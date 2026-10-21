@@ -1,0 +1,14 @@
+# №689: бабл «разбита» (4 жёстких переноса, uiMessage из main_loop.h:1178): рамка по кадрам появления и после
+scene g646
+flag msn
+wait 3
+flag uipopdest 1
+wait 0.2
+shot d1
+wait 0.2
+shot d2
+wait 0.3
+shot d3
+wait 1.2
+shot d4
+end

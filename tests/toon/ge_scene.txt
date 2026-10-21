@@ -1,0 +1,24 @@
+# №428 / аудит железа TEST27 п.1: пик списка GE и пропуски персонажей (geskip) с контуром выкл/вкл: гараж АЭС L1 (G1) и улица H5-2 с трафиком и пешеходами.
+# журнал smoke_report: колонка GE (пик КБ из 256) и строка «список GE полон» при пропусках; сравнивать только пары выкл/вкл в одном прогоне (Мак шумит)
+scene start
+wait 3
+scene G1_toon0
+flag toon 0
+foot -85 -302 1.5708
+wait 6
+shot G1_toon0
+scene G1_toon1
+flag toon 1
+wait 6
+shot G1_toon1
+scene H5_toon0
+flag toon 0
+foot 50 -285 0.0
+wait 8
+shot H5_toon0
+scene H5_toon1
+flag toon 1
+wait 8
+shot H5_toon1
+flag toon 0
+end

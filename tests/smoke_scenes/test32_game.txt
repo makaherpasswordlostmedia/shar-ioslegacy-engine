@@ -1,0 +1,296 @@
+# TEST31 · тур терминала игры (17.10, ветка game-polish): только правки интерфейса, ~2 мин. Роб запускает «SHAR TEST31» и смотрит кадры:
+# №724 значок дома вверху слева (кольцо на месте аватарки) и аватарка задания; №672 монета справа от цифр (HUD); №684/№683 будка: машины ×0,85,
+# стрелки на месте, Лимо и чёрные машины без крапинок; лавка: название не заходит под счёт, у счёта монета; №732 гардероб: лучи из центра, 12;
+# №724 сообщение VEHICLE DESTROYED: края капсулы родного размера; все пузыри — Принцип пузыря v1 (буквы только на прямой части, текст у верха); №349 возврат из двора K2-8 ирисом. Будка (порядок из журнала PHONEV): из позиции 1 — 5 раз влево = чёрный седан cSedan (38), ещё 13 = cLimo (25)
+# Вечер 17.10: будка — лучи за машиной, строка «название + монеты» одной линией, статы под монетой; монеты справа вверху (будка, гардероб — место паузы);
+# значки заданий в углу — свой верх у каждого (memory feedback_shar_icon_custom_top), таймер/место правее рисунка значка; меню — стрелки по ширине пункта.
+# В конце — звуковой блок L1 (tests/smoke_scenes/sound_block_l1.txt): слушать крики, шаги, двери, будку, Kwik-E-Mart, лавку, горящую машину
+scene T31_HOME_ICON
+flag repair
+flag warmhere
+wait 4
+shot t31_home
+flag coinadd 26
+wait 0.6
+shot t31_hud_coins
+scene T31_AVATAR
+flag msn
+wait 14
+shot t31_avatar
+scene T31_BOOTH
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+shot t31_booth_00
+press right
+wait 0.6
+shot t31_booth_01
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+wait 0.4
+shot t31_booth_sedan
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+wait 0.4
+shot t31_booth_limo
+press triangle
+wait 3
+scene T31_SHOP
+flag coinadd 2000
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.5
+shot t31_shop_0
+press right
+wait 1
+shot t31_shop_survvan
+press right
+wait 1
+shot t31_shop_2
+press triangle
+wait 3
+scene T31_WARDROBE
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag warmhere
+wait 1
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+foot 493.61 291.4 3.1416 -19.5
+wait 1.5
+press triangle
+wait 1.5
+shot t31_wardrobe
+press right
+wait 0.8
+shot t31_wardrobe_2
+press triangle
+wait 2
+scene T31_DESTROYED
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag testboom
+wait 3.8
+shot t31_destroyed
+wait 1
+shot t31_destroyed_2
+scene T31_BUBBLES
+flag msn
+wait 0.8
+shot t31_bub_a_talk
+wait 2.5
+flag uipopdest 1
+wait 1.2
+shot t31_bub_b_dest
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 2
+wait 1
+shot t31_bub_c_m2
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 3
+wait 1
+shot t31_bub_d_m3
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 5
+wait 1
+shot t31_bub_e_m5
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 6
+wait 1
+shot t31_bub_f_m6
+flag uipopmsg 0
+wait 2.5
+flag uipopmsgl 1
+wait 1
+shot t31_bub_g_long
+scene ZI_WARM
+flag repair
+flag warmhere
+wait 2
+goto 236 -508.5 1.5708
+flag warmhere
+wait 3
+scene ZI_ENTER
+goto 274 -515 3.1416
+wait 0.15
+shot t31_zi_a
+wait 0.25
+shot t31_zi_b
+wait 2
+shot t31_zi_c
+# Звуковой блок L1 для общего теста (терминал игры 17.10; Роб: «тест вместе со звуком»). Без смены уровня (она висит — №700/находка 17.10).
+# Что слушать и что пишет журнал: наезды — крики прохожих и водителей, реплика героя после крика (№180/184/467, №183/685, STREETSAY);
+# пешком — шаги, прыжки, туба (№179); выход и посадка — W_GOC/W_GIC (№345); будка; Kwik-E-Mart — атмосфера комнаты (№345, ROOMAMB);
+# лавка — музыка muzak (№235); горящая машина — повтор W_Burn (№180); в конце SAYSTAT — счёт разных фраз (№685: не одна и та же)
+flag sfxlog 1
+scene S_L1_START
+flag repair
+flag warmhere
+wait 3
+scene S_L1_HITS
+flag repair
+flag warmhere
+wait 3
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag stop
+wait 1
+scene S_L1_GETOUTIN
+press triangle
+wait 3
+press triangle
+wait 3
+scene S_L1_FOOT
+press triangle
+wait 2
+flag walk 24
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 4
+flag stop
+scene S_L1_BOOTH
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+press triangle
+wait 4
+scene S_L1_KWIK
+foot 213.9 301.4 3.1416
+wait 1
+press triangle
+wait 8
+scene S_L1_SHOP
+flag coinadd 300
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 6
+press triangle
+wait 3
+scene S_L1_BURN
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag testboom
+wait 30
+scene S_L1_SAYSTAT
+flag saystat 1
+wait 1
+# --- блок рендера TEST32 (терминал рендера, 17.10 вечер) ---
+# №757 тень деревьев с/без в одном месте (газон у дома Симпсонов) дважды по очереди: число с PSP — работа кадра по сценам R_TREE_*
+scene R_TREE_ON
+foot 214 210 -2.4
+flag treesh 1
+wait 6
+scene R_TREE_OFF
+flag treesh 0
+wait 6
+scene R_TREE_ON2
+flag treesh 1
+wait 6
+scene R_TREE_OFF2
+flag treesh 0
+wait 6
+# №748/749 тени людей у Мардж (14 %), прыжок — тень меньше; №756 монета-спрайт вблизи
+scene R_MARGE
+foot 228.94 180.5 3.1416 3.83
+wait 4
+shot r_marge
+press cross 0.1
+wait 0.35
+shot r_jump
+scene R_COIN
+foot 222 204 -1.4
+wait 3
+shot r_coin
+# проверка 17.10: самое плотное по предметам место L1 (12 в радиусе 12 м) — отбор ближних для теней предметов под нагрузкой на железе
+scene R_PROPS
+foot 200 -380 0
+wait 3
+press up 2
+wait 2.5
+end

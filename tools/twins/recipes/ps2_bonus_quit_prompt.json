@@ -1,0 +1,33 @@
+{
+ "id": "ps2_bonus_quit_prompt",
+ "state": "build/twins/o4/ps2_bonus_pause_quit_selection/snap_320.p2s",
+ "frames": 200,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "cross",
+   1
+  ],
+  [
+   26,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  50,
+  100,
+  200
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 150,
+ "note": "Native Quit Game selected and visually verified. Accept once; inspect confirmation before leaving collected-card session. No writes, no saving."
+}

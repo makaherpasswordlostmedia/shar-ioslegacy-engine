@@ -1,0 +1,37 @@
+# Правки Роба 40 и 38 (tests/camera/convcam_emu.sh, разбор tests/camera/convcam_check.py emu): камеры разговора в эмуляторе.
+# m0: разговор с Мардж по △ (icecream: Мардж, Гомер; SetConversationCam 0 npc_far, 1 pc_near; SetCamBestSide bestside_m0),
+# затем брифинг X; MISSION SELECT m1: разговор с Мардж (project: 4 реплики, npc_far / pc_near; лучшая сторона — другая),
+# на третьей реплике X — «Start Mission» (LetterBoxButtons.pag): разговор кончается, сразу брифинг.
+# Строки TALKCAM — камера, как нарисована, места обоих и план; TALKSHOT — смена плана на реплику; LETTERBOX — полосы и
+# подписи экрана разговора (prompt 2 — «✕ Start Mission / △ Cancel»); TALKSKIP — пропуск X.
+wait 3
+flag msn
+wait 3
+scene conv_m0
+press triangle
+wait 2.5
+shot conv_m0_line0
+wait 7
+shot conv_m0_line1
+wait 5
+press cross
+wait 1
+scene conv_m1
+flag msnsel 1
+wait 3
+flag msngo
+wait 2
+flag msngo
+wait 2
+press triangle
+wait 2.5
+shot conv_m1_a
+wait 5
+shot conv_m1_b
+wait 2
+press cross
+wait 1.5
+shot conv_m1_skip
+press cross
+wait 2
+end

@@ -1,0 +1,18 @@
+# Гейт «смена тона -> сразу смена уровня / пауза без утечки дескриптора» (16.10, Камера, аудит железа): дескриптор живёт только внутри шага.
+# Ждать в smoke.txt: TONEJOB start ... TONEJOB cancel opened=N closed=N (равны), потом на втором уровне новая смена до конца: TONEJOB done и TONEFD opened==closed.
+scene GC_L1_load
+flag golevel 1
+wait 15
+scene GC_change_then_level
+flag gamma 130
+wait 0.4
+flag golevel 2
+wait 20
+scene GC_second_change
+flag gamma 100
+wait 12
+flag hzcachetone 160
+wait 12
+flag hzcachetone 136
+wait 12
+end

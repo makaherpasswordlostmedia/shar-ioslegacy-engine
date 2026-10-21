@@ -1,0 +1,20 @@
+# Загрузка уровня газетой: меню -> NEW GAME; flag loadshot снимает «loading» с середины разворота (с текстом); второй прогон load_b.txt — без текста
+flag menu
+flag intro
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1.5
+flag idle 0
+flag uitypo 1
+flag loadshot 1.6
+press cross
+wait 8
+end

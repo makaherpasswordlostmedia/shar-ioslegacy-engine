@@ -1,0 +1,145 @@
+# №704: облёт будки L1; стик «вперёд» нажимается через D с после начала облёта (камера уже крутится): курс ходьбы остаётся от вида ДО облёта (EXB_<new|old>_<D>), красный контроль flag ctrlfreezeold 1
+scene BQ_load
+flag golevel 1
+wait 15
+flag player 1
+flag camlog
+scene EXB_new_0_5
+flag ctrlfreezeold 0
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 0.5
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+scene EXB_old_0_5
+flag ctrlfreezeold 1
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 0.5
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+scene EXB_new_1_0
+flag ctrlfreezeold 0
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 1.0
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+scene EXB_old_1_0
+flag ctrlfreezeold 1
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 1.0
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+scene EXB_new_1_5
+flag ctrlfreezeold 0
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 1.5
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+scene EXB_old_1_5
+flag ctrlfreezeold 1
+foot 228.7 153.5 3.14
+wait 2
+flag phoneanim
+wait 1.5
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 2.5
+end

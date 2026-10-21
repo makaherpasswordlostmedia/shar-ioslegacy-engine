@@ -1,0 +1,927 @@
+"""Экспорт уровня SHAR для PSP (формат SHR7): город клетками 40x40 м + небо + карта высот + машина + коллизия COL1.
+python tools/psp_export.py            -> весь уровень 1
+python tools/psp_export.py 2          -> уровень 2
+python tools/psp_export.py --out /tmp/x.shr  -> записать в другой файл (по умолчанию build/level.shr)"""
+import sys, json, struct, re
+from pathlib import Path
+import numpy as np
+from PIL import Image
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / 'hit-and-run-web/tools'))
+from convert import Converter, GAME, OUT
+from p3d import read, walk, string
+from interiors import leaves as col_leaves   # листья CollisionVolume (родители — только габарит для поиска, не твёрдые)
+import prp2_export   # стейтпропы и обломки -> подсекция SPR1 секции PRP2 (tools/prp2_export.py, docs/props_spec.md)
+
+import os
+CAP, CHUNK, SPLIT, SPLIT_GROUND, CELL, LAYERS = 128, 40.0, 14.0, 7.0, 1.5, 4
+SPLIT = float(os.environ.get('SHR_SPLIT_WALL', SPLIT))   # эксперимент шага 7 аудита: нарезка стен у камеры
+# Флаги куска (Rec.flags / PropPiece.flags / SpPiece.flags младший байт):
+#   1 альфа-тест, 2 полупрозрачное, 4 небо, 8 двусторонний (без отсечения задних граней),
+#   16 без индексов: вершины подряд по 3 на треугольник (ближняя версия, сразу за ней дальняя), nv = ni + nf,
+#   32 вершина 12 Б: u,v int16, цвет GU_COLOR_5650 (u16, альфа = 255), x,y,z int16 (иначе 16 Б: цвет 8888 + pad)
+F_DOUBLE, F_NOIDX, F_V12 = 8, 16, 32
+QV12 = np.dtype([('u', '<i2'), ('v', '<i2'), ('c', '<u2'), ('x', '<i2'), ('y', '<i2'), ('z', '<i2')])
+
+def to5650(c):
+    """ABGR8888 -> 5650 (r 0-4, g 5-10, b 11-15) с округлением"""
+    c = np.asarray(c, np.uint32)
+    r, g, b = c & 255, (c >> 8) & 255, (c >> 16) & 255
+    return (((r * 31 + 127) // 255) | (((g * 63 + 127) // 255) << 5) | (((b * 31 + 127) // 255) << 11)).astype('<u2')
+
+def ni_bytes(q, v12):
+    """16-байтные вершины (QV) -> байты вершинного потока без индексов (16 Б или 12 Б с цветом 5650)"""
+    if not v12: return q.tobytes()
+    o = np.zeros(len(q), QV12)
+    for k in ('u', 'v', 'x', 'y', 'z'): o[k] = q[k]
+    o['c'] = to5650(q['c'])
+    return o.tobytes()
+SKY_S = 1 / 60   # небо ужимаем и рисуем вокруг камеры
+SKY_NAMES = ('horizon', 'sky')
+FAR_MIN = 1.2   # в дальней версии куска выкидываем исходные треугольники мельче этого (м²)
+FAR_SPLIT = 28.0  # дальняя версия = исходные треугольники, лишь рёбра длиннее 28 м делим пополам. PSP выбрасывает
+                  # треугольник целиком, если хоть одна вершина вне гвард-бэнда 4096 px (~83.7° от оси взгляда при
+                  # вьюпорте 480x272, fovy 62°). От угла кадра до этой границы >= 33.7°, дальний кусок весь >= 50 м
+                  # от глаза -> видимый треугольник с такой вершиной имеет ребро >= 2*50*sin(33.7°/2) = 29.0 м
+PIECE_VERTS = 60000   # «суп» вершин (ближняя + дальняя версия) на кусок; уникальных всегда <= 65535
+SKY_SECTORS = 8   # небо — 8 секторов по 45° (азимут центра треугольника вокруг камеры), движок отсекает их пирамидой
+SKY_CAP = 30.0    # ...и «шапка» над головой (центр треугольника ближе 30 ужатых м к оси): иначе ящик каждого сектора
+                  # дотягивается до оси, накрывает глаз и не отсекается никогда
+GRAD_TOL = 0.5    # текстура неба = вертикальный градиент, если в каждой строке пиксели отличаются не больше чем на 0.5
+BAKE_MAX = 8.0    # ...и вмешиваем её в цвет вершин, только если плавная заливка отличается от текстуры не больше 8/255
+SPAWN = {1: ((220, 3.5, 172), np.pi / 2)}
+VT = [('u', '<f4'), ('v', '<f4'), ('c', '<u4'), ('x', '<f4'), ('y', '<f4'), ('z', '<f4')]
+
+def swizzle_level(data, w, h):
+    """CLUT8 w x h -> swizzle GE: блоки 16 байт x 8 строк, высота добивается до кратной 8 последней строкой"""
+    a = np.frombuffer(data, np.uint8).reshape(h, w); hp = (h + 7) & ~7
+    if hp != h: a = np.concatenate([a, np.repeat(a[-1:], hp - h, 0)])
+    return a.reshape(hp // 8, 8, w // 16, 16).transpose(0, 2, 1, 3).tobytes()
+
+def load_tex(url, cache, blob):
+    if not url: return -1
+    if url in cache: return cache[url]
+    img = Image.open(OUT / url).convert('RGBA')
+    w, h = img.size; s = min(1.0, CAP / max(w, h))
+    w, h = max(16, int(w * s)), max(8, int(h * s))
+    if img.size != (w, h): img = img.resize((w, h), Image.LANCZOS)
+    q = img.quantize(256, method=Image.Quantize.FASTOCTREE)
+    pal = np.zeros((256, 4), np.uint8)
+    p = np.array(q.getpalette(rawmode='RGBA'), np.uint8).reshape(-1, 4)[:256]; pal[:len(p)] = p
+    levels = []; lw, lh, cur = w, h, img
+    while lw >= 16 and len(levels) < 8:
+        if levels:
+            a = np.asarray(cur, np.int32).reshape(-1, 4)
+            idx = ((a[:, None, :] - pal[None].astype(np.int32)) ** 2).sum(2).argmin(1).astype(np.uint8)
+        else: idx = np.asarray(q, np.uint8).reshape(-1)
+        levels.append(idx.tobytes())
+        lw, lh = lw // 2, max(1, lh // 2)
+        if lw >= 16: cur = img.resize((lw, lh), Image.LANCZOS)
+    # уровни сразу в swizzle (блоки 16 Б x 8 строк, высота добита до кратной 8 повтором последней строки — как
+    # swizzleLevel в main.c): байт 7 заголовка = 1, движку не нужна вторая (линейная) копия — -3 МБ ОЗУ (шаг 4.2 аудита)
+    out = struct.pack('<HHHBB8x', w, h, len(levels), 0, 1) + pal.tobytes()
+    lw, lh = w, h
+    for lv in levels:
+        sw = swizzle_level(lv, lw, lh); out += sw + b'\0' * (-len(sw) % 16)
+        lw, lh = lw // 2, max(1, lh // 2)
+    blob.append(out); cache[url] = len(blob) - 1
+    return cache[url]
+
+# Ф2 текстуры (docs/АУДИТ_ОПТИМИЗАЦИИ 10.3): точные палитры tools/texq.py — T8, предел 128, без CLUT4, уровни сразу в
+# swizzle (байт 7 = 1, вторая копия в ОЗУ не нужна). Размеры и число мипов те же, что у load_tex выше.
+#   SHR_TEXQ=0          -> старый путь (FASTOCTREE, load_tex выше)
+#   SHR_TEX_CAP256=1    -> родные 256x128 для 8 крупных исходников (вывески/щиты; +0.25 МБ), остальное 128
+#   SHR_SMALL_MIPS=1    -> мипы и ниже 16 px (до 1 px; строка 16 Б, байт 8 = 1; BOX + покрытие альфа-теста)
+TEX_CAP256 = ('textures/a7a9b8ac41248b5e9546.png', 'textures/68f3567d2aa80fb31ee6.png', 'textures/a44b975c13f87db7f865.png',
+              'textures/613596a3df666840a734.png', 'textures/2f9eba2961ee2932bcf9.png', 'textures/020948d017434d037b00.png',
+              'textures/0c3ef8f9ed6afa467bf9.png', 'textures/e3a9ff751e5b9e72872f.png')
+if os.environ.get('SHR_TEXQ', '1') != '0':
+    import texq
+    texq.CAP, texq.CLUT4, texq.PRESWIZZLE = CAP, False, True
+    texq.SMALL_MIPS = os.environ.get('SHR_SMALL_MIPS') == '1'
+    if os.environ.get('SHR_TEX_CAP256') == '1': texq.CAPS.update({u: 256 for u in TEX_CAP256})
+    load_tex = texq.load_tex
+
+def subdivide_lod(P, UV, C, split=SPLIT, ground_split=SPLIT_GROUND, far_split=None):
+    """Режем длинные треугольники: PSP не обрезает их у камеры, и дорога у машины пропадала бы.
+    Делим самое длинное ребро пополам, пока оно длиннее split (земля/дорога — ground_split).
+    far_split: заодно собираем дальнюю версию — те же исходные треугольники, порезанные только до far_split
+    («дальние предки»). Каждый мелкий треугольник — потомок ровно одного предка, края совпадают.
+    -> P, UV, C                                     (far_split=None)
+    -> P, UV, C, anc, (fP, fUV, fC, forig)          anc: номер предка у каждого мелкого треугольника,
+                                                    forig: номер исходного треугольника у каждого предка"""
+    P, UV, C = P.reshape(-1, 3, 3), UV.reshape(-1, 3, 2), C.reshape(-1, 3)
+    orig, anc = np.arange(len(P)), np.full(len(P), -1)
+    done, far, nfar = [], [], 0
+    def adopt(new):   # треугольники new становятся дальними предками
+        nonlocal nfar
+        if not new.any(): return
+        anc[new] = nfar + np.arange(int(new.sum())); nfar += int(new.sum())
+        far.append((P[new], UV[new], C[new], orig[new]))
+    for _ in range(10):
+        e = np.stack([np.linalg.norm(P[:, (i + 1) % 3] - P[:, i], axis=1) for i in range(3)], 1)
+        if far_split is not None: adopt((anc < 0) & (e.max(1) <= far_split))
+        nrm = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]); ln = np.linalg.norm(nrm, axis=1) + 1e-9
+        flat = np.abs(nrm[:, 1]) / ln > 0.55   # дорога/земля: режем мельче, чтобы не пропадала у камеры
+        big = e.max(1) > np.where(flat, ground_split, split)
+        if far_split is not None: adopt((anc < 0) & ~big)   # страховка: готовый треугольник без предка (NaN-вершины) сам себе предок, иначе anc = -1
+        done.append((P[~big], UV[~big], C[~big], anc[~big]))
+        if not big.any(): P = P[:0]; break
+        P, UV, C, k, orig, anc = P[big], UV[big], C[big], e[big].argmax(1), orig[big], anc[big]
+        n = np.arange(len(P)); i0, i1, i2 = k, (k + 1) % 3, (k + 2) % 3
+        def mid(A): return (A[n, i0] + A[n, i1]) / 2
+        mp, mu = mid(P), mid(UV)
+        c0, c1 = C[n, i0], C[n, i1]
+        mc = ((((c0 & 0xFF) + (c1 & 0xFF)) // 2) | ((((c0 >> 8) & 0xFF) + ((c1 >> 8) & 0xFF)) // 2 << 8) |
+              ((((c0 >> 16) & 0xFF) + ((c1 >> 16) & 0xFF)) // 2 << 16) | (0xFF << 24)).astype(np.uint32)
+        a = np.stack([P[n, i0], mp, P[n, i2]], 1); b = np.stack([mp, P[n, i1], P[n, i2]], 1)
+        ua = np.stack([UV[n, i0], mu, UV[n, i2]], 1); ub = np.stack([mu, UV[n, i1], UV[n, i2]], 1)
+        ca = np.stack([c0, mc, C[n, i2]], 1); cb = np.stack([mc, c1, C[n, i2]], 1)
+        P, UV, C = np.concatenate([a, b]), np.concatenate([ua, ub]), np.concatenate([ca, cb])
+        orig, anc = np.concatenate([orig, orig]), np.concatenate([anc, anc])
+    if len(P):
+        if far_split is not None: adopt(anc < 0)
+        done.append((P, UV, C, anc))
+    out = (np.concatenate([d[0] for d in done]).reshape(-1, 3), np.concatenate([d[1] for d in done]).reshape(-1, 2),
+           np.concatenate([d[2] for d in done]).reshape(-1))
+    if far_split is None: return out
+    if not far:   # пустой примитив (0 треугольников): np.concatenate([]) упал бы
+        far = [(np.zeros((0, 3, 3), np.float32), np.zeros((0, 3, 2), np.float32), np.zeros((0, 3), np.uint32), np.zeros(0, int))]
+    fP, fUV, fC, forig = (np.concatenate([f[i] for f in far]) for i in range(4))
+    return out + (np.concatenate([d[3] for d in done]), (fP.reshape(-1, 3), fUV.reshape(-1, 2), fC.reshape(-1), forig))
+
+def subdivide(P, UV, C, split=SPLIT, ground_split=SPLIT_GROUND):
+    return subdivide_lod(P, UV, C, split, ground_split)
+
+def tri_area(P):
+    T = np.asarray(P, np.float64).reshape(-1, 3, 3)
+    return np.linalg.norm(np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]), axis=1) / 2
+
+def gradient_rows(url):
+    """Текстура — чистый вертикальный градиент (каждая строка одного цвета)? -> цвета строк (H, 4) или None"""
+    a = np.asarray(Image.open(OUT / url).convert('RGBA'), np.float64)
+    return a.mean(1) if np.abs(a - a.mean(1, keepdims=True)).max() <= GRAD_TOL else None
+
+def sample_rows(rows, v):
+    """Цвет градиента в точке v так, как его берёт PSP: билинейно по v, повтор текстуры (GU_REPEAT)."""
+    H = len(rows); y = np.asarray(v, np.float64) * H - .5; i0 = np.floor(y).astype(int); f = (y - i0)[..., None]
+    return rows[i0 % H] * (1 - f) + rows[(i0 + 1) % H] * f
+
+def abgr_split(C): return np.stack([(C >> s) & 0xFF for s in (0, 8, 16, 24)], -1).astype(np.float64)   # -> r, g, b, a
+
+def bake_gradient(UV, C, rows, n=12):
+    """Цвет градиентной текстуры в каждой вершине вмешиваем в цвет вершины (как GU_TFX_MODULATE).
+    -> новые цвета и макс. ошибка (0..255) внутри треугольников против текстуры (выборка n*(n+1)/2 точек)."""
+    vq = np.round(UV[:, 1] * 256) / 256                                # v так, как оно ляжет в файл
+    col = abgr_split(C); tex = sample_rows(rows, vq)
+    baked = np.clip(np.round(tex * col / 255), 0, 255).astype(np.uint32)
+    newC = (baked[:, 0] | baked[:, 1] << 8 | baked[:, 2] << 16 | baked[:, 3] << 24).astype(np.uint32)
+    i, j = np.meshgrid(np.arange(n + 1), np.arange(n + 1)); m = i + j <= n
+    w = np.stack([i[m], j[m], n - i[m] - j[m]], 1) / n                 # барицентрические точки
+    V, CO, BK = vq.reshape(-1, 3), col.reshape(-1, 3, 4), baked.reshape(-1, 3, 4).astype(np.float64)
+    truth = sample_rows(rows, V @ w.T) * np.einsum('pk,tkc->tpc', w, CO) / 255   # текстура * цвет вершины
+    gour = np.einsum('pk,tkc->tpc', w, BK)                                        # плавная заливка вершин
+    return newC, float(np.abs(truth - gour).max(initial=0.0))
+
+def is_sky(obj): return obj['name'].lower().startswith(SKY_NAMES)
+JUNK_MESHES = ('Plane1Shape',)   # служебная плоскость с палитрой в небе
+
+def pack_prims(meta, raw, conv_cache, blob, want=lambda o: True):
+    """-> список (tex, flags, P, UV, C) в координатах объекта*матрица"""
+    out = []
+    for obj in meta['objects']:
+        if not want(obj) or obj['mesh'] in JUNK_MESHES: continue
+        M = np.array(obj['matrix'], np.float64).reshape(4, 4)
+        for prim in meta['meshes'].get(obj['mesh'], []):
+            at = prim['attributes']
+            g = lambda k, w, t='<f4': np.frombuffer(raw, t, at[k][1], at[k][0]).reshape(-1, w) if w > 1 else np.frombuffer(raw, t, at[k][1], at[k][0])
+            pos, uv, col, idx = g('position', 3), g('uv', 2), g('color', 3), g('indices', 1, '<u4')
+            world = (np.c_[pos, np.ones(len(pos))] @ M)[:, :3]
+            mat = meta['materials'].get(prim['shader'], {})
+            t = load_tex(mat.get('textureUrl', ''), conv_cache, blob)
+            flags = (1 if mat.get('alpha') else 0) | (2 if mat.get('translucent') or mat.get('blend') else 0)
+            c = np.clip(col * 255, 0, 255).astype(np.uint32)
+            # альфа вершин (PS2) — только у полупрозрачных материалов: стекло Krusty/Buzz Cola — 40%, как в оригинале
+            A = np.clip(g('alpha', 1) * 255 + .5, 0, 255).astype(np.uint32) if (flags & 2) and 'alpha' in at else 0xFF
+            abgr = (A << 24) | (c[:, 2] << 16) | (c[:, 1] << 8) | c[:, 0]
+            out.append((t, flags, world[idx].astype(np.float32), uv[idx].astype(np.float32), abgr[idx].astype(np.uint32)))
+    return out
+
+def verts(P, UV, C):
+    v = np.zeros(len(P), dtype=VT)
+    v['u'], v['v'], v['c'] = UV[:, 0], UV[:, 1], C
+    v['x'], v['y'], v['z'] = P[:, 0], P[:, 1], P[:, 2]
+    return v
+
+def heightmap(tris):
+    lo = tris.reshape(-1, 3).min(0); hi = tris.reshape(-1, 3).max(0)
+    W, H = int((hi[0] - lo[0]) / CELL) + 2, int((hi[2] - lo[2]) / CELL) + 2
+    hm = np.full((H, W, LAYERS), -32768, np.int16)
+    n = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    ln = np.linalg.norm(n, axis=1); ok = ln > 1e-6
+    tris, n = tris[ok], n[ok] / ln[ok, None]
+    walk = np.abs(n[:, 1]) > 0.55
+    for t in tris[walk]:
+        x0, x1 = int((t[:, 0].min() - lo[0]) / CELL), int((t[:, 0].max() - lo[0]) / CELL)
+        z0, z1 = int((t[:, 2].min() - lo[2]) / CELL), int((t[:, 2].max() - lo[2]) / CELL)
+        xs, zs = np.meshgrid(np.arange(x0, x1 + 1), np.arange(z0, z1 + 1))
+        px, pz = lo[0] + (xs + .5) * CELL, lo[2] + (zs + .5) * CELL
+        (ax, ay, az), (bx, by, bz), (cx, cy, cz) = t
+        d = (bz - cz) * (ax - cx) + (cx - bx) * (az - cz)
+        if abs(d) < 1e-9: continue
+        w1 = ((bz - cz) * (px - cx) + (cx - bx) * (pz - cz)) / d
+        w2 = ((cz - az) * (px - cx) + (ax - cx) * (pz - cz)) / d
+        w3 = 1 - w1 - w2
+        inside = (w1 >= -.05) & (w2 >= -.05) & (w3 >= -.05)
+        if not inside.any(): continue
+        hy = (w1 * ay + w2 * by + w3 * cy)[inside]
+        for zz, xx, yy in zip(zs[inside], xs[inside], hy):
+            cm = int(np.clip(yy * 100, -32000, 32000)); cell = hm[zz, xx]
+            if (np.abs(cell.astype(np.int32) - cm) < 40).any(): continue
+            free = np.where(cell == -32768)[0]
+            if len(free): cell[free[0]] = cm
+            else:
+                j = cell.argmin()
+                if cm > cell[j]: cell[j] = cm
+    # стены: крутые треугольники коллизии -> по клетке диапазон высот, который нельзя проехать
+    wall = np.zeros((H, W, 2), np.int16); wall[..., 0] = 32767; wall[..., 1] = -32767
+    steep = tris[~walk]
+    for t in steep:
+        e = max(np.linalg.norm(t[1] - t[0]), np.linalg.norm(t[2] - t[1]), np.linalg.norm(t[0] - t[2]))
+        n = int(min(80, max(1, e / (CELL * .5))))
+        i, j = np.meshgrid(np.arange(n + 1), np.arange(n + 1)); m = i + j <= n
+        a, b = i[m] / n, j[m] / n; pts = t[0] + a[:, None] * (t[1] - t[0]) + b[:, None] * (t[2] - t[0])
+        gx = ((pts[:, 0] - lo[0]) / CELL).astype(int); gz = ((pts[:, 2] - lo[2]) / CELL).astype(int)
+        ok2 = (gx >= 0) & (gz >= 0) & (gx < W) & (gz < H)
+        gx, gz, yy = gx[ok2], gz[ok2], np.clip(pts[ok2, 1] * 100, -32000, 32000).astype(np.int16)
+        np.minimum.at(wall[..., 0], (gz, gx), yy); np.maximum.at(wall[..., 1], (gz, gx), yy)
+    return lo, W, H, hm, wall
+
+# ---------------------------------------------------------------------------------------------------------------
+# Коллизия: секция COL1 (после блобов клеток, до PVS; смещение в заголовке SHR7 @92). Всё little endian, float32.
+#   ColHdr  48 B: "COL1", ox, oz, cell, W, H, ntri, nbox, ncyl, nseg, nref, flags
+#   ColTri  48 B: a[3] b[3] c[3] n[3]      земля (Intersect 0x3f00003); n = unit(cross(b-a, c-a)), n.y >= 0
+#   ColBox  64 B: c[3] ax[3] ay[3] az[3] h[3] pad   ориентированный ящик (оси единичные, правая тройка)
+#   ColCyl  48 B: c[3] axis[3] r halfLen flat pad[3]  flat=1 цилиндр, 0 капсула; сфера = капсула с halfLen 0
+#   ColSeg  32 B: a[2] b[2] n[2] y0 y1     забор (x,z), n — в сторону проезжей части, y0/y1 = -1e6/+1e6
+#   u32 cellStart[W*H+1]; u32 refs[nref] = (type << 29) | index, type 0 tri 1 box 2 cyl 3 seg
+# Массивы идут подряд в этом порядке без промежутков; конец секции выровнен на 16.
+# Сетка 4 м от (ox, oz), клетка gz*W+gx. Примитив записан во все клетки, которые задевает его xz-габарит
+# (у забора — все клетки в пределах 0.5 м от отрезка).
+COL_CELL = 4.0
+COL_SEG_MARGIN = 0.5
+COL_FENCE_Y = 1e6
+COL_MIN_2A, COL_MIN_H = 1e-4, 1e-3   # вырожденный треугольник: удвоенная площадь < 1e-4 м² или высота < 1 мм
+COL_VERT_NY = 1e-6                   # |n.y| меньше — стена строго вертикальна: сторону берём из нормали диска
+MIRROR = np.diag([1.0, 1.0, -1.0, 1.0])
+# StaticPhys — здания/стены/заборы-объекты в мировых координатах; InstaStatPhys — большие деревья, живые изгороди,
+# колонны, столбы и т.п.: объём задан в своих координатах и ставится матрицей каждого экземпляра (как их меш).
+# Одиночный CollisionObject верхнего уровня (l1r6_rotating_sign, флаг static=1) — тоже в мировых.
+COL_STATIC = {0x3f00001: 'StaticPhys', 0x3f0000a: 'InstaStatPhys', 0x7010000: 'CollisionObject'}
+# сбиваемое и подвижное — не в COL1 (этап 5): фонари, мелкие деревья, гидранты, почтовые ящики, знаки (DynaPhys),
+# будки, ящики, торговые автоматы, кусты-шары (AnimDynaPhys), платформы/вентиляторы/двери/люки (AnimCollision)
+COL_DYNAMIC = {0x3f00002: 'DynaPhys', 0x3f0000e: 'AnimDynaPhys', 0x3f00008: 'AnimCollision'}
+
+def col_instances(entity):
+    """Матрицы (уже отзеркаленные по z, как у меша в convert.py) всех экземпляров сущности из её InstanceList."""
+    out = []
+    def rec(c, m):
+        if c.id == 0x120103:
+            _, p = string(c.data); m = np.frombuffer(c.data, '<f4', 16, p + 4).reshape(4, 4).astype(np.float64) @ m
+        if c.id == 0x120107: out.append(MIRROR @ m @ MIRROR)
+        for s in c.children: rec(s, m)
+    for c in entity.children:
+        if c.id == 0x3000008: rec(c, np.eye(4))
+    return out
+
+def col_place(shape, M):
+    """Лист CollisionVolume (dict из interiors.leaves, уже отзеркален) -> ('box'|'cyl', 16 или 12 float) в мире."""
+    R = M[:3, :3]
+    c = np.append(np.asarray(shape['center'], np.float64), 1.0) @ M
+    if shape['kind'] == 'box':
+        A = np.asarray(shape['axes'], np.float64) @ R; s = np.linalg.norm(A, axis=1)
+        h = np.asarray(shape['halfExtents'], np.float64) * s; A = A / s[:, None]
+        ax = A[0]; ay = A[1] - ax * (ax @ A[1]); ay /= np.linalg.norm(ay); az = np.cross(ax, ay)   # правая тройка
+        return 'box', [*c[:3], *ax, *ay, *az, *h, 0.0], float(np.abs(np.abs(A @ A.T) - np.eye(3)).max())
+    if shape['kind'] == 'cylinder':
+        a = np.asarray(shape['axis'], np.float64) @ R; s = np.linalg.norm(a); a /= s
+        u = np.cross(a, [1.0, 0, 0] if abs(a[0]) < .9 else [0, 1.0, 0]); u /= np.linalg.norm(u)
+        rs = max(np.linalg.norm(u @ R), np.linalg.norm(np.cross(a, u) @ R))
+        if a[1] < 0: a = -a   # направление оси не важно; вверх — удобнее смотреть
+        return 'cyl', [*c[:3], *a, shape['radius'] * rs, shape['length'] * s, float(shape['flatEnds']), 0, 0, 0], 0.0
+    rs = max(np.linalg.norm(R, axis=0))
+    return 'cyl', [*c[:3], 0.0, 1.0, 0.0, shape['radius'] * rs, 0.0, 0.0, 0, 0, 0], 0.0
+
+# ---------------------------------------------------------------------------------------------------------------
+# Пропы (этап 3б): секция PRP1 — сбиваемые DynaPhys (0x3f00002): гидранты, ящики, знаки, мелкие деревья, фонари.
+# Атрибут 0x3000600 на сущности = (cls, physProp, звук); cls==2 — статика (данные сами говорят «не трогать»,
+# остаётся в городских кусках как раньше). Масса — из ATC art/atc/atc.p3d (0x3000602, 63 строки: 3 строки
+# (звук, частицы, обломок) + 3 числа; второе число — масса, сверено с docs/gameplay.md).
+def atc_mass_table():
+    root = read(GAME / 'art' / 'atc' / 'atc.p3d')
+    c = next(x for x in walk(root) if x.id == 0x3000602)
+    d = c.data; n, = struct.unpack_from('<I', d, 0); p = 4; mass = []
+    for _ in range(n):
+        _, p = string(d, p); _, p = string(d, p); _, p = string(d, p)
+        f = struct.unpack_from('<3f', d, p); p += 12
+        mass.append(f[1])
+    return mass
+
+def prop_entities(scenes, art):
+    """Сканирует сцены уровня (сырые чанки, без Converter) -> {имя сущности: dict(scene, mat, mats=[4x4 мировых])}."""
+    atc = atc_mass_table(); out = {}
+    for scene in scenes:
+        root = read(art / f'{scene}.p3d')
+        for ent in root.children:
+            if ent.id != 0x3f00002: continue
+            name = string(ent.data)[0]
+            if 'powerbox' in name.lower(): continue
+            eff = next((c for c in ent.children if c.id == 0x3000600), None)
+            cls, mat = struct.unpack_from('<II', eff.data) if eff else (2, 0)
+            if cls == 2: continue   # данные говорят: статика — не трогаем
+            mats = col_instances(ent)
+            if not mats: continue
+            row = out.setdefault(name, dict(scene=scene, mat=mat, mass=atc[mat] if mat < len(atc) else 100.0, mats=[]))
+            row['mats'].extend(mats)
+    return out
+
+def quat_from_R(m):
+    """3x3 (мир = m @ локальный столбец) -> кватернион (w, x, y, z), стандартный алгоритм Шеппарда."""
+    tr = m[0, 0] + m[1, 1] + m[2, 2]
+    if tr > 0:
+        s = np.sqrt(tr + 1.0) * 2
+        w, x, y, z = 0.25 * s, (m[2, 1] - m[1, 2]) / s, (m[0, 2] - m[2, 0]) / s, (m[1, 0] - m[0, 1]) / s
+    elif m[0, 0] > m[1, 1] and m[0, 0] > m[2, 2]:
+        s = np.sqrt(1.0 + m[0, 0] - m[1, 1] - m[2, 2]) * 2
+        w, x, y, z = (m[2, 1] - m[1, 2]) / s, 0.25 * s, (m[0, 1] + m[1, 0]) / s, (m[0, 2] + m[2, 0]) / s
+    elif m[1, 1] > m[2, 2]:
+        s = np.sqrt(1.0 + m[1, 1] - m[0, 0] - m[2, 2]) * 2
+        w, x, y, z = (m[0, 2] - m[2, 0]) / s, (m[0, 1] + m[1, 0]) / s, 0.25 * s, (m[1, 2] + m[2, 1]) / s
+    else:
+        s = np.sqrt(1.0 + m[2, 2] - m[0, 0] - m[1, 1]) * 2
+        w, x, y, z = (m[1, 0] - m[0, 1]) / s, (m[0, 2] + m[2, 0]) / s, (m[1, 2] + m[2, 1]) / s, 0.25 * s
+    n = np.sqrt(w * w + x * x + y * y + z * z) or 1.0
+    return w / n, x / n, y / n, z / n
+
+def prop_section(prop_types, prop_pieces_raw, tmap, coin_type=-1, coin_pos=()):
+    """-> bytes секции PRP1: общие вершины/индексы (формат кусков города) + таблицы кусков/типов/экземпляров."""
+    QV = np.dtype([('u', '<i2'), ('v', '<i2'), ('c', '<u4'), ('x', '<i2'), ('y', '<i2'), ('z', '<i2'), ('pad', '<i2')])
+    vblob, iblob, precs, first_of = bytearray(), bytearray(), [], []
+    cur = -1
+    for ti, t, fl, P, UV, C in prop_pieces_raw:
+        if ti != cur:
+            first_of.append(len(precs)); cur = ti
+        lo_, hi_ = P.min(0), P.max(0); c = (lo_ + hi_) / 2; S = max(float((hi_ - lo_).max()) / 2, 1e-3)
+        q = np.zeros(len(P), QV)
+        q['x'], q['y'], q['z'] = [np.clip(np.round((P[:, j] - c[j]) / S * 32767), -32767, 32767) for j in range(3)]
+        q['u'] = np.clip(np.round(UV[:, 0] * 256), -32767, 32767); q['v'] = np.clip(np.round(UV[:, 1] * 256), -32767, 32767)
+        q['c'] = C
+        # без индексов (шаг 3 аудита): вершины подряд, nv = ni, iOff = 0; флаг 16 — без индексов, 8 — двусторонний
+        vOff = len(vblob); vblob += q.tobytes(); vblob += b'\0' * (-len(vblob) % 16)
+        precs.append((c[0], c[1], c[2], S * 32768 / 32767, tmap.get(t, -1), fl | F_DOUBLE | F_NOIDX, len(q), len(q), vOff, 0))
+    first_of.append(len(precs))
+    trecs = bytearray()
+    for i, ty in enumerate(prop_types):
+        first, n = first_of[i], first_of[i + 1] - first_of[i]
+        trecs += struct.pack('<3f2I', ty['radius'], ty['halfH'], ty['mass'], first, n)
+    irecs = bytearray()
+    for ty in prop_types:
+        for M in ty['mats']:
+            x, y, z = M[3, 0], M[3, 1], M[3, 2]
+            w, qx, qy, qz = quat_from_R(M[:3, :3].T)
+            irecs += struct.pack('<3f4fI', x, y, z, w, qx, qy, qz, ty['index'])
+    prec_bytes = bytearray()
+    for ox, oy, oz, sc, tex, fl, nv, ni, vOff, iOff in precs:
+        prec_bytes += struct.pack('<4f2i4I', ox, oy, oz, sc, tex, fl, nv, ni, vOff, iOff)
+    head = b'PRP1' + struct.pack('<5I', len(precs), len(prop_types), sum(len(t['mats']) for t in prop_types), len(vblob), len(iblob))
+    head += struct.pack('<iI', coin_type, len(coin_pos))   # @24 тип-меш монеты (-1 нет), @28 число монет
+    crecs = b''.join(struct.pack('<3f', *p_) for p_ in coin_pos)   # монеты: x,y,z после экземпляров
+    return bytes(head) + bytes(vblob) + bytes(iblob) + bytes(prec_bytes) + bytes(trecs) + bytes(irecs) + crecs
+
+def col_collect(roots):
+    """roots: [(имя сцены, корень p3d)] -> tris (N,4,3), boxes (N,16), cyls (N,12), segs (N,8), отчёт"""
+    tris, nrm, boxes, cyls, segs = [], [], [], [], []
+    rep = dict(static={}, skipped={}, errors=[], ortho=0.0, flat_cyl=0, spheres=0, zero_box=0)
+    for scene, root in roots:
+        for c in walk(root):
+            if c.id == 0x3f00003:   # земля: индексы, вершины, нормали по треугольникам (+ список типов поверхности)
+                ni, = struct.unpack_from('<I', c.data); idx = np.frombuffer(c.data, '<u4', ni, 4); p = 4 + 4 * ni
+                nv, = struct.unpack_from('<I', c.data, p); pos = np.frombuffer(c.data, '<f4', 3 * nv, p + 4).reshape(-1, 3); p += 4 + 12 * nv
+                nn, = struct.unpack_from('<I', c.data, p)
+                fn = np.frombuffer(c.data, '<f4', 3 * nn, p + 4).reshape(-1, 3) if nn * 3 == ni else np.zeros((ni // 3, 3), np.float32)
+                tris.append(pos[idx[:ni // 3 * 3]].reshape(-1, 3, 3)); nrm.append(fn[:ni // 3])
+            elif c.id == 0x3000000 and scene.endswith('_terra'):   # забор: начало, конец, нормаль
+                segs.append(np.frombuffer(c.data, '<f4', 9).reshape(3, 3))
+        for ent in root.children:
+            if ent.id not in COL_STATIC and ent.id not in COL_DYNAMIC: continue
+            name = string(ent.data)[0]
+            objs = [ent] if ent.id == 0x7010000 else [o for o in walk(ent) if o.id == 0x7010000]
+            shapes = []
+            try:
+                for o in objs:
+                    for v in o.children:
+                        if v.id == 0x7010001: shapes.extend(col_leaves(v, name))
+            except ValueError as e:
+                rep['errors'].append(f'{scene}/{name}: {e}'); continue
+            if not shapes: continue
+            if ent.id in COL_DYNAMIC:   # считаем расставленные экземпляры (AnimCollision стоит сам, без списка)
+                d = rep['skipped'].setdefault(COL_DYNAMIC[ent.id], {})
+                k = re.sub(r'\d+', '#', name); d[k] = d.get(k, 0) + (len(col_instances(ent)) if ent.id != 0x3f00008 else 1)
+                continue
+            mats = col_instances(ent) if ent.id == 0x3f0000a else [np.eye(4)]
+            kind = COL_STATIC[ent.id]; st = rep['static'].setdefault(kind, [0, 0, 0])
+            st[0] += len(mats)
+            for M in mats:
+                for s in shapes:
+                    k, rec, err = col_place(s, M); rep['ortho'] = max(rep['ortho'], err)
+                    if k == 'box':
+                        boxes.append(rec); st[1] += 1; rep['zero_box'] += min(rec[12:15]) <= 0
+                    else:
+                        cyls.append(rec); st[2] += 1; rep['flat_cyl'] += rec[8] == 1; rep['spheres'] += s['kind'] == 'sphere'
+    T = np.concatenate(tris).astype(np.float64); T[..., 2] *= -1
+    FN = np.concatenate(nrm).astype(np.float64); FN[:, 2] *= -1
+    n = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0]); a2 = np.linalg.norm(n, axis=1)
+    emax = np.max([np.linalg.norm(T[:, (i + 1) % 3] - T[:, i], axis=1) for i in range(3)], 0)
+    ok = (a2 >= COL_MIN_2A) & (a2 / np.maximum(emax, 1e-12) >= COL_MIN_H)
+    rep['tri_src'], rep['tri_degenerate'] = len(T), int((~ok).sum())
+    T, FN, n = T[ok], FN[ok], n[ok] / a2[ok, None]
+    # одинаковые треугольники из соседних зон — один раз
+    q = np.round(T * 1000).astype(np.int64)                                   # мм; вершины по порядку внутри треугольника
+    order = np.lexsort((q[..., 2], q[..., 1], q[..., 0]), axis=-1)
+    key = np.take_along_axis(q, order[..., None], axis=1).reshape(-1, 9)
+    _, first = np.unique(key, axis=0, return_index=True); first.sort()
+    rep['tri_duplicate'] = len(T) - len(first); T, FN, n = T[first], FN[first], n[first]
+    # ориентация: n.y >= 0; строго вертикальные — в сторону нормали из файла (после зеркала)
+    flip = np.where(np.abs(n[:, 1]) > COL_VERT_NY, n[:, 1] < 0, (n * FN).sum(1) < 0)
+    T[flip] = T[flip][:, [0, 2, 1]]; n[flip] *= -1   # (зеркало z разворачивает обход почти у всех — это нормально)
+    rep['tri_flipped'] = int(((n * FN).sum(1) < 0).sum())   # смотрят против нормали диска: нависающие (n.y<0 в игре)
+    rep['tri_vertical'] = int((np.abs(n[:, 1]) <= COL_VERT_NY).sum())
+    TR = np.concatenate([T, n[:, None]], 1)
+    S = np.array(segs, np.float64).reshape(-1, 3, 3); S[..., 2] *= -1
+    # нормали заборов: в файле всегда слева от направления (замкнутые петли вокруг непроезжих областей) и смотрят
+    # из петли наружу — на дорогу. Оставляем как есть; проверка заливкой от спавна — tools/col_check.py
+    SG = np.c_[S[:, 0][:, [0, 2]], S[:, 1][:, [0, 2]], S[:, 2][:, [0, 2]], np.full(len(S), -COL_FENCE_Y), np.full(len(S), COL_FENCE_Y)]
+    return TR, np.array(boxes, np.float64).reshape(-1, 16), np.array(cyls, np.float64).reshape(-1, 12), SG, rep
+
+def col_xz_bounds(TR, BX, CY):
+    """xz-габариты примитивов (N, 4: x0 z0 x1 z1) — ровно так же считает tools/col_check.py"""
+    t = np.c_[TR[:, :3, 0].min(1), TR[:, :3, 2].min(1), TR[:, :3, 0].max(1), TR[:, :3, 2].max(1)]
+    e = np.abs(BX[:, 3:12].reshape(-1, 3, 3)) * BX[:, 12:15, None]          # |ось| * полуразмер
+    ex, ez = e[:, :, 0].sum(1), e[:, :, 2].sum(1)
+    b = np.c_[BX[:, 0] - ex, BX[:, 2] - ez, BX[:, 0] + ex, BX[:, 2] + ez]
+    r, hl = CY[:, 6], CY[:, 7]
+    cx, cz = np.abs(CY[:, 3]) * hl + r, np.abs(CY[:, 5]) * hl + r            # капсула/цилиндр: с запасом
+    c = np.c_[CY[:, 0] - cx, CY[:, 2] - cz, CY[:, 0] + cx, CY[:, 2] + cz]
+    return t, b, c
+
+def col_seg_cells(SG, ox, oz, cell, W, H, margin=COL_SEG_MARGIN):
+    """-> (клетки, номера заборов): клетки, чей квадрат, раздутый на margin, пересекает отрезок"""
+    cells, ids = [], []
+    for i, (ax, az, bx, bz) in enumerate(SG[:, :4]):
+        gx0 = int(np.floor((min(ax, bx) - margin - ox) / cell)); gx1 = int(np.floor((max(ax, bx) + margin - ox) / cell))
+        gz0 = int(np.floor((min(az, bz) - margin - oz) / cell)); gz1 = int(np.floor((max(az, bz) + margin - oz) / cell))
+        gx, gz = np.meshgrid(np.arange(max(gx0, 0), min(gx1, W - 1) + 1), np.arange(max(gz0, 0), min(gz1, H - 1) + 1))
+        gx, gz = gx.ravel(), gz.ravel()
+        lo_x, hi_x = ox + gx * cell - margin, ox + (gx + 1) * cell + margin
+        lo_z, hi_z = oz + gz * cell - margin, oz + (gz + 1) * cell + margin
+        dx, dz = bx - ax, bz - az; t0, t1 = np.zeros(len(gx)), np.ones(len(gx))
+        for d, a, lo_, hi_ in ((dx, ax, lo_x, hi_x), (dz, az, lo_z, hi_z)):   # отсечение отрезка по прямоугольнику
+            if abs(d) < 1e-12:
+                bad = (a < lo_) | (a > hi_); t0 = np.where(bad, 2.0, t0)
+            else:
+                u0, u1 = (lo_ - a) / d, (hi_ - a) / d
+                t0, t1 = np.maximum(t0, np.minimum(u0, u1)), np.minimum(t1, np.maximum(u0, u1))
+        hit = t0 <= t1
+        cells.append(gz[hit] * W + gx[hit]); ids.append(np.full(int(hit.sum()), i))
+    return (np.concatenate(cells), np.concatenate(ids)) if cells else (np.zeros(0, int), np.zeros(0, int))
+
+def col_section(TR, BX, CY, SG, cell=COL_CELL):
+    """-> bytes секции COL1 и статистика сетки"""
+    t, b, c = col_xz_bounds(TR, BX, CY)
+    s = np.c_[np.minimum(SG[:, 0], SG[:, 2]) - COL_SEG_MARGIN, np.minimum(SG[:, 1], SG[:, 3]) - COL_SEG_MARGIN,
+              np.maximum(SG[:, 0], SG[:, 2]) + COL_SEG_MARGIN, np.maximum(SG[:, 1], SG[:, 3]) + COL_SEG_MARGIN]
+    allb = np.concatenate([t, b, c, s])
+    ox, oz = np.floor(allb[:, 0].min() / cell) * cell, np.floor(allb[:, 1].min() / cell) * cell
+    W = int(np.floor((allb[:, 2].max() - ox) / cell)) + 1; H = int(np.floor((allb[:, 3].max() - oz) / cell)) + 1
+    pc, pr = [], []
+    for typ, bb in ((0, t), (1, b), (2, c)):
+        if not len(bb): continue
+        gx0 = np.floor((bb[:, 0] - ox) / cell).astype(int); gz0 = np.floor((bb[:, 1] - oz) / cell).astype(int)
+        gx1 = np.floor((bb[:, 2] - ox) / cell).astype(int); gz1 = np.floor((bb[:, 3] - oz) / cell).astype(int)
+        nx, nz = gx1 - gx0 + 1, gz1 - gz0 + 1; cnt = nx * nz
+        idx = np.repeat(np.arange(len(bb)), cnt); k = np.arange(cnt.sum()) - np.repeat(np.cumsum(cnt) - cnt, cnt)
+        gx = gx0[idx] + k % nx[idx]; gz = gz0[idx] + k // nx[idx]
+        pc.append(gz * W + gx); pr.append((typ << 29) | idx)
+    sc, si = col_seg_cells(SG, ox, oz, cell, W, H)
+    pc.append(sc); pr.append((3 << 29) | si)
+    pc, pr = np.concatenate(pc).astype(np.int64), np.concatenate(pr).astype(np.int64)
+    o = np.lexsort((pr, pc)); pc, pr = pc[o], pr[o]
+    start = np.zeros(W * H + 1, np.int64); np.cumsum(np.bincount(pc, minlength=W * H), out=start[1:])
+    head = b'COL1' + struct.pack('<3f8I', ox, oz, cell, W, H, len(TR), len(BX), len(CY), len(SG), len(pr), 0)
+    cy = np.zeros(len(CY), [('f', '<f4', 8), ('flat', '<u4'), ('pad', '<u4', 3)])   # flat — uint32
+    cy['f'] = CY[:, :8]; cy['flat'] = CY[:, 8].astype(np.uint32)
+    body = [TR.astype('<f4').tobytes(), BX.astype('<f4').tobytes(), cy.tobytes(),
+            SG.astype('<f4').tobytes(), start.astype('<u4').tobytes(), pr.astype('<u4').tobytes()]
+    sec = bytearray(head + b''.join(body)); sec += b'\0' * (-len(sec) % 16)
+    per = np.diff(start); ne = per[per > 0]
+    stats = dict(ox=ox, oz=oz, W=W, H=H, nref=len(pr), bytes=len(sec), cells_used=len(ne), mean=float(ne.mean()),
+                 max=int(per.max()), p99=float(np.percentile(ne, 99)), max_tri=int(np.bincount(pc[pr >> 29 == 0], minlength=W * H).max()))
+    return bytes(sec), stats
+
+def col_report(rep, st, TR, BX, CY, SG):
+    print(f'коллизия COL1: {len(TR):,} треуг. земли (из {rep["tri_src"]:,}: вырожденных {rep["tri_degenerate"]}, '
+          f'повторов {rep["tri_duplicate"]}, нависающих перевёрнуто к n.y>=0 {rep["tri_flipped"]}, '
+          f'вертикальных {rep["tri_vertical"]}), ящиков {len(BX)}, '
+          f'цилиндров/капсул/сфер {len(CY)} (плоских торцов {rep["flat_cyl"]}, сфер {rep["spheres"]}), заборов {len(SG)}')
+    for k, (ni, nb, nc) in rep['static'].items(): print(f'  в COL1 {k}: {ni} экз., ящиков {nb}, цилиндров {nc}')
+    for k, d in rep['skipped'].items(): print(f'  НЕ в COL1 (этап 5) {k}: {sum(d.values())} шт. — ' + ', '.join(f'{n} {c}' for n, c in sorted(d.items(), key=lambda x: -x[1])))
+    if rep['errors']: print('  ошибки чтения объёмов:', *rep['errors'], sep='\n    ')
+    print(f'  сетка {st["W"]}x{st["H"]} по {COL_CELL:g} м от ({st["ox"]:g}, {st["oz"]:g}), ссылок {st["nref"]:,}, '
+          f'в непустой клетке ср. {st["mean"]:.1f}, 99% {st["p99"]:.0f}, макс {st["max"]} (треуг. макс {st["max_tri"]}), '
+          f'непустых клеток {st["cells_used"]:,}; секция {st["bytes"] / 2**20:.2f} MB; неортогональность осей ящиков {rep["ortho"]:.1e}')
+
+# ---------------------------------------------------------------------------------------------------------------
+# Машина игрока (docs/car_spec.md): куски по суставам + секция CAR1 (смещение в заголовке @100).
+# Куски машины (owner 1): Rec.pad[0] = сустав (0 кузов … 26), Rec.pad[1] = вариант (0 машина, 1 остов huska).
+# Вершины варианта 0 — в осях своего сустава (без позиции покоя: её движок берёт из таблицы суставов CAR1),
+# остов — в позе покоя целиком (сустав 0). Цвет вершин = запечённая светотень по нормалям (шейдеры машины LIT 1).
+#   'CAR1' u32 version, njoint, nhinge, ndam, nflare, pad[2]                                   32 Б
+#   float lift, huskLift, wheelRad, maxSteer, shadowAdj[8]                                    48 Б
+#   joint[njoint] : char name[12]; float x, y, z (SHR, позиция покоя в модели); u32 parent    28 Б
+#   hinge[nhinge] : u8 joint, axis(0 X, 1 Y), i8 sign, u8 zone; float max, stiff, cx, cy, cz  24 Б
+#   dam[ndam]     : u16 texNorm, texDam; u8 zone(0 перед, 1 зад, 2 левый, 3 правый борт), pad[3]  8 Б
+#   flare[nflare] : u8 joint, kind(0 стоп, 1 задний ход), mode(0 YAX, 1 LYAX, 2 AAX), pad; u16 tex, pad;
+#                   u32 abgr; float w, h, dist, ox, oy, oz                                     36 Б
+CAR_SUN = np.array([0.35, 0.85, -0.40]); CAR_SUN = CAR_SUN / np.linalg.norm(CAR_SUN)   # сверху, спереди-справа (модель смотрит в -Z)
+CAR_AMB, CAR_DIF = 0.50, 0.55   # светотень: ambient + диффуз (подобрано на глаз, AMBI шейдеров не берём)
+CAR_HINGES = {'HoodRot': (0, 1, 0), 'TrunkRot': (0, -1, 1), 'DoorDRot': (1, -1, 2), 'DoorPRot': (1, 1, 3)}   # ось, знак, зона
+CAR_ZONES = {'Hood': 0, 'Back': 1, 'DoorD': 2, 'DoorP': 3}
+
+def car_prims(meta, raw, conv_cache, blob, bake_matrix):
+    """-> [(имя объекта (сустав), tex, flags, P, UV, C)]; P в осях сустава (bake_matrix=False) или в позе покоя"""
+    out = []
+    for obj in meta['objects']:
+        M = np.array(obj['matrix'], np.float64).reshape(4, 4) if bake_matrix else np.eye(4)
+        for prim in meta['meshes'].get(obj['mesh'], []):
+            at = prim['attributes']
+            g = lambda k, w: np.frombuffer(raw, '<f4', at[k][1], at[k][0]).reshape(-1, w)
+            pos, uv = g('position', 3), g('uv', 2)
+            idx = np.frombuffer(raw, '<u4', at['indices'][1], at['indices'][0])
+            P = (np.c_[pos, np.ones(len(pos))] @ M)[:, :3]
+            if 'normal' in at: N = g('normal', 3) @ M[:3, :3]
+            else:   # нормали нет — по граням, усреднённые в вершинах
+                N = np.zeros_like(P); T = P[idx].reshape(-1, 3, 3); fn = np.cross(T[:, 1] - T[:, 0], T[:, 2] - T[:, 0])
+                for k in range(3): np.add.at(N, idx.reshape(-1, 3)[:, k], fn)
+            N = N / np.maximum(np.linalg.norm(N, axis=1, keepdims=True), 1e-9)
+            k = np.clip(CAR_AMB + CAR_DIF * np.maximum(N @ CAR_SUN, 0) + 0.08 * N[:, 1], 0, 1)
+            c = np.round(k * 255).astype(np.uint32)
+            abgr = (0xFF << 24) | (c << 16) | (c << 8) | c
+            mat = meta['materials'].get(prim['shader'], {})
+            t = load_tex(mat.get('textureUrl', ''), conv_cache, blob)
+            flags = (1 if mat.get('alpha') else 0) | (2 if mat.get('translucent') or mat.get('blend') else 0)
+            out.append((obj['name'], t, flags, P[idx].astype(np.float32), uv[idx].astype(np.float32), abgr[idx].astype(np.uint32)))
+    return out
+
+def car_export(conv, cache, blob):
+    """-> car_groups, lift, car1 (данные для секции CAR1 без номеров текстур level.shr), доп. текстуры"""
+    import car_dump as cd
+    carp = GAME / 'art' / 'cars' / 'famil_v.p3d'; huskp = GAME / 'art' / 'cars' / 'huska.p3d'
+    groups, extra = {}, set()
+    if not carp.exists(): return groups, 0.0, None, extra
+    root = read(carp); conv.resources(root)
+    comp = next(c for c in root.children if c.id == 0x4512)
+    _, p = string(comp.data); skname, _ = string(comp.data, p)
+    J = cd.skeleton(next(c for c in root.children if c.id == 0x4500 and string(c.data)[0] == skname))
+    jn = {j[0]: i for i, j in enumerate(J)}
+    jpos = np.array([[j[3][3, 0], j[3][3, 1], -j[3][3, 2]] for j in J])      # SHR: z зеркалим
+    conv.export(carp, 'psp_car', vehicle=True)
+    meta = json.loads((OUT / 'psp_car.json').read_text()); raw = (OUT / 'psp_car.bin').read_bytes()
+    lo_y, wr = 1e9, 0.0
+    for name, t, fl, P, UV, C in car_prims(meta, raw, cache, blob, False):
+        j = jn[name]; lo_y = min(lo_y, float((P[:, 1] + jpos[j, 1]).min()))
+        if name.startswith('w') and name[1:].isdigit(): wr = max(wr, float(np.abs(P[:, 1]).max()))
+        v = verts(P, UV, C)
+        groups.setdefault(((j, 0), t, fl), []).append((v, np.arange(len(v) // 3), v, np.ones(len(v) // 3, bool)))
+    for ext in ('json', 'bin'): (OUT / f'psp_car.{ext}').unlink()
+    lift = -lo_y
+    husk_lift = 0.0
+    if huskp.exists():
+        conv.export(huskp, 'psp_husk', vehicle=True)
+        meta = json.loads((OUT / 'psp_husk.json').read_text()); raw = (OUT / 'psp_husk.bin').read_bytes()
+        hp = car_prims(meta, raw, cache, blob, True)
+        husk_lift = -min(float(P[:, 1].min()) for _, _, _, P, _, _ in hp)
+        for name, t, fl, P, UV, C in hp:
+            v = verts(P, UV, C)
+            groups.setdefault(((0, 1), t, fl), []).append((v, np.arange(len(v) // 3), v, np.ones(len(v) // 3, bool)))
+        for ext in ('json', 'bin'): (OUT / f'psp_husk.{ext}').unlink()
+    # шарниры: PhysicsObject машины (первый, не ...BV), суставы с DOF 1
+    hinges = []
+    po = next(c for c in root.children if c.id == 0x7011000)
+    for jc in (c for c in po.children if c.id == 0x7011020):
+        idx, vol, stiff, amax, amin, dof = struct.unpack_from('<I4fI', jc.data)
+        if dof != 1 or J[idx][0] not in CAR_HINGES: continue
+        vec = next((struct.unpack_from('<3f', v.data) for v in jc.children if v.id == 0x7011002), (0, 0, 0))
+        ax, sg, zone = CAR_HINGES[J[idx][0]]
+        hinges.append((idx, ax, sg, zone, amax, stiff, vec[0], vec[1], -vec[2]))
+    # битые текстуры: не в шейдерах -> грузим сами
+    texnames = [string(c.data)[0] for c in root.children if c.id == 0x19000]
+    dams = []
+    for d in texnames:
+        if 'Dam' not in d: continue
+        norm = d.replace('Dam', 'Norm'); zone = next((z for k, z in CAR_ZONES.items() if k + 'Dam' in d), -1)
+        un, ud = conv.textures.get(norm.lower()), conv.textures.get(d.lower())
+        if zone < 0 or not un or not ud: continue
+        tn, td = load_tex(un, cache, blob), load_tex(ud, cache, blob); extra |= {tn, td}
+        dams.append((tn, td, zone))
+    # блики стоп-сигналов / заднего хода (BillboardQuadGroup на суставах brake1..4 / rev1..4)
+    sh = cd.shaders(root); flares = []
+    for g, s, q, mode, t, col, w, h, dist, zt, zw in cd.billboards(root):
+        jname = g[:-5] if g.endswith('Shape') else g
+        if jname not in jn: continue
+        kind = 0 if jname.startswith('brake') else 1 if jname.startswith('rev') else -1
+        if kind < 0: continue
+        url = conv.textures.get(sh.get(s, ('', {}))[1].get('TEX', [''])[0].lower())
+        ti = load_tex(url, cache, blob) if url else -1
+        if ti >= 0: extra.add(ti)
+        a, r, gg, b = (col >> 24) & 255, (col >> 16) & 255, (col >> 8) & 255, col & 255
+        flares.append((jn[jname], kind, {'YAX': 0, 'LYAX': 1, 'AAX': 2}.get(mode, 0), ti, (a << 24) | (b << 16) | (gg << 8) | r,
+                       w, h, dist, t[0], t[1], -t[2]))
+    con = (GAME / 'scripts' / 'cars' / 'famil_v.con').read_text(errors='replace')
+    m = re.search(r'SetShadowAdjustments\s*\(([^)]*)\)', con)
+    shadow = [float(x) for x in m.group(1).split(',')] if m else [0.0] * 8
+    m = re.search(r'SetMaxWheelTurnAngle\s*\(([^)]*)\)', con)
+    max_steer = np.radians(float(m.group(1))) if m else np.radians(30)
+    car1 = dict(joints=[(J[i][0], *jpos[i], J[i][1]) for i in range(len(J))], hinges=hinges, dams=dams, flares=flares,
+                lift=lift, husk_lift=husk_lift, wheel_rad=wr or 0.38, max_steer=float(max_steer), shadow=(shadow + [0.0] * 8)[:8])
+    print(f'машина: {len(J)} суставов, {len(groups)} групп кусков (с остовом), lift {lift:.3f}, остов {husk_lift:.3f}, '
+          f'колесо R {wr:.3f}, шарниров {len(hinges)}, битых текстур {len(dams)}, бликов {len(flares)}')
+    return groups, lift, car1, extra
+
+def car_section(car1, tmap):
+    if not car1: return b''
+    out = bytearray(b'CAR1' + struct.pack('<7I', 1, len(car1['joints']), len(car1['hinges']), len(car1['dams']), len(car1['flares']), 0, 0))
+    out += struct.pack('<4f8f', car1['lift'], car1['husk_lift'], car1['wheel_rad'], car1['max_steer'], *car1['shadow'])
+    for name, x, y, z, par in car1['joints']:
+        out += struct.pack('<12s3fI', name.encode()[:11], x, y, z, par)
+    for j, ax, sg, zone, amax, stiff, cx, cy, cz in car1['hinges']:
+        out += struct.pack('<BBbB5f', j, ax, sg, zone, amax, stiff, cx, cy, cz)
+    for tn, td, zone in car1['dams']:
+        out += struct.pack('<HHB3x', tmap.get(tn, 0xFFFF), tmap.get(td, 0xFFFF), zone)
+    for j, kind, mode, ti, abgr, w, h, dist, ox, oy, oz in car1['flares']:
+        out += struct.pack('<BBBxHxxI6f', j, kind, mode, tmap.get(ti, 0xFFFF), abgr, w, h, dist, ox, oy, oz)
+    out += b'\0' * (-len(out) % 16)
+    return bytes(out)
+
+F_LAYER = 64      # кусок-«наклейка»: лежит в плоскости другой непрозрачной поверхности (зазор < LAYER_GAP) —
+LAYER_GAP = 0.003 # движок рисует его с постоянным сдвигом глубины к камере (sceGuDepthOffset), иначе 16-бит глубина мигает
+
+def mark_layers(groups):
+    """Ф2: tools/coplanar.py по ближним версиям всего города. Треугольник A — слой, если его центр лежит на
+    непрозрачной (пишущей глубину) поверхности B другого куска/текстуры с зазором < LAYER_GAP, почти параллельно,
+    и A меньше B (наклейка на стене/земле; при равных — больший номер группы). Решение — по дальнему предку
+    (большинство потомков), чтобы ближняя и дальняя версии не разъехались. Слои уходят в группу с флагом 64."""
+    import coplanar
+    keys = list(groups); P, T, FL, GI, REF = [], [], [], [], []
+    for gi, k in enumerate(keys):
+        for pj, part in enumerate(groups[k]):
+            v = part[0]; n = len(v) // 3
+            if not n: continue
+            P.append(np.stack([v['x'], v['y'], v['z']], 1).astype(np.float64).reshape(-1, 3, 3))
+            T.append(np.full(n, k[1])); FL.append(np.full(n, k[2])); GI.append(np.full(n, gi)); REF.append((gi, pj, n))
+    P, T, FL, GI = np.concatenate(P), np.concatenate(T), np.concatenate(FL), np.concatenate(GI)
+    R, N, C, A = coplanar.analyze(P, T, FL, GI, maxgap=LAYER_GAP)
+    ai, bj = R[:, 0].astype(int), R[:, 1].astype(int)
+    ok = ((FL[bj] & 2) == 0) & ((A[ai] < A[bj] * .999) | ((np.abs(A[ai] - A[bj]) <= A[bj] * .001) & (GI[ai] > GI[bj])))
+    lay = np.zeros(len(P), bool); lay[ai[ok]] = True
+    moved, off = 0, 0
+    for gi, pj, n in REF:
+        m = lay[off:off + n]; off += n
+        if not m.any(): continue
+        k = keys[gi]; vn, anc, vf, keep = groups[k][pj]
+        nf = len(keep); frac = np.bincount(anc, weights=m, minlength=nf) / np.maximum(np.bincount(anc, minlength=nf), 1)
+        mf = frac >= .5
+        if not mf.any(): continue
+        parts = []
+        for sel in (mf, ~mf):
+            mn = sel[anc]; loc = np.cumsum(sel) - 1
+            parts.append((vn[np.repeat(mn, 3)], loc[anc[mn]], vf[np.repeat(sel, 3)], keep[sel]))
+        groups[k][pj] = parts[1]
+        groups.setdefault((k[0], k[1], k[2] | F_LAYER), []).append(parts[0]); moved += int(mf[anc].sum())
+    for k in [k for k in groups if not any(len(p[0]) for p in groups[k])]: del groups[k]
+    print(f'слои (флаг {F_LAYER}): {int(lay.sum())} треуг. найдено, {moved} ближних треуг. в кусках-слоях')
+
+def main(level, out_path=None):
+    art = GAME / 'art'
+    scenes = [f'l{level}_terra'] + sorted(p.stem for p in art.glob(f'l{level}r*.p3d')) + sorted(p.stem for p in art.glob(f'l{level}z*.p3d'))
+    conv = Converter(); blob = []; cache = {}
+    for path in sorted(art.glob(f'l{level}*.p3d')):
+        try: conv.resources(read(path))
+        except Exception as e: print('skip', path.name, e)
+    print('пропы: сбиваемые объекты…', flush=True)
+    prop_ent = prop_entities(scenes, art); prop_type_names = set(prop_ent)
+    print(f'  {len(prop_ent)} типов, {sum(len(v["mats"]) for v in prop_ent.values())} экземпляров (класс статики — в городе, как раньше)')
+    # стейтпропы (AnimDynaPhys: ящики, автоматы, будки, колонки, кусты-шары…) и обломки BreakableObject — PRP2/SPR1;
+    # их меши убираем из города (раньше там стояли все части составного рисунка сразу, без коллизии)
+    print('стейтпропы…', flush=True)
+    def sp_pack(f, mesh):
+        conv.export(f, 'psp_sp_tmp', mesh_name=mesh)
+        meta_ = json.loads((OUT / 'psp_sp_tmp.json').read_text()); raw_ = (OUT / 'psp_sp_tmp.bin').read_bytes()
+        for ext in ('json', 'bin'): (OUT / f'psp_sp_tmp.{ext}').unlink()
+        return pack_prims(meta_, raw_, cache, blob)
+    def sp_tex(f, sh):
+        s_ = conv.shaders.get(sh)
+        return (load_tex(conv.textures.get(s_['texture'], ''), cache, blob), int(s_['blend'])) if s_ else -1
+    sprops = prp2_export.StateProps(level, art, sp_pack, sp_tex)
+    sprops.report()
+    city_skip = prop_type_names | sprops.city_skip
+    groups, coll, sky, roots = {}, [], [], []
+    for scene in scenes:
+        roots.append((scene, conv.export(art / f'{scene}.p3d', f'psp_{scene}')))
+        meta = json.loads((OUT / f'psp_{scene}.json').read_text()); raw = (OUT / f'psp_{scene}.bin').read_bytes()
+        for t, fl, P, UV, C in pack_prims(meta, raw, cache, blob, is_sky):
+            sky.append((t, fl, P, UV, C))
+        for t, fl, P, UV, C in pack_prims(meta, raw, cache, blob, lambda o: not is_sky(o) and o['mesh'] not in city_skip):
+            oarea = tri_area(P)
+            P, UV, C, anc, (fP, fUV, fC, forig) = subdivide_lod(P, UV, C, far_split=FAR_SPLIT)
+            # клетку выбирает дальний предок (по своему центру), мелкие потомки идут за ним в тот же кусок:
+            # иначе ближняя и дальняя версии одной поверхности разъехались бы по разным кускам (дыры/двойники)
+            keys = np.floor(fP.reshape(-1, 3, 3).mean(1)[:, [0, 2]] / CHUNK).astype(int)
+            keep = oarea[forig] >= FAR_MIN
+            for key in {tuple(k) for k in keys}:
+                fm = (keys == key).all(1); nm = fm[anc]
+                local = np.cumsum(fm) - 1
+                groups.setdefault((key, t, fl), []).append(
+                    (verts(P[np.repeat(nm, 3)], UV[np.repeat(nm, 3)], C[np.repeat(nm, 3)]), local[anc[nm]],
+                     verts(fP[np.repeat(fm, 3)], fUV[np.repeat(fm, 3)], fC[np.repeat(fm, 3)]), keep[fm]))
+        if meta.get('collision'):
+            o, n = meta['collision']; coll.append(np.frombuffer(raw, '<f4', n, o).reshape(-1, 3, 3))
+        for ext in ('json', 'bin'): (OUT / f'psp_{scene}.{ext}').unlink()
+    print('карта высот…', flush=True)
+    tris = np.concatenate(coll); lo, W, H, hm, wall = heightmap(tris)
+
+    # машина семьи Симпсонов: куски по суставам + остов, данные CAR1 (см. car_export)
+    car_groups, lift, car1, car_tex = car_export(conv, cache, blob)
+
+    # небо: вокруг центра, ужатое, режем крупно (в ужатых метрах); 8 секторов по азимуту, чтобы движок
+    # не рисовал то, что за кадром. Градиентные текстуры (l1_backfade*) вмешиваем в цвет вершин, без текстуры.
+    sky_groups = {}
+    if sky:
+        urls = {i: u for u, i in cache.items()}; grads, baked = {}, []
+        allp = np.concatenate([P for _, _, P, _, _ in sky]); sc = (allp.min(0) + allp.max(0)) / 2; sc[1] = 0
+        for t, fl, P, UV, C in sky:
+            P, UV, C = subdivide((P - sc) * SKY_S, UV, C, SPLIT, SPLIT)
+            if t >= 0 and t not in grads: grads[t] = gradient_rows(urls[t])
+            if t >= 0 and grads[t] is not None:
+                C2, err = bake_gradient(UV, C, grads[t]); baked.append((urls[t], len(P) // 3, err))
+                if err <= BAKE_MAX:   # без текстуры; UV обнуляем, чтобы вершины лучше склеились
+                    C, t, UV = C2, -1, np.zeros_like(UV)
+            cen = P.reshape(-1, 3, 3).mean(1)
+            sec = np.floor((np.arctan2(cen[:, 0], cen[:, 2]) + np.pi) / (2 * np.pi / SKY_SECTORS)).astype(int) % SKY_SECTORS
+            sec[np.hypot(cen[:, 0], cen[:, 2]) < SKY_CAP] = SKY_SECTORS                  # шапка
+            for s_ in np.unique(sec):
+                sel = np.repeat(sec == s_, 3); v = verts(P[sel], UV[sel], C[sel]); n = len(v) // 3
+                sky_groups.setdefault(((int(s_), 0), t, fl | 4), []).append((v, np.arange(n), v, np.ones(n, bool)))
+        print(f'небо: {sum(len(p[0]) for v in sky_groups.values() for p in v) // 3} треугольников, '
+              f'{len(sky_groups)} кусков ({SKY_SECTORS} секторов + шапка)')
+        for u, n, err in baked:
+            print(f'  градиент {u} ({n} треуг.): макс. ошибка заливки {err:.2f}/255 -> '
+                  + ('цвет вершин, без текстуры' if err <= BAKE_MAX else 'оставляем текстуру'))
+
+    print('пропы: геометрия…', flush=True)
+    prop_types, prop_pieces_raw = [], []
+    for name, info in prop_ent.items():
+        outname = f'psp_prop_{len(prop_types)}'
+        conv.export(art / f"{info['scene']}.p3d", outname, mesh_name=name)
+        meta = json.loads((OUT / f'{outname}.json').read_text()); raw = (OUT / f'{outname}.bin').read_bytes()
+        parts = pack_prims(meta, raw, cache, blob)
+        for ext in ('json', 'bin'): (OUT / f'{outname}.{ext}').unlink()
+        if not parts: continue
+        allp = np.concatenate([P for _, _, P, _, _ in parts])
+        lo_, hi_ = allp.min(0), allp.max(0)
+        radius = float(np.hypot((hi_[0] - lo_[0]) / 2, (hi_[2] - lo_[2]) / 2))
+        ti = len(prop_types)
+        for t, fl, P, UV, C in parts: prop_pieces_raw.append((ti, t, fl, P, UV, C))
+        prop_types.append(dict(name=name, index=ti, mass=info['mass'], radius=radius, halfH=float((hi_[1] - lo_[1]) / 2), mats=info['mats'], mat=info['mat']))
+    # монеты (этап 3б): один меш coinShape_000 (как лишний тип пропа без экземпляров) + точки kind 14 из локаторов
+    coin_pos, seen = [], set()
+    for sc_ in scenes:
+        for c in walk(read(art / f'{sc_}.p3d')):
+            if c.id != 0x3000005: continue
+            nm, pp_ = string(c.data); kind, ln = struct.unpack_from('<II', c.data, pp_)
+            if kind != 14: continue
+            x_, y_, z_ = struct.unpack_from('<3f', c.data, pp_ + 8 + ln * 4); key = (round(x_, 2), round(y_, 2), round(-z_, 2))
+            if key not in seen: seen.add(key); coin_pos.append((x_, y_, -z_))
+    coin_type = -1
+    conv.export(art / f'missions/level0{level}/level.p3d', 'psp_coin', mesh_name='coinShape_000')
+    meta = json.loads((OUT / 'psp_coin.json').read_text()); raw = (OUT / 'psp_coin.bin').read_bytes()
+    parts = pack_prims(meta, raw, cache, blob)
+    for ext in ('json', 'bin'): (OUT / f'psp_coin.{ext}').unlink()
+    if parts:
+        coin_type = len(prop_types)
+        for t, fl, P, UV, C in parts: prop_pieces_raw.append((coin_type, t, fl, P, UV, C))
+        prop_types.append(dict(name='coinShape_000', index=coin_type, mass=0.0, radius=0.35, halfH=0.35, mats=[]))
+    print(f'  монеты: {len(coin_pos)} в мире, меш {"есть" if parts else "НЕ НАЙДЕН"}')
+    print(f'  {len(prop_types)} типов пропов, {len(prop_pieces_raw)} кусков геометрии, '
+          f'{sum(len(t["mats"]) for t in prop_types)} экземпляров')
+
+    if os.environ.get('SHR_LAYERS') == '1': mark_layers(groups)   # Ф2: слои-«наклейки» в одной плоскости -> флаг 64
+    allv = np.concatenate([p[0] for v in groups.values() for p in v])
+    bb = [allv['x'].min(), allv['y'].min(), allv['z'].min(), allv['x'].max(), allv['y'].max(), allv['z'].max()]
+    (sx, sy, sz), sh = SPAWN.get(level, (((bb[0] + bb[3]) / 2, bb[4], (bb[2] + bb[5]) / 2), 0.0))
+    # клетки: всё, что в клетке, лежит одним блоком и грузится за одно чтение
+    cellkeys = sorted({k[0] for k in groups})
+    owners = [(0, [k for k in groups if k[0] == ck]) for ck in cellkeys]
+    owners += [(1, list(car_groups)), (2, list(sky_groups))]
+    src = {0: groups, 1: car_groups, 2: sky_groups}
+    QV = np.dtype([('u', '<i2'), ('v', '<i2'), ('c', '<u4'), ('x', '<i2'), ('y', '<i2'), ('z', '<i2'), ('pad', '<i2')])
+    # текстуры, которые никто не использует (градиенты неба ушли в цвет вершин), не кладём в файл
+    used = sorted({k[1] for d in src.values() for k in d if k[1] >= 0} | {t for _, t, _, _, _, _ in prop_pieces_raw if t >= 0} | car_tex | sprops.textures())
+    tmap = {t: i for i, t in enumerate(used)}; blob = [blob[t] for t in used]
+    cells, pieces, tris_total, far_total = [], [], 0, 0
+    for owner, keys in owners:
+        if not keys: continue
+        first, cblob, clo, chi = len(pieces), bytearray(), np.full(3, 1e9), np.full(3, -1e9)
+        for key in sorted(keys, key=lambda k: (k[2], k[1])):
+            parts = src[owner][key]   # (ближний суп, № предка у каждого ближнего треуг., дальний суп, дальний нужен?)
+            nv = np.concatenate([p[0] for p in parts]); fv = np.concatenate([p[2] for p in parts])
+            base = np.cumsum([0] + [len(p[3]) for p in parts])[:-1]
+            anc = np.concatenate([p[1] + b for p, b in zip(parts, base)]); keep = np.concatenate([p[3] for p in parts])
+            if owner == 0: tris_total += len(nv) // 3; far_total += int(keep.sum())
+            # режем на куски по ~PIECE_VERTS вершин супа (ближняя + дальняя версии); предок и его потомки не разлучаются
+            w = np.bincount(anc, minlength=len(keep)) * 3 + keep * 3
+            chunk = (np.cumsum(w) - w) // PIECE_VERTS
+            for ch in range(int(chunk.max()) + 1):
+                nm, fm = chunk[anc] == ch, (chunk == ch) & keep
+                vn, vf = nv[np.repeat(nm, 3)], fv[np.repeat(fm, 3)]
+                if not len(vn): continue
+                vv = np.concatenate([vn, vf])   # обе версии — один массив вершин (почти все вершины общие)
+                P = np.stack([vv['x'], vv['y'], vv['z']], 1).astype(np.float64)
+                lo_, hi_ = P.min(0), P.max(0); c = (lo_ + hi_) / 2; S = max(float((hi_ - lo_).max()) / 2, 1e-3)
+                clo, chi = np.minimum(clo, lo_), np.maximum(chi, hi_)
+                q = np.zeros(len(vv), QV)
+                q['x'], q['y'], q['z'] = [np.clip(np.round((P[:, j] - c[j]) / S * 32767), -32767, 32767) for j in range(3)]
+                q['u'] = np.clip(np.round(vv['u'] * 256), -32767, 32767); q['v'] = np.clip(np.round(vv['v'] * 256), -32767, 32767)
+                q['c'] = vv['c']
+                # без индексов (шаг 3 аудита, gebench на PSP: 1.83x быстрее индексов): ближняя версия — вершины
+                # подряд по 3 на треугольник, сразу за ней дальняя (у машины и неба дальняя не нужна: nf = 0).
+                # Вершина 12 Б (цвет 5650), если альфа всех вершин 255 и это не небо (градиенты неба — 8888).
+                if owner != 0: q = q[:len(vn)]
+                v12 = owner != 2 and bool((q['c'] >> 24 == 0xFF).all())
+                fl = key[2] | F_NOIDX | (F_V12 if v12 else 0) | (F_DOUBLE if owner == 1 else 0)
+                nn = len(vn); nf_ = len(q) - nn
+                off = len(cblob)
+                cblob += ni_bytes(q, v12); cblob += b'\0' * (-len(cblob) % 16)
+                pieces.append((lo_, hi_, tmap.get(key[1], -1), fl, len(q), nn, owner, c, S * 32768 / 32767, off, nf_, len(cells),
+                               key[0] if owner == 1 else (0, 0)))   # машина: (сустав, вариант) -> Rec.pad[0..1]
+        cells.append([clo, chi, first, len(pieces) - first, owner, bytes(cblob)])
+    head = bytearray(b'SHR7' + struct.pack('<II', len(blob), len(pieces)))
+    head += struct.pack('<6f4f f', *bb, sx, sy, sz, sh, lift)
+    head += struct.pack('<3fII', lo[0], lo[2], CELL, W, H)
+    head += b'\0' * 4                                   # 76: смещение таблицы кусков
+    head += struct.pack('<II', len(cells), 0) + b'\0' * 16  # 80: клеток, 84: смещение таблицы клеток, 88: PVS1, 92: COL1, 96: PRP1, 100: CAR1
+    head += hm.tobytes(); head += b'\0' * (-len(head) % 16)
+    head += wall.tobytes(); head += b'\0' * (-len(head) % 16)
+    for t in blob: head += t; head += b'\0' * (-len(head) % 16)
+    struct.pack_into('<I', head, 76, len(head))
+    recs = bytearray()
+    for lo_, hi_, t, fl, nv, ni, owner, c, S, off, nf, ci, jv in pieces:
+        recs += struct.pack('<6fiIIII3ffIII2I', *lo_, *hi_, t, fl, nv, ni, owner, *c, S, off, nf, ci, *jv)
+    struct.pack_into('<I', head, 84, len(head) + len(recs))
+    off = len(head) + len(recs) + 48 * len(cells); off += -off % 16; crecs = bytearray()
+    for clo, chi, first, n, owner, cb in cells:
+        crecs += struct.pack('<6fIIIII4x', *clo, *chi, first, n, owner, off, len(cb)); off += len(cb)
+    out = head + recs + crecs; out += b'\0' * (-len(out) % 16); out += b''.join(c[5] for c in cells)
+    # коллизия COL1 — после блобов клеток (движок их читает по смещениям, резидентная часть не меняется),
+    # PVS (tools/pvs) допишется уже после неё
+    print('коллизия…', flush=True)
+    TR, BX, CY, SG, rep = col_collect(roots)
+    col, cst = col_section(TR, BX, CY, SG)
+    out += b'\0' * (-len(out) % 16); struct.pack_into('<I', out, 92, len(out)); out += col
+    col_report(rep, cst, TR, BX, CY, SG)
+    # пропы PRP1 — сразу после COL1 (заголовок SHR7 теперь 100 Б, @96); PVS (tools/pvs) допишется в самый конец
+    # PRP2 = PRP1 (заголовок 64 Б) + подсекция SPR1 стейтпропов в конце (prp2_export.wrap_prp2)
+    spr = sprops.section(tmap, [t['name'] for t in prop_types])
+    out += b'\0' * (-len(out) % 16); struct.pack_into('<I', out, 96, len(out))
+    # PRP2 @44/@48: по типу PRP1 частицы ATC + обломок (удар машиной: вода гидранта, листья, мусор, почта, искры фонарей)
+    type_fx = prp2_export.type_fx_table(prop_types, sprops.atc)
+    out += prp2_export.wrap_prp2(prop_section(prop_types, prop_pieces_raw, tmap, coin_type, coin_pos), spr, type_fx)
+    print('  частицы типов PRP1: ' + ', '.join(f"{t['name']}={type_fx[2 * i]}/{type_fx[2 * i + 1]}" for i, t in enumerate(prop_types)
+                                                  if type_fx[2 * i] or type_fx[2 * i + 1] != 0xFF))
+    print(f'  имён систем частиц SPR1: {sprops.fx_names}')
+    print(f'стейтпропы SPR1: {len(sprops.types)} типов, {sum(len(T["inst"]) for T in sprops.types)} экземпляров, {len(spr) / 1024:.0f} КБ')
+    # машина CAR1 — сразу после PRP1 (заголовок SHR7 теперь 104 Б, @100); PVS (tools/pvs) — в самый конец
+    if car1:
+        out += b'\0' * (-len(out) % 16); struct.pack_into('<I', out, 100, len(out)); out += car_section(car1, tmap)
+    print(f'пропы PRP1: {len(prop_types)} типов, {sum(len(t["mats"]) for t in prop_types)} экземпляров')
+    dst = Path(out_path) if out_path else ROOT / 'build' / 'level.shr'
+    dst.parent.mkdir(parents=True, exist_ok=True); dst.write_bytes(out)
+    mb = len(out) / 2**20
+    print(f'{dst.name}: {mb:.1f} MB, {tris_total:,} треугольников (дальних {far_total:,}), {len(blob)} текстур, {len(cells)} клеток, {len(pieces)} кусков, карта {W}x{H}')
+
+if __name__ == '__main__':
+    import argparse
+    ap = argparse.ArgumentParser(description='SHAR -> PSP level export (SHR7)')
+    ap.add_argument('level', nargs='?', type=int, default=1)
+    ap.add_argument('--out', default=str(ROOT / 'build' / 'level.shr'), help='куда писать (по умолчанию build/level.shr)')
+    a = ap.parse_args()
+    main(a.level, a.out)

@@ -1,0 +1,73 @@
+scene start
+wait 3
+flag repair
+wait 2
+foot -85 -302 1.5708
+wait 6
+flag eyex -84.4
+flag eyey 3
+flag eyez -301.1
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I0p0_301p1_old
+flag lightconeold 1
+wait 3
+shot I0p0_301p1_old
+flag eyex -84.4
+flag eyey 3
+flag eyez -301.1
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I0p0_301p1_new
+flag lightconeold 0
+wait 3
+shot I0p0_301p1_new
+flag eyex -82.9
+flag eyey 3
+flag eyez -301.1
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I1p5_301p1_old
+flag lightconeold 1
+wait 3
+shot I1p5_301p1_old
+flag eyex -82.9
+flag eyey 3
+flag eyez -301.1
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I1p5_301p1_new
+flag lightconeold 0
+wait 3
+shot I1p5_301p1_new
+flag eyex -84.4
+flag eyey 3
+flag eyez -298.0
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I0p0_298p0_old
+flag lightconeold 1
+wait 3
+shot I0p0_298p0_old
+flag eyex -84.4
+flag eyey 3
+flag eyez -298.0
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz 1
+flag eyeon 1
+scene I0p0_298p0_new
+flag lightconeold 0
+wait 3
+shot I0p0_298p0_new
+end

@@ -1,0 +1,23 @@
+# Телефонная будка (правка Роба 104, tests/shop/booth_emu.sh): будка R1P2 (ActionEvent SummonVehiclePhone l1r1.p3d, 144.04, 81.77)
+# -> △ -> страница PhoneBooth.scr: своя машина famil_v (картинка cars2d, «Damaged: 90%» — flag testdmg, урон 0.9 своей машины;
+# запись PS2 37:54 «Damaged: 16 %») -> ► elect_v (закрыта: замок, картинка, звёзды, без Accept, урона нет; порядок PS2 ps2_v105_booth_access) -> ◄ -> ✕ вызвать (приезжает целая)
+scene booth
+flag msn
+flag testdmg
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+shot ph_before
+press triangle
+wait 1.5
+shot ph_open
+press right
+wait 0.8
+shot ph_locked
+press left
+wait 0.8
+shot ph_own
+press cross
+wait 2
+shot ph_after
+end

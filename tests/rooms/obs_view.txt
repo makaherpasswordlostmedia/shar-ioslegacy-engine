@@ -1,0 +1,30 @@
+# cam принимает ВЕКТОР направления (fx fy fz), не точку взгляда (смоук: взгляд = глаз + вектор)
+# Обсерватория L3 (Observatory, l3i06.p3d): окна и экран как их видит игрок (позы камер из прогонов Камеры), фон комнат пурпурный
+scene start
+wait 3
+scene L3_load
+flag golevel 3
+wait 20
+scene obs_in
+foot 179.28 -484.62 -2.5307 4.67
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene o1
+cam 153.281 -18.700 355.418 -4.526 0.757 -8.885 46.7
+wait 1
+shot o1
+cam 156.267 -17.789 351.484 -0.460 -1.211 5.192 43.1
+wait 1
+shot o2
+cam 150.0 -18.0 350.0 0.0 2.0 -50.0 60
+wait 1
+shot o3
+cam 150.0 -17.0 345.0 0.0 2.0 -55.0 90
+wait 1
+shot o4
+end

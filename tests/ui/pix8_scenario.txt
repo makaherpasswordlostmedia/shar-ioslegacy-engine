@@ -1,0 +1,21 @@
+# Правка 126 (tests/ui/pix8_emu.sh): пузырь задания пиксельным шрифтом 8×8 — m0 как в tests/missions/m0_scenario.txt:
+# брифинг -> X -> задание в пузыре (аватар), посадка -> сообщение без значка. Снимки для Роба: ~/Downloads/SHAR_пузырь/
+scene m0
+wait 3
+flag msn
+wait 3
+press triangle
+wait 14
+press cross
+wait 1
+shot bubble_obj1
+wait 1
+shot bubble_obj2
+flag msngo
+wait 1
+press triangle
+wait 2
+shot bubble_car1
+wait 2
+shot bubble_car2
+end

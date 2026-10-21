@@ -1,0 +1,58 @@
+# Правка 274: запасные варианты утилиты сохранений (tests/savegame/fallback/run.py). Один запуск эмулятора:
+# новая игра -> отметка прогресса -> «savefail 388» (прежний набор параметров отвергается кодом 0x80110388, как на PSP Роба)
+# -> пауза -> SAVE GAME -> слот 1: цепочка std (отказ) -> sv1 (запись) -> проверка чтением -> «Save Successful»
+# -> снова «savefail 388» (удачный вариант забыт, как новый запуск) -> QUIT GAME -> NO -> главное меню -> LOAD GAME -> слот 1:
+# цепочка чтения std (отказ параметров 80110308) -> sv1 -> «Load Successful» -> тот же прогресс -> замер-тур savematrix (T8)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 4
+flag svmark
+flag savefail 388
+wait 0.5
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 1
+press cross
+wait 2.5
+shot svf_saved
+press cross
+wait 0.8
+flag savefail 388
+press down
+wait 0.4
+press cross
+wait 1
+press down
+wait 0.3
+press cross
+wait 3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2
+press cross
+# игра уже шла: «Loading this data will cause current game progress to be lost» — YES
+wait 1.5
+press cross
+wait 2.5
+shot svf_loaded
+press cross
+wait 5
+flag svlog
+flag savematrix
+wait 1
+shot svf_after_matrix
+end

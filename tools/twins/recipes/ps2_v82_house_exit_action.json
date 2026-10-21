@@ -1,0 +1,70 @@
+{
+ "id": "ps2_v82_house_exit_action",
+ "state": "build/twins/o4/ps2_v82_house_exit_right/snap_100.p2s",
+ "state_sha256": "d6fe3e7a60e2b20b888667607db9a42506d6c8f7f7300e9ef3425e7d1c4422c9",
+ "frames": 600,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "mat",
+  {
+   "addr": "a24a70",
+   "type": "f32",
+   "label": "hx"
+  },
+  {
+   "addr": "a24a74",
+   "type": "f32",
+   "label": "hy"
+  },
+  {
+   "addr": "a24a78",
+   "type": "f32",
+   "label": "hz"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  }
+ ],
+ "writes": [],
+ "pad": [
+  [
+   20,
+   "triangle",
+   1
+  ],
+  [
+   26,
+   "triangle",
+   0
+  ]
+ ],
+ "shots": [
+  2,
+  100,
+  200,
+  400,
+  600
+ ],
+ "pngs": [
+  [
+   10,
+   200,
+   10
+  ],
+  [
+   250,
+   600,
+   50
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 120,
+ "note": "Action after successful third preparation: native original screenshot shows exit triangle at current indoor door position. Press triangle and record actual transfer plus outdoor ambience; no game RAM writes."
+}

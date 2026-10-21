@@ -1,0 +1,15 @@
+# Карточка миссии (правка Роба 52, tests/ui/brief_emu.sh): разговор с Мардж, ✕ «Start Mission» -> карточка m0 (первая на
+# уровне): через 0.5 с — мигающее LOADING, кнопок нет; через 2.2 с — «✕ Continue», «Cancel Mission» нет; затем ✕ — миссия
+wait 3
+flag msn
+wait 3
+scene brief_m0
+press triangle
+wait 12.9
+shot brief_loading
+wait 2
+shot brief_continue
+press cross
+wait 2
+shot brief_after
+end

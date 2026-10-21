@@ -1,0 +1,18 @@
+# Конец уровня по данным диска (tests/levels/fmv_levelend.sh): уровень 2 -> последняя сюжетная миссия m8 (служебный выбор
+# миссии, flag msnsel 7 — как MISSION SELECT) -> цель «fmv» SetFMVInfo("fmv3.rmv") — ролик movies/fmv3.smv (снимок, START —
+# пропуск, как в оригинале) -> этап 2: таймер 2 с и SetLevelOver -> LEVEL COMPLETE -> газета уровня 3 -> уровень 3
+flag menu
+flag lvset 2
+wait 1.5
+press cross
+wait 7
+flag msnsel 7
+wait 4
+shot fmv3
+press start
+wait 6
+flag lvshot 1.5
+wait 8
+flag lvlog
+shot l3_after_fmv
+end

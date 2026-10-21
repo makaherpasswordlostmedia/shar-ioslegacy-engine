@@ -1,0 +1,42 @@
+# Сценарий смоук-теста (tools/smoke.sh): движок читает его из scenario.txt рядом с EBOOT (viewer/smoke.h).
+# Команды: scene ИМЯ | goto X Z КУРС | flag ИМЯ [N] | wait С | shot ИМЯ | end
+# После каждого снимка — успокоение (кадр снимка окна медленный), поэтому перед флагами сцены стоит wait 1.
+# Цель FPS — по режиму в строке smoke.txt: long = 30, view60 = 60. Старт в режиме по умолчанию (long, 250 м).
+scene spawn
+wait 4
+shot spawn
+scene drive
+wait 1
+flag autostraight
+wait 5
+shot drive
+flag stop
+flag repair
+scene testdmg
+goto 220 172 1.5708
+flag testdmg
+wait 4
+shot testdmg
+scene testboom
+wait 1
+flag testboom
+wait 4
+shot testboom
+flag repair
+# ящик l1_crate (375.9, 148.1): разгон 18 м по прямой с курса 75° (путь чист по COL1: заборы и коробки), тормоз через 3 с
+scene crate
+goto 393.3 152.8 -1.8326
+flag autostraight 3
+wait 4.5
+shot crate
+flag stop
+scene long
+goto 345 -81 1
+flag long
+wait 5
+shot long
+scene view60
+flag view60
+wait 5
+shot view60
+end

@@ -1,0 +1,119 @@
+{
+ "id": "ps2_homer_double_jump_velocity",
+ "state": "build/ps2ref/answers/observer_queue/input/m0d/snap_00010.p2s",
+ "frames": 500,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_x"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_y"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_z"
+  },
+  {
+   "addr": "a24a70",
+   "type": "f32",
+   "label": "legacy_x"
+  },
+  {
+   "addr": "a24a74",
+   "type": "f32",
+   "label": "legacy_y"
+  },
+  {
+   "addr": "a24a78",
+   "type": "f32",
+   "label": "legacy_z"
+  },
+  {
+   "addr": "a24570",
+   "type": "u32",
+   "label": "homer_vtable"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  },
+  {
+   "addr": "8470c4",
+   "type": "u32",
+   "label": "gui_screen"
+  },
+  {
+   "addr": "5db570",
+   "type": "u32",
+   "label": "stage_pointer"
+  },
+  {
+   "addr": "a245c0",
+   "type": "f32",
+   "label": "homer_native_vel_x"
+  },
+  {
+   "addr": "a245c4",
+   "type": "f32",
+   "label": "homer_native_vel_y"
+  },
+  {
+   "addr": "a245c8",
+   "type": "f32",
+   "label": "homer_native_vel_z"
+  }
+ ],
+ "pad": [
+  [
+   20,
+   "cross",
+   1
+  ],
+  [
+   26,
+   "cross",
+   0
+  ],
+  [
+   36,
+   "cross",
+   1
+  ],
+  [
+   42,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  20,
+  36,
+  50,
+  100,
+  220,
+  500
+ ],
+ "pngs": [
+  [
+   0,
+   240,
+   10
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 180,
+ "note": "Queue18 original Homer on foot idle home m0d. Native world position SimState+40 instead of legacy renderroot; input-only action. Do not infer animation-ground motion or floor height from image alone. Repeatedinput with original sim::SimState linearvelocity+0x50;+0x80 was rejected as wrongbyteoffset (80decimal=0x50). Compare originalworldmatrix and phase."
+}

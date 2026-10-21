@@ -1,0 +1,60 @@
+{
+ "id": "o4_buttons",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 760,
+ "every": 10,
+ "trace": [
+  "frame",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[2]"
+ ],
+ "pad": [
+  [
+   40,
+   "square",
+   1
+  ],
+  [
+   190,
+   "square",
+   0
+  ],
+  [
+   240,
+   "circle",
+   1
+  ],
+  [
+   390,
+   "circle",
+   0
+  ],
+  [
+   440,
+   "triangle",
+   1
+  ],
+  [
+   450,
+   "triangle",
+   0
+  ],
+  [
+   560,
+   "l2",
+   1
+  ],
+  [
+   700,
+   "l2",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [],
+ "timeout": 180
+}

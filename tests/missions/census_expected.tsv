@@ -1,0 +1,25 @@
+# Ожидания гейта tests/missions/census.sh (tools/missions/census.py --check): семейство<TAB>наибольшее число строк «нет / частично».
+# Больше записанного — регрессия (FAIL); меньше — хорошо, число уменьшить сознательно. Перепись 04.10 (docs/МИССИИ_ПОЛНОТА_2026-10-04.md):
+# прежний экспорт — 1141 строка «нет/частично», после правок — 783. Что остаётся и почему — раздел «Осталось» документа
+effect	300	# рисование эффекта подбора (props.item_collected) — помощник «эффекты»; данные (msnart wrench_collect, fx.shr) есть
+room	0	# город ниже −10 м остаётся городом; SHI1 пол определяет комнату (world_visibility.py)
+player	126	# игрок уровня — Барт/Лиза/Мардж/Апу (AddCharacter): у порта везде Гомер
+reward	72	# экраны будки, лавки и гардероба уровней 2–7 (shop/phone/wardrobe только у уровня 1)
+driver	45	# водитель в машине миссии (5-й аргумент AddStageVehicle) не рисуется
+load	19	# пинок и удар током персонажа (kickwave/electrocuted), стейтпропы L7 (НЛО, луч, бочки), картинки kang/kodos
+sprop	10	# L7 бочки AddCollectibleStateProp, L5 световые пятна SetStatepropShadow
+npc	5	# dolph (волосы не полосами), SetCharacterToHide концовок m8
+wasp	1	# L7 летающий корабль AddFlyingActorByLocator
+item	0
+race	0
+cam	0
+fmv	0
+marker	0
+icon	0
+brief	0
+car	0
+gag	0
+voice	0
+misc	0
+locator	0
+cap	0

@@ -1,0 +1,76 @@
+{
+ "id": "ps2_v100_options_return",
+ "state": "build/twins/o4/ps2_v100_fly_options_real/snap_1600.p2s",
+ "frames": 600,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  {
+   "addr": "f6e084",
+   "type": "u32",
+   "label": "main_menu_vtable"
+  },
+  {
+   "addr": "f6e120",
+   "type": "s32",
+   "label": "gag_current"
+  },
+  {
+   "addr": "f6e124",
+   "type": "s32",
+   "label": "gag_pending"
+  },
+  {
+   "addr": "f6e128",
+   "type": "s32",
+   "label": "gag_homer_segment"
+  },
+  {
+   "addr": "f6e12c",
+   "type": "u32",
+   "label": "gag_elapsed_ms"
+  },
+  {
+   "addr": "f6e130",
+   "type": "u32",
+   "label": "gag_delay_ms"
+  }
+ ],
+ "pad": [
+  [
+   10,
+   "triangle",
+   1
+  ],
+  [
+   16,
+   "triangle",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  100,
+  150,
+  200,
+  300,
+  600
+ ],
+ "pngs": [
+  [
+   2,
+   600,
+   4
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 150,
+ "renderer": "metal",
+ "note": "Return from actual Options after elapsed timer remained22721ms for20sec. Record whether native main-menu clock resumes/ resets and next pending/visual gag."
+}

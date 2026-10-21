@@ -1,0 +1,62 @@
+# Объекты миссий уровня 1 (пакет «Объекты уровня и миссий», пункт 3): первая цель каждой сюжетной миссии m1..m7 —
+# маркер/предмет с 12 м (msnfar), как их рисует msnart.shr. Запуск: SMOKE_SCN=tests/levelobj/msn_views.txt tools/smoke.sh DIR
+scene m1
+wait 3
+flag msn
+wait 2
+flag msnsel 1
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m1_target
+scene m2
+flag msnsel 2
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m2_target
+scene m3
+flag msnsel 3
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m3_target
+scene m4
+flag msnsel 4
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m4_target
+scene m5
+flag msnsel 5
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m5_target
+scene m6
+flag msnsel 6
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m6_target
+scene m7
+flag msnsel 7
+wait 3
+press cross
+wait 2
+flag msnfar 4
+wait 3
+shot m7_target
+end

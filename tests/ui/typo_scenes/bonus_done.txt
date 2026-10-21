@@ -1,0 +1,16 @@
+# Итоги бонус-игры: гонка в 1 круг, машиной игрока ведёт водитель ИИ; кадр bonus_summary игра снимает сама («flag bonusshots»)
+flag menu
+flag bonuslaps 1
+flag bonusauto 1
+flag bonustrack 1
+flag bonusopen
+flag bonusshots 1
+flag idle 0
+wait 2.5
+press left
+wait 0.6
+press cross
+wait 1.5
+flag bonusgo
+wait 110
+end

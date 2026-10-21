@@ -1,0 +1,9 @@
+# Правка Роба 227 (tests/hnr/bust_freeroam.sh): арест в свободной езде (NEW GAME, сюжетная миссия ещё не начата) — штраф,
+# миссия не проваливается и игрока никуда не переносит
+flag menu
+wait 1.5
+press cross
+wait 10
+flag hnrbust
+wait 3
+end

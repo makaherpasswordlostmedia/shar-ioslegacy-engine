@@ -1,0 +1,682 @@
+{
+ "id": "ps2_bonus_z6_native_repair",
+ "state": "build/twins/o4/ps2_bonus_card16_access/snap_150.p2s",
+ "frames": 180,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_cm",
+  "car_vel",
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_world_x"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_world_y"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_world_z"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "triangle",
+   0
+  ],
+  [
+   0,
+   "lup",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "ldown",
+   0
+  ]
+ ],
+ "writes": [
+  {
+   "at": 2,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 2,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 2,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 2,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 2,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 2,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 4,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 4,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 4,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 6,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 6,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 6,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 8,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 8,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 8,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 10,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 10,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 10,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 12,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 12,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 12,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 14,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 14,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 14,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 16,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 16,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 16,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 18,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 18,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 18,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 20,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 20,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 20,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 22,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 22,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 22,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 24,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 24,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 24,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 26,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 26,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 26,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 28,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 28,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 28,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 30,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 30,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 30,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 32,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 32,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 32,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 34,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 34,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 34,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 36,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 36,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 36,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 38,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 38,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 38,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_cm[0]",
+   "value": -178.483795
+  },
+  {
+   "at": 40,
+   "name": "car_cm[1]",
+   "value": -0.4
+  },
+  {
+   "at": 40,
+   "name": "car_cm[2]",
+   "value": 302.364471
+  },
+  {
+   "at": 40,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[2]",
+   "value": 0
+  }
+ ],
+ "shots": [
+  2,
+  80,
+  180
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 180,
+ "note": "Access six genuine cards. Original Z6W1 Wrench sphere in loaded l1z6, only CM/velocity positioning. No health/progress writes. Final repair scene must be viewed before normal road drive to z7.",
+ "renderer": "metal"
+}

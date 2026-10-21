@@ -1,0 +1,473 @@
+# TEST20b · короткий тур ≤ 10 минут на железе: базой сценарий Сборки test20 (её A/B воды и дальности), плюс проверки проваливания (пешком у машины и трафика, камера у стены J9-5, скамья/Милхаус L2, арка, изгородь у будки).
+# Сокращено ради 10 минут: A/B оставлены только на причале L3 (вода W on/off, дальность 150/200, свет on/bias); убраны A/B дальности L5, свет АЭС, обычный проезд причала, свет L7 со сдвигом; чуть короче погони и гонки.
+# Координаты пеших сцен T20_walk_* и T20_L3_comic_walk подобраны по кадрам видео TEST19, не по карте: на железе проверить, что Гомер/Лиза действительно упираются в машину и дорогу.
+# На каждой сцене (кроме *_load): flag camin 1 в начале и flag camin в конце, счётчик камеры «глаз внутри» по причинам (строка CAMIN в smoke.txt), для вердикта по железу без видео.
+# Основа TEST19 + исправленные артефакты + места из голоса Роба по видео IMG_7849 (docs/handoff/ВИДЕО_TEST19_РОБ_ГОЛОСОМ.md).
+# Исправлено против TEST19: после будки и лавки перед телепортом wait 3 (камера будки уходит); гонки не сбрасываем 'flag msn' прямо перед msnmainat,
+# после Continue гонка едет 16 с (проверить, остаётся ли «BONUS MISSION COMPLETE»: гонка L1 без сброса, Лиза со сбросом и wait 3 — разные условия); мост L6 с прогревом 2 с;
+# убраны A/B TQ_FAST (разницы нет, см. РАЗБОР_ЖЕЛЕЗА_TEST19_Сборка.md), полиция и вторая гонка света L3.
+# Места из голоса: изгородь у будки (камера будки), дом и арка J9-5, скамья и Милхаус на L2, столб F2-7, вид вдаль с причала L3 стоя с медленным поворотом, погоня L5 при въезде.
+# НЕ ПОКРЫТО: пузырь без аватарки (№616), сбитый проп вне взгляда (№589), перекрёстки трафика 0/3 отдельно, карточка с телепортом (№625, взята L5 502 как предположение).
+# Метка сцены 12x12 с чёрной каймой рисуется сама на каждой 'scene' (viewer/hud.c cf25587c). Имена сцен ≤ 23 знака. Дописывать блоки внутри своего уровня, перед следующей строкой *_load.
+scene T20_L1_load
+flag golevel 1
+wait 20
+# карточка 1: старт на месте (L1 m2, таймер со значком цели)
+scene T20_card_timer
+flag camin 1
+flag repair
+flag warmhere
+flag msn
+wait 3
+flag msnmainat 201
+wait 4
+shot T20_card_timer_in
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T20_timer_icon
+flag stop
+flag msn
+wait 3
+flag camin
+# карточка 2: гонка L1 (без сброса перед msnmainat), едет 16 с
+scene T20_card_race_L1
+flag camin 1
+flag msnmainat 801
+wait 4
+shot T20_card_race_in
+press cross 0.3
+wait 1
+flag msngo
+wait 2
+shot T20_race_after_card
+flag autostraight 14
+wait 14
+shot T20_race_hud
+flag stop
+wait 1
+flag camin
+scene T20_pause_cellcode
+flag camin 1
+press start 0.15
+wait 2
+shot T20_pause_cellcode
+press start 0.15
+wait 1
+flag camin
+scene T20_fail_screen
+flag camin 1
+flag msnfail
+wait 3
+shot T20_fail_hints
+press cross 0.3
+wait 2
+flag msn
+wait 1
+flag camin
+# будка: камера будки и изгородь (Роб 2:07), перед лавкой ждём конец камеры
+scene T20_booth_hedge
+flag camin 1
+flag phoneplant
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+shot T20_booth_before
+press triangle
+wait 1.5
+shot T20_booth_open
+press cross
+wait 2
+shot T20_booth_cam
+wait 1
+shot T20_booth_hedge
+press circle 0.3
+wait 3
+flag camin
+scene T20_shop_barney
+flag camin 1
+flag coinadd 200
+foot 325.5 -121.9 -1.5708 4
+wait 2
+shot T20_shop_barney
+press triangle
+wait 1.5
+shot T20_shop_dark
+press circle 0.3
+wait 3
+flag camin
+# трафик у перекрёстка и арка J9-5 (тот же маршрут автопилота: арка на 10-й секунде)
+# проваливание: пешком у проезжающего трафика (тротуар у лавки, машина проезжает по улице; место взято по кадру видео TEST19)
+scene T20_walk_traffic
+flag camin 1
+foot 325.5 -121.9 -1.5708
+wait 2
+press up 2
+wait 3
+shot T20_walk_traffic_1
+wait 4
+shot T20_walk_traffic_2
+flag camin
+scene T20_traffic_arch
+flag camin 1
+flag repair
+flag warmhere
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 9
+shot T20_arch_in
+wait 2
+shot T20_arch_J95
+wait 7
+flag stop
+wait 1
+flag camin
+# проваливание: пешком вплотную к стоящей машине (бок машины спавна, идём в неё 3 с)
+scene T20_walk_parked_car
+flag camin 1
+flag repair
+flag warmhere
+goto 220 172 1.5708
+wait 2
+foot 220 176 3.1416
+wait 2
+shot T20_walk_car_0
+press up 3
+wait 1
+shot T20_walk_car_1
+wait 2
+flag camin
+scene T20_cam_houses_J95
+flag camin 1
+goto 150 150 1.5708
+wait 2
+flag autostraight 14
+wait 6
+shot T20_cam_houses
+flag stop
+wait 1
+flag camin
+# проваливание: камера вплотную к стене дома, поворот и переулок у J9-5 (курс против, тихая езда; координаты исследовательские)
+scene T20_wall_cam_J95
+flag camin 1
+goto 150 150 3.1416
+wait 2
+flag autostraight 5
+wait 6
+shot T20_wall_cam_J95
+flag stop
+wait 1
+flag camin
+# проваливание в текстуры у арки J9-5 (№634, Аудит): три прохода по пяти точкам глаза — обычный (ggnear 1), срез во всех кадрах (ggold 2), ggnear 0
+scene T20_arch_norm
+flag eyedy 0
+flag eyedz 0
+flag eyedx -1
+flag eyey 5.5
+flag eyez 159
+flag eyeon 1
+flag camclipdump
+flag ggnear 1
+flag ggold 0
+flag eyex 166
+wait 1.3
+shot A1_0
+flag eyex 160
+wait 1.3
+shot A1_1
+flag eyex 154
+wait 1.3
+shot A1_2
+flag eyex 148
+wait 1.3
+shot A1_3
+flag eyex 142
+wait 1.3
+shot A1_4
+scene T20_arch_ggold2
+flag ggold 2
+flag eyex 166
+wait 1.3
+shot A2_0
+flag eyex 160
+wait 1.3
+shot A2_1
+flag eyex 154
+wait 1.3
+shot A2_2
+flag eyex 148
+wait 1.3
+shot A2_3
+flag eyex 142
+wait 1.3
+shot A2_4
+scene T20_arch_ggnear0
+flag ggold 0
+flag ggnear 0
+flag eyex 166
+wait 1.3
+shot A3_0
+flag eyex 160
+wait 1.3
+shot A3_1
+flag eyex 154
+wait 1.3
+shot A3_2
+flag eyex 148
+wait 1.3
+shot A3_3
+flag eyex 142
+wait 1.3
+shot A3_4
+flag ggnear 1
+flag eyeon 0
+wait 0.5
+scene T20_ramp9_crown
+flag camin 1
+flag bisect 0
+goto 229.3 -536.0 0.785
+wait 2
+flag autostraight 8
+wait 7
+shot T20_ramp9_far
+flag stop
+wait 1
+flag camin
+scene T20_L2_load
+flag golevel 2
+wait 20
+# скамья закрывает героя и Милхаус ходит у камеры (Роб 4:08-4:28): стоим на старте уровня
+scene T20_L2_bench
+flag camin 1
+wait 3
+shot T20_L2_bench_1
+wait 3
+shot T20_L2_bench_2
+wait 3
+shot T20_L2_bench_3
+press up 2
+wait 2
+shot T20_L2_bench_walk
+flag camin
+scene T20_L2_pole_F2-7
+flag camin 1
+flag repair
+flag warmhere
+goto -206 -498 1.5708
+wait 3
+flag autostraight 3
+wait 4
+shot T20_L2_pole_hit
+flag stop
+wait 1
+flag camin
+scene T20_L3_load
+flag golevel 3
+wait 20
+# карточка 3: гонка Лизы, старт с ирисом (самый тяжёлый кадр), едет 16 с
+# проваливание: пешком Лиза у лавки комиксов, рядом проезжает трафик (старт уровня)
+scene T20_L3_comic_walk
+flag camin 1
+wait 3
+shot T20_comic_0
+press up 2
+wait 3
+shot T20_comic_1
+press right 1.5
+wait 4
+shot T20_comic_2
+flag camin
+scene T20_card_lisa_L3
+flag camin 1
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+shot T20_card_lisa_in
+press cross 0.3
+wait 1
+flag msngo
+wait 2
+shot T20_lisa_after_card
+flag autostraight 14
+wait 12
+shot T20_lisa_race
+flag stop
+flag msn
+wait 2
+flag camin
+# вид вдаль с причала (Роб: «вдалеке ничего не видно»): 5 с стоя, потом медленный поворот ступенями
+scene T20_L3_pier_view
+flag camin 1
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 5
+shot T20_pier_view_0
+goto -469.4 -35.9 3.4
+wait 2
+shot T20_pier_view_1
+goto -469.4 -35.9 2.9
+wait 2
+shot T20_pier_view_2
+goto -469.4 -35.9 2.4
+wait 2
+shot T20_pier_view_3
+flag camin
+scene T20_L3_chase
+flag camin 1
+flag repair
+flag warmhere
+flag hnr 100
+flag drive 75
+wait 14
+shot T20_L3_chase
+flag stop
+flag hnr 0
+wait 1
+flag camin
+# --- Сборка: вода причала (полупрозрачная tex264) есть/скрыта; пол регулятора дальности 150 / 200 м (дальние версии кусков far_plain 140)
+scene T20_W_on
+flag camin 1
+flag ddfloor 0
+flag tqskip -1
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_W_on
+flag stop
+wait 0.5
+flag camin
+scene T20_W_off
+flag camin 1
+flag tqskip 264
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_W_off
+flag stop
+wait 0.5
+flag camin
+scene T20_L3_dd150
+flag camin 1
+flag tqskip -1
+flag ddfloor 150
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 6
+shot T20_L3_dd150
+flag stop
+wait 0.5
+flag camin
+scene T20_L3_dd200
+flag camin 1
+flag ddfloor 200
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 6
+shot T20_L3_dd200
+flag stop
+wait 0.5
+flag ddfloor 0
+flag ddfloor 0
+flag camin
+# свет у причала: ВКЛ и со сдвигом глубины
+scene T20_SV_L3_pier_on
+flag camin 1
+flag neonglow 1
+flag glowbias 0
+flag repair
+flag warmhere
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_pier_on
+flag stop
+wait 0.5
+flag camin
+# (A/B света bias на причале убран ради сцены арки J9-5, слово дирижёра 15.10; сброс флагов света)
+flag neonglow 0
+flag glowbias 0
+flag camin
+scene T20_L5_load
+flag golevel 5
+wait 20
+# карточка 4 и погоня L5 при въезде
+scene T20_card_L5
+flag camin 1
+flag msn
+wait 3
+flag msnmainat 502
+wait 3
+shot T20_card_L5_in
+press cross 0.3
+wait 1
+flag msngo
+wait 3
+shot T20_card_L5_go
+flag stop
+flag msn
+wait 1
+flag camin
+scene T20_L5_chase
+flag camin 1
+flag repair
+flag warmhere
+flag hnr 100
+flag drive 75
+wait 16
+shot T20_L5_chase
+flag stop
+flag hnr 0
+wait 1
+flag camin
+# --- Сборка: погоня L5, пол дальности 150 / 200 м
+scene T20_L6_load
+flag golevel 6
+wait 20
+wait 2
+scene T20_L6_bridge
+flag camin 1
+flag repair
+flag warmhere
+flag drive 75
+wait 14
+flag stop
+wait 1
+flag camin
+scene T20_L7_load
+flag golevel 7
+wait 20
+scene T20_SV_L7_lamps_on
+flag camin 1
+flag neonglow 1
+flag glowbias 0
+goto 230 160 1.5708
+flag repair
+flag warmhere
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_L7_on
+flag stop
+wait 1
+flag camin
+flag neonglow 0
+flag glowbias 0
+wait 1
+end

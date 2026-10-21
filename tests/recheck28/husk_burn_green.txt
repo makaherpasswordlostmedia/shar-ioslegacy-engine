@@ -1,0 +1,18 @@
+# №697: взрыв своей машины на L1 (flag testboom): остов (чёрный каркас) и сколько горит; кадры 1, 4, 8, 13, 20 с после взрыва
+wait 3
+scene own_boom
+cam 213.5 6.0 169.5 6.0 -2.6 2.5 55
+wait 0.5
+flag testboom
+wait 1
+shot green_a
+wait 3
+shot green_b
+wait 4
+shot green_c
+wait 5
+shot green_d
+wait 7
+shot green_e
+wait 1
+end

@@ -1,0 +1,67 @@
+# Перепроверка TEST28 (Стены), быстрые заезды: старт ближе (~18–20 м до цели), съёмка 0,9…3,2 с
+wait 3
+scene j94_fast
+goto 150.0 159.0 -1.5708
+wait 1.5
+flag stop
+flag repair
+flag autostraight 4.5
+wait 0.9
+shot j94_fast_a
+wait 0.7
+shot j94_fast_b
+wait 0.7
+shot j94_fast_c
+wait 0.9
+shot j94_fast_d
+wait 1.5
+flag stop
+scene j95_fast
+goto 143.7 186.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 4.5
+wait 0.9
+shot j95_fast_a
+wait 0.7
+shot j95_fast_b
+wait 0.7
+shot j95_fast_c
+wait 0.9
+shot j95_fast_d
+wait 1.5
+flag stop
+scene plinth_fast
+goto 213.0 170.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 4.5
+wait 0.9
+shot plinth_fast_a
+wait 0.7
+shot plinth_fast_b
+wait 0.7
+shot plinth_fast_c
+wait 0.9
+shot plinth_fast_d
+wait 1.5
+flag stop
+scene plinth_fast2
+goto 216.0 172.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 4.5
+wait 0.9
+shot plinth_fast2_a
+wait 0.7
+shot plinth_fast2_b
+wait 0.7
+shot plinth_fast2_c
+wait 0.9
+shot plinth_fast2_d
+wait 1.5
+flag stop
+end

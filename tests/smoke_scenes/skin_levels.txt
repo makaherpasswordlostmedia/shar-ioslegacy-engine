@@ -1,0 +1,35 @@
+# Свет персонажей по уровням (16.10, Камера): Гомер ПЕШКОМ в кадре на L1, L3, L7; пары: форма порта (skindata 0) и свет из данных LightGroup (skindata 1). Для сверки с PS2 (Стенд).
+scene SK_L1_load
+flag golevel 1
+wait 15
+flag repair
+foot 222 177 -1.56
+flag skindata 0
+wait 3
+shot sk_l1_port
+flag skindata 1
+wait 3
+shot sk_l1_data
+scene SK_L3_load
+flag golevel 3
+wait 20
+flag repair
+foot 19.85 1.57 -0.75
+flag skindata 0
+wait 3
+shot sk_l3_port
+flag skindata 1
+wait 3
+shot sk_l3_data
+scene SK_L7_load
+flag golevel 7
+wait 20
+flag repair
+foot 222 177 -1.56
+flag skindata 0
+wait 3
+shot sk_l7_port
+flag skindata 1
+wait 3
+shot sk_l7_data
+end

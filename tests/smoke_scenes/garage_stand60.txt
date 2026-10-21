@@ -1,0 +1,13 @@
+# №658/№599: гараж АЭС L1, камера стоит 60 с (мигание конусов: LSP pops / alpha_jumps = 0), кадр рядом с PS2 ps2_light_garage_lamps
+scene GS_L1_load
+flag golevel 1
+wait 15
+scene GS_garage
+flag repair
+foot -85 -300 1.5708
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+wait 5
+shot gs_start
+wait 55
+shot gs_end
+end

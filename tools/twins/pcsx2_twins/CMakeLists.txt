@@ -1,0 +1,5 @@
+# pcsx2-twins: PCSX2 core without Qt and without a window (tools/twins/pcsx2_twins, GPL-3.0+ as PCSX2)
+add_executable(pcsx2-twins)
+target_sources(pcsx2-twins PRIVATE Main.cpp)
+target_include_directories(pcsx2-twins PRIVATE "${CMAKE_BINARY_DIR}/common/include" "${CMAKE_SOURCE_DIR}/pcsx2")
+target_link_libraries(pcsx2-twins PRIVATE PCSX2_FLAGS PCSX2)

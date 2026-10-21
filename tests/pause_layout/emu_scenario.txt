@@ -1,0 +1,52 @@
+# Снимки до/после правок 150/151 (tests/pause_layout/emu.sh): m0 — △ у Мардж, брифинг, X -> START: пауза миссии (снимок) ->
+# ↓↓↓ OPTIONS, X (снимок) -> X SOUND (снимок) -> △, ↓, X SETTINGS (снимок) -> △ △ -> ↑ CANCEL MISSION, X -> START: пауза
+# свободной езды: служебный режим (все строки) и игрок (flag player: RESET CAR скрыт) — снимки
+scene msn
+flag msn
+wait 2
+press triangle
+wait 14
+press cross
+wait 2
+press start
+wait 1
+shot pause_msn
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 0.8
+shot opt_pause
+press cross
+wait 0.8
+shot opt_sound
+press triangle
+wait 0.5
+press down
+wait 0.3
+press cross
+wait 0.8
+shot opt_settings
+press triangle
+wait 0.5
+press triangle
+wait 0.5
+press up
+wait 0.3
+press cross
+wait 3
+press start
+wait 1
+shot pause_free_svc
+press start
+wait 1
+flag player
+press start
+wait 1
+shot pause_free
+press start
+wait 1
+end

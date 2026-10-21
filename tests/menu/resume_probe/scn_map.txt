@@ -1,0 +1,21 @@
+# Разведка главного меню на ПУСТОЙ карте: порядок пунктов (курсор вправо/влево), без нажатия ✕
+flag menu
+flag saves
+wait 1.5
+shot m0_start
+press right
+wait 0.8
+shot m1_right
+press right
+wait 0.8
+shot m2_right
+press right
+wait 0.8
+shot m3_right
+press right
+wait 0.8
+shot m4_right
+press right
+wait 0.8
+shot m5_right
+end

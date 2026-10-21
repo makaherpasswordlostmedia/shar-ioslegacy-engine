@@ -1,0 +1,147 @@
+# TEST17 · блок сцен по картам правок Роба 13.10 (№581–588), 12 коротких сцен езды + пауза с кодом клетки + карточка миссии + гонка L1.
+# Курс подъезда подобран хост-прогоном tools: газ без руля с места 'back' м позади точки, 16 курсов; лучший по сближению с точкой. Вставляется в TEST17 как есть.
+# C3-5 L2: на этой клетке сверху плато 38.5, метка Роба на y 16.1 — подъезд проверен только по плато, не по нижнему слою.
+scene S17_L1_load
+flag golevel 1
+wait 20
+scene S586_L1_J3-3_gate
+flag repair
+goto 175.2 -476.6 1.9635
+wait 2
+flag autostraight 5
+wait 6
+shot S586_L1_J3-3_gate
+flag stop
+wait 0.5
+scene S586_L1_J3-6_gate
+flag repair
+goto 210.7 -454.7 4.7124
+wait 2
+flag autostraight 5
+wait 6
+shot S586_L1_J3-6_gate
+flag stop
+wait 0.5
+scene S585_L1_J10-1_roof_slow
+flag repair
+goto 131.4 225.8 4.7124
+wait 2
+flag autostraight 3
+wait 4
+shot S585_L1_J10-1_roof_slow
+flag stop
+wait 0.5
+scene S583_L1_J9-8_hill
+flag repair
+goto 167.3 187.0 3.5343
+wait 2
+flag autostraight 4
+wait 5
+shot S583_L1_J9-8_hill
+flag stop
+wait 0.5
+scene S581_L1_L8-5_ramp
+flag repair
+goto 368.3 87.8 3.5343
+wait 2
+flag autostraight 5
+wait 6
+shot S581_L1_L8-5_ramp
+flag stop
+wait 0.5
+scene S581_L1_L6-8_ramp
+flag repair
+goto 329.8 -102.7 1.9635
+wait 2
+flag autostraight 5
+wait 6
+shot S581_L1_L6-8_ramp
+flag stop
+wait 0.5
+scene S17_pause_cellcode
+flag stop
+press start 0.15
+wait 2
+shot S17_pause_cellcode
+press start 0.15
+wait 1
+scene S17_L1_card_in
+flag msn
+flag msnmainat 801
+wait 3
+shot S17_L1_card_in
+scene S17_L1_card_out
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+shot S17_L1_card_out
+scene S17_L1_race_bubble
+wait 3
+shot S17_L1_bubble
+flag autostraight 14
+wait 6
+shot S17_L1_race
+flag stop
+wait 1
+scene S17_L2_load
+flag golevel 2
+wait 20
+scene S582_L2_F7-4_pits
+flag repair
+goto -152.8 -19.7 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot S582_L2_F7-4_pits
+flag stop
+wait 0.5
+scene S582_L2_E6-8_pits
+flag repair
+goto -243.9 -82.2 3.1416
+wait 2
+flag autostraight 4
+wait 5
+shot S582_L2_E6-8_pits
+flag stop
+wait 0.5
+scene S588_L2_C3-5_fence
+flag repair
+goto -463.5 -460.5 1.5708
+wait 5
+flag autostraight 3
+wait 4
+shot S588_L2_C3-5_fence
+flag stop
+wait 0.5
+scene S17_L3_load
+flag golevel 3
+wait 20
+scene S584_L3_D6-9_ledges
+flag repair
+goto -334.6 -120.6 0.7854
+wait 2
+flag autostraight 4
+wait 5
+shot S584_L3_D6-9_ledges
+flag stop
+wait 0.5
+scene S584_L3_D7-6_ledges
+flag repair
+goto -320.9 -76.4 0.0
+wait 2
+flag autostraight 4
+wait 5
+shot S584_L3_D7-6_ledges
+flag stop
+wait 0.5
+scene S3_L3_C7-4_pier
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot S3_L3_C7-4_pier
+flag stop
+wait 0.5
+end

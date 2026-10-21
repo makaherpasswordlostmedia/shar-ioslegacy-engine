@@ -1,0 +1,56 @@
+# Правка Роба 325 (повторы 244, 265, 293): «при наезде к газете в новой игре есть момент, когда часть пола будто пропадает» —
+# проверка на ЖЕЛЕЗЕ (оконный эмулятор рисует всё и этого не показывает; безголовый с программной отрисовкой — показывает, на нём
+# гейт tests/fe_guard/gate325.sh). Часть M11 тура (строки без «#» и без «end» — как берёт
+# tools/tour_make.py части psp_test10_menu.txt); читает tests/fe_guard/test11_read.py ПАПКА_ТУРА.
+# Причина (кадры fecap TEST 10, модель GE tests/fe_guard/ge325.py): пропадает не пол, а СВЕТ ИЗ ОКНА на полу — подсветка
+# window.bmp, квад 4,4 × 4,5 м со сложением. Его вершина после среза по near уходит дальше ±2048 px от центра — железо выбрасывает
+# треугольник целиком: половина пятна света исчезает с кадра ~30 из 40 (диагональю), остальное — с кадра ~35,6, пол у газеты
+# резко темнеет (кадр 103 → 69). У оригинала пол у газеты светлый до ириса. Правка: такие подсветки движок режет сам по пирамиде
+# защитной полосы (viewer/fe_billcut.h), GE больше ничего не выбрасывает.
+# Два НАСТОЯЩИХ перелёта NEW GAME из игры (пауза → ↑ → × QUIT GAME → меню → × NEW GAME → газета → уровень 1), кадры перелёта
+# с 16-го (fecap 24, fecapfrom 16: кадры 16–31 и последние 8) → shots/fe3250_*.bmp (прежнее) и fe3251_*.bmp (новое); у каждого
+# кадра строка FEFR с bn= (подсветок не целиком в пирамиде полосы) и bc= (из них нарезано: прежнее 0, новое = bn).
+# Заодно в главном меню у PSP появится розовый отсвет на потолке под верхом рамки (подсветка #3, раньше железо её выбрасывало всегда).
+# Робу: смотреть на пол вокруг газеты в конце наезда — в первом перелёте (a) пол темнеет скачком, во втором (b) остаётся светлым.
+scene M11a_menu_old
+flag feframelog 1
+flag febillold 1
+flag fecaptag 3250
+flag fecapfrom 16
+flag fecap 24
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 22
+scene M11b_menu_new
+flag febillold 0
+flag fecaptag 3251
+flag fecapfrom 16
+flag fecap 24
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 22
+scene M11_after
+flag febillold 0
+flag fecaptag 293
+flag fecapfrom 0
+flag feframelog 0
+wait 3
+end

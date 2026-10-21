@@ -1,0 +1,57 @@
+{
+ "id": "ps2_bonus_minimenu_entry",
+ "state": "build/twins/o4/ps2_bonus_unlocked_main_selection/snap_250.p2s",
+ "frames": 1000,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "right",
+   1
+  ],
+  [
+   26,
+   "right",
+   0
+  ],
+  [
+   100,
+   "cross",
+   1
+  ],
+  [
+   106,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  50,
+  150,
+  300,
+  500,
+  700,
+  1000
+ ],
+ "pngs": [
+  [
+   100,
+   300,
+   10
+  ],
+  [
+   400,
+   1000,
+   100
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 240,
+ "note": "Actual preceding screen OPTIONS. Right once selects BONUS, then native Accept once. Returned main includes additional RESUME item, so prior three-right scan ended at OPTIONS. Inspect enabled caption and MiniMenu actual defaults before changing settings. No writes."
+}

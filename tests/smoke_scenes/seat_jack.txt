@@ -1,0 +1,21 @@
+# №667: угон машины трафика (сценарий tests/traffic/jack_scenario.txt + SEAT): без шарнира двери — посадка ирисом, door=0 irisIn=1
+# Правка Роба 63 (tests/traffic/jack_emu.sh): угон. На полосе у Kwik-E-Mart Гомер выходит, рядом ставится машина трафика (служебно),
+# △ — Гомер садится в неё, газ — машина игрока едет моделью трафика; своя машина осталась позади
+wait 3
+scene jack
+goto 188 279.9 1.5708
+wait 2
+press triangle
+wait 2.5
+flag jackplace
+wait 1.2
+shot jack_prompt
+press triangle
+wait 3
+shot jack_in
+press cross 2
+wait 2
+shot jack_drive
+flag seatlog 0
+wait 1
+end

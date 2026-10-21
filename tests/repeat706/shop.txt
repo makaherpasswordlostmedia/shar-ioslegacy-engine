@@ -1,0 +1,19 @@
+# №706: лавка продавца уровня 2, зажатая ► 1,5 с (путь как tests/shop/shops_levels_scenario.txt)
+scene start
+flag msn
+wait 3
+scene L2_load
+flag golevel 2
+wait 30
+scene L2_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.5
+press right 0.15
+wait 1.2
+press right 1.5
+wait 1.9
+end

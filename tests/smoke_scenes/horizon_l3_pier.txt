@@ -1,0 +1,182 @@
+# L3 спавн и вокруг, 8 направлений, горизонт выкл и 8
+scene start
+wait 3
+flag golevel 3
+wait 25
+scene PS_S0
+flag horizon 0
+flag repair
+goto -3.35 -5.57 0.0
+wait 3
+flag horizon 0
+wait 1
+shot PS_S0_off
+flag horizon 8
+wait 1
+shot PS_S0_8
+scene PS_S1
+flag horizon 0
+flag repair
+goto -3.35 -5.57 0.785
+wait 3
+flag horizon 0
+wait 1
+shot PS_S1_off
+flag horizon 8
+wait 1
+shot PS_S1_8
+scene PS_S2
+flag horizon 0
+flag repair
+goto -3.35 -5.57 1.571
+wait 3
+flag horizon 0
+wait 1
+shot PS_S2_off
+flag horizon 8
+wait 1
+shot PS_S2_8
+scene PS_S3
+flag horizon 0
+flag repair
+goto -3.35 -5.57 2.356
+wait 3
+flag horizon 0
+wait 1
+shot PS_S3_off
+flag horizon 8
+wait 1
+shot PS_S3_8
+scene PS_S4
+flag horizon 0
+flag repair
+goto -3.35 -5.57 3.142
+wait 3
+flag horizon 0
+wait 1
+shot PS_S4_off
+flag horizon 8
+wait 1
+shot PS_S4_8
+scene PS_S5
+flag horizon 0
+flag repair
+goto -3.35 -5.57 3.927
+wait 3
+flag horizon 0
+wait 1
+shot PS_S5_off
+flag horizon 8
+wait 1
+shot PS_S5_8
+scene PS_S6
+flag horizon 0
+flag repair
+goto -3.35 -5.57 4.712
+wait 3
+flag horizon 0
+wait 1
+shot PS_S6_off
+flag horizon 8
+wait 1
+shot PS_S6_8
+scene PS_S7
+flag horizon 0
+flag repair
+goto -3.35 -5.57 5.498
+wait 3
+flag horizon 0
+wait 1
+shot PS_S7_off
+flag horizon 8
+wait 1
+shot PS_S7_8
+scene PS_T0
+flag horizon 0
+flag repair
+goto -90 -5.6 0.0
+wait 3
+flag horizon 0
+wait 1
+shot PS_T0_off
+flag horizon 8
+wait 1
+shot PS_T0_8
+scene PS_T1
+flag horizon 0
+flag repair
+goto -90 -5.6 0.785
+wait 3
+flag horizon 0
+wait 1
+shot PS_T1_off
+flag horizon 8
+wait 1
+shot PS_T1_8
+scene PS_T2
+flag horizon 0
+flag repair
+goto -90 -5.6 1.571
+wait 3
+flag horizon 0
+wait 1
+shot PS_T2_off
+flag horizon 8
+wait 1
+shot PS_T2_8
+scene PS_T3
+flag horizon 0
+flag repair
+goto -90 -5.6 2.356
+wait 3
+flag horizon 0
+wait 1
+shot PS_T3_off
+flag horizon 8
+wait 1
+shot PS_T3_8
+scene PS_T4
+flag horizon 0
+flag repair
+goto -90 -5.6 3.142
+wait 3
+flag horizon 0
+wait 1
+shot PS_T4_off
+flag horizon 8
+wait 1
+shot PS_T4_8
+scene PS_T5
+flag horizon 0
+flag repair
+goto -90 -5.6 3.927
+wait 3
+flag horizon 0
+wait 1
+shot PS_T5_off
+flag horizon 8
+wait 1
+shot PS_T5_8
+scene PS_T6
+flag horizon 0
+flag repair
+goto -90 -5.6 4.712
+wait 3
+flag horizon 0
+wait 1
+shot PS_T6_off
+flag horizon 8
+wait 1
+shot PS_T6_8
+scene PS_T7
+flag horizon 0
+flag repair
+goto -90 -5.6 5.498
+wait 3
+flag horizon 0
+wait 1
+shot PS_T7_off
+flag horizon 8
+wait 1
+shot PS_T7_8
+end

@@ -1,0 +1,34 @@
+{
+ "id": "ps2_v101_title_arrival",
+ "state": "build/twins/o4/ps2_v101_continue_no_card/snap_2400.p2s",
+ "frames": 1200,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  100,
+  300,
+  500,
+  700,
+  900,
+  1200
+ ],
+ "pngs": [
+  [
+   2,
+   1200,
+   2
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 150,
+ "renderer": "metal",
+ "note": "No input after original publisher intro, fine title arrival sequence every2 PAL vsync. Copied cardless profile."
+}

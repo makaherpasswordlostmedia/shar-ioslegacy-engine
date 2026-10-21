@@ -1,0 +1,24 @@
+# Гейт бонус-игры в безголовом эмуляторе (правка 420, tests/bonus/emu.sh): меню -> MINI GAME -> выбор -> гонка (1 круг, машиной игрока
+# ведёт водитель ИИ — flag bonusauto) -> вид сверху и за машиной -> итоги -> назад в меню.
+flag menu
+flag bonuslaps 1
+flag bonusauto 1
+flag bonustrack 1
+wait 2
+press left
+wait 0.6
+press cross
+wait 1.5
+shot bonus_menu
+flag bonusgo
+wait 6
+shot bonus_top
+flag bonuscam 1
+wait 3
+shot bonus_chase
+flag bonuscam 0
+wait 60
+press triangle
+wait 4
+shot bonus_back
+end

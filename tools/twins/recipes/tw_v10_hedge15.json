@@ -1,0 +1,68 @@
+{
+ "id": "tw_v10_hedge15",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 460,
+ "every": 2,
+ "trace": [
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[1]",
+  "car_vel[2]",
+  "hnr"
+ ],
+ "writes": [
+  {
+   "name": "car_cm[0]",
+   "value": 134.545,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 4.6,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -152.464,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 152,
+   "hold": 40
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 152,
+   "hold": 40
+  },
+  {
+   "name": "car_vel[0]",
+   "value": -4.431,
+   "at": 250,
+   "hold": 3
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 14.331,
+   "at": 250,
+   "hold": 3
+  }
+ ],
+ "shots": [
+  240,
+  290,
+  340,
+  420
+ ],
+ "note": "изгородь J9-4: старт (134.54, -152.46) в 12 м до точки (131.0, -141.0) по носу машины, толчок 15 м/с"
+}

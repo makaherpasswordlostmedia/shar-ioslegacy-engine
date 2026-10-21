@@ -1,0 +1,5 @@
+# Загрузка 3: 90 с полёта камеры по кругу L1 на скорости 30 м/с (flypath), строка учёта LOADACC; SMOKE_FLAGS="slowio flypath"
+scene l1_fly
+flag loadacc 1
+wait 95
+end

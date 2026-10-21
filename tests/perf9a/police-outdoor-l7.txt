@@ -1,0 +1,13 @@
+flag level 7
+flag policewarmold 0
+scene police_outdoor_l7
+flag msn
+wait 3
+foot 220 172 1.5708
+wait 2
+flag hnr 85
+wait 2
+flag hnr 100
+wait 8
+shot police_outdoor_l7
+end

@@ -1,0 +1,47 @@
+# «press circle» рядом с ↑/↓/←/→ пешком: ○ зажат — Гомер бежит (раскладка оригинала ControllerPS2.pag: ○ DASH / SPRINT, 29.09); без ○ идёт 4 м/с
+# В5 в эмуляторе (tests/collect/emu.sh): карточка, оса, гэг, ролик гэга. Точки — из данных (build/collect/expect.tsv:
+# card17 407.99 4.24 -413.09; оса w_bonuscar -99.01 1.21 213.73; gag_bbq триггер 228.567 3.355 201.097; дверь Kwik-E-Mart и
+# gag_tele триггер 506.452 -19.91 303.307), движок ничего не знает о местах: сценарий только ставит Гомера/машину и жмёт кнопки
+# правка Роба 41: вход и выход комнат — только по △ (viewer/rooms.h needAction); в триггере двери — press triangle
+scene start
+wait 3
+# оса (первой: Гомер ещё за рулём) w_bonuscar: машина в 14 м, курс на осу, газ -> сбита, 25 монет
+scene wasp
+goto -99.01 227.73 3.14159
+wait 1.5
+shot wasp_alive
+flag autostraight 2.5
+wait 3
+shot wasp_dead
+flag stop
+# карточка card17 (у трейлеров, 0.9 м над землёй): Гомер пешком под ней -> подбор, «COLLECTOR CARD!», 1/7
+scene card
+foot 407.99 -413.09 0 4.6
+wait 0.6
+shot card_got
+wait 2
+# гэг барбекю во дворе Симпсонов: Гомер в триггере, △ -> пламя, звук gag_bbq, 1 монета
+scene gag
+foot 228.567 201.097 0 5
+wait 1
+press triangle
+wait 1.5
+shot gag_bbq
+wait 5
+# ролик гэга: Kwik-E-Mart, gag_tele (GagPlayFMV loot.rmv)
+scene loot
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2.5
+foot 506.452 303.307 0 -19
+wait 1
+press triangle
+wait 3
+shot loot_fmv
+wait 10
+shot loot_after
+end

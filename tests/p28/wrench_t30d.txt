@@ -1,0 +1,56 @@
+scene start
+wait 3
+flag repair
+wait 3
+flag wrencheye 5
+flag wrenchgo 7
+wait 8
+scene K7
+wait 1
+shot K7
+flag wrenchgo 307
+wait 8
+scene K307
+wait 1
+shot K307
+flag wrenchgo 8
+wait 8
+scene K8
+wait 1
+shot K8
+flag wrenchgo 308
+wait 8
+scene K308
+wait 1
+shot K308
+flag wrenchgo 9
+wait 8
+scene K9
+wait 1
+shot K9
+flag wrenchgo 309
+wait 8
+scene K309
+wait 1
+shot K309
+flag wrenchgo 10
+wait 8
+scene K10
+wait 1
+shot K10
+flag wrenchgo 310
+wait 8
+scene K310
+wait 1
+shot K310
+flag wrenchgo 11
+wait 8
+scene K11
+wait 1
+shot K11
+flag wrenchgo 311
+wait 8
+scene K311
+wait 1
+shot K311
+end

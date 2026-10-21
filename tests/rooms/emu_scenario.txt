@@ -1,0 +1,136 @@
+# «press circle» рядом с ↑/↓/←/→ пешком: ○ зажат — Гомер бежит (раскладка оригинала ControllerPS2.pag: ○ DASH / SPRINT, 29.09); без ○ идёт 4 м/с
+# Комнаты уровня 1 в эмуляторе (пункт 11.2, tests/rooms/emu.sh): Гомер пешком у двери -> «вверх» -> комната (снимок) ->
+# назад к локатору выхода -> на улице у той же двери. Kwik-E-Mart 5 кругов подряд (куча без утечки), школа и дом по разу.
+# Двери и курсы — из build/interiors-l1.json: Kwik (213.9, 302.7) вход на +z; школа (-35.2, 589.5) вход на −x; дом (228.9, 184.1) вход на +z.
+# Вход и выход — по триггерам из данных (viewer/rooms.h): Гомер ставится в 0.5–1.3 м перед триггером двери; старт комнаты — у края
+# триггера выхода, выход «взводится», когда Гомер побывал снаружи. «Вверх» 0.8 с: вход и ещё пара метров вглубь; «вниз» 1 с —
+# тем же путём назад в триггер выхода (он за стартом, по оси входа; в Kwik-E-Mart камера 01 смотрит от входа — «вниз» к выходу).
+# Сцены *_in — только комната (разбор: tests/rooms/emu_check.py)
+# правка Роба 41: вход и выход комнат — только по △ (viewer/rooms.h needAction; PS2: «PRESS △ TO GO INSIDE»); в триггере двери —
+# press triangle, в Kwik-E-Mart после входа полсекунды вглубь (как прежде вход посреди шага: тот же вид камеры 03), выход —
+# в центр триггера выхода (данные: exitTrig int_kwik_exit 499.43, 305.25), как у школы и дома
+scene start
+wait 3
+foot 213.9 299 0 5.2
+wait 1.5
+shot kwik_door
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+scene kwik_in
+wait 4
+shot kwik_in
+scene kwik_loop
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+shot kwik_out
+wait 1.5
+# круги 2–5
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+# школа
+scene school
+foot -31.5 589.45 -1.5708 4.64
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene school_in
+wait 4
+shot school_in
+scene school_out
+# в комнате «вверх/вниз» — от вида её камеры (как в оригинале); выход школы и дома — телепортом через триггер выхода: сначала
+# вне него (выход взводится), потом в центр (данные: build/interiors-l1.json exitTrig)
+foot 499.98 344.6 0 -19.5
+wait 0.5
+foot 499.43 342.83 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+shot school_out
+wait 2
+# дом Симпсонов
+scene house
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene house_in
+wait 4
+shot house_in
+scene house_out
+foot 501.0 398.03 0 -19.5
+wait 0.5
+foot 502.97 398.67 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+shot house_out
+wait 2
+end

@@ -1,0 +1,41 @@
+{
+ "id": "ps2_v100_main_idle_180s",
+ "state": "build/twins/o4/ps2_v100_intro_to_menu/snap_2400.p2s",
+ "frames": 9000,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  2,
+  750,
+  1500,
+  2250,
+  3000,
+  3750,
+  4500,
+  5250,
+  6000,
+  6750,
+  7500,
+  8250,
+  9000
+ ],
+ "pngs": [
+  [
+   2,
+   9000,
+   10
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 300,
+ "renderer": "metal",
+ "note": "180 seconds without buttons in main menu; native PNG every10 PAL frames, internal WAV only, CDVD file log retained. Main menu clock initial elapsed depends on saved entry stage."
+}

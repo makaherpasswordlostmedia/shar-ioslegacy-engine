@@ -1,0 +1,5 @@
+flag level 5
+wait 3
+flag spbillnear 100
+shot control5
+end

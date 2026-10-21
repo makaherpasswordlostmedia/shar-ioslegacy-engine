@@ -1,0 +1,32 @@
+{
+ "id": "ps2_v101_title_arrival_sw_check",
+ "state": "build/twins/o4/ps2_v101_title_arrival/snap_100.p2s",
+ "frames": 180,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  100,
+  180
+ ],
+ "pngs": [
+  [
+   2,
+   180,
+   2
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 120,
+ "renderer": "sw",
+ "note": "Software-renderer check of first title frames from original saved loading, compare stable logo and pulse to Metal capture. Runtime/card/profile unchanged."
+}

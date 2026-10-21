@@ -1,0 +1,31 @@
+# TEST19 видео 2:07: облёт будки через изгородь. Запуск на пакете TEST19 (flag phoneanim). Красный: flag camphoneguardold 1 (кадры в листве 5 из 10); зелёный: перед глазом свободно не меньше 1 м, изгородь видна снаружи, листвой не забито
+flag player
+scene T19_booth
+flag phoneplant
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+flag camphoneguardold 0
+flag camlog
+flag phoneanim
+wait 0.3
+shot pha0
+wait 0.3
+shot pha1
+wait 0.3
+shot pha2
+wait 0.3
+shot pha3
+wait 0.3
+shot pha4
+wait 0.3
+shot pha5
+wait 0.3
+shot pha6
+wait 0.3
+shot pha7
+wait 0.3
+shot pha8
+wait 0.3
+shot pha9
+end

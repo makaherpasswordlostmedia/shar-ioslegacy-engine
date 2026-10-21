@@ -1,0 +1,61 @@
+# Обзор комнаты bart из центра: 12 направлений по 30°, сравнение стекла старое/новое (cam берёт вектор)
+wait 3
+flag golevel 4
+wait 20
+scene bart_in
+foot 224.7 204.4 3.1416 6.6
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene y00
+cam 500.2 -18.6 450.5 0.000 0.08 1.000 70
+wait 0.8
+shot y00
+scene y01
+cam 500.2 -18.6 450.5 0.500 0.08 0.866 70
+wait 0.8
+shot y01
+scene y02
+cam 500.2 -18.6 450.5 0.866 0.08 0.500 70
+wait 0.8
+shot y02
+scene y03
+cam 500.2 -18.6 450.5 1.000 0.08 0.000 70
+wait 0.8
+shot y03
+scene y04
+cam 500.2 -18.6 450.5 0.866 0.08 -0.500 70
+wait 0.8
+shot y04
+scene y05
+cam 500.2 -18.6 450.5 0.500 0.08 -0.866 70
+wait 0.8
+shot y05
+scene y06
+cam 500.2 -18.6 450.5 0.000 0.08 -1.000 70
+wait 0.8
+shot y06
+scene y07
+cam 500.2 -18.6 450.5 -0.500 0.08 -0.866 70
+wait 0.8
+shot y07
+scene y08
+cam 500.2 -18.6 450.5 -0.866 0.08 -0.500 70
+wait 0.8
+shot y08
+scene y09
+cam 500.2 -18.6 450.5 -1.000 0.08 -0.000 70
+wait 0.8
+shot y09
+scene y10
+cam 500.2 -18.6 450.5 -0.866 0.08 0.500 70
+wait 0.8
+shot y10
+scene y11
+cam 500.2 -18.6 450.5 -0.500 0.08 0.866 70
+wait 0.8
+shot y11
+end

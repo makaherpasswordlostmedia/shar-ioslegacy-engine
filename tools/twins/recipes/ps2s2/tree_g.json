@@ -1,0 +1,127 @@
+{
+ "id": "tree_g",
+ "state": "build/twins/o4/ps2_v105_oblit_boot3/snap_6250.p2s",
+ "frames": 600,
+ "every": 5,
+ "trace": [
+  "homer_root",
+  "cam_pos"
+ ],
+ "pad": [
+  [
+   5,
+   "square",
+   1
+  ],
+  [
+   12,
+   "square",
+   0
+  ],
+  [
+   30,
+   "lleft",
+   1.0
+  ],
+  [
+   130,
+   "lleft",
+   0
+  ],
+  [
+   140,
+   "lup",
+   1.0
+  ],
+  [
+   400,
+   "lup",
+   0.6
+  ],
+  [
+   400,
+   "lleft",
+   0.8
+  ],
+  [
+   420,
+   "cross",
+   1
+  ],
+  [
+   426,
+   "cross",
+   0
+  ],
+  [
+   450,
+   "cross",
+   1
+  ],
+  [
+   456,
+   "cross",
+   0
+  ],
+  [
+   480,
+   "cross",
+   1
+  ],
+  [
+   486,
+   "cross",
+   0
+  ],
+  [
+   510,
+   "cross",
+   1
+  ],
+  [
+   516,
+   "cross",
+   0
+  ],
+  [
+   540,
+   "cross",
+   1
+  ],
+  [
+   546,
+   "cross",
+   0
+  ],
+  [
+   570,
+   "cross",
+   1
+  ],
+  [
+   576,
+   "cross",
+   0
+  ],
+  [
+   600,
+   "lleft",
+   0
+  ],
+  [
+   600,
+   "lup",
+   0
+  ]
+ ],
+ "shots": [],
+ "pngs": [
+  [
+   400,
+   600,
+   10
+  ]
+ ],
+ "timeout": 600,
+ "renderer": "metal"
+}

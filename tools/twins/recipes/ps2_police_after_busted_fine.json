@@ -1,0 +1,232 @@
+{
+ "id": "ps2_police_after_busted_fine",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "frames": 1900,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "hnr_view",
+  "hnr_pause_ms",
+  "car_vel[0]",
+  "car_vel[2]",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  {
+   "addr": "a25810",
+   "label": "pol_x"
+  },
+  {
+   "addr": "a25818",
+   "label": "pol_z"
+  },
+  {
+   "addr": "a25820",
+   "label": "pol_vx"
+  },
+  {
+   "addr": "a25828",
+   "label": "pol_vz"
+  },
+  {
+   "addr": "6121b0",
+   "type": "u32",
+   "label": "m6121b0"
+  },
+  {
+   "addr": "6121b4",
+   "type": "u32",
+   "label": "m6121b4"
+  },
+  {
+   "addr": "6121c0",
+   "type": "u32",
+   "label": "m6121c0"
+  },
+  {
+   "addr": "6121c8",
+   "type": "u32",
+   "label": "m6121c8"
+  },
+  {
+   "addr": "6121dc",
+   "type": "u32",
+   "label": "m6121dc"
+  },
+  {
+   "addr": "6121e4",
+   "type": "u32",
+   "label": "m6121e4"
+  },
+  {
+   "addr": "6121ec",
+   "type": "u32",
+   "label": "m6121ec"
+  },
+  {
+   "addr": "6121f8",
+   "type": "u32",
+   "label": "m6121f8"
+  },
+  {
+   "addr": "612140",
+   "type": "u32",
+   "label": "m612140"
+  },
+  {
+   "addr": "612148",
+   "type": "u32",
+   "label": "m612148"
+  },
+  {
+   "addr": "612154",
+   "type": "u32",
+   "label": "m612154"
+  },
+  {
+   "addr": "61215c",
+   "type": "u32",
+   "label": "m61215c"
+  },
+  {
+   "addr": "612174",
+   "type": "u32",
+   "label": "m612174"
+  },
+  {
+   "addr": "612178",
+   "type": "u32",
+   "label": "m612178"
+  },
+  {
+   "addr": "61217c",
+   "type": "u32",
+   "label": "m61217c"
+  },
+  {
+   "addr": "6120e4",
+   "type": "u32",
+   "label": "m6120e4"
+  },
+  {
+   "addr": "6120e8",
+   "type": "u32",
+   "label": "m6120e8"
+  },
+  {
+   "addr": "6120ec",
+   "type": "u32",
+   "label": "m6120ec"
+  },
+  {
+   "addr": "612108",
+   "type": "u32",
+   "label": "m612108"
+  },
+  {
+   "addr": "61210c",
+   "type": "u32",
+   "label": "m61210c"
+  },
+  {
+   "addr": "a275f0",
+   "type": "f32",
+   "label": "pol1_x"
+  },
+  {
+   "addr": "a275f8",
+   "type": "f32",
+   "label": "pol1_z"
+  },
+  {
+   "addr": "a293d0",
+   "type": "f32",
+   "label": "pol2_x"
+  },
+  {
+   "addr": "a293d8",
+   "type": "f32",
+   "label": "pol2_z"
+  }
+ ],
+ "writes": [
+  {
+   "value": 221.3,
+   "at": 150,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 4.11,
+   "at": 150,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -174.24,
+   "at": 150,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": -3.54,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 11.46,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[2]"
+  },
+  {
+   "name": "hnr",
+   "value": 100.0,
+   "at": 700
+  },
+  {
+   "name": "car_cm[0]",
+   "value": 106.0,
+   "at": 840
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 4.848,
+   "at": 840
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -161.165,
+   "at": 840
+  }
+ ],
+ "shots": [
+  1320,
+  1330,
+  1340,
+  1350,
+  1360,
+  1370,
+  1380,
+  1390,
+  1400,
+  1410,
+  1420,
+  1430,
+  1440,
+  1450,
+  1460,
+  1470,
+  1480,
+  1490,
+  1500,
+  1510,
+  1520,
+  1530,
+  1540,
+  1550,
+  1600,
+  1700,
+  1800,
+  1900
+ ]
+}

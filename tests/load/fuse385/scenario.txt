@@ -1,0 +1,9 @@
+scene before_load
+wait 2
+flag lvfuseslow 350
+flag golevel 2
+wait 5
+scene after_load
+wait 3
+shot fuse385_loaded
+end

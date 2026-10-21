@@ -1,0 +1,786 @@
+{
+ "id": "ps2_v104_jz2_70_repeat",
+ "state": "build/twins/o4/ps2_v104_prepare_jz2/stage.p2s",
+ "target_speed_kmh": 70,
+ "coast": false,
+ "heading_deg": -90,
+ "lip": [
+  -53.76,
+  4.21,
+  -629.42
+ ],
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  "hnr",
+  {
+   "addr": "1298ab8",
+   "type": "f32",
+   "label": "body0"
+  },
+  {
+   "addr": "1298abc",
+   "type": "f32",
+   "label": "body1"
+  },
+  {
+   "addr": "1298ac0",
+   "type": "f32",
+   "label": "body2"
+  },
+  {
+   "addr": "1298ac4",
+   "type": "f32",
+   "label": "body3"
+  },
+  {
+   "addr": "1298ac8",
+   "type": "f32",
+   "label": "body4"
+  },
+  {
+   "addr": "1298acc",
+   "type": "f32",
+   "label": "body5"
+  },
+  {
+   "addr": "1298ad0",
+   "type": "f32",
+   "label": "body6"
+  },
+  {
+   "addr": "1298ad4",
+   "type": "f32",
+   "label": "body7"
+  },
+  {
+   "addr": "1298ad8",
+   "type": "f32",
+   "label": "body8"
+  },
+  {
+   "addr": "1298adc",
+   "type": "f32",
+   "label": "body9"
+  },
+  {
+   "addr": "1298ae0",
+   "type": "f32",
+   "label": "body10"
+  },
+  {
+   "addr": "1298ae4",
+   "type": "f32",
+   "label": "body11"
+  },
+  {
+   "addr": "1298ae8",
+   "type": "f32",
+   "label": "body12"
+  },
+  {
+   "addr": "1298aec",
+   "type": "f32",
+   "label": "body13"
+  },
+  {
+   "addr": "1298af0",
+   "type": "f32",
+   "label": "body14"
+  },
+  {
+   "addr": "1298af4",
+   "type": "f32",
+   "label": "body15"
+  },
+  {
+   "addr": "1489218",
+   "type": "f32",
+   "label": "wheel0_12"
+  },
+  {
+   "addr": "148921c",
+   "type": "f32",
+   "label": "wheel0_13"
+  },
+  {
+   "addr": "1489220",
+   "type": "f32",
+   "label": "wheel0_14"
+  },
+  {
+   "addr": "14892d8",
+   "type": "f32",
+   "label": "wheel1_12"
+  },
+  {
+   "addr": "14892dc",
+   "type": "f32",
+   "label": "wheel1_13"
+  },
+  {
+   "addr": "14892e0",
+   "type": "f32",
+   "label": "wheel1_14"
+  },
+  {
+   "addr": "1489398",
+   "type": "f32",
+   "label": "wheel2_12"
+  },
+  {
+   "addr": "148939c",
+   "type": "f32",
+   "label": "wheel2_13"
+  },
+  {
+   "addr": "14893a0",
+   "type": "f32",
+   "label": "wheel2_14"
+  },
+  {
+   "addr": "1489458",
+   "type": "f32",
+   "label": "wheel3_12"
+  },
+  {
+   "addr": "148945c",
+   "type": "f32",
+   "label": "wheel3_13"
+  },
+  {
+   "addr": "1489460",
+   "type": "f32",
+   "label": "wheel3_14"
+  },
+  {
+   "addr": "12988a4",
+   "type": "f32",
+   "label": "cm_offset_y"
+  },
+  {
+   "addr": "a23054",
+   "type": "f32",
+   "label": "wheel0_raw_disp_candidate"
+  },
+  {
+   "addr": "a23074",
+   "type": "u32",
+   "label": "wheel0_contact_candidate"
+  },
+  {
+   "addr": "a230e4",
+   "type": "f32",
+   "label": "wheel1_raw_disp_candidate"
+  },
+  {
+   "addr": "a23104",
+   "type": "u32",
+   "label": "wheel1_contact_candidate"
+  },
+  {
+   "addr": "a23174",
+   "type": "f32",
+   "label": "wheel2_raw_disp_candidate"
+  },
+  {
+   "addr": "a23194",
+   "type": "u32",
+   "label": "wheel2_contact_candidate"
+  },
+  {
+   "addr": "a23204",
+   "type": "f32",
+   "label": "wheel3_raw_disp_candidate"
+  },
+  {
+   "addr": "a23224",
+   "type": "u32",
+   "label": "wheel3_contact_candidate"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0.226
+  ],
+  [
+   2,
+   "lleft",
+   0.211
+  ],
+  [
+   4,
+   "lleft",
+   0.193
+  ],
+  [
+   6,
+   "lleft",
+   0.183
+  ],
+  [
+   8,
+   "lleft",
+   0.175
+  ],
+  [
+   10,
+   "lleft",
+   0.168
+  ],
+  [
+   12,
+   "lleft",
+   0.163
+  ],
+  [
+   14,
+   "lleft",
+   0.161
+  ],
+  [
+   16,
+   "lleft",
+   0.159
+  ],
+  [
+   18,
+   "lleft",
+   0.158
+  ],
+  [
+   20,
+   "lleft",
+   0.157
+  ],
+  [
+   32,
+   "lleft",
+   0.158
+  ],
+  [
+   36,
+   "lleft",
+   0.159
+  ],
+  [
+   42,
+   "cross",
+   0
+  ],
+  [
+   42,
+   "lleft",
+   0.16
+  ],
+  [
+   46,
+   "cross",
+   1
+  ],
+  [
+   48,
+   "lleft",
+   0.159
+  ],
+  [
+   50,
+   "cross",
+   0
+  ],
+  [
+   50,
+   "lleft",
+   0.158
+  ],
+  [
+   52,
+   "lleft",
+   0.157
+  ],
+  [
+   54,
+   "cross",
+   1
+  ],
+  [
+   56,
+   "cross",
+   0
+  ],
+  [
+   60,
+   "cross",
+   1
+  ],
+  [
+   62,
+   "cross",
+   0
+  ],
+  [
+   68,
+   "cross",
+   1
+  ],
+  [
+   70,
+   "cross",
+   0
+  ],
+  [
+   72,
+   "cross",
+   1
+  ],
+  [
+   74,
+   "cross",
+   0
+  ],
+  [
+   78,
+   "cross",
+   1
+  ],
+  [
+   78,
+   "lleft",
+   0.158
+  ],
+  [
+   80,
+   "cross",
+   0
+  ],
+  [
+   82,
+   "cross",
+   1
+  ],
+  [
+   84,
+   "cross",
+   0
+  ],
+  [
+   88,
+   "cross",
+   1
+  ],
+  [
+   90,
+   "cross",
+   0
+  ],
+  [
+   92,
+   "cross",
+   1
+  ],
+  [
+   94,
+   "cross",
+   0
+  ],
+  [
+   98,
+   "cross",
+   1
+  ],
+  [
+   100,
+   "lleft",
+   0.159
+  ],
+  [
+   102,
+   "cross",
+   0
+  ],
+  [
+   102,
+   "lleft",
+   0.16
+  ],
+  [
+   104,
+   "lleft",
+   0.161
+  ],
+  [
+   106,
+   "cross",
+   1
+  ],
+  [
+   106,
+   "lleft",
+   0.162
+  ],
+  [
+   108,
+   "cross",
+   0
+  ],
+  [
+   110,
+   "cross",
+   1
+  ],
+  [
+   110,
+   "lleft",
+   0.163
+  ],
+  [
+   114,
+   "cross",
+   0
+  ],
+  [
+   114,
+   "lleft",
+   0.164
+  ],
+  [
+   116,
+   "lleft",
+   0.166
+  ],
+  [
+   118,
+   "lleft",
+   0.169
+  ],
+  [
+   120,
+   "lleft",
+   0.171
+  ],
+  [
+   122,
+   "cross",
+   1
+  ],
+  [
+   122,
+   "lleft",
+   0.173
+  ],
+  [
+   124,
+   "lleft",
+   0.174
+  ],
+  [
+   126,
+   "cross",
+   0
+  ],
+  [
+   126,
+   "lleft",
+   0.173
+  ],
+  [
+   130,
+   "cross",
+   1
+  ],
+  [
+   132,
+   "cross",
+   0
+  ],
+  [
+   132,
+   "lleft",
+   0.172
+  ],
+  [
+   136,
+   "cross",
+   1
+  ],
+  [
+   138,
+   "cross",
+   0
+  ],
+  [
+   142,
+   "cross",
+   1
+  ],
+  [
+   144,
+   "cross",
+   0
+  ],
+  [
+   150,
+   "lleft",
+   0.173
+  ],
+  [
+   152,
+   "cross",
+   1
+  ],
+  [
+   152,
+   "lleft",
+   0.172
+  ],
+  [
+   156,
+   "lleft",
+   0.174
+  ],
+  [
+   158,
+   "lleft",
+   0.176
+  ],
+  [
+   160,
+   "lleft",
+   0.175
+  ],
+  [
+   162,
+   "lleft",
+   0.172
+  ],
+  [
+   164,
+   "lleft",
+   0.175
+  ],
+  [
+   168,
+   "lleft",
+   0.174
+  ],
+  [
+   170,
+   "lleft",
+   0.172
+  ],
+  [
+   172,
+   "cross",
+   0
+  ],
+  [
+   172,
+   "lleft",
+   0.169
+  ],
+  [
+   174,
+   "lleft",
+   0.166
+  ],
+  [
+   176,
+   "lleft",
+   0
+  ],
+  [
+   212,
+   "cross",
+   1
+  ],
+  [
+   232,
+   "cross",
+   0
+  ],
+  [
+   236,
+   "cross",
+   1
+  ],
+  [
+   266,
+   "cross",
+   0
+  ],
+  [
+   270,
+   "cross",
+   1
+  ],
+  [
+   272,
+   "cross",
+   0
+  ],
+  [
+   278,
+   "cross",
+   1
+  ],
+  [
+   280,
+   "cross",
+   0
+  ],
+  [
+   282,
+   "cross",
+   1
+  ],
+  [
+   284,
+   "cross",
+   0
+  ],
+  [
+   286,
+   "cross",
+   1
+  ],
+  [
+   290,
+   "cross",
+   0
+  ],
+  [
+   294,
+   "cross",
+   1
+  ],
+  [
+   296,
+   "cross",
+   0
+  ],
+  [
+   350,
+   "cross",
+   1
+  ],
+  [
+   352,
+   "cross",
+   0
+  ],
+  [
+   354,
+   "cross",
+   1
+  ],
+  [
+   356,
+   "cross",
+   0
+  ],
+  [
+   360,
+   "cross",
+   1
+  ],
+  [
+   362,
+   "cross",
+   0
+  ],
+  [
+   366,
+   "cross",
+   1
+  ],
+  [
+   368,
+   "cross",
+   0
+  ],
+  [
+   374,
+   "cross",
+   1
+  ],
+  [
+   376,
+   "cross",
+   0
+  ],
+  [
+   380,
+   "cross",
+   1
+  ],
+  [
+   382,
+   "cross",
+   0
+  ],
+  [
+   384,
+   "cross",
+   1
+  ],
+  [
+   386,
+   "cross",
+   0
+  ],
+  [
+   390,
+   "cross",
+   1
+  ],
+  [
+   392,
+   "cross",
+   0
+  ],
+  [
+   396,
+   "cross",
+   1
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  0,
+  176,
+  226,
+  326,
+  476
+ ],
+ "every": 2,
+ "timeout": 180,
+ "note": "Input-only real route stage; native camera/body/articulated wheel positions every2 PAL frames. raw_disp/contact are candidates, never an independently accepted contact measurement.",
+ "frames": 476
+}

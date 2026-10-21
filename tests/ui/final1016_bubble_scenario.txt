@@ -1,0 +1,17 @@
+scene g646
+flag msn
+wait 3
+flag uipopmsg 2
+wait 1
+shot l1
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 3
+wait 1
+shot l2
+flag uipopmsg 0
+wait 2.5
+flag uipopmsgl 1
+wait 1
+shot l4
+end

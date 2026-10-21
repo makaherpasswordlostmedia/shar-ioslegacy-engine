@@ -1,0 +1,19 @@
+# Детская площадка школы (l1z3: z3_playground_* StaticPhys, меши SchoolLadder_m, автобус-горка): вблизи пешком и с машины.
+# SMOKE_SCN=tests/levelobj/playground_views.txt tools/smoke.sh DIR
+scene pg_car
+goto -90 596 0.2
+wait 4
+shot pg_car
+scene pg_foot1
+foot -92 600 0.3
+wait 2
+shot pg_foot1
+scene pg_foot2
+foot -78 609 -1.2
+wait 2
+shot pg_foot2
+scene pg_foot3
+foot -100 616 2.4
+wait 2
+shot pg_foot3
+end

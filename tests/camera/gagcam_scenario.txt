@@ -1,0 +1,23 @@
+# Правка Роба 338 (tests/camera/gagcam.py): газ у АЭС (L1 H4-7, кнопка 12,35; 1; −337) — камера зоны r6_cam с диска. Гомер на площадке
+# у кнопки (в триггере r6_cam), уходит из триггера, стоит, возвращается в триггер, снова уходит
+flag camlog
+flag caminlog
+wait 3
+scene gas
+foot 12.35 -335.6 3.1416 2.0
+wait 2
+flag camin 0.2
+press up 1.5
+wait 1.6
+shot gas_out
+wait 2
+shot gas_after
+press down 1.5
+wait 1.6
+shot gas_in
+wait 1.5
+press up 1.5
+wait 1.6
+wait 2
+flag camin
+end

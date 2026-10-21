@@ -1,0 +1,26 @@
+# Гейт «бит в бит» смены тона (16.10, Камера): итоговые палитры прежнего синхронного пути (tonejobold 1) и фонального задания совпадают.
+# Читать строки TONEHASH old/job в smoke.txt: gamma 130 old == gamma 130 job; gamma 100 old == gamma 100 job; 130 != 100 (красный контроль: хэш чувствителен).
+scene GH_L1_load
+flag golevel 1
+wait 15
+scene GH_old
+flag tonejobold 1
+flag gamma 130
+wait 2
+flag gamma 100
+wait 2
+flag hzcachetone 160
+wait 2
+flag hzcachetone 136
+wait 2
+scene GH_job
+flag tonejobold 0
+flag gamma 130
+wait 6
+flag gamma 100
+wait 6
+flag hzcachetone 160
+wait 6
+flag hzcachetone 136
+wait 6
+end

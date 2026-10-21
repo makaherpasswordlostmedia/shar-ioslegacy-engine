@@ -1,0 +1,38 @@
+flag player
+flag msn
+wait 7
+flag coinadd 200
+scene typo_shop
+foot 325 -124.55 -1.5708 2.7
+wait 2
+press triangle
+wait 3
+press square
+wait .8
+shot shop_a
+flag uitypo 1
+wait .1
+shot shop_b
+flag uitypo 2
+wait .1
+shot shop_c
+flag uitypo 0
+wait .1
+shot shop_a2
+press circle
+wait 2
+scene typo_cards
+flag cardsset 63
+foot 407.993 -413.088 0 4.2373
+wait 3.5
+shot cards_a
+flag uitypo 1
+wait .1
+shot cards_b
+flag uitypo 2
+wait .1
+shot cards_c
+flag uitypo 0
+wait .1
+shot cards_a2
+end

@@ -1,0 +1,167 @@
+{
+ "id": "f12",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 880,
+ "every": 1,
+ "trace": [
+  "car_cm[0]",
+  "car_cm[1]",
+  "car_cm[2]",
+  "car_vel[0]",
+  "car_vel[1]",
+  "car_vel[2]",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]"
+ ],
+ "writes": [
+  {
+   "name": "car_cm[0]",
+   "value": -204.016,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 3.21,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -185.761,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_cm[0]",
+   "value": -242.811,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 2.36,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -271.478,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_cm[0]",
+   "value": -242.03,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 1.29,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -273.89,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[0]",
+   "value": -1.581,
+   "at": 630,
+   "hold": 50
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 4.743,
+   "at": 630,
+   "hold": 50
+  }
+ ],
+ "shots": [
+  550,
+  874
+ ],
+ "note": {
+  "place": 12,
+  "loader": "loader17",
+  "zone": "l1r3",
+  "depart": [
+   -242.03,
+   -0.21,
+   -273.89
+  ],
+  "edge": [
+   -242.02,
+   -0.22,
+   -273.85
+  ],
+  "beyond": [
+   -242.81,
+   -271.48
+  ],
+  "course_orig_deg": -18.4,
+  "speed": 5.0,
+  "foot": true
+ }
+}

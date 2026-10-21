@@ -1,0 +1,338 @@
+{
+ "id": "ps2_epic_jz2",
+ "state": "/Users/USER/Downloads/shar-psp-ps2-w/build/twins/o4/ps2_v104_prepare_jz2/stage.p2s",
+ "target_speed_kmh": 100,
+ "coast": false,
+ "heading_deg": -90,
+ "lip": [
+  -53.76,
+  4.21,
+  -629.42
+ ],
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  {
+   "addr": "c8460c",
+   "type": "f32",
+   "label": "eye0"
+  },
+  {
+   "addr": "c84610",
+   "type": "f32",
+   "label": "eye1"
+  },
+  {
+   "addr": "c84614",
+   "type": "f32",
+   "label": "eye2"
+  },
+  {
+   "addr": "c84618",
+   "type": "f32",
+   "label": "tgt0"
+  },
+  {
+   "addr": "c8461c",
+   "type": "f32",
+   "label": "tgt1"
+  },
+  {
+   "addr": "c84620",
+   "type": "f32",
+   "label": "tgt2"
+  },
+  {
+   "addr": "c84550",
+   "type": "f32",
+   "label": "lens"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0.226
+  ],
+  [
+   2,
+   "lleft",
+   0.211
+  ],
+  [
+   4,
+   "lleft",
+   0.193
+  ],
+  [
+   6,
+   "lleft",
+   0.183
+  ],
+  [
+   8,
+   "lleft",
+   0.175
+  ],
+  [
+   10,
+   "lleft",
+   0.168
+  ],
+  [
+   12,
+   "lleft",
+   0.163
+  ],
+  [
+   14,
+   "lleft",
+   0.161
+  ],
+  [
+   16,
+   "lleft",
+   0.159
+  ],
+  [
+   18,
+   "lleft",
+   0.158
+  ],
+  [
+   20,
+   "lleft",
+   0.157
+  ],
+  [
+   32,
+   "lleft",
+   0.158
+  ],
+  [
+   36,
+   "lleft",
+   0.159
+  ],
+  [
+   42,
+   "lleft",
+   0.16
+  ],
+  [
+   48,
+   "lleft",
+   0.161
+  ],
+  [
+   50,
+   "lleft",
+   0.163
+  ],
+  [
+   52,
+   "lleft",
+   0.165
+  ],
+  [
+   54,
+   "lleft",
+   0.166
+  ],
+  [
+   56,
+   "lleft",
+   0.165
+  ],
+  [
+   60,
+   "lleft",
+   0.164
+  ],
+  [
+   64,
+   "lleft",
+   0.165
+  ],
+  [
+   72,
+   "lleft",
+   0.166
+  ],
+  [
+   76,
+   "lleft",
+   0.167
+  ],
+  [
+   82,
+   "lleft",
+   0.168
+  ],
+  [
+   88,
+   "lleft",
+   0.169
+  ],
+  [
+   92,
+   "lleft",
+   0.17
+  ],
+  [
+   96,
+   "lleft",
+   0.172
+  ],
+  [
+   98,
+   "lleft",
+   0.173
+  ],
+  [
+   100,
+   "lleft",
+   0.174
+  ],
+  [
+   108,
+   "lleft",
+   0.176
+  ],
+  [
+   110,
+   "lleft",
+   0.179
+  ],
+  [
+   112,
+   "lleft",
+   0.18
+  ],
+  [
+   114,
+   "lleft",
+   0.181
+  ],
+  [
+   120,
+   "lleft",
+   0.178
+  ],
+  [
+   122,
+   "lleft",
+   0.175
+  ],
+  [
+   124,
+   "lleft",
+   0.172
+  ],
+  [
+   126,
+   "lleft",
+   0.168
+  ],
+  [
+   128,
+   "lleft",
+   0.166
+  ],
+  [
+   130,
+   "lleft",
+   0.163
+  ],
+  [
+   132,
+   "lleft",
+   0.161
+  ],
+  [
+   134,
+   "lleft",
+   0.16
+  ],
+  [
+   138,
+   "lleft",
+   0.152
+  ],
+  [
+   140,
+   "lleft",
+   0.132
+  ],
+  [
+   142,
+   "lleft",
+   0.119
+  ],
+  [
+   144,
+   "lleft",
+   0.103
+  ],
+  [
+   146,
+   "lleft",
+   0.091
+  ],
+  [
+   148,
+   "lleft",
+   0.071
+  ],
+  [
+   150,
+   "lleft",
+   0.057
+  ],
+  [
+   152,
+   "lleft",
+   0.042
+  ],
+  [
+   154,
+   "lleft",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [],
+ "every": 2,
+ "timeout": 400,
+ "note": "Input-only real route stage; native camera/body/articulated wheel positions every2 PAL frames. raw_disp/contact are candidates, never an independently accepted contact measurement.",
+ "frames": 454,
+ "pngs": [
+  [
+   100,
+   454,
+   2
+  ]
+ ]
+}

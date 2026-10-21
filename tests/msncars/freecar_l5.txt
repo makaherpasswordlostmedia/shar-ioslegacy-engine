@@ -1,0 +1,12 @@
+# №418: L5 J4-7 — машина мира oblit_v у стадиона (viewer/worldcars.h): видна, △ рядом — Гомер в ней
+flag level 5
+scene freecar
+flag msn
+wait 3
+foot 116.7 -311.9 -1.57 15.5
+wait 6
+shot freecar_l5
+press triangle
+wait 4
+shot freecar_l5_in
+end

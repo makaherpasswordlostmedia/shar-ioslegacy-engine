@@ -1,0 +1,26 @@
+# Дверь комнаты Барта (L4/L7): триггер по данным y 6,14..16,14 (центр 11,14, полувысота 5), x 222,7..226,8, z 195,9..201,7; земля у двери y ≈ 3,4. Проба: Гомер ставится на разных высотах у двери
+scene start
+wait 3
+scene B_ground
+foot 224.69 203.5 3.1416 3.5
+wait 2
+shot b_ground
+scene B_high7
+foot 224.69 202.2 3.1416 7.0
+wait 2
+shot b_high7
+press up 0.4
+wait 1.5
+press triangle
+wait 2
+shot b_after
+scene B_high12
+foot 224.69 202.2 3.1416 12.0
+wait 2
+shot b_high12
+press up 0.4
+wait 1.5
+press triangle
+wait 2
+shot b_after12
+end

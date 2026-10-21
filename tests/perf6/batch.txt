@@ -1,0 +1,68 @@
+flag camlog
+flag gglog 1
+scene warm
+wait 3
+scene house_batch1
+flag ggbatchold 1
+foot 240 190 2.4
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot house_batch1
+flag gglog 1
+scene house_batch0
+flag ggbatchold 0
+foot 240 190 2.4
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot house_batch0
+flag gglog 1
+scene frozen_house
+flag ggbatchcompare
+wait 1
+scene exit_batch1
+flag ggbatchold 1
+foot 225 176 0
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot exit_batch1
+flag gglog 1
+scene exit_batch0
+flag ggbatchold 0
+foot 225 176 0
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot exit_batch0
+flag gglog 1
+scene frozen_exit
+flag ggbatchcompare
+wait 1
+scene shadow_batch1
+flag ggbatchold 1
+foot 108.81 190.18 5.1124
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot shadow_batch1
+flag gglog 1
+scene shadow_batch0
+flag ggbatchold 0
+foot 108.81 190.18 5.1124
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+shot shadow_batch0
+flag gglog 1
+scene frozen_shadow
+flag ggbatchcompare
+wait 1
+end

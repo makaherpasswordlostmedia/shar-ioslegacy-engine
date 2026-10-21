@@ -1,0 +1,242 @@
+{
+ "id": "ps2_props_vanish_l1a",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "frames": 1500,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "hnr",
+  {
+   "addr": "a87470",
+   "type": "f32",
+   "label": "p87430_x"
+  },
+  {
+   "addr": "a87474",
+   "type": "f32",
+   "label": "p87430_y"
+  },
+  {
+   "addr": "a87478",
+   "type": "f32",
+   "label": "p87430_z"
+  },
+  {
+   "addr": "a87480",
+   "type": "f32",
+   "label": "p87430_vx"
+  },
+  {
+   "addr": "a87484",
+   "type": "f32",
+   "label": "p87430_vy"
+  },
+  {
+   "addr": "a87488",
+   "type": "f32",
+   "label": "p87430_vz"
+  },
+  {
+   "addr": "a8f240",
+   "type": "f32",
+   "label": "p8f200_x"
+  },
+  {
+   "addr": "a8f244",
+   "type": "f32",
+   "label": "p8f200_y"
+  },
+  {
+   "addr": "a8f248",
+   "type": "f32",
+   "label": "p8f200_z"
+  },
+  {
+   "addr": "a8f250",
+   "type": "f32",
+   "label": "p8f200_vx"
+  },
+  {
+   "addr": "a8f254",
+   "type": "f32",
+   "label": "p8f200_vy"
+  },
+  {
+   "addr": "a8f258",
+   "type": "f32",
+   "label": "p8f200_vz"
+  },
+  {
+   "addr": "a8e970",
+   "type": "f32",
+   "label": "p8e930_x"
+  },
+  {
+   "addr": "a8e974",
+   "type": "f32",
+   "label": "p8e930_y"
+  },
+  {
+   "addr": "a8e978",
+   "type": "f32",
+   "label": "p8e930_z"
+  },
+  {
+   "addr": "a8e980",
+   "type": "f32",
+   "label": "p8e930_vx"
+  },
+  {
+   "addr": "a8e984",
+   "type": "f32",
+   "label": "p8e930_vy"
+  },
+  {
+   "addr": "a8e988",
+   "type": "f32",
+   "label": "p8e930_vz"
+  },
+  {
+   "addr": "a9b300",
+   "type": "f32",
+   "label": "p9b2c0_x"
+  },
+  {
+   "addr": "a9b304",
+   "type": "f32",
+   "label": "p9b2c0_y"
+  },
+  {
+   "addr": "a9b308",
+   "type": "f32",
+   "label": "p9b2c0_z"
+  },
+  {
+   "addr": "a9b310",
+   "type": "f32",
+   "label": "p9b2c0_vx"
+  },
+  {
+   "addr": "a9b314",
+   "type": "f32",
+   "label": "p9b2c0_vy"
+  },
+  {
+   "addr": "a9b318",
+   "type": "f32",
+   "label": "p9b2c0_vz"
+  },
+  {
+   "addr": "a8e460",
+   "type": "f32",
+   "label": "p8e420_x"
+  },
+  {
+   "addr": "a8e464",
+   "type": "f32",
+   "label": "p8e420_y"
+  },
+  {
+   "addr": "a8e468",
+   "type": "f32",
+   "label": "p8e420_z"
+  },
+  {
+   "addr": "a8e470",
+   "type": "f32",
+   "label": "p8e420_vx"
+  },
+  {
+   "addr": "a8e474",
+   "type": "f32",
+   "label": "p8e420_vy"
+  },
+  {
+   "addr": "a8e478",
+   "type": "f32",
+   "label": "p8e420_vz"
+  },
+  {
+   "addr": "a9a5d0",
+   "type": "f32",
+   "label": "p9a590_x"
+  },
+  {
+   "addr": "a9a5d4",
+   "type": "f32",
+   "label": "p9a590_y"
+  },
+  {
+   "addr": "a9a5d8",
+   "type": "f32",
+   "label": "p9a590_z"
+  },
+  {
+   "addr": "a9a5e0",
+   "type": "f32",
+   "label": "p9a590_vx"
+  },
+  {
+   "addr": "a9a5e4",
+   "type": "f32",
+   "label": "p9a590_vy"
+  },
+  {
+   "addr": "a9a5e8",
+   "type": "f32",
+   "label": "p9a590_vz"
+  },
+  {
+   "addr": "a87680",
+   "type": "f32",
+   "label": "p87640_x"
+  },
+  {
+   "addr": "a87684",
+   "type": "f32",
+   "label": "p87640_y"
+  },
+  {
+   "addr": "a87688",
+   "type": "f32",
+   "label": "p87640_z"
+  },
+  {
+   "addr": "a87690",
+   "type": "f32",
+   "label": "p87640_vx"
+  },
+  {
+   "addr": "a87694",
+   "type": "f32",
+   "label": "p87640_vy"
+  },
+  {
+   "addr": "a87698",
+   "type": "f32",
+   "label": "p87640_vz"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ]
+ ],
+ "shots": [
+  2,
+  250,
+  500,
+  750,
+  1000,
+  1250,
+  1500
+ ],
+ "timeout": 240,
+ "renderer": "metal",
+ "note": "props vanish probe: gas from 0, trace of 7 prop slots near road"
+}

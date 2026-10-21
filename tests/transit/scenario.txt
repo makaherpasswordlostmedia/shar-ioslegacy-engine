@@ -1,0 +1,64 @@
+# «press circle» рядом с ↑/↓/←/→ пешком: ○ зажат — Гомер бежит (раскладка оригинала ControllerPS2.pag: ○ DASH / SPRINT, 29.09); без ○ идёт 4 м/с
+# Переходы как в оригинале и выброс при взрыве (tests/transit/emu.sh, разбор tests/transit/check.py).
+# 1) взрыв на спавне: Гомер вылетает из остова (строки BOOM/EJECT), снимок в полёте и после
+# 2) ирис на месте, в 20 раз медленнее (снимки: закрыт, середина раскрытия); строки IRIS why=test
+# 3) выход через верх у стены (место из tests/homer host: машина 205.6 136.4 курс -135°, стена у двери водителя 0.23 м)
+#    -> IRIS why=overtop; △ снова — дверь некуда открыть -> IRIS why=seat
+# 4) Kwik-E-Mart: вход и выход -> IRIS why=room_in / room_out (двери — tests/rooms/emu_scenario.txt)
+# 5) MISSION SELECT (перенос сценарием миссии) -> IRIS why=msn: закрыт под брифингом (мир стоит), раскрывается после X
+# правка Роба 41: вход и выход комнат — только по △ (viewer/rooms.h needAction); в триггере двери — press triangle
+scene start
+wait 3
+scene boom
+flag testboom
+wait 0.35
+shot boom_air
+wait 3
+shot boom_after
+flag repair
+wait 1
+scene iris
+flag irisslow 20
+flag iristest
+shot iris_closed
+wait 4.5
+shot iris_mid
+wait 6
+flag irisslow 1
+scene overtop
+goto 205.6 136.4 -2.3562
+wait 3
+press triangle
+wait 0.6
+shot overtop_open
+wait 3
+press triangle
+wait 3
+shot seat_after
+scene room
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 3
+shot room_in
+press down 1.0
+press circle 1.0
+wait 1.5
+press triangle
+wait 3
+shot room_out
+scene msn
+flag msn
+wait 2
+flag msnsel 8
+# перед гонкой sr1 — разговор Гомера и Милхауса с голосом (~9 с, пакет dialog), перенос и брифинг — после него
+wait 12
+shot msn_brief
+press cross
+wait 0.25
+shot msn_open
+wait 3
+end

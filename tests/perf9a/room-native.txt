@@ -1,0 +1,8 @@
+scene start
+foot 213.9 301.4 3.14159
+wait 2.5
+scene room_entry
+press TRIANGLE .15
+wait 5
+shot inside
+end

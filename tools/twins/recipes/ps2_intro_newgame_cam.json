@@ -1,0 +1,175 @@
+{
+ "id": "ps2_intro_newgame_cam",
+ "frames": 6100,
+ "every": 4,
+ "trace": [
+  {
+   "addr": "c8460c",
+   "type": "f32",
+   "label": "cam_eye0"
+  },
+  {
+   "addr": "c84610",
+   "type": "f32",
+   "label": "cam_eye1"
+  },
+  {
+   "addr": "c84614",
+   "type": "f32",
+   "label": "cam_eye2"
+  },
+  {
+   "addr": "c845e8",
+   "type": "f32",
+   "label": "cam_fwd0"
+  },
+  {
+   "addr": "c845ec",
+   "type": "f32",
+   "label": "cam_fwd1"
+  },
+  {
+   "addr": "c845f0",
+   "type": "f32",
+   "label": "cam_fwd2"
+  },
+  {
+   "addr": "c84618",
+   "type": "f32",
+   "label": "cam_tgt0"
+  },
+  {
+   "addr": "c8461c",
+   "type": "f32",
+   "label": "cam_tgt1"
+  },
+  {
+   "addr": "c84620",
+   "type": "f32",
+   "label": "cam_tgt2"
+  }
+ ],
+ "pad": [
+  [
+   700,
+   "cross",
+   1
+  ],
+  [
+   706,
+   "cross",
+   0
+  ],
+  [
+   1100,
+   "start",
+   1
+  ],
+  [
+   1106,
+   "start",
+   0
+  ],
+  [
+   1250,
+   "start",
+   1
+  ],
+  [
+   1256,
+   "start",
+   0
+  ],
+  [
+   1400,
+   "start",
+   1
+  ],
+  [
+   1406,
+   "start",
+   0
+  ],
+  [
+   1550,
+   "start",
+   1
+  ],
+  [
+   1556,
+   "start",
+   0
+  ],
+  [
+   1700,
+   "start",
+   1
+  ],
+  [
+   1706,
+   "start",
+   0
+  ],
+  [
+   1850,
+   "start",
+   1
+  ],
+  [
+   1856,
+   "start",
+   0
+  ],
+  [
+   2000,
+   "start",
+   1
+  ],
+  [
+   2006,
+   "start",
+   0
+  ],
+  [
+   2150,
+   "start",
+   1
+  ],
+  [
+   2156,
+   "start",
+   0
+  ],
+  [
+   2300,
+   "start",
+   1
+  ],
+  [
+   2306,
+   "start",
+   0
+  ],
+  [
+   2650,
+   "cross",
+   1
+  ],
+  [
+   2656,
+   "cross",
+   0
+  ]
+ ],
+ "pngs": [
+  [
+   4400,
+   6100,
+   10
+  ]
+ ],
+ "timeout": 900,
+ "shots": [],
+ "note": "новая игра с нуля до L1, камеры вступления: PNG каждые 10 кадров с 4400, камера tPointCamera каждые 4",
+ "state": null
+}

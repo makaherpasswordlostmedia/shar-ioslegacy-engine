@@ -1,0 +1,48 @@
+# Горизонт в туре TEST28: flag horizon выкл/6/8 посреди уровня, L3 причал и L5
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag drawdist 60
+flag ddfloor 200
+flag repair
+goto -402 278 3.626
+wait 5
+scene L3_hz_off
+flag horizon 0
+wait 4
+shot T28_L3_off
+scene L3_hz_6
+flag horizon 6
+wait 4
+shot T28_L3_6
+scene L3_hz_8
+flag horizon 8
+wait 4
+shot T28_L3_8
+scene L3_hz_off2
+flag horizon 0
+wait 3
+shot T28_L3_off2
+flag golevel 5
+wait 25
+flag drawdist 60
+flag ddfloor 200
+flag repair
+goto 252 -132 3.875
+wait 5
+scene L5_hz_off
+flag horizon 0
+wait 4
+shot T28_L5_off
+scene L5_hz_6
+flag horizon 6
+wait 4
+shot T28_L5_6
+scene L5_hz_8
+flag horizon 8
+wait 4
+shot T28_L5_8
+flag horizon 0
+wait 2
+end

@@ -1,0 +1,20 @@
+flag msn
+wait 3
+scene typo_stage
+flag msnmainat 100
+wait 2
+press cross
+wait 2
+foot 224.566 171.057 0 3.6521
+wait .7
+shot stage_a
+flag uitypo 1
+wait .1
+shot stage_b
+flag uitypo 2
+wait .1
+shot stage_c
+flag uitypo 0
+wait .1
+shot stage_a2
+end

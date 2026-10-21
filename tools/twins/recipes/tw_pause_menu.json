@@ -1,0 +1,10 @@
+{
+ "id": "tw_pause_menu",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 330,
+ "every": 10,
+ "trace": ["frame"],
+ "pad": [[60, "start", 1], [66, "start", 0], [200, "down", 1], [206, "down", 0]],
+ "pngs": [[150, 150, 1], [240, 240, 1], [320, 320, 1]]
+}

@@ -1,0 +1,54 @@
+{
+ "id": "ps2_bonus_unlocked_main_selection",
+ "state": "build/twins/o4/ps2_bonus_quit_no_save/snap_1000.p2s",
+ "frames": 250,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "right",
+   1
+  ],
+  [
+   80,
+   "right",
+   1
+  ],
+  [
+   140,
+   "right",
+   1
+  ],
+  [
+   26,
+   "right",
+   0
+  ],
+  [
+   86,
+   "right",
+   0
+  ],
+  [
+   146,
+   "right",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  50,
+  110,
+  170,
+  250
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 120,
+ "note": "Actual returned main selection RESUME GAME, TV highlighted. Three right taps toward BONUS GAME. Compare actual enabled yellow caption and Accept against original locked capture; no writes, cards retained in RAM."
+}

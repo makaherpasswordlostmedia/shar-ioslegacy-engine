@@ -1,0 +1,23 @@
+# Гейт «смена гаммы без остановки» (16.10, Камера): в гараже АЭС L1 смена gamma 100 -> 130 -> 100 и насыщенности; строки TONE/GAMMA в smoke.txt,
+# длинный кадр в секунду смены виден в work/maxframe. Прежний путь: перечитывание 531 палитры из файла за один кадр (0,85 с на PSP).
+scene GM_L1_load
+flag golevel 1
+wait 15
+scene GM_a_g100
+flag repair
+foot -84.63 -300.67 1.5708
+wait 3
+shot GM_a
+scene GM_b_g130
+flag gamma 130
+wait 8
+shot GM_b
+scene GM_c_g100
+flag gamma 100
+wait 8
+shot GM_c
+scene GM_d_sat
+flag hzcachetone 160
+wait 8
+shot GM_d
+end

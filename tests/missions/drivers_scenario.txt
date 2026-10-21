@@ -1,0 +1,37 @@
+# Аудит 09.10 п. 20: водители машин миссий (tests/missions/drivers.sh). Машина игрока ставится от машины миссии
+# (goto: в 6 м и на 4,5 м вбок, чтобы её не закрывала своя машина; курс h — по (sin h, cos h)), камера за ней смотрит на машину миссии: sr2 — Барт в honor_v на старте (отсчёт, стоят), m7 — Смитерс в smith_v
+# (игрок стоит — Смитерс ползёт 3 м/с, аудит п. 10), m6 — Джаспер в cBone (стоит до старта погони)
+scene spawn
+wait 3
+scene start
+flag msn
+wait 3
+scene sr2
+flag msnmain 9
+wait 3
+press cross
+wait 1
+goto -157.4 255.7 0
+wait 1
+shot sr2_back
+goto -155.4 257.2 -1.5708
+wait 1
+shot sr2_side
+scene m7
+flag msnmain 7
+wait 3
+press cross
+wait 0.5
+goto 24 -287.6 -1.5708
+wait 1.5
+shot m7_front
+scene m6
+flag msnmain 6
+wait 3
+press cross
+wait 1
+goto -96.8 550.5 -1.5708
+wait 1
+shot m6_side
+wait 2
+end

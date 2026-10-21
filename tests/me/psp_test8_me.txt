@@ -1,0 +1,59 @@
+# TEST 8 · проба Media Engine (правки 269/273/276, ступень 0) — сценарий тура SHARTOUR (формат tools/tour_make.py), ~3 мин.
+# Выкладка (терминал): make -C viewer/me && cp viewer/me/sharme.prx build/sharme.prx (или tools/ship.sh — правило sharme.prx);
+#   TOUR_TITLE="SHAR TEST 8" tools/tour_psp.sh --deploy; затем этот файл поверх сценария тура:
+#   cp tests/me/psp_test8_me.txt /Volumes/PSP/PSP/GAME/SHARTOUR/scenario.txt && cmp tests/me/psp_test8_me.txt /Volumes/PSP/PSP/GAME/SHARTOUR/scenario.txt
+#   (sharme.prx тур кладёт сам из build/, если движок его упоминает; проверить: ls /Volumes/PSP/PSP/GAME/SHARTOUR/sharme.prx)
+# Роб: в XMB «SHAR TEST 8» — запустить. После логотипа Gracie Films машина поедет сама, потом встанет на минуту (сцена
+#   ME_sleep_window): в эту минуту перевести PSP в сон (кнопку питания вниз на секунду), через 5–10 с разбудить. Дождаться
+#   конца (около 3 мин), подключить PSP по USB.
+# Итог (tools/tour_psp.sh --fetch; файлы в PSP/GAME/SHARTOUR/):
+#   smoke.txt и blackbox.txt — строка «ME probe ok=100/100 rt_us_min/avg/max=… sum_ok=100 mode=mist …» (хорошо) или
+#     «ME timeout job=K; …» (ME не ответил за 50 мс — дальше без ME; перед сном лучше перезапустить PSP) или «ME probe ok=0 err=…»
+#   me.txt — шаги пробы «ME 0…5» (последняя строка — докуда дошло, если PSP встала)
+#   smoke.txt — «MSNFMV name=gracie … played=1 frames=… shown=…» — ролик после пробы (кадры JPEG разжимает прошивка на ME)
+#   blackbox.txt — строки BB раз в секунду после пробы и после сна (время сна — скачок часов), нет STALL/CRASH
+# Контроль «то же с файлом nome»: пустой файл nome в PSP/GAME/SHARTOUR и тот же тур — строка «ME skip nome», остальное как выше
+scene start
+flag trace 1
+wait 3
+# 1 — проба ME (одна на запуск)
+scene ME_probe
+flag meprobe 1
+wait 2
+shot ME_after_probe
+# 2 — ролик после пробы: живы ли задания ME прошивки (sceJpeg)
+scene ME_movie
+flag mefmv 1
+wait 15
+shot ME_after_movie
+# 3 — езда после пробы: подгрузка клеток на скорости, звук, кадр (строки BB)
+scene ME_drive1
+goto 246 -180 1.5708
+wait 2
+flag autostraight 8
+wait 10
+shot ME_drive1_end
+flag stop
+scene ME_drive2
+goto 444 68 3.1416
+wait 2
+flag autostraight 8
+wait 10
+shot ME_drive2_end
+flag stop
+# 4 — окно сна: минута стоя; Роб усыпляет и будит PSP (me_wrapper прошивки при сне просит ME сохраниться и ждёт ответа)
+scene ME_sleep_window
+wait 60
+shot ME_after_sleep
+# 5 — после сна: езда и второй флаг пробы («ME probe again: …» — ME второй раз не перезапускается)
+scene ME_drive3
+goto 345 68 1.5708
+wait 2
+flag autostraight 8
+wait 10
+shot ME_drive3_end
+flag stop
+scene ME_again
+flag meprobe 1
+wait 2
+end

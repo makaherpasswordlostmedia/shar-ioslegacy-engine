@@ -1,0 +1,8 @@
+# Правка 274: проба сохранения на железе — часть S тура TEST 8 (tools/tour_make.py --test8). «flag savematrix»: каждый вариант
+# параметров утилиты (std, sv1, key, s1500, s1480, noicon — viewer/savemenu.c SVV_*) пишет тестовую запись T8, читает её тем же
+# вариантом, сверяет байты и удаляет. Строки «SVMATRIX variant=… res=… load=… cmp=… del=…» — в smoke.txt тура, в чёрный ящик и в
+# savematrix.txt рядом с EBOOT; итог «SVMATRIX done ok=N/6 first=<первый рабочий>». Работает и без «flag saves» (служебный запуск).
+# Ожидание по железу (pspautotests secureversion): std — 80110388, sv1 и key — пишутся и читаются; s1500/s1480/noicon — узнаём
+scene S_savematrix
+flag savematrix
+wait 1

@@ -1,0 +1,22 @@
+# Провал и повтор в EBOOT (родные элементы Scrooby): бонус-гонка sr1 Милхауса (95 с на 5 кругов, условия: время, урон,
+# вне машины). Брифинг — X. Машина стоит — таймер истекает, рантайм засчитывает провал «время вышло», меню RETRY/ABORT, X — повтор с
+# чекпоинта (отсчёт 3-2-1 снова). Запуск: SMOKE_SCN=tests/missions/fail_scenario.txt tools/smoke.sh build
+scene fail
+wait 3
+flag msn
+wait 2
+flag msnsel 8
+wait 11
+shot sr1_briefing
+press cross
+wait 1
+shot sr1_countdown
+wait 4
+shot sr1_timer
+wait 97
+shot sr1_failed
+press cross
+wait 5
+shot sr1_retry
+wait 2
+end

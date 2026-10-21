@@ -1,0 +1,43 @@
+{
+ "id": "ps2_bonus_b01_start",
+ "state": "build/twins/o4/ps2_bonus_b01_player_confirm/snap_150.p2s",
+ "frames": 1500,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "start",
+   1
+  ],
+  [
+   26,
+   "start",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  200,
+  400,
+  600,
+  900,
+  1200,
+  1500
+ ],
+ "pngs": [
+  [
+   0,
+   1500,
+   4
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 300,
+ "note": "Native MiniMenu, first unlocked track,3laps. P1 confirmed padlock over Lisa, selected pink Family Sedan rating2; remaining controllers inactive. Start once and no gameplay input. Record actual load/flyover/countdown/top-camera/AI by GS+CDVD+WAV; heap addresses from story are not assumed valid in bonus."
+}

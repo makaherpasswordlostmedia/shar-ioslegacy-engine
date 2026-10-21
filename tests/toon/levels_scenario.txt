@@ -1,0 +1,84 @@
+# №428: кадр мультика на героях L2–L7 (t0 выкл, t1 вкл) на месте старта своего уровня, пешком (tests/toon/levels.sh, levels_check.py).
+# Нужен набор с уровнями l2..l7 рядом с EBOOT: SHIP_LEVELS="2 3 4 5 6 7" (иначе golevel молча не срабатывает и все кадры остаются на L1 — на этом погорел первый лист 16.10)
+# Герои по журналу PLAYER: L2 brt_ (Барт), L3 lsa_ (Лиза), L4 mrg_ (Мардж), L5 apu_ (Апу), L6 brt_ (Барт), L7 hom_ (Гомер); позиция — spawn из строки LEVEL ev=load (L7 — место тестов tests/hover)
+scene start
+wait 3
+scene L2_load
+flag golevel 2
+wait 30
+scene L2_t0
+foot 152.0 -38.44 5.716
+wait 5
+shot L2_t0
+scene L2_t1
+flag toon 1
+wait 3
+shot L2_t1
+flag toon 0
+wait 0.5
+scene L3_load
+flag golevel 3
+wait 30
+scene L3_t0
+foot -3.35 -5.57 0.002
+wait 5
+shot L3_t0
+scene L3_t1
+flag toon 1
+wait 3
+shot L3_t1
+flag toon 0
+wait 0.5
+scene L4_load
+flag golevel 4
+wait 30
+scene L4_t0
+foot 214.88 172.27 3.322
+wait 5
+shot L4_t0
+scene L4_t1
+flag toon 1
+wait 3
+shot L4_t1
+flag toon 0
+wait 0.5
+scene L5_load
+flag golevel 5
+wait 30
+scene L5_t0
+foot -154.9 -482.05 0.024
+wait 5
+shot L5_t0
+scene L5_t1
+flag toon 1
+wait 3
+shot L5_t1
+flag toon 0
+wait 0.5
+scene L6_load
+flag golevel 6
+wait 30
+scene L6_t0
+foot -300.14 -218.57 4.644
+wait 5
+shot L6_t0
+scene L6_t1
+flag toon 1
+wait 3
+shot L6_t1
+flag toon 0
+wait 0.5
+scene L7_load
+flag golevel 7
+wait 30
+scene L7_t0
+foot 210.0 161.1 1.5708
+wait 5
+shot L7_t0
+scene L7_t1
+flag toon 1
+wait 3
+shot L7_t1
+flag toon 0
+wait 0.5
+end

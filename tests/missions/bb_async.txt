@@ -1,0 +1,15 @@
+# №bb-async (tests/missions/bb_async.sh): L1, карточка миссии, старт: фоновое чтение моделей персонажей (npc+) и машин (car+) не пишет чёрный ящик в кадре (sync=0)
+scene B_L1_load
+flag golevel 1
+wait 20
+scene B_card_race_L1
+flag repair
+flag msn
+wait 3
+flag msnmainat 801
+wait 4
+press cross 0.3
+wait 1
+flag msngo
+wait 8
+end

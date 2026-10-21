@@ -1,0 +1,248 @@
+# Правила данных для tools/ship.sh и tools/smoke.sh. Строка: ИМЯ | ГДЕ ЛЕЖИТ | ЗАВИСИМОСТИ | КОМАНДА
+#   ИМЯ         — имя файла рядом с EBOOT на PSP; файл едет на PSP, только если движок его упоминает ("ИМЯ" в исходниках
+#                 из viewer/CMakeLists.txt) — так новые данные (Гомер, звук, UI, миссии) подключаются сами, когда их начнёт читать движок
+#   ГДЕ ЛЕЖИТ   — путь от корня проекта
+#   ЗАВИСИМОСТИ — если любая новее файла (или файла нет) -> пересобрать
+#   КОМАНДА     — {out} = временный файл (подменит ГДЕ ЛЕЖИТ только при успехе), {outdir} = его родительская папка
+level.shr   | build/level.shr         | tools/psp_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/missions/p3dlocs.py tools/stateprop_dump.py tools/char_export.py tools/car_dump.py tools/pvs.c tools/wind.c tools/build_level.sh hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py hit-and-run-web/tools/interiors.py tools/uvq.py tools/coplanar.py tools/level_light.py viewer/skin.h tools/walls_confirmed/L1.tsv | tools/build_level.sh {out}
+fx.shr      | build/fx.shr            | tools/fx_pack.py tools/fx_export.py | python tools/fx_pack.py --out {out}
+# монета-спрайт (Роб 17.10, viewer/coinspr.h): кадры оборота 3D-монеты, запечённые в Blender один раз (build/coin_bake: coin_dump.py -> coin_blender.py / SHAR_coin.blend -> frames3/); в git не кладутся (данные диска). Нет файла — монеты 3D-моделью
+coinspr.bin | build/coinspr.bin | tools/coin/coin_pack.py build/coin_bake/frames3/f_00.png | python tools/coin/coin_pack.py build/coin_bake/frames3 build/coin_bake/out --spin 3.0 --bin {out}
+homer.shr   | build/homer.shr         | tools/homer_export.py tools/uvq.py tools/char_export.py | python tools/homer_export.py --out {out}
+# traffic.shr — трафик, стоящие машины, пешеходы (этап 5, viewer/traffic.c); флаги качества текстур — как у уровня (закон 1)
+traffic.shr | build/traffic.shr       | tools/traffic_export.py tools/psp_export.py tools/char_export.py tools/texq.py tools/uvq.py tools/level_light.py viewer/skin.h tools/car_dump.py | SHR_TEX_CAP256=1 SHR_SMALL_MIPS=1 SHR_LAYERS=1 python tools/traffic_export.py --out {out}
+mcpr.shr | build/mcpr.shr | {stage}/level.shr {stage}/traffic.shr tools/mcp_bake.c tools/mcp_bake.sh viewer/msncar.c viewer/car.c viewer/col.c viewer/traffic.c | tools/mcp_bake.sh {stage}/level.shr {stage}/traffic.shr {out}
+lmap.shr | build/lmap.shr | {stage}/level.shr tools/lmap_pack.c tools/lmap_pack.sh viewer/lmap.h | tools/lmap_pack.sh {stage}/level.shr {out}
+silh.shr | build/silh.shr | {stage}/level.shr tools/silh_export.py tools/shr7read.py viewer/silh.h | python tools/silh_export.py {stage}/level.shr {out} --mesh 13 --noground --muted 0.5
+# horizon.shr | build/horizon.shr | {stage}/level.shr tools/horizon_export.py tools/shr7read.py viewer/horizon.h | python tools/horizon_export.py {stage}/level.shr --out {out}   # ВЫКЛЮЧЕНО до решения: горизонт необязателен, набор TEST27 не должен требовать horizon.shr (движок: нет файла — тихо выкл). Включить строку, когда Роб примет
+ui.shr      | build/ui.shr            | tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/ui_export.py --out {out}
+# fe.shr — 3D-гостиная главного меню (пункт 12а, viewer/frontend3d.c); грузится только на время меню
+fe.shr      | build/fe.shr            | tools/frontend3d_export.py tools/char_export.py tools/texq.py tools/uvq.py | python tools/frontend3d_export.py --out {out}
+fe_audio.sap | build/fe_audio.sap | tools/fe_audio_export.py tools/audio_export.py | python tools/fe_audio_export.py --out {out}
+audio/music.sap | build/audio/music.sap | tools/sound_export.py tools/music_graph.py tools/rms.py tools/ticket_audio.py tools/street_voice_export.py tools/npc_list.py tools/audio_export.py tools/traffic_export.py tools/missions/compile.py tools/interior_export.py | python tools/sound_export.py --out {outdir}
+audio/sfx.sab | build/audio/sfx.sab   | tools/sound_export.py tools/music_graph.py tools/rms.py tools/ticket_audio.py tools/street_voice_export.py tools/npc_list.py tools/audio_export.py tools/traffic_export.py tools/missions/compile.py tools/interior_export.py | python tools/sound_export.py --out {outdir}
+level01.msn | build/missions/level01.msn | tools/missions/compile.py tools/missions/mfk.py tools/missions/commands.py | python tools/missions/compile.py --level 1 -q --out {outdir}
+# пункт 8: маркеры цели и значки заданий миссий (viewer/msnart.c) и персонажи миссий уровня 1 (viewer/msn_view.c)
+msnart.shr  | build/msnart.shr        | tools/msnart_export.py tools/briefcards_source.py tools/prp2_export.py tools/frontend3d_export.py tools/ui_export.py tools/uvq.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/msnart_export.py --out {out}
+# правка 122: заборы трасс уличных гонок уровня 1 (StreetRacePropsLoad l1_srNp.p3d: FenceWrapper) — viewer/msn_view.c raceFences
+racefence.bin | build/racefence.bin  | tools/msnart_export.py tools/briefcards_source.py | python tools/msnart_export.py --fences {out}
+# правка 143(а): у персонажей миссий (--npc) в пакете только клипы, которые может проиграть движок: loco_idle_rest/loco_walk
+# (msn_view.c) и жесты AddAmbientNpcAnimation скриптов диска; гейт tests/chr/run.sh. homer.shr не режется
+# правка 240: набор клипов вынимается из viewer/msn_view.c (skinFindClip: flail / fall_land / get_up — сбит машиной), поэтому
+# пакеты --npc зависят и от него: новый клип в движке — пакеты пересобираются выпуском
+chars/marge.chr | build/chars/marge.chr | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name marge --npc --out {out}
+chars/apu.chr   | build/chars/apu.chr   | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name apu --npc --out {out}
+# персонажи миссий уровня 1 (tools/npc_list.py --rules): модель art/chars/<имя[:6]>_m.p3d, клипы — риг npd из скриптов (правило порта для AddNPC без рига)
+chars/barney.chr      | build/chars/barney.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name barney --model art/chars/barney_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/burns.chr       | build/chars/burns.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name burns --model art/chars/burns_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/carl.chr        | build/chars/carl.chr        | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name carl --model art/chars/carl_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/cletus.chr      | build/chars/cletus.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name cletus --model art/chars/cletus_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/eddie.chr       | build/chars/eddie.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name eddie --model art/chars/eddie_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/gil.chr         | build/chars/gil.chr         | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name gil --model art/chars/gil_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/grandpa.chr     | build/chars/grandpa.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name grandpa --model art/chars/grandp_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/krusty.chr      | build/chars/krusty.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name krusty --model art/chars/krusty_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/lenny.chr       | build/chars/lenny.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name lenny --model art/chars/lenny_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/louie.chr       | build/chars/louie.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name louie --model art/chars/louie_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/lisa.chr        | build/chars/lisa.chr        | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name lisa --model art/chars/lisa_m.p3d --anims art/chars/lisa_a.p3d --npc --out {out}
+chars/milhouse.chr    | build/chars/milhouse.chr    | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name milhouse --model art/chars/milhou_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/moe.chr         | build/chars/moe.chr         | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name moe --model art/chars/moe_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/moleman.chr     | build/chars/moleman.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name moleman --model art/chars/molema_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/ned.chr         | build/chars/ned.chr         | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name ned --model art/chars/ned_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/nelson.chr      | build/chars/nelson.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name nelson --model art/chars/nelson_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/patty.chr       | build/chars/patty.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name patty --model art/chars/patty_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/ralph.chr       | build/chars/ralph.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name ralph --model art/chars/ralph_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/selma.chr       | build/chars/selma.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name selma --model art/chars/selma_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/willie.chr      | build/chars/willie.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name willie --model art/chars/willie_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+# интро оригинала (viewer/movie.c): логотипы создателей и ролик до главного меню, порядок — SLES_518.97; 50 МБ, в git нет
+movies/vuglogo.smv | build/movies/vuglogo.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/vuglogo.rmv | python tools/movie_export.py --clip vuglogo --out {out}
+movies/foxlogo.smv | build/movies/foxlogo.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/foxlogo.rmv | python tools/movie_export.py --clip foxlogo --out {out}
+movies/gracie.smv  | build/movies/gracie.smv  | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/gracie.rmv | python tools/movie_export.py --clip gracie --out {out}
+movies/radlogo.smv | build/movies/radlogo.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/radlogo.rmv | python tools/movie_export.py --clip radlogo --out {out}
+movies/intro.smv   | build/movies/intro.smv   | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/intro.rmv | python tools/movie_export.py --clip intro --out {out}
+# ролик простоя меню оригинала (правка Роба 33): простой меню -> титульный -> movies\demo.rmv с надписью «- DEMO -» (Demo.scr), по кругу
+movies/demo.smv    | build/movies/demo.smv    | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/demo.rmv | python tools/movie_export.py --clip demo --out {out}
+# routes.txt — служебный обход трамплинов для Роба (пункт 12): в машине ↑ / ↓; без файла кнопки ничего не делают
+routes.txt  | build/routes.txt        | tools/cartest/routes_txt.py build/sandbox/routes-l1.tsv build/sandbox/routes-result.json build/sandbox/routes-l1.json | python tools/cartest/routes_txt.py --out {out}
+# экраны вокруг игры из Scrooby оригинала (tools/load_export.py, viewer/ui.c uiScr*): лицензия, BootupLoad, титульный экран;
+# загрузка уровня и загрузка меню. Грузятся только на время показа
+boot.shr    | build/boot.shr          | tools/load_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/load_export.py --pack boot --out {out}
+# пиксельные знаки причастных на заставке GONE Makers (правка Роба 127, viewer/bootmarks.h): плашки gamelogo с диска + файлы
+# Роба из ~/Downloads/SHAR_логотипы и build/assets/boot_marks; нет файла — заставка без знаков
+bootmarks.bin | build/bootmarks.bin   | tools/bootmarks.py build/assets/boot_marks hit-and-run-web/tools/textures.py hit-and-run-web/tools/p3d.py | python tools/bootmarks.py --out {out}
+load.shr    | build/load.shr          | tools/load_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/load_export.py --pack load --out {out}
+# меню оригинала (tools/menu_export.py): OPTIONS главного меню (Options, Sound) и паузы (Options, Sound, Settings); на время показа
+# ирис оригинала (Scrooby 3dIris.pag -> iris.p3d: сетка, морф, ключи STE, камера) — переходы viewer/transit.c
+iris.shr    | build/iris.shr          | tools/iris_export.py hit-and-run-web/tools/p3d.py | python tools/iris_export.py --out {out}
+menu.shr    | build/menu.shr          | tools/menu_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/menu_export.py --pack menu --out {out}
+pmenu.shr   | build/pmenu.shr         | tools/menu_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/menu_export.py --pack pmenu --out {out}
+# экраны паузы (29.09): VIEW CARDS (PauseViewCards.scr: 7 карточек уровня 1, крупно с текстами), MISSION SELECT (MissionSelect.scr);
+# на время показа
+pextra.shr  | build/pextra.shr        | tools/menu_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/menu_export.py --pack pextra --out {out}
+# Codex-3 menus: disc PauseBgd and album art/texts use the active level.
+l{N}/pextra.shr | build/levels/l{N}/pextra.shr | tools/menu_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | LEVEL={N} python tools/menu_export.py --pack pextra --out {out}
+l{N}/pmenu.shr | build/levels/l{N}/pmenu.shr | tools/menu_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | LEVEL={N} python tools/menu_export.py --pack pmenu --out {out}
+# комнаты уровня 1 (пункт 11.2): коллизия, старт/выход и двери (SHI1, viewer/rooms.c) + рисование (SHG1, main.c) — один экспорт
+interiors-l1.bin     | build/interiors-l1.bin     | tools/interior_export.py tools/roomorient.py tools/roomvis.c viewer/roomcam.c tests/rooms/view_host.c tools/psp_export.py tools/texq.py tools/coplanar.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/interior_export.py --outdir {outdir}
+interiors-l1-gfx.bin | build/interiors-l1-gfx.bin | tools/interior_export.py tools/roomorient.py tools/roomvis.c viewer/roomcam.c tests/rooms/view_host.c tools/psp_export.py tools/texq.py tools/coplanar.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/interior_export.py --outdir {outdir}
+# В5: карточки, осы и гэги уровня 1 (tools/collect_export.py -> viewer/collect.c, рисование и звук — main.c collLoad/collDraw/collFrame);
+# ролик гэга gag_tele в Kwik-E-Mart (GagPlayFMV("loot.rmv"), viewer/main.c gagMovie)
+collect-l1.shr | build/collect-l1.shr | tools/collect_export.py tools/gag_skin_export.py tools/frontend3d_export.py tools/prp2_export.py tools/psp_export.py tools/texq.py tools/char_export.py tools/stateprop_dump.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/collect_export.py --out {out}
+movies/loot.smv | build/movies/loot.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/loot.rmv | python tools/movie_export.py --clip loot --out {out}
+# перепись миссий 04.10: ролик гэга gag_tele — видео в телескопе обсерватории уровней 3 и 6 (GagPlayFMV("tele.rmv"), viewer/main.c gagMovie
+# "movies/%s.smv"); 7,5 МБ
+movies/tele.smv | build/movies/tele.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/tele.rmv | python tools/movie_export.py --clip tele --out {out}
+# сохранения оригинала (tools/save_export.py, viewer/savemenu.c): слоты LoadGame (главное меню) и SaveGame (пауза), вопросы и
+# сообщения; грузятся только на время показа
+fsave.shr   | build/fsave.shr         | tools/save_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/save_export.py --pack fsave --out {out}
+psave.shr   | build/psave.shr         | tools/save_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/save_export.py --pack psave --out {out}
+l{N}/psave.shr | build/levels/l{N}/psave.shr | tools/save_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | LEVEL={N} python tools/save_export.py --pack psave --out {out}
+# правка 40: камеры старта миссий — «наезды» (tools/msncam_export.py -> viewer/msncam.c); облёт улицы на старте уровня
+msncam.shr  | build/msncam.shr        | tools/msncam_export.py tools/frontend3d_export.py | python tools/msncam_export.py --out {out}
+# правка 40: камеры зон города (tools/zonecam_export.py -> viewer/roomcam.c в main.c): дверь дома Симпсонов, дворы, проходы, мостки
+# и кабинет АЭС — пешком, пока Гомер в триггере камеры (камеры прыжков машины — не в пакете)
+zonecam-l1.shr | build/zonecam-l1.shr | tools/zonecam_export.py tools/interior_export.py | python tools/zonecam_export.py --level 1 --out {out}
+# №408: камеры зон для машины (tools/zonecam_export.py --car -> viewer/carzone.c): рельс сбоку на прыжке через дом, z1_housejump и др.
+carzone-l1.shr | build/carzone-l1.shr | tools/zonecam_export.py tools/interior_export.py tools/jumps_export.py | python tools/zonecam_export.py --level 1 --car --out {out}
+# 29.09: машины миссий уровня (AddStageVehicle, LoadDisposableCar "AI"; viewer/msncar.c, main.c — модели по требованию) и блок
+# машины для SetForcedCar (MCR1 v2); флаги качества текстур — как у уровня (закон 1)
+msncars-l1.shr | build/msncars-l1.shr | tools/msncar_export.py viewer/worldcars.h tools/traffic_export.py tools/psp_export.py tools/missions/compile.py tools/texq.py tools/uvq.py tools/level_light.py viewer/skin.h tools/car_dump.py | SHR_TEX_CAP256=1 SHR_SMALL_MIPS=1 SHR_LAYERS=1 python tools/msncar_export.py --level 1 --out {out}
+# ---- Уровни 2–7 (29.09, «уровни 2–7 как в оригинале»): набор уровня N — в папке l{N}/ рядом с EBOOT (viewer/main.c levelFile
+# "l%d/%s"), как build/levels/l{N}/ сборки по рецепту (docs/РЕЦЕПТ_УРОВНЯ.md §4, §9). Строка с {N} — по строке на уровень 2..7
+# (tools/ship_files.sh; SHIP_LEVELS="2 3" — только эти, SHIP_LEVELS="" — без уровней 2–7), {NN} — номер двумя цифрами.
+# Уровень 1 — прежние строки выше (корень SHARVIEW). Качество уровня — как у уровня 1 (закон 1: флаги в tools/build_level.sh)
+far_plain        | build/levels/far_plain        | tools/psp_export.py | true   # уровень 1: дальние версии кусков (D, м), необязательный (у уровней 2–7 — в папке уровня)
+level_toon.shr | build/levels/level_toon.shr | tools/psp_export.py tools/texq.py | true   # №679: мир «мультик» уровня 1 (SHR_TOON=1; COL1 побайтно как у level.shr), необязательный; выбор при загрузке уровня (levelToonWanted)
+toonlines.shr   | build/levels/toonlines.shr   | tools/psp_export.py | true   # №679: контур зданий TLN2 (только вместе с level_toon.shr), необязательный
+l{N}/far_plain   | build/levels/l{N}/far_plain   | tools/psp_export.py | true   # №508/№631: дальние версии кусков (число D, м) — только у уровней, собранных с SHR_FAR_PLAIN=1; нет файла — движок рисует как раньше (необязательный)
+l{N}/level.shr   | build/levels/l{N}/level.shr   | tools/psp_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/missions/p3dlocs.py tools/stateprop_dump.py tools/char_export.py tools/car_dump.py tools/pvs.c tools/wind.c tools/build_level.sh hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py hit-and-run-web/tools/interiors.py tools/uvq.py tools/coplanar.py tools/level_light.py viewer/skin.h tools/walls_confirmed/L{N}.tsv | LEVEL={N} tools/build_level.sh {out}
+l{N}/traffic.shr | build/levels/l{N}/traffic.shr | tools/traffic_export.py tools/psp_export.py tools/char_export.py tools/texq.py tools/uvq.py tools/level_light.py viewer/skin.h tools/car_dump.py | SHR_TEX_CAP256=1 SHR_SMALL_MIPS=1 SHR_LAYERS=1 python tools/traffic_export.py --level {N} --out {out}
+l{N}/mcpr.shr | build/levels/l{N}/mcpr.shr | {stage}/l{N}/level.shr {stage}/l{N}/traffic.shr tools/mcp_bake.c tools/mcp_bake.sh viewer/msncar.c viewer/car.c viewer/col.c viewer/traffic.c | tools/mcp_bake.sh {stage}/l{N}/level.shr {stage}/l{N}/traffic.shr {out}
+l{N}/lmap.shr | build/levels/l{N}/lmap.shr | {stage}/l{N}/level.shr tools/lmap_pack.c tools/lmap_pack.sh viewer/lmap.h | tools/lmap_pack.sh {stage}/l{N}/level.shr {out}
+l{N}/silh.shr | build/levels/l{N}/silh.shr | {stage}/l{N}/level.shr tools/silh_export.py tools/shr7read.py viewer/silh.h | python tools/silh_export.py {stage}/l{N}/level.shr {out} --mesh 13 --noground --muted 0.5
+# l{N}/horizon.shr | build/levels/l{N}/horizon.shr | {stage}/l{N}/level.shr tools/horizon_export.py tools/shr7read.py viewer/horizon.h | python tools/horizon_export.py {stage}/l{N}/level.shr --out {out}   # ВЫКЛЮЧЕНО до решения: горизонт необязателен, набор TEST27 не должен требовать horizon.shr (движок: нет файла — тихо выкл). Включить строку, когда Роб примет
+# интерфейс уровня: фон паузы ingamel{N} и радар l{N}hudmap (движок переоткрывает ui.shr при смене уровня)
+l{N}/ui.shr      | build/levels/l{N}/ui.shr      | tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | LEVEL={N} python tools/ui_export.py --out {out}
+l{N}/fx.shr      | build/levels/l{N}/fx.shr      | tools/fx_pack.py tools/fx_export.py | python tools/fx_pack.py --level {N} --out {out}
+l{N}/audio/music.sap | build/levels/l{N}/audio/music.sap | tools/sound_export.py tools/music_graph.py tools/rms.py tools/ticket_audio.py tools/street_voice_export.py tools/npc_list.py tools/audio_export.py tools/traffic_export.py tools/missions/compile.py tools/interior_export.py | python tools/sound_export.py --level {N} --out {outdir}
+l{N}/audio/sfx.sab   | build/levels/l{N}/audio/sfx.sab   | tools/sound_export.py tools/music_graph.py tools/rms.py tools/ticket_audio.py tools/street_voice_export.py tools/npc_list.py tools/audio_export.py tools/traffic_export.py tools/missions/compile.py tools/interior_export.py | python tools/sound_export.py --level {N} --out {outdir}
+l{N}/level{NN}.msn   | build/levels/l{N}/missions/level{NN}.msn | tools/missions/compile.py tools/missions/mfk.py tools/missions/commands.py | python tools/missions/compile.py --level {N} -q --out {outdir}
+l{N}/msnart.shr  | build/levels/l{N}/msnart.shr  | tools/msnart_export.py tools/briefcards_source.py tools/prp2_export.py tools/frontend3d_export.py tools/ui_export.py tools/uvq.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/msnart_export.py --level {N} --out {out}
+# перепись миссий 04.10: заборы трасс уличных гонок уровней 2–7 (StreetRacePropsLoad lN_srMp.p3d: FenceWrapper) — движок давно читает
+# "l%d/racefence-l%d.bin" (viewer/msn_view.c raceFences), пакета не было: на трассах 2–7 гонщик срезал сквозь ограждения
+l{N}/racefence-l{N}.bin | build/levels/l{N}/racefence-l{N}.bin | tools/msnart_export.py tools/briefcards_source.py | python tools/msnart_export.py --level {N} --fences {out}
+l{N}/interiors-l{N}.bin     | build/levels/l{N}/interiors-l{N}.bin     | tools/interior_export.py tools/roomorient.py tools/roomvis.c viewer/roomcam.c tests/rooms/view_host.c tools/psp_export.py tools/texq.py tools/coplanar.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/interior_export.py --level {N} --outdir {outdir}
+l{N}/interiors-l{N}-gfx.bin | build/levels/l{N}/interiors-l{N}-gfx.bin | tools/interior_export.py tools/roomorient.py tools/roomvis.c viewer/roomcam.c tests/rooms/view_host.c tools/psp_export.py tools/texq.py tools/coplanar.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/interior_export.py --level {N} --outdir {outdir}
+l{N}/collect-l{N}.shr | build/levels/l{N}/collect-l{N}.shr | tools/collect_export.py tools/gag_skin_export.py tools/frontend3d_export.py tools/prp2_export.py tools/psp_export.py tools/texq.py tools/char_export.py tools/stateprop_dump.py hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py | python tools/collect_export.py --level {N} --out {out}
+l{N}/zonecam-l{N}.shr | build/levels/l{N}/zonecam-l{N}.shr | tools/zonecam_export.py tools/interior_export.py | python tools/zonecam_export.py --level {N} --out {out}
+l{N}/carzone-l{N}.shr | build/levels/l{N}/carzone-l{N}.shr | tools/zonecam_export.py tools/interior_export.py tools/jumps_export.py | python tools/zonecam_export.py --level {N} --car --out {out}
+l{N}/msncam.shr  | build/levels/l{N}/msncam.shr  | tools/msncam_export.py tools/frontend3d_export.py | python tools/msncam_export.py --level {N} --out {out}
+l{N}/msncars-l{N}.shr | build/levels/l{N}/msncars-l{N}.shr | tools/msncar_export.py viewer/worldcars.h tools/traffic_export.py tools/psp_export.py tools/missions/compile.py tools/texq.py tools/uvq.py tools/level_light.py viewer/skin.h tools/car_dump.py | SHR_TEX_CAP256=1 SHR_SMALL_MIPS=1 SHR_LAYERS=1 python tools/msncar_export.py --level {N} --out {out}
+# персонажи миссий уровней 2–7 (tools/npc_list.py --level N --rules; к персонажам уровня 1 выше — новые, общие для всех уровней:
+# chars/ рядом с EBOOT, viewer/msn_view.c npcFiles); Dolph hair is a native triangle list, exported as separate faces
+chars/dolph.chr       | build/chars/dolph.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name dolph --model art/chars/dolph_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/bart.chr        | build/chars/bart.chr        | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name bart --model art/chars/bart_m.p3d --anims art/chars/bart_a.p3d --npc --out {out}
+chars/beeman.chr      | build/chars/beeman.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name beeman --model art/chars/beeman_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/brn_unf.chr     | build/chars/brn_unf.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name brn_unf --model art/chars/brn_un_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/captain.chr     | build/chars/captain.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name captain --model art/chars/captai_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/cbg.chr         | build/chars/cbg.chr         | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name cbg --model art/chars/cbg_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/frink.chr       | build/chars/frink.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name frink --model art/chars/frink_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/hibbert.chr     | build/chars/hibbert.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name hibbert --model art/chars/hibber_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/jasper.chr      | build/chars/jasper.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name jasper --model art/chars/jasper_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/jimbo.chr       | build/chars/jimbo.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name jimbo --model art/chars/jimbo_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/lou.chr         | build/chars/lou.chr         | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name lou --model art/chars/lou_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/nriviera.chr    | build/chars/nriviera.chr    | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name nriviera --model art/chars/nrivie_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/otto.chr        | build/chars/otto.chr        | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name otto --model art/chars/otto_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/skinner.chr     | build/chars/skinner.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name skinner --model art/chars/skinne_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/smithers.chr    | build/chars/smithers.chr    | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name smithers --model art/chars/smithe_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/snake.chr       | build/chars/snake.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name snake --model art/chars/snake_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/teen.chr        | build/chars/teen.chr        | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name teen --model art/chars/teen_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/wiggum.chr      | build/chars/wiggum.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name wiggum --model art/chars/wiggum_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/zfem1.chr       | build/chars/zfem1.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name zfem1 --model art/chars/zfem1_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/zmale1.chr      | build/chars/zmale1.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name zmale1 --model art/chars/zmale1_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/zmale3.chr      | build/chars/zmale3.chr      | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name zmale3 --model art/chars/zmale3_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/male2.chr       | build/chars/male2.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name male2 --model art/chars/male2_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+# перепись миссий 04.10 (docs/МИССИИ_ПОЛНОТА_2026-10-04.md): персонажи скриптов, которых не было в пакетах — Кирни (L2 m2sd AddNPC и
+# разговор, L4 фоновый, L6 продавец машин AddPurchaseCarReward) и Гомер-персонаж (L2/L5 продавец «simpson», L6 m7 AddNPC — игрок там Барт,
+# L6 sr2/sr3 водитель homer_v); у Гомера свои клипы homer_a (как у Мардж/Апу/Лизы/Барта, tools/npc_list.py OWN)
+chars/kearney.chr     | build/chars/kearney.chr     | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name kearney --model art/chars/kearne_m.p3d --anims art/chars/npd_a.p3d --npc --out {out}
+chars/homer.chr       | build/chars/homer.chr       | tools/char_export.py tools/uvq.py viewer/msn_view.c | python tools/char_export.py --name homer --model art/chars/homer_m.p3d --anims art/chars/homer_a.p3d --npc --out {out}
+# ролики целей «fmv» миссий (SetFMVInfo на диске): L1 m5 fmv2, L2 m8 fmv3, L4 m5 fmv4, L5 m8 fmv5, L6 m8 fmv6, L7 m8 fmv7 — у 2, 5, 6, 7
+# это конец уровня (перед SetLevelOver / SetGameOver). viewer/main.c msnMovie; ~284 МБ на карте памяти
+# ролик новой игры (29.09): после газеты NEW GAME, перед облётом улицы — запись PS2 0:20–0:55 (viewer/main.c menuStartGame)
+movies/fmv1a.smv | build/movies/fmv1a.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv1a.rmv | python tools/movie_export.py --clip fmv1a --out {out}
+movies/fmv2.smv | build/movies/fmv2.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv2.rmv | python tools/movie_export.py --clip fmv2 --out {out}
+movies/fmv3.smv | build/movies/fmv3.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv3.rmv | python tools/movie_export.py --clip fmv3 --out {out}
+movies/fmv4.smv | build/movies/fmv4.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv4.rmv | python tools/movie_export.py --clip fmv4 --out {out}
+movies/fmv5.smv | build/movies/fmv5.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv5.rmv | python tools/movie_export.py --clip fmv5 --out {out}
+movies/fmv6.smv | build/movies/fmv6.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv6.rmv | python tools/movie_export.py --clip fmv6 --out {out}
+movies/fmv7.smv | build/movies/fmv7.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv7.rmv | python tools/movie_export.py --clip fmv7 --out {out}
+# L3 ticket reward and ViewMovies Movie8 both play this original clip.
+movies/fmv8.smv | build/movies/fmv8.smv | tools/movie_export.py tools/load_export.py hit-and-run-web/source/game/movies/fmv8.rmv | python tools/movie_export.py --clip fmv8 --out {out}
+# экран покупки у продавца (пункт 6, viewer/shop_view.c): страница PurchaseRewards.scr и сцены подиума машин на продажу уровня 1
+ending.shr | build/ending.shr | tools/ending_export.py tools/menu_export.py tools/ui_export.py tools/ui_typo.py tools/pixel_fonts.py assets/fonts/pixel | python tools/ending_export.py --out {out}
+shop.shr     | build/shop.shr     | tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/shop_export.py --ui-only --out {out}
+reward-0.shr | build/reward-0.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --scene 0 --out {out}
+reward-1.shr | build/reward-1.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --scene 1 --out {out}
+reward-2.shr | build/reward-2.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --scene 2 --out {out}
+# правка Роба 94 (30.09): телефонная будка — экран PhoneBooth.scr и подиум каждой машины-награды уровня
+phone.shr    | build/phone.shr    | tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/shop_export.py --phone-ui --out {out}
+phonecars.txt | build/phonecars.txt | tools/shop_export.py | python tools/shop_export.py --phone-list --out {out}
+# №375: будка читает каталог и страницу из папки текущего уровня, не только L1
+l{N}/phone.shr | build/levels/l{N}/phone.shr | tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/shop_export.py --level {N} --phone-ui --out {out}
+l{N}/phonecars.txt | build/levels/l{N}/phonecars.txt | tools/shop_export.py | python tools/shop_export.py --level {N} --phone-list --out {out}
+# правка Роба 107: гардероб Гомера — костюмы уровня 1 (модели на скелете Гомера), страница и список
+wardrobe.shr | build/wardrobe.shr | tools/skins_export.py tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/skins_export.py --ui {out}
+skins.txt    | build/skins.txt    | tools/skins_export.py tools/shop_export.py | python tools/skins_export.py --list {out}
+homer-h_undr_m.shr | build/homer-h_undr_m.shr | tools/homer_export.py tools/uvq.py tools/char_export.py | python tools/homer_export.py --skin h_undr_m --out {out}
+homer-h_fat_m.shr  | build/homer-h_fat_m.shr  | tools/homer_export.py tools/uvq.py tools/char_export.py | python tools/homer_export.py --skin h_fat_m --out {out}
+homer-h_stcr_m.shr | build/homer-h_stcr_m.shr | tools/homer_export.py tools/uvq.py tools/char_export.py | python tools/homer_export.py --skin h_stcr_m --out {out}
+# правка Роба 352 (05.10): игрок уровня — [диск] AddCharacter leveli.mfk (L2/L6 Барт, L3 Лиза, L4 Мардж, L5 Апу, L7 Гомер): своя модель,
+# скелет и клипы (viewer/main.c playerLoad, viewer/homer.c — префикс клипов)
+l{N}/player.shr   | build/levels/l{N}/player.shr   | tools/homer_export.py tools/uvq.py tools/char_export.py | python tools/homer_export.py --level {N} --out {out}
+# Codex-3 shop: rewards.mfk has one default and three purchasable skins on every L2-L7.
+l{N}/wardrobe.shr | build/levels/l{N}/wardrobe.shr | tools/skins_export.py tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/skins_export.py --level {N} --ui {out}
+l{N}/skins.txt | build/levels/l{N}/skins.txt | tools/skins_export.py tools/shop_export.py | python tools/skins_export.py --level {N} --list {out}
+l{N}/skin1.shr | build/levels/l{N}/skin1.shr | tools/homer_export.py tools/uvq.py tools/char_export.py tools/skins_export.py | python tools/homer_export.py --level {N} --skin-index 1 --out {out}
+l{N}/skin2.shr | build/levels/l{N}/skin2.shr | tools/homer_export.py tools/uvq.py tools/char_export.py tools/skins_export.py | python tools/homer_export.py --level {N} --skin-index 2 --out {out}
+l{N}/skin3.shr | build/levels/l{N}/skin3.shr | tools/homer_export.py tools/uvq.py tools/char_export.py tools/skins_export.py | python tools/homer_export.py --level {N} --skin-index 3 --out {out}
+# идея Роба 85: QR эпизода у крупной карточки VIEW CARDS (viewer/main.c vcQrDraw)
+cardqr-l1.bin | build/cardqr-l1.bin | tools/cardqr_export.py | python tools/cardqr_export.py --level 1 --out {out}
+cardqr-l{N}.bin | build/cardqr-l{N}.bin | tools/cardqr_export.py | python tools/cardqr_export.py --level {N} --out {out}
+# ловушка вылета (аудит ведущего 01.10 22:35): модуль ядра рядом с EBOOT, viewer/main.c kexcBoot; при исключении — CRASH в ящик
+sharexc.prx | build/sharexc.prx | viewer/kexc/main.c viewer/kexc/Makefile | make -C viewer/kexc >/dev/null && cp viewer/kexc/sharexc.prx {out}
+# правки 269/273/276, ступень 0: проба Media Engine — модуль ядра рядом с EBOOT (viewer/me, метод MIST); грузится только флагом сценария meprobe (тур TEST 8)
+# и флаг-файлом meaudio (правка 276: смешивание звука на ME, viewer/mixdsp.h — та же функция в EBOOT и в модуле)
+# и флаг-файлом mefx (правка 313: частицы и свечение на ME, viewer/fxdsp.c — тот же машинный код в EBOOT и в модуле)
+sharme.prx | build/sharme.prx | viewer/me/sharme.c viewer/me/mebox.h viewer/mixdsp.h viewer/fxdsp.h viewer/fxdsp.c viewer/fx.h viewer/me/Makefile viewer/me/vendor/me-safe-task/me-stask-mist.c viewer/me/vendor/me-safe-task/me-stask-utils.c viewer/me/vendor/me-core-mapper/me-core-mapping.c viewer/fpuguard.h | make -C viewer/me >/dev/null && cp viewer/me/sharme.prx {out}
+# правка 420: бонус-игра (MINI GAME) — трассы мини-игры b01..b07 (SHR7: с 09.10 и модели подборов wrench/nitro в SPR1), правила, путь ИИ, подборы и зоны (BNS1 версии 2), машины гонки (MCR1); viewer/bonus.c, bonus_play.h
+bonus/b01.shr | build/bonus/b01.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 1 --shr-file {out}
+bonus/b01.bns | build/bonus/b01.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b01.shr | python tools/bonus/export.py --track 1 --bns-file {out} --shr {stage}/bonus/b01.shr
+bonus/b02.shr | build/bonus/b02.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 2 --shr-file {out}
+bonus/b02.bns | build/bonus/b02.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b02.shr | python tools/bonus/export.py --track 2 --bns-file {out} --shr {stage}/bonus/b02.shr
+bonus/b03.shr | build/bonus/b03.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 3 --shr-file {out}
+bonus/b03.bns | build/bonus/b03.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b03.shr | python tools/bonus/export.py --track 3 --bns-file {out} --shr {stage}/bonus/b03.shr
+bonus/b04.shr | build/bonus/b04.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 4 --shr-file {out}
+bonus/b04.bns | build/bonus/b04.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b04.shr | python tools/bonus/export.py --track 4 --bns-file {out} --shr {stage}/bonus/b04.shr
+bonus/b05.shr | build/bonus/b05.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 5 --shr-file {out}
+bonus/b05.bns | build/bonus/b05.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b05.shr | python tools/bonus/export.py --track 5 --bns-file {out} --shr {stage}/bonus/b05.shr
+bonus/b06.shr | build/bonus/b06.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 6 --shr-file {out}
+bonus/b06.bns | build/bonus/b06.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b06.shr | python tools/bonus/export.py --track 6 --bns-file {out} --shr {stage}/bonus/b06.shr
+bonus/b07.shr | build/bonus/b07.shr | tools/bonus/export.py tools/bonus/track.py tools/psp_export.py tools/collect_export.py tools/jumps_export.py tools/prp2_export.py tools/animobj_export.py tools/level_light.py tools/pvs.c tools/wind.c hit-and-run-web/tools/convert.py hit-and-run-web/tools/p3d.py tools/uvq.py viewer/skin.h | python tools/bonus/export.py --track 7 --shr-file {out}
+bonus/b07.bns | build/bonus/b07.bns | tools/bonus/export.py tools/bonus/track.py tools/bonus/nav.py {stage}/bonus/b07.shr | python tools/bonus/export.py --track 7 --bns-file {out} --shr {stage}/bonus/b07.shr
+bonus/msncars-b.shr | build/bonus/msncars-b.shr | tools/bonus/export.py tools/msncar_export.py tools/traffic_export.py tools/psp_export.py tools/texq.py tools/uvq.py tools/level_light.py viewer/skin.h tools/car_dump.py | python tools/bonus/export.py --cars-file {out}
+
+# 09.10: родные экраны мини-игры (minigame.p3d: MiniMenu / MiniSummary / MiniPause, пакет UIP1) и облёт перед заездом (minigamecam.p3d, ss.mfk); viewer/bonus_play.h
+bonus/mini.shr | build/bonus/mini.shr | tools/bonus/screens_export.py tools/ui_export.py tools/ui_typo.py hit-and-run-web/tools/p3d.py hit-and-run-web/tools/textures.py tools/pixel_fonts.py assets/fonts/pixel | python tools/bonus/screens_export.py --out {out}
+bonus/flyby.cam | build/bonus/flyby.cam | tools/bonus/flyby_export.py tools/frontend3d_export.py hit-and-run-web/tools/p3d.py | python tools/bonus/flyby_export.py --out {out}
+bonus/audio/sfx.sab | build/bonus/audio/sfx.sab | tools/bonus/audio_export.py tools/audio_export.py tools/sound_export.py tools/rms.py viewer/bonus_play.h | python tools/bonus/audio_export.py --out {outdir}
+bonus/audio/music.sap | build/bonus/audio/music.sap | tools/bonus/audio_export.py tools/audio_export.py tools/sound_export.py tools/rms.py viewer/bonus_play.h | python tools/bonus/audio_export.py --out {outdir}
+
+# Codex-3 cars 09.10: AddPurchaseCarReward exists on every level; its UI/model must ship there too.
+# CAR_REWARDS_OLD: previous manifest (no L2–L7 purchase screens) is the red data control in tests/cars/catalog/gate.py.
+l{N}/shop.shr | build/levels/l{N}/shop.shr | tools/shop_export.py tools/ui_export.py tools/ui_typo.py build/ui_typo.json tools/pixel_fonts.py assets/fonts/pixel | python tools/shop_export.py --level {N} --ui-only --out {out}
+l{N}/reward-0.shr | build/levels/l{N}/reward-0.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --level {N} --scene 0 --out {out}
+l{N}/reward-1.shr | build/levels/l{N}/reward-1.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --level {N} --scene 1 --out {out}
+l{N}/reward-2.shr | build/levels/l{N}/reward-2.shr | tools/shop_export.py tools/frontend3d_export.py tools/psp_export.py tools/texq.py tools/uvq.py hit-and-run-web/tools/convert.py | python tools/shop_export.py --level {N} --scene 2 --out {out}
+
+# Native L3 card/movie reward routing, read by ticketViewLoad.
+l3/ticket.shr | build/levels/l3/ticket.shr | tools/ticket_export.py tools/ticket_source.py tools/ticket_audio.py tools/missions/compile.py tools/missions/mfk.py hit-and-run-web/source/disc/SLES_518.97 hit-and-run-web/source/game/scripts/missions/level03/level.mfk hit-and-run-web/source/game/conversations | python tools/ticket_export.py --out {out}

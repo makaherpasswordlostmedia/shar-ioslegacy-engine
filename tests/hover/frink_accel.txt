@@ -1,0 +1,44 @@
+# Гейт 413б (уточнение Роба: frink_v «становится прозрачной при разгоне»). L7 дорога 2: Гомер садится в машину уровня, будка даёт
+# frink_v; окно CARGLASS стоя (1 с) и на разгоне с места до хода (autostraight 6, окно 4,5 с) — сначала с правилом, потом прежним путём.
+# flips — сколько раз за окно поменялся порядок кусков своей машины в очереди полупрозрачного (сортировка по расстоянию до глаза)
+scene start
+wait 6
+scene L7_load
+flag golevel 7
+wait 25
+scene frink
+goto 200 161.1 1.5708
+foot 200 163.4 1.5708
+wait 2
+press triangle 0.2
+wait 6
+flag phonecar_frink_v
+wait 4
+flag carglass
+wait 1
+flag carglass
+shot f_stand
+flag autostraight 6
+wait 1
+shot f_acc1
+wait 3.5
+flag carglass
+shot f_acc4
+flag stop
+wait 3
+scene frink_old
+flag carglassold 1
+goto 200 161.1 1.5708
+flag phonecar_frink_v
+wait 4
+flag carglass
+wait 1
+flag carglass
+shot o_stand
+flag autostraight 6
+wait 1
+shot o_acc1
+wait 3.5
+flag carglass
+shot o_acc4
+end

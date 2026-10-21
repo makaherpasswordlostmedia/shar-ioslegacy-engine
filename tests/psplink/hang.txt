@@ -1,0 +1,8 @@
+# Гейт стенда PSPLink (этап С.1), заведомо плохой вход: главный поток игры встаёт навсегда, PSPLink жив.
+# Стенд обязан сообщить «ЗАВИСАНИЕ ИГРЫ» (код 11), потоки и снимок экрана (viewer/smoke.h, flag hang)
+scene hang
+wait 6
+shot hang_before
+flag hang
+wait 40
+end

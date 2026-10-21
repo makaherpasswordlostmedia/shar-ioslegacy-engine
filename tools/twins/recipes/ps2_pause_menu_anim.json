@@ -1,0 +1,46 @@
+{
+ "id": "ps2_pause_menu_anim",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "frames": 260,
+ "every": 10,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "start",
+   1
+  ],
+  [
+   26,
+   "start",
+   0
+  ],
+  [
+   160,
+   "start",
+   1
+  ],
+  [
+   166,
+   "start",
+   0
+  ]
+ ],
+ "pngs": [
+  [
+   16,
+   90,
+   1
+  ],
+  [
+   156,
+   230,
+   1
+  ]
+ ],
+ "timeout": 240,
+ "renderer": "metal",
+ "note": "пауза: START на кадре 20 (открытие), START на кадре 160 (закрытие), PNG каждый кадр"
+}

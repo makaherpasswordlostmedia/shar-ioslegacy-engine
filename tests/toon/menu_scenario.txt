@@ -1,0 +1,40 @@
+# №428: опция «Cartoon» в Settings паузы (tests/toon/menu_row.sh): Гомер пешком, режим выкл (два кадра — шум) -> пауза -> OPTIONS -> SETTINGS -> Cartoon (последняя строка, после Tutorial; выбираемые Invert, Radar, Colour, Tutorial, Cartoon: четыре вниз) -> ► -> в игру: чёрный контур вокруг Гомера
+scene start
+wait 3
+scene foot_t0
+foot 225 176 1.5708
+wait 5
+shot foot_t0
+wait 0.5
+shot foot_t0b
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 0.8
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press right
+wait 0.5
+shot set_toon_on
+press triangle
+wait 0.4
+press triangle
+wait 0.4
+press start
+wait 1.5
+shot foot_t1
+end

@@ -1,0 +1,20 @@
+# Загрузка 2: погоня L3 от причала как в T20_L3_chase TEST21 (недогруженные видимые клетки при скорости 75, точка B8-3 около −515 −79)
+flag golevel 3
+wait 20
+scene chase_pre
+flag camin 1
+flag repair
+flag warmhere
+goto -469.4 -35.9 2.4
+wait 5
+scene chase_L3
+flag camin 1
+flag repair
+flag warmhere
+flag hnr 100
+flag drive 75
+wait 14
+flag stop
+flag hnr 0
+wait 1
+end

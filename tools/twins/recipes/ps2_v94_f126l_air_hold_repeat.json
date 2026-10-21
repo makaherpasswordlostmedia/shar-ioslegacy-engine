@@ -1,0 +1,1127 @@
+{
+ "id": "ps2_v94_f126l_air_hold_repeat",
+ "state": "build/twins/o4/ps2_v94_heading_stage_slow/stage.p2s",
+ "frames": 380,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "hnr",
+  {
+   "addr": "1295f64",
+   "type": "u32",
+   "label": "wheel0_pointer"
+  },
+  {
+   "addr": "a23040",
+   "type": "u32",
+   "label": "wheel0_vehicle"
+  },
+  {
+   "addr": "a23048",
+   "type": "u32",
+   "label": "wheel0_index"
+  },
+  {
+   "addr": "a23074",
+   "type": "u8",
+   "label": "wheel0_collision_A"
+  },
+  {
+   "addr": "a23075",
+   "type": "u8",
+   "label": "wheel0_flag_B"
+  },
+  {
+   "addr": "a23050",
+   "type": "f32",
+   "label": "wheel0_current_contact_displacement"
+  },
+  {
+   "addr": "a23054",
+   "type": "f32",
+   "label": "wheel0_cached_displacement"
+  },
+  {
+   "addr": "a23064",
+   "type": "f32",
+   "label": "wheel0_limit"
+  },
+  {
+   "addr": "1489218",
+   "type": "f32",
+   "label": "wheel0_world_x"
+  },
+  {
+   "addr": "148921c",
+   "type": "f32",
+   "label": "wheel0_world_y"
+  },
+  {
+   "addr": "1489220",
+   "type": "f32",
+   "label": "wheel0_world_z"
+  },
+  {
+   "addr": "1295f68",
+   "type": "u32",
+   "label": "wheel1_pointer"
+  },
+  {
+   "addr": "a230d0",
+   "type": "u32",
+   "label": "wheel1_vehicle"
+  },
+  {
+   "addr": "a230d8",
+   "type": "u32",
+   "label": "wheel1_index"
+  },
+  {
+   "addr": "a23104",
+   "type": "u8",
+   "label": "wheel1_collision_A"
+  },
+  {
+   "addr": "a23105",
+   "type": "u8",
+   "label": "wheel1_flag_B"
+  },
+  {
+   "addr": "a230e0",
+   "type": "f32",
+   "label": "wheel1_current_contact_displacement"
+  },
+  {
+   "addr": "a230e4",
+   "type": "f32",
+   "label": "wheel1_cached_displacement"
+  },
+  {
+   "addr": "a230f4",
+   "type": "f32",
+   "label": "wheel1_limit"
+  },
+  {
+   "addr": "14892d8",
+   "type": "f32",
+   "label": "wheel1_world_x"
+  },
+  {
+   "addr": "14892dc",
+   "type": "f32",
+   "label": "wheel1_world_y"
+  },
+  {
+   "addr": "14892e0",
+   "type": "f32",
+   "label": "wheel1_world_z"
+  },
+  {
+   "addr": "1295f6c",
+   "type": "u32",
+   "label": "wheel2_pointer"
+  },
+  {
+   "addr": "a23160",
+   "type": "u32",
+   "label": "wheel2_vehicle"
+  },
+  {
+   "addr": "a23168",
+   "type": "u32",
+   "label": "wheel2_index"
+  },
+  {
+   "addr": "a23194",
+   "type": "u8",
+   "label": "wheel2_collision_A"
+  },
+  {
+   "addr": "a23195",
+   "type": "u8",
+   "label": "wheel2_flag_B"
+  },
+  {
+   "addr": "a23170",
+   "type": "f32",
+   "label": "wheel2_current_contact_displacement"
+  },
+  {
+   "addr": "a23174",
+   "type": "f32",
+   "label": "wheel2_cached_displacement"
+  },
+  {
+   "addr": "a23184",
+   "type": "f32",
+   "label": "wheel2_limit"
+  },
+  {
+   "addr": "1489398",
+   "type": "f32",
+   "label": "wheel2_world_x"
+  },
+  {
+   "addr": "148939c",
+   "type": "f32",
+   "label": "wheel2_world_y"
+  },
+  {
+   "addr": "14893a0",
+   "type": "f32",
+   "label": "wheel2_world_z"
+  },
+  {
+   "addr": "1295f70",
+   "type": "u32",
+   "label": "wheel3_pointer"
+  },
+  {
+   "addr": "a231f0",
+   "type": "u32",
+   "label": "wheel3_vehicle"
+  },
+  {
+   "addr": "a231f8",
+   "type": "u32",
+   "label": "wheel3_index"
+  },
+  {
+   "addr": "a23224",
+   "type": "u8",
+   "label": "wheel3_collision_A"
+  },
+  {
+   "addr": "a23225",
+   "type": "u8",
+   "label": "wheel3_flag_B"
+  },
+  {
+   "addr": "a23200",
+   "type": "f32",
+   "label": "wheel3_current_contact_displacement"
+  },
+  {
+   "addr": "a23204",
+   "type": "f32",
+   "label": "wheel3_cached_displacement"
+  },
+  {
+   "addr": "a23214",
+   "type": "f32",
+   "label": "wheel3_limit"
+  },
+  {
+   "addr": "1489458",
+   "type": "f32",
+   "label": "wheel3_world_x"
+  },
+  {
+   "addr": "148945c",
+   "type": "f32",
+   "label": "wheel3_world_y"
+  },
+  {
+   "addr": "1489460",
+   "type": "f32",
+   "label": "wheel3_world_z"
+  },
+  {
+   "addr": "1295b50",
+   "type": "u32",
+   "label": "vehicle_vtable"
+  },
+  {
+   "addr": "1295ff8",
+   "type": "u32",
+   "label": "vehicle_simstate"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   80,
+   "cross",
+   1
+  ],
+  [
+   100,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [
+  {
+   "at": 20,
+   "name": "car_cm[0]",
+   "value": -116.021
+  },
+  {
+   "at": 20,
+   "name": "car_cm[1]",
+   "value": 35
+  },
+  {
+   "at": 20,
+   "name": "car_cm[2]",
+   "value": -377.792
+  },
+  {
+   "at": 20,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 24,
+   "name": "car_cm[1]",
+   "value": 35
+  },
+  {
+   "at": 24,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 24,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 26,
+   "name": "car_cm[1]",
+   "value": 35
+  },
+  {
+   "at": 26,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 26,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 28,
+   "name": "car_cm[1]",
+   "value": 35
+  },
+  {
+   "at": 28,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 28,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 30,
+   "name": "car_cm[1]",
+   "value": 35
+  },
+  {
+   "at": 30,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 30,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 80,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 80,
+   "name": "car_cm[1]",
+   "value": 8.9
+  },
+  {
+   "at": 80,
+   "name": "car_cm[2]",
+   "value": -452
+  },
+  {
+   "at": 80,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 80,
+   "name": "car_vel[1]",
+   "value": -1
+  },
+  {
+   "at": 80,
+   "name": "car_vel[2]",
+   "value": -18
+  },
+  {
+   "at": 82,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 82,
+   "name": "car_cm[1]",
+   "value": 8.9
+  },
+  {
+   "at": 82,
+   "name": "car_cm[2]",
+   "value": -452
+  },
+  {
+   "at": 82,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 82,
+   "name": "car_vel[1]",
+   "value": -1
+  },
+  {
+   "at": 82,
+   "name": "car_vel[2]",
+   "value": -18
+  },
+  {
+   "at": 40,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 40,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 40,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 40,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 42,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 42,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 42,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 44,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 44,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 44,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 46,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 46,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 46,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 48,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 48,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 48,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 50,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 50,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 50,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 52,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 52,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 52,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 54,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 54,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 54,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 56,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 56,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 56,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 58,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 58,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 58,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 60,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 60,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 60,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 62,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 62,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 62,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 64,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 64,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 64,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 66,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 66,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 66,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 68,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 68,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 68,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 70,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 70,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 70,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 72,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 72,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 72,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 74,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 74,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 74,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 76,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 76,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 76,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_cm[0]",
+   "value": -124.9
+  },
+  {
+   "at": 78,
+   "name": "car_cm[1]",
+   "value": 9.9
+  },
+  {
+   "at": 78,
+   "name": "car_cm[2]",
+   "value": -447
+  },
+  {
+   "at": 78,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_vel[2]",
+   "value": 0
+  }
+ ],
+ "shots": [
+  2,
+  30,
+  46,
+  78,
+  80,
+  84,
+  88,
+  100,
+  140,
+  220,
+  300,
+  380
+ ],
+ "pngs": [
+  [
+   76,
+   160,
+   2
+  ],
+  [
+   160,
+   380,
+   20
+  ]
+ ],
+ "timeout": 180,
+ "note": "ThirdV94 setup: secondnearstagefell/rolled-25.86° beforelaunch, rejected. HoldallowedCM/linearvel atnearairpoint9.9;-447 until78 tokeepupright before requested8.9;-452 /vel0;-1;-18 at80/82. Noangular/orientation/flags/terrainwrites. ActualModelRoot height/heading andpostlaunch mustmatcholdfixtureorbeexplicitlypartial."
+}

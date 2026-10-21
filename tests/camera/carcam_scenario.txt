@@ -1,0 +1,45 @@
+# Правка Роба 198+ (tests/camera/carcam_ps2.py): камера за машиной — кадр оригинала с поправкой на угол кадра порта.
+# Три машины на одной прямой улице L1 (172; 265,4, курс на запад, впереди 60 м прямой): famil_v (своя), школьный автобус
+# schoolbu и грузовик glastruc — угон стоящих машин зоны Z1 (места Z1PC и Z1PC1 трафика). На каждой: стоянка 2,5 с (строка
+# CARCAM раз в секунду: глаз, цель, угол кадра, кузов), снимок; разгон 2 с, снимок. famil_v — со старта (Гомер за рулём);
+# потом «flag msn» — как NEW GAME (угон работает только при живых миссиях; Гомер пешком), foot к борту стоящей машины, △ — угон
+# и посадка; между автобусом и грузовиком △ — выйти из автобуса.
+flag carcamlog
+wait 3
+scene famil_v
+goto 172 265.4 -1.5708
+wait 2.5
+shot famil_still
+flag autostraight 2.2
+wait 2.0
+shot famil_drive
+wait 3
+flag msn
+wait 3
+scene schoolbu
+foot 298.0 177.42 -1.5708
+wait 2
+press triangle
+wait 4
+goto 172 265.4 -1.5708
+wait 2.5
+shot bus_still
+flag autostraight 2.2
+wait 2.0
+shot bus_drive
+wait 3
+scene glastruc
+press triangle
+wait 3
+foot 329.4 176.2 1.5708
+wait 2
+press triangle
+wait 4
+goto 172 265.4 -1.5708
+wait 2.5
+shot truck_still
+flag autostraight 2.2
+wait 2.0
+shot truck_drive
+wait 3
+end

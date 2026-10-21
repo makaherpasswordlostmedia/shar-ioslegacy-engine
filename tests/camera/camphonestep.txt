@@ -1,0 +1,14 @@
+# TEST21 видео f3900: облёт будки (flag phoneanim на пакете TEST20) — шаг глаза за кадр. Красный: flag camphonestepold 1 (pjmax > 0,5); зелёный: pjmax <= 0,5
+flag player
+scene T20_booth_hedge
+flag camin 1
+flag caminlog
+flag camphonestepold 0
+flag phoneplant
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+flag phoneanim
+wait 8
+flag camin
+end

@@ -1,0 +1,53 @@
+scene start
+wait 3
+flag repair
+wait 3
+flag wrencheye 6
+flag wrenchgo 0
+wait 5
+scene R6_0
+wait 1
+shot R6_0
+flag wrencheye 6
+flag wrenchgo 100
+wait 5
+scene R6_100
+wait 1
+shot R6_100
+flag wrencheye 6
+flag wrenchgo 200
+wait 5
+scene R6_200
+wait 1
+shot R6_200
+flag wrencheye 6
+flag wrenchgo 300
+wait 5
+scene R6_300
+wait 1
+shot R6_300
+flag wrencheye 12
+flag wrenchgo 0
+wait 5
+scene R12_0
+wait 1
+shot R12_0
+flag wrencheye 12
+flag wrenchgo 100
+wait 5
+scene R12_100
+wait 1
+shot R12_100
+flag wrencheye 12
+flag wrenchgo 200
+wait 5
+scene R12_200
+wait 1
+shot R12_200
+flag wrencheye 12
+flag wrenchgo 300
+wait 5
+scene R12_300
+wait 1
+shot R12_300
+end

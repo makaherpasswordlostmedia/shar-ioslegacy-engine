@@ -1,0 +1,35 @@
+{
+ "id": "ps2_v101_title_idle_60s",
+ "state": "build/twins/o4/ps2_v101_title_arrival/snap_1200.p2s",
+ "frames": 3000,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  2,
+  500,
+  1000,
+  1500,
+  2000,
+  2500,
+  3000
+ ],
+ "pngs": [
+  [
+   2,
+   3000,
+   50
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 150,
+ "renderer": "metal",
+ "note": "60 seconds without buttons on title after measured arrival; verify any automatic movie/demo and WAV/CDVD behavior."
+}

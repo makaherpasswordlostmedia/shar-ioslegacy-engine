@@ -1,0 +1,200 @@
+# HLOD шов, пролёт камеры над городом (32 м): 9 точек вдоль z, 150 м; проход без HLOD и с HLOD, одинаковые позиции
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+flag drawdist 60
+flag fogsoft 3
+flag horizon 8
+scene HF_off
+flag hlod 0
+flag repair
+goto 0 300 0
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_0
+goto 0 273 0
+flag eyex 0
+flag eyey 32
+flag eyez 273
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_1
+goto 0 246 0
+flag eyex 0
+flag eyey 32
+flag eyez 246
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_2
+goto 0 219 0
+flag eyex 0
+flag eyey 32
+flag eyez 219
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_3
+goto 0 192 0
+flag eyex 0
+flag eyey 32
+flag eyez 192
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_4
+goto 0 165 0
+flag eyex 0
+flag eyey 32
+flag eyez 165
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_5
+goto 0 138 0
+flag eyex 0
+flag eyey 32
+flag eyez 138
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_6
+goto 0 111 0
+flag eyex 0
+flag eyey 32
+flag eyez 111
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_7
+goto 0 84 0
+flag eyex 0
+flag eyey 32
+flag eyez 84
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_off_8
+flag eyeon 0
+scene HF_on
+flag hlod 3
+flag repair
+goto 0 300 0
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_0
+goto 0 273 0
+flag eyex 0
+flag eyey 32
+flag eyez 273
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_1
+goto 0 246 0
+flag eyex 0
+flag eyey 32
+flag eyez 246
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_2
+goto 0 219 0
+flag eyex 0
+flag eyey 32
+flag eyez 219
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_3
+goto 0 192 0
+flag eyex 0
+flag eyey 32
+flag eyez 192
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_4
+goto 0 165 0
+flag eyex 0
+flag eyey 32
+flag eyez 165
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_5
+goto 0 138 0
+flag eyex 0
+flag eyey 32
+flag eyez 138
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_6
+goto 0 111 0
+flag eyex 0
+flag eyey 32
+flag eyez 111
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_7
+goto 0 84 0
+flag eyex 0
+flag eyey 32
+flag eyez 84
+flag eyedx 0
+flag eyedy -0.10
+flag eyedz -1
+flag eyeon 1
+wait 1.5
+shot HF_on_8
+flag eyeon 0
+end

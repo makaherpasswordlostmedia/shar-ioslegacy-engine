@@ -1,0 +1,45 @@
+{
+ "id": "ps2_v101_continue_no_card",
+ "state": "build/twins/o4/ps2_v101_cold_title/snap_3000.p2s",
+ "frames": 2400,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [
+  [
+   10,
+   "cross",
+   1
+  ],
+  [
+   16,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  100,
+  500,
+  1000,
+  1500,
+  2000,
+  2400
+ ],
+ "pngs": [
+  [
+   20,
+   2400,
+   10
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 180,
+ "renderer": "metal",
+ "note": "Accept Continue Without Saving on own cold boot. No personal memory card inserted/written. No further input; establish title first appearance from frame sequence."
+}

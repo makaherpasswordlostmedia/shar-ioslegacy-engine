@@ -1,0 +1,85 @@
+# TEST19 · Сборка: диагностика света и A/B перегруппировки. Блоки вставляются в сценарий после загрузки своего уровня (golevel N + wait 22), по порядку L3, L7, L1.
+# Рантайм-флаги: neonglow 1 — ореолы/неон/пятна со сложением вкл; policeflash 1 — вспышки мигалки; glowbias N — сдвиг глубины N единиц к камере для света со сложением
+# (куски города, билборды стейтпропов, квады-пятна под персонажами и маркеры миссий; гипотеза: пятно в 8 см над землёй мигает из-за 16-бит глубины); tqfast 0/1 — перегруппировка полупрозрачного.
+# Снимок кадра у каждой сцены метка-вспышка делает движок сам (оверлей). Длина блоков ≈ 110 с.
+
+# ---- блок L3 (после «flag golevel 3» + wait 22): неон причала и пятно под Милхаусом у старта гонки
+scene SV_L3_pier_on
+flag neonglow 1
+flag policeflash 1
+flag glowbias 0
+goto -385 -31 4.712
+flag repair
+flag autostraight 6
+wait 8
+flag stop
+wait 1
+scene SV_L3_pier_bias
+flag glowbias 40
+goto -385 -31 4.712
+flag repair
+flag autostraight 6
+wait 8
+flag stop
+wait 1
+scene SV_L3_milhouse_on
+flag glowbias 0
+flag msnmainat 901
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+scene SV_L3_milhouse_bias
+flag glowbias 40
+flag msnmainat 901
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+flag neonglow 0
+flag policeflash 0
+flag glowbias 0
+
+# ---- блок L7 (после «flag golevel 7» + wait 22): фонари
+scene SV_L7_lamps_on
+flag neonglow 1
+flag glowbias 0
+goto 230 160 1.5708
+flag repair
+flag autostraight 4
+wait 9
+flag stop
+wait 1
+scene SV_L7_lamps_bias
+flag glowbias 40
+goto 230 160 1.5708
+flag repair
+flag autostraight 4
+wait 9
+flag stop
+wait 1
+flag neonglow 0
+flag glowbias 0
+
+# ---- блок L1 (после «flag golevel 1» + wait 22): A/B перегруппировки полупрозрачного на тяжёлой сцене
+scene SV_L1_city_tq1
+flag tqfast 1
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 20
+wait 22
+flag stop
+wait 1
+scene SV_L1_city_tq0
+flag tqfast 0
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 20
+wait 22
+flag stop
+wait 1
+flag tqfast 1

@@ -1,0 +1,22 @@
+# Правка Роба 265 (tests/fe_guard/run.sh, Мак, безголовый эмулятор): меню → NEW GAME → в игре флаги → пауза → QUIT GAME →
+# меню → × NEW GAME: перелёт к газете покадрово (flag fe265sweep 1: одна поза камеры на кадр рисования, проход 0 — прежний мип
+# AUTO, проход 1 — текущий). Кадры пишет сама гостиная (frontend3d.c sweepDump): shots/fe265_a|b_<кадр×100>.bmp + fe265_sweep.txt;
+# «wait 8» после × — перелёт идёт внутри menuFly, сценарий не должен дойти до end раньше (101 кадр, шаг сценария ≤ 0,05 с)
+# КРАСНЫЙ: flag feold265 2 — проход 1 рисует самый мелкий мип (как «зелёный полигон»), гейт обязан упасть
+flag menu
+wait 1.5
+press cross
+wait 2
+flag feold265 2
+flag fe265sweep 1
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1.5
+press cross
+wait 8
+wait 3
+end

@@ -1,0 +1,50 @@
+{
+ "id": "tw_v8_stand",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 1500,
+ "every": 5,
+ "trace": [
+  "hnr",
+  "chase",
+  "bust_near_ms",
+  "bust_ms",
+  "coins",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  {
+   "addr": "a25810",
+   "label": "pol_x"
+  },
+  {
+   "addr": "a25814",
+   "label": "pol_y"
+  },
+  {
+   "addr": "a25818",
+   "label": "pol_z"
+  },
+  {
+   "addr": "a25820",
+   "label": "pol_vx"
+  },
+  {
+   "addr": "a25828",
+   "label": "pol_vz"
+  }
+ ],
+ "writes": [
+  {
+   "name": "hnr",
+   "value": 100.0,
+   "at": 150,
+   "hold": 2
+  }
+ ],
+ "shots": [
+  400,
+  1200
+ ]
+}

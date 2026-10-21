@@ -1,0 +1,74 @@
+# №617: SELECT за рулём как строка Camera PS2: Far Follow → Bumper → Near Follow (кадры a, b, c); кадры на машине уровня
+scene V1_load
+flag golevel 1
+wait 15
+flag player 1
+flag camlog
+flag carcamlog 1
+flag repair
+wait 2
+scene V1_far
+wait 1.5
+shot v1a
+press select 0.2
+wait 1.5
+scene V1_bump_
+shot v1b
+press select 0.2
+wait 1.5
+scene V1_near
+shot v1c
+flag drive 3
+wait 4
+shot v1d
+flag stop
+wait 1
+scene V2_load
+flag golevel 2
+wait 15
+flag player 1
+flag camlog
+flag carcamlog 1
+flag repair
+wait 2
+scene V2_far
+wait 1.5
+shot v2a
+press select 0.2
+wait 1.5
+scene V2_bump_
+shot v2b
+press select 0.2
+wait 1.5
+scene V2_near
+shot v2c
+flag drive 3
+wait 4
+shot v2d
+flag stop
+wait 1
+scene V4_load
+flag golevel 4
+wait 15
+flag player 1
+flag camlog
+flag carcamlog 1
+flag repair
+wait 2
+scene V4_far
+wait 1.5
+shot v4a
+press select 0.2
+wait 1.5
+scene V4_bump_
+shot v4b
+press select 0.2
+wait 1.5
+scene V4_near
+shot v4c
+flag drive 3
+wait 4
+shot v4d
+flag stop
+wait 1
+end

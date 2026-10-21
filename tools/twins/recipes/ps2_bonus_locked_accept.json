@@ -1,0 +1,33 @@
+{
+ "id": "ps2_bonus_locked_accept",
+ "state": "build/twins/o4/ps2_bonus_main_selection/snap_300.p2s",
+ "frames": 300,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "cross",
+   1
+  ],
+  [
+   26,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  150,
+  300
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 100,
+ "note": "Bonus grey entry: original Cross once, no writes. Confirm actual response."
+}

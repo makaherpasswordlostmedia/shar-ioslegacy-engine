@@ -1,0 +1,27 @@
+{
+ "id": "ps2_v101_cold_title",
+ "frames": 3000,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up"
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  200,
+  500,
+  1000,
+  1500,
+  2000,
+  2500,
+  3000
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 180,
+ "renderer": "metal",
+ "note": "Cold boot own original disc/profile; no input. Capture title arrival; sampled screenshots identify phase before finer followup."
+}

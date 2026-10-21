@@ -1,0 +1,65 @@
+# сетка точек G4-7 (поиск гаража АЭС старта Resume)
+scene PG_L1_load
+flag golevel 1
+wait 15
+scene PG_p1_98_330
+flag repair
+foot -98 -330 1.5708
+wait 2.5
+shot PG_p1
+scene PG_p2_98_320
+flag repair
+foot -98 -320 1.5708
+wait 2.5
+shot PG_p2
+scene PG_p3_98_310
+flag repair
+foot -98 -310 1.5708
+wait 2.5
+shot PG_p3
+scene PG_p4_98_302
+flag repair
+foot -98 -302 1.5708
+wait 2.5
+shot PG_p4
+scene PG_p5_85_330
+flag repair
+foot -85 -330 1.5708
+wait 2.5
+shot PG_p5
+scene PG_p6_85_320
+flag repair
+foot -85 -320 1.5708
+wait 2.5
+shot PG_p6
+scene PG_p7_85_310
+flag repair
+foot -85 -310 1.5708
+wait 2.5
+shot PG_p7
+scene PG_p8_85_302
+flag repair
+foot -85 -302 1.5708
+wait 2.5
+shot PG_p8
+scene PG_p9_72_330
+flag repair
+foot -72 -330 1.5708
+wait 2.5
+shot PG_p9
+scene PG_p10_72_320
+flag repair
+foot -72 -320 1.5708
+wait 2.5
+shot PG_p10
+scene PG_p11_72_310
+flag repair
+foot -72 -310 1.5708
+wait 2.5
+shot PG_p11
+scene PG_p12_72_302
+flag repair
+foot -72 -302 1.5708
+wait 2.5
+shot PG_p12
+end

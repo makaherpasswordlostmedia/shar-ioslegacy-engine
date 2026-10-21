@@ -1,0 +1,29 @@
+# Известные числа уровней — для сверки паспорта (tools/level/passport.py N --check). Один уровень — одна проверка генератора.
+# режим: «равно» — паспорт обязан дать это число; «справка» (ключ «что/чем_объяснено») — число другого источника (ботов, прежних
+# отчётов): паспорт обязан воспроизвести его названным своим числом (иначе FAIL: необъяснённое расхождение).
+# Источник — где число получено не этим генератором.
+# уровень	ключ	значение	режим	источник
+1	missions	13	равно	level_check disk: AddMission 8 + AddBonusMission 5 (РЕЦЕПТ §6.1: MSN1 13 / 99)
+1	stages	99	равно	РЕЦЕПТ §6.1 (MSN1 уровня 1: 13 миссий / 99 стадий)
+1	story	8	равно	level.mfk AddMission m0–m7
+1	bonus	5	равно	level.mfk AddBonusMission sr1 sr2 sr3 gr1 bm1
+1	car	famil_v	равно	РЕЦЕПТ §10 (машина уровня 1)
+1	driver	homer	равно	ПРИНЦИП §4 / РЕЦЕПТ §6.1
+1	teleports	12	равно	level_check disk: зоны AddTeleportDest (12)
+1	gags	33	равно	РЕЦЕПТ §11: гэги level.mfk L1 33 (collect.log)
+1	rooms	3	равно	РЕЦЕПТ §6.1: школа, KwikEMart, дом Симпсонов
+1	coins	207	равно	утро ботов 30.09: coin 174 из 207 (build/bots/targets-l1.tsv, PRP2 build/level.shr)
+1	skins	4	равно	GAPS «не так» 3: 4 костюма уровня (правка 107)
+1	cards/card_locator_names	6	справка	утро ботов 30.09: card 4 из 6 (build/bots/targets-l1.tsv — локаторы с «card» в имени, одно имя на цель)
+1	wasps/wasp_locators	23	справка	утро ботов 30.09: wasp 16 из 23 (build/bots/targets-l1.tsv — все локаторы w_* в wasps.p3d)
+1	cards	7	равно	РЕЦЕПТ §11: карточки 7/7 у всех 7 уровней (CLT1)
+1	wasps	20	равно	РЕЦЕПТ §11: осы 20/20 у всех 7 уровней (CLT1)
+2	missions	13	равно	РЕЦЕПТ §6.1 (MSN1 уровня 2: 13 / 115)
+2	stages	115	равно	РЕЦЕПТ §6.1
+2	car	honor_v	равно	РЕЦЕПТ §10
+2	driver	bart	равно	ПРИНЦИП §4
+2	gags	13	равно	РЕЦЕПТ §11: L2 13
+2	rooms	2	равно	РЕЦЕПТ §6.1: DMV, Moe's
+2	teleports	8	равно	РЕЦЕПТ §8: телепорты 8/8
+2	cards	7	равно	РЕЦЕПТ §6.1 / §11: карточки 7 (collect_export L2)
+2	wasps	20	равно	РЕЦЕПТ §6.1 / §11: осы 20 (collect_export L2)

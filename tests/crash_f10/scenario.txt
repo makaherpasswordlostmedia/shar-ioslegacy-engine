@@ -1,0 +1,185 @@
+# Аудит ведущего 01.10 22:35, обрыв 22:26 на a95a30cd (ящик build/crash/20261001-2226): последняя строка t=158 L1 F10-5
+# (-166,-1,238), без STALL — встал весь процессор. Перед ним стекло Krusty F10-8 (t=155,5) и приземление large_car_crash (t=157,5).
+# Путь Роба по ящику: (-120,432) t=149 → F11-2 (-143,332) t=153 → F10-8 (-163,290) t=155 → F10-5 (-166,248) t=157, ~22 м/с,
+# почти одна прямая. v2: путь точками из ящика (flag wp, автопилот wpgo держит скорость wpv) — 4 прохода 20/23/26/23 м/с.
+# Пролог как tests/crash_school/scenario.txt (миссии, подсказки, журнал звуков). Запуск: SCN=tests/crash_f10/scenario.txt tests/crash_school/run.sh
+flag sfxlog
+flag player
+wait 2
+flag msn
+wait 3
+wait 3
+press cross
+wait 3
+press cross
+scene f10_1_v20
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 20
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 24
+flag carv
+wait 4
+flag carv
+flag stop
+wait 2
+scene f10_2_v23
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 23
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 24
+flag carv
+wait 4
+flag carv
+flag stop
+wait 2
+scene f10_3_v26
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 26
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 24
+flag carv
+wait 4
+flag carv
+flag stop
+wait 2
+scene f10_4_v23
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 23
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 24
+flag carv
+wait 4
+flag carv
+flag stop
+wait 2
+scene f10_5_v24
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 24
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 24
+flag carv
+wait 4
+flag carv
+flag stop
+wait 2
+end

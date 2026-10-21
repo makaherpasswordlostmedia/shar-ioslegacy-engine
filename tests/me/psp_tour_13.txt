@@ -1,0 +1,321 @@
+# Тур 13 (11.10): точки миссий как в туре 12, но каждая разбита на две сцены: *_T — старт миссии целиком (msnmainat, брифинг, ✕, msngo, 5 с после) и *_D — езда;
+# плюс 5 худших мест дневных ботов (ОТЧЁТ_ДЕНЬ_2026-10-11 разд. 4: L6 m8 (-413,-142) и (-336,-124), L6 m5 (-468,-107), L3 m7 (-406,-34), L7 m8 (230,160), с розыском 85),
+# смена этапа L5 m6 (502 -> 503), хвост C_* со счётчиком щелей на лету (C_L7 вне дома Гомера: после выхода из дома машина ставится на улицу, 230 160).
+scene start
+flag meprof 1
+wait 6
+scene L3_load
+flag golevel 3
+wait 20
+scene L3_idle
+wait 20
+scene L3_drive
+flag repair
+flag autostraight 14
+wait 15
+flag autostraight 14
+wait 15
+shot L3_drive
+flag stop
+wait 1
+scene P3_sr3_T
+flag msnmainat 901
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P3_sr3_D
+flag autostraight 14
+wait 12
+shot P3_sr3
+flag stop
+wait 1
+scene H_L3m7_T
+flag msnmainat 601
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L3m7_D
+goto -406 -34 1.5708
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L3m7
+flag stop
+flag hnr 0
+wait 1
+scene L4_load
+flag golevel 4
+wait 20
+scene P4_m1e5_T
+flag msnmainat 5
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P4_m1e5_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P4_m1e5
+flag stop
+flag hnr 0
+wait 1
+scene L5_load
+flag golevel 5
+wait 20
+scene P5_m6e2_T
+flag msnmainat 502
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6e2_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e2
+flag stop
+flag hnr 0
+wait 1
+scene P5_m6e4_T
+flag msnmainat 504
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6e4_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e4
+flag stop
+flag hnr 0
+wait 1
+scene P5_m1e2_T
+flag msnmainat 2
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m1e2_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m1e2
+flag stop
+flag hnr 0
+wait 1
+scene P5_m6stage_T
+flag msnmainat 502
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 3
+flag msnmainat 503
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6stage_D
+flag hnr 85
+flag autostraight 14
+wait 10
+shot P5_m6stage
+flag stop
+flag hnr 0
+wait 1
+scene L6_load
+flag golevel 6
+wait 20
+scene P6_bm1e5_T
+flag msnmainat 1205
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_bm1e5_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_bm1e5
+flag stop
+flag hnr 0
+wait 1
+scene P6_m2e1_T
+flag msnmainat 101
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_m2e1_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m2e1
+flag stop
+flag hnr 0
+wait 1
+scene P6_m7e1_T
+flag msnmainat 601
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_m7e1_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m7e1
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m8a_T
+flag msnmainat 701
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L6m8a_D
+goto -413 -142 1.5708
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m8a
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m8b_D
+goto -336 -124 1.5708
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m8b
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m5_T
+flag msnmainat 401
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L6m5_D
+goto -468 -107 1.5708
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m5
+flag stop
+flag hnr 0
+wait 1
+scene L7_load
+flag golevel 7
+wait 20
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+scene H_L7m8_T
+flag msnmainat 701
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L7m8_D
+goto 230 160 1.5708
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L7m8
+flag stop
+flag hnr 0
+wait 1
+# L1 места дня: трамплин J9-8 (150,183), кусты J9-5 (150,150), АЭС (стоянка Power Plant Parking Lot, движок 40,-296; свет, лучи)
+scene L1x_load
+flag golevel 1
+wait 20
+scene J98_trampoline_D
+goto 150 183 1.5708
+wait 2
+flag autostraight 14
+wait 10
+shot J98_trampoline
+flag stop
+wait 1
+scene J95_bushes_D
+goto 150 150 1.5708
+wait 2
+flag autostraight 14
+wait 10
+shot J95_bushes
+flag stop
+wait 1
+scene L1_aes_D
+goto 40 -296 1.5708
+wait 2
+flag autostraight 14
+wait 10
+shot L1_aes
+flag stop
+wait 1
+# Хвост: счётчик щелей, 3 точки по 10 с, скорость не считается
+scene C_L1_load
+flag clearchk 0
+flag golevel 1
+wait 20
+scene C_L1
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L1
+flag stop
+scene C_L2_load
+flag clearchk 0
+flag golevel 2
+wait 20
+scene C_L2
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L2
+flag stop
+scene C_L7_load
+flag clearchk 0
+flag golevel 7
+wait 20
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+goto 230 160 1.5708
+wait 3
+scene C_L7
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L7
+flag stop
+flag clearchk 0
+end

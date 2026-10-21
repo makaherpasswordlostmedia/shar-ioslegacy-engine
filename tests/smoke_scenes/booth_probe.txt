@@ -1,0 +1,11 @@
+# №704: где ближайшая будка L1 от спавна
+scene BP_load
+flag golevel 1
+wait 15
+flag player 1
+scene BP_a
+foot 215 172 0
+wait 2
+flag phoneanim
+wait 3
+end

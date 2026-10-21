@@ -1,0 +1,29 @@
+scene typo_brief
+wait 3
+flag msn
+wait 3
+press triangle
+wait 3
+shot lbox_a
+flag uitypo 1
+wait 0.1
+shot lbox_b
+flag uitypo 2
+wait 0.1
+shot lbox_c
+flag uitypo 0
+wait 0.1
+shot lbox_a2
+flag msnmain 0
+wait 6
+shot brief_a
+flag uitypo 1
+wait 0.1
+shot brief_b
+flag uitypo 2
+wait 0.1
+shot brief_c
+flag uitypo 0
+wait 0.1
+shot brief_a2
+end

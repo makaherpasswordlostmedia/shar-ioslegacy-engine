@@ -1,0 +1,467 @@
+{
+ "id": "ps2_bonus_reverse_ready_view",
+ "state": "build/twins/o4/ps2_bonus_b01_reverse_load_null/snap_600.p2s",
+ "frames": 300,
+ "every": 2,
+ "trace": [
+  "frame",
+  {
+   "addr": "0x14429b0",
+   "type": "u32",
+   "label": "famil_v_vehicle_vtable"
+  },
+  {
+   "addr": "0x85e090",
+   "type": "u32",
+   "label": "famil_v_simstate_vtable"
+  },
+  {
+   "addr": "0x85e0a0",
+   "type": "f32",
+   "label": "famil_v_mat0"
+  },
+  {
+   "addr": "0x85e0a4",
+   "type": "f32",
+   "label": "famil_v_mat1"
+  },
+  {
+   "addr": "0x85e0a8",
+   "type": "f32",
+   "label": "famil_v_mat2"
+  },
+  {
+   "addr": "0x85e0ac",
+   "type": "f32",
+   "label": "famil_v_mat3"
+  },
+  {
+   "addr": "0x85e0b0",
+   "type": "f32",
+   "label": "famil_v_mat4"
+  },
+  {
+   "addr": "0x85e0b4",
+   "type": "f32",
+   "label": "famil_v_mat5"
+  },
+  {
+   "addr": "0x85e0b8",
+   "type": "f32",
+   "label": "famil_v_mat6"
+  },
+  {
+   "addr": "0x85e0bc",
+   "type": "f32",
+   "label": "famil_v_mat7"
+  },
+  {
+   "addr": "0x85e0c0",
+   "type": "f32",
+   "label": "famil_v_mat8"
+  },
+  {
+   "addr": "0x85e0c4",
+   "type": "f32",
+   "label": "famil_v_mat9"
+  },
+  {
+   "addr": "0x85e0c8",
+   "type": "f32",
+   "label": "famil_v_mat10"
+  },
+  {
+   "addr": "0x85e0cc",
+   "type": "f32",
+   "label": "famil_v_mat11"
+  },
+  {
+   "addr": "0x85e0d0",
+   "type": "f32",
+   "label": "famil_v_mat12"
+  },
+  {
+   "addr": "0x85e0d4",
+   "type": "f32",
+   "label": "famil_v_mat13"
+  },
+  {
+   "addr": "0x85e0d8",
+   "type": "f32",
+   "label": "famil_v_mat14"
+  },
+  {
+   "addr": "0x85e0dc",
+   "type": "f32",
+   "label": "famil_v_mat15"
+  },
+  {
+   "addr": "0x85e0e0",
+   "type": "f32",
+   "label": "famil_v_vel0"
+  },
+  {
+   "addr": "0x85e0e4",
+   "type": "f32",
+   "label": "famil_v_vel1"
+  },
+  {
+   "addr": "0x85e0e8",
+   "type": "f32",
+   "label": "famil_v_vel2"
+  },
+  {
+   "addr": "0x1449970",
+   "type": "u32",
+   "label": "gramp_v_vehicle_vtable"
+  },
+  {
+   "addr": "0x863080",
+   "type": "u32",
+   "label": "gramp_v_simstate_vtable"
+  },
+  {
+   "addr": "0x863090",
+   "type": "f32",
+   "label": "gramp_v_mat0"
+  },
+  {
+   "addr": "0x863094",
+   "type": "f32",
+   "label": "gramp_v_mat1"
+  },
+  {
+   "addr": "0x863098",
+   "type": "f32",
+   "label": "gramp_v_mat2"
+  },
+  {
+   "addr": "0x86309c",
+   "type": "f32",
+   "label": "gramp_v_mat3"
+  },
+  {
+   "addr": "0x8630a0",
+   "type": "f32",
+   "label": "gramp_v_mat4"
+  },
+  {
+   "addr": "0x8630a4",
+   "type": "f32",
+   "label": "gramp_v_mat5"
+  },
+  {
+   "addr": "0x8630a8",
+   "type": "f32",
+   "label": "gramp_v_mat6"
+  },
+  {
+   "addr": "0x8630ac",
+   "type": "f32",
+   "label": "gramp_v_mat7"
+  },
+  {
+   "addr": "0x8630b0",
+   "type": "f32",
+   "label": "gramp_v_mat8"
+  },
+  {
+   "addr": "0x8630b4",
+   "type": "f32",
+   "label": "gramp_v_mat9"
+  },
+  {
+   "addr": "0x8630b8",
+   "type": "f32",
+   "label": "gramp_v_mat10"
+  },
+  {
+   "addr": "0x8630bc",
+   "type": "f32",
+   "label": "gramp_v_mat11"
+  },
+  {
+   "addr": "0x8630c0",
+   "type": "f32",
+   "label": "gramp_v_mat12"
+  },
+  {
+   "addr": "0x8630c4",
+   "type": "f32",
+   "label": "gramp_v_mat13"
+  },
+  {
+   "addr": "0x8630c8",
+   "type": "f32",
+   "label": "gramp_v_mat14"
+  },
+  {
+   "addr": "0x8630cc",
+   "type": "f32",
+   "label": "gramp_v_mat15"
+  },
+  {
+   "addr": "0x8630d0",
+   "type": "f32",
+   "label": "gramp_v_vel0"
+  },
+  {
+   "addr": "0x8630d4",
+   "type": "f32",
+   "label": "gramp_v_vel1"
+  },
+  {
+   "addr": "0x8630d8",
+   "type": "f32",
+   "label": "gramp_v_vel2"
+  },
+  {
+   "addr": "0x1450700",
+   "type": "u32",
+   "label": "sedanB_vehicle_vtable"
+  },
+  {
+   "addr": "0xb6d3e0",
+   "type": "u32",
+   "label": "sedanB_simstate_vtable"
+  },
+  {
+   "addr": "0xb6d3f0",
+   "type": "f32",
+   "label": "sedanB_mat0"
+  },
+  {
+   "addr": "0xb6d3f4",
+   "type": "f32",
+   "label": "sedanB_mat1"
+  },
+  {
+   "addr": "0xb6d3f8",
+   "type": "f32",
+   "label": "sedanB_mat2"
+  },
+  {
+   "addr": "0xb6d3fc",
+   "type": "f32",
+   "label": "sedanB_mat3"
+  },
+  {
+   "addr": "0xb6d400",
+   "type": "f32",
+   "label": "sedanB_mat4"
+  },
+  {
+   "addr": "0xb6d404",
+   "type": "f32",
+   "label": "sedanB_mat5"
+  },
+  {
+   "addr": "0xb6d408",
+   "type": "f32",
+   "label": "sedanB_mat6"
+  },
+  {
+   "addr": "0xb6d40c",
+   "type": "f32",
+   "label": "sedanB_mat7"
+  },
+  {
+   "addr": "0xb6d410",
+   "type": "f32",
+   "label": "sedanB_mat8"
+  },
+  {
+   "addr": "0xb6d414",
+   "type": "f32",
+   "label": "sedanB_mat9"
+  },
+  {
+   "addr": "0xb6d418",
+   "type": "f32",
+   "label": "sedanB_mat10"
+  },
+  {
+   "addr": "0xb6d41c",
+   "type": "f32",
+   "label": "sedanB_mat11"
+  },
+  {
+   "addr": "0xb6d420",
+   "type": "f32",
+   "label": "sedanB_mat12"
+  },
+  {
+   "addr": "0xb6d424",
+   "type": "f32",
+   "label": "sedanB_mat13"
+  },
+  {
+   "addr": "0xb6d428",
+   "type": "f32",
+   "label": "sedanB_mat14"
+  },
+  {
+   "addr": "0xb6d42c",
+   "type": "f32",
+   "label": "sedanB_mat15"
+  },
+  {
+   "addr": "0xb6d430",
+   "type": "f32",
+   "label": "sedanB_vel0"
+  },
+  {
+   "addr": "0xb6d434",
+   "type": "f32",
+   "label": "sedanB_vel1"
+  },
+  {
+   "addr": "0xb6d438",
+   "type": "f32",
+   "label": "sedanB_vel2"
+  },
+  {
+   "addr": "0x1454b90",
+   "type": "u32",
+   "label": "mrplo_v_vehicle_vtable"
+  },
+  {
+   "addr": "0xb644d0",
+   "type": "u32",
+   "label": "mrplo_v_simstate_vtable"
+  },
+  {
+   "addr": "0xb644e0",
+   "type": "f32",
+   "label": "mrplo_v_mat0"
+  },
+  {
+   "addr": "0xb644e4",
+   "type": "f32",
+   "label": "mrplo_v_mat1"
+  },
+  {
+   "addr": "0xb644e8",
+   "type": "f32",
+   "label": "mrplo_v_mat2"
+  },
+  {
+   "addr": "0xb644ec",
+   "type": "f32",
+   "label": "mrplo_v_mat3"
+  },
+  {
+   "addr": "0xb644f0",
+   "type": "f32",
+   "label": "mrplo_v_mat4"
+  },
+  {
+   "addr": "0xb644f4",
+   "type": "f32",
+   "label": "mrplo_v_mat5"
+  },
+  {
+   "addr": "0xb644f8",
+   "type": "f32",
+   "label": "mrplo_v_mat6"
+  },
+  {
+   "addr": "0xb644fc",
+   "type": "f32",
+   "label": "mrplo_v_mat7"
+  },
+  {
+   "addr": "0xb64500",
+   "type": "f32",
+   "label": "mrplo_v_mat8"
+  },
+  {
+   "addr": "0xb64504",
+   "type": "f32",
+   "label": "mrplo_v_mat9"
+  },
+  {
+   "addr": "0xb64508",
+   "type": "f32",
+   "label": "mrplo_v_mat10"
+  },
+  {
+   "addr": "0xb6450c",
+   "type": "f32",
+   "label": "mrplo_v_mat11"
+  },
+  {
+   "addr": "0xb64510",
+   "type": "f32",
+   "label": "mrplo_v_mat12"
+  },
+  {
+   "addr": "0xb64514",
+   "type": "f32",
+   "label": "mrplo_v_mat13"
+  },
+  {
+   "addr": "0xb64518",
+   "type": "f32",
+   "label": "mrplo_v_mat14"
+  },
+  {
+   "addr": "0xb6451c",
+   "type": "f32",
+   "label": "mrplo_v_mat15"
+  },
+  {
+   "addr": "0xb64520",
+   "type": "f32",
+   "label": "mrplo_v_vel0"
+  },
+  {
+   "addr": "0xb64524",
+   "type": "f32",
+   "label": "mrplo_v_vel1"
+  },
+  {
+   "addr": "0xb64528",
+   "type": "f32",
+   "label": "mrplo_v_vel2"
+  },
+  {
+   "addr": "0x7aaba0",
+   "type": "f32",
+   "label": "listener_pos0"
+  },
+  {
+   "addr": "0x7aaba4",
+   "type": "f32",
+   "label": "listener_pos1"
+  },
+  {
+   "addr": "0x7aaba8",
+   "type": "f32",
+   "label": "listener_pos2"
+  }
+ ],
+ "pad": [],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  100,
+  150,
+  200,
+  250,
+  300
+ ],
+ "pngs": [
+  [
+   2,
+   300,
+   2
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 240,
+ "note": "Rerender reverse original grid just after initialization, from verified typed native fourVehicle andWheel backrefs. No input/writes. Record actual camera flyover/READY/GO and motion onset; listener is sound object, not directtCamera."
+}

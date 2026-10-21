@@ -1,0 +1,11 @@
+# Real idle-to-title flow; ui.c pulse is the scope, cold-start flow belongs to root
+flag menu
+scene title_start_phase
+wait 2
+flag idle 1
+wait 3.6
+shot title
+wait 0.3
+press start
+wait 1
+end

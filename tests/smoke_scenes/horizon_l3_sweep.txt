@@ -1,0 +1,50 @@
+# Горизонт L3: шов проявления башни при смене дальности на месте (s0, маяк в 247 м): ddfloor 200/240/270/300, выкл и вкл
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_sweep
+flag repair
+goto -366 94 4.120
+wait 5
+flag ddfloor 200
+flag drawdist 200
+wait 3
+flag horizon 0
+wait 1
+shot HZ_dd200_off
+flag horizon 8
+wait 1
+shot HZ_dd200_on
+flag ddfloor 240
+flag drawdist 240
+wait 3
+flag horizon 0
+wait 1
+shot HZ_dd240_off
+flag horizon 8
+wait 1
+shot HZ_dd240_on
+flag ddfloor 270
+flag drawdist 270
+wait 3
+flag horizon 0
+wait 1
+shot HZ_dd270_off
+flag horizon 8
+wait 1
+shot HZ_dd270_on
+flag ddfloor 300
+flag drawdist 300
+wait 3
+flag horizon 0
+wait 1
+shot HZ_dd300_off
+flag horizon 8
+wait 1
+shot HZ_dd300_on
+end

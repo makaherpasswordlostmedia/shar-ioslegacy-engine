@@ -1,0 +1,81 @@
+# Правка 252: путь F10 из ящиков PSP (01.10 22:26 и 03.10 15:06) для эмулятора-проверяльщика (tests/crash_f10/hw.sh). Стекло
+# Krusty на крыше (-165.5, 11.8, 269.2), съезд с 12–13 м на газон у особняка (F10-5, посадка large_car_crash). Проход 1 — машина
+# целая (гаечный ключ на крыше заправки F12-3 чинит её по дороге); проход 2 — урон 0.99 у края: разбита на посадке, Гомер
+# вылетает, взрыв через 3 с (BOOM, EJECT, CARBOOM). Пролог — как tests/crash_f10/scenario.txt
+flag sfxlog
+flag player
+wait 2
+flag msn
+wait 3
+wait 3
+press cross
+wait 3
+press cross
+scene f10hw_whole_v26
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 26
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 19.2
+wait 20
+flag carv
+flag stop
+wait 3
+scene f10hw_wreck_v26
+flag wpclear
+goto -18 550 -1.5708
+flag repair
+wait 2
+press cross
+wait 1
+flag wpv 26
+flag wp -34 546
+flag wp -53 547
+flag wp -77 549
+flag wp -102 544
+flag wp -113 527
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wpgo
+wait 19.2
+flag testdmg 0.99
+wait 20
+flag carv
+flag stop
+wait 3
+end

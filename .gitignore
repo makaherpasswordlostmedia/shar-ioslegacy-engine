@@ -1,0 +1,13 @@
+viewer/build*/
+build/
+pspdev/
+.venv/
+hit-and-run-web/
+*.shr
+*.PBP
+*.at3
+*.pmf
+*.rcf
+*.p3d
+*.iso
+.DS_Store

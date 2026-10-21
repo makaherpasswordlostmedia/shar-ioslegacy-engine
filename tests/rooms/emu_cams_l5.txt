@@ -1,0 +1,121 @@
+# Камеры комнат L5, глаз не в стене (tests/rooms/emu_cams_levels_gen.py): двери 2, камер 19; CAMIN eye/near на каждой точке
+scene start
+wait 3
+scene L5_load
+flag golevel 5
+wait 20
+scene DMV_door
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene DMV_02
+foot -0.028 208.744 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_02
+scene DMV_03
+foot -2.672 196.670 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_03
+scene DMV_04
+foot 6.315 208.699 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_04
+scene DMV_01
+foot -2.484 203.556 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_01
+scene DMV_05
+foot 3.391 198.160 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_05
+scene DMV_06
+foot -5.911 206.815 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot DMV_06
+scene Moes_door
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Moes_01
+foot 45.516 196.241 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_01
+scene Moes_02
+foot 54.015 206.037 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_02
+scene Moes_03
+foot 48.698 205.534 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_03
+scene Moes_04
+foot 49.359 200.293 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_04
+scene Moes_05
+foot 51.860 201.371 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_05
+scene Moes_06
+foot 45.602 200.293 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_06
+scene Moes_07qq
+foot 47.064 203.172 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_07qq
+scene Moes_08
+foot 53.362 196.143 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_08
+end

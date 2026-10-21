@@ -1,0 +1,12 @@
+# №603: карточка гонки (L1 m7 The Fat and Furious, гонка со Скиннером) и карточка обычной миссии (m1) — по одному кадру
+scene typo_brief_race
+wait 3
+flag msn
+wait 3
+flag msnmain 7
+wait 6
+shot race_a
+flag msnmain 0
+wait 6
+shot msn_a
+end

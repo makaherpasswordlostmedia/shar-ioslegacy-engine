@@ -1,0 +1,295 @@
+{
+ "id": "ps2_v112_moving50_repeat",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 1092,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "hnr",
+  "cam_pos",
+  {
+   "addr": "b32110",
+   "type": "f32",
+   "label": "traffic_body0"
+  },
+  {
+   "addr": "b32114",
+   "type": "f32",
+   "label": "traffic_body1"
+  },
+  {
+   "addr": "b32118",
+   "type": "f32",
+   "label": "traffic_body2"
+  },
+  {
+   "addr": "b3211c",
+   "type": "f32",
+   "label": "traffic_body3"
+  },
+  {
+   "addr": "b32120",
+   "type": "f32",
+   "label": "traffic_body4"
+  },
+  {
+   "addr": "b32124",
+   "type": "f32",
+   "label": "traffic_body5"
+  },
+  {
+   "addr": "b32128",
+   "type": "f32",
+   "label": "traffic_body6"
+  },
+  {
+   "addr": "b3212c",
+   "type": "f32",
+   "label": "traffic_body7"
+  },
+  {
+   "addr": "b32130",
+   "type": "f32",
+   "label": "traffic_body8"
+  },
+  {
+   "addr": "b32134",
+   "type": "f32",
+   "label": "traffic_body9"
+  },
+  {
+   "addr": "b32138",
+   "type": "f32",
+   "label": "traffic_body10"
+  },
+  {
+   "addr": "b3213c",
+   "type": "f32",
+   "label": "traffic_body11"
+  },
+  {
+   "addr": "b32140",
+   "type": "f32",
+   "label": "traffic_body12"
+  },
+  {
+   "addr": "b32144",
+   "type": "f32",
+   "label": "traffic_body13"
+  },
+  {
+   "addr": "b32148",
+   "type": "f32",
+   "label": "traffic_body14"
+  },
+  {
+   "addr": "b3214c",
+   "type": "f32",
+   "label": "traffic_body15"
+  },
+  {
+   "addr": "b32150",
+   "type": "f32",
+   "label": "traffic_vel0"
+  },
+  {
+   "addr": "b32154",
+   "type": "f32",
+   "label": "traffic_vel1"
+  },
+  {
+   "addr": "b32158",
+   "type": "f32",
+   "label": "traffic_vel2"
+  },
+  {
+   "addr": "eefe44",
+   "type": "f32",
+   "label": "traffic_cm0"
+  },
+  {
+   "addr": "eefe48",
+   "type": "f32",
+   "label": "traffic_cm1"
+  },
+  {
+   "addr": "eefe4c",
+   "type": "f32",
+   "label": "traffic_cm2"
+  },
+  {
+   "addr": "eefdec",
+   "type": "f32",
+   "label": "traffic_mass0"
+  },
+  {
+   "addr": "eefdf0",
+   "type": "f32",
+   "label": "traffic_mass1"
+  },
+  {
+   "addr": "eefe88",
+   "type": "f32",
+   "label": "traffic_tensor0"
+  },
+  {
+   "addr": "eefe8c",
+   "type": "f32",
+   "label": "traffic_tensor1"
+  },
+  {
+   "addr": "eefe90",
+   "type": "f32",
+   "label": "traffic_tensor2"
+  },
+  {
+   "addr": "eefe94",
+   "type": "f32",
+   "label": "traffic_tensor3"
+  },
+  {
+   "addr": "eefe98",
+   "type": "f32",
+   "label": "traffic_tensor4"
+  },
+  {
+   "addr": "eefe9c",
+   "type": "f32",
+   "label": "traffic_tensor5"
+  },
+  {
+   "addr": "eee2f0",
+   "type": "f32",
+   "label": "legacy_mat0"
+  },
+  {
+   "addr": "eee2f4",
+   "type": "f32",
+   "label": "legacy_mat1"
+  },
+  {
+   "addr": "eee2f8",
+   "type": "f32",
+   "label": "legacy_mat2"
+  },
+  {
+   "addr": "eee2fc",
+   "type": "f32",
+   "label": "legacy_mat3"
+  },
+  {
+   "addr": "eee300",
+   "type": "f32",
+   "label": "legacy_mat4"
+  },
+  {
+   "addr": "eee304",
+   "type": "f32",
+   "label": "legacy_mat5"
+  },
+  {
+   "addr": "eee308",
+   "type": "f32",
+   "label": "legacy_mat6"
+  },
+  {
+   "addr": "eee30c",
+   "type": "f32",
+   "label": "legacy_mat7"
+  },
+  {
+   "addr": "eee310",
+   "type": "f32",
+   "label": "legacy_mat8"
+  },
+  {
+   "addr": "eee314",
+   "type": "f32",
+   "label": "legacy_mat9"
+  },
+  {
+   "addr": "eee318",
+   "type": "f32",
+   "label": "legacy_mat10"
+  },
+  {
+   "addr": "eee31c",
+   "type": "f32",
+   "label": "legacy_mat11"
+  },
+  {
+   "addr": "eee320",
+   "type": "f32",
+   "label": "legacy_mat12"
+  },
+  {
+   "addr": "eee324",
+   "type": "f32",
+   "label": "legacy_mat13"
+  },
+  {
+   "addr": "eee328",
+   "type": "f32",
+   "label": "legacy_mat14"
+  },
+  {
+   "addr": "eee32c",
+   "type": "f32",
+   "label": "legacy_mat15"
+  }
+ ],
+ "writes": [],
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   250,
+   "cross",
+   1
+  ],
+  [
+   340,
+   "cross",
+   0
+  ]
+ ],
+ "shots": [
+  0,
+  342,
+  392,
+  592,
+  842,
+  1092
+ ],
+ "timeout": 180,
+ "note": "Native SimStateArticulated of traffic minivan: CollisionObject 0xb322a0 points back to 0xb32100; state physics pointer +0x70 is 0xeefdb0. Recorded legacy PINE writes normalized to exact frame commands. Legacy 0xeee2f0 is retained as separate render-part signal, not body/CM.",
+ "target_speed_kmh": 50,
+ "start_pad": 250
+}

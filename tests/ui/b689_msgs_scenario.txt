@@ -1,0 +1,35 @@
+# №689: все виды сообщений в одном бабле: разбита (4 жёстких переноса), короткие, длинное, с аватаром (Talk to Marge); кадр на каждый
+scene g646
+flag msn
+wait 0.8
+shot a_talk
+wait 2.5
+flag uipopdest 1
+wait 1.2
+shot b_dest
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 2
+wait 1
+shot c_m2
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 3
+wait 1
+shot d_m3
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 5
+wait 1
+shot e_m5
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 6
+wait 1
+shot f_m6
+flag uipopmsg 0
+wait 2.5
+flag uipopmsgl 1
+wait 1
+shot g_long
+end

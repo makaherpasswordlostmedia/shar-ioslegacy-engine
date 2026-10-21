@@ -1,0 +1,22 @@
+# №138/186/229 школа: порт в тех же точках, что PS2 (близнец s2_school кадры 7770 и 7810): Гомер входит в школу, телепорт на путь и снимок через 0,3 с.
+# SMOKE_HEADLESS=1 SMOKE_HOME=/tmp/h229 SMOKE_SCN=tools/roomcam_school_scenario.txt tools/smoke.sh НАБОР (EBOOT смоука + данные TEST28); откат правила: SMOKE_FLAGS=roomcamswitchold
+scene start
+wait 3
+scene school
+foot -31.5 589.45 -1.5708 4.64
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 3
+scene school_in
+foot 500.79 346.5 0 -19.5
+wait 2
+shot sch_7770
+foot 501.1 349.4 0 -19.5
+wait 0.3
+shot sch_7810_03s
+wait 1.5
+shot sch_7810_18s
+end

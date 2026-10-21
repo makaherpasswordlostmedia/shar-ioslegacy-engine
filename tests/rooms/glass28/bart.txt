@@ -1,0 +1,61 @@
+# Окна/стёкла комнаты bart (L4): игровая камера в 6 точках вокруг входа, 2 курса; фон комнат пурпурный (сравнение старое/новое стекло, TEST28)
+wait 3
+flag golevel 4
+wait 20
+scene bart_in
+foot 224.7 204.4 3.1416 6.6
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene s01
+foot 500.20 452.50 0.0 -19.5
+wait 1.3
+shot s01
+scene s02
+foot 500.20 452.50 1.5708 -19.5
+wait 1.3
+shot s02
+scene s03
+foot 502.70 452.50 0.0 -19.5
+wait 1.3
+shot s03
+scene s04
+foot 502.70 452.50 1.5708 -19.5
+wait 1.3
+shot s04
+scene s05
+foot 497.70 452.50 0.0 -19.5
+wait 1.3
+shot s05
+scene s06
+foot 497.70 452.50 1.5708 -19.5
+wait 1.3
+shot s06
+scene s07
+foot 500.20 455.00 0.0 -19.5
+wait 1.3
+shot s07
+scene s08
+foot 500.20 455.00 1.5708 -19.5
+wait 1.3
+shot s08
+scene s09
+foot 500.20 450.00 0.0 -19.5
+wait 1.3
+shot s09
+scene s10
+foot 500.20 450.00 1.5708 -19.5
+wait 1.3
+shot s10
+scene s11
+foot 502.70 455.00 0.0 -19.5
+wait 1.3
+shot s11
+scene s12
+foot 502.70 455.00 1.5708 -19.5
+wait 1.3
+shot s12
+end

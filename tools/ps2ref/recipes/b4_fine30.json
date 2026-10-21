@@ -1,0 +1,82 @@
+{
+ "id": "b4_fine30",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 820,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "chase",
+  "bust_near_ms",
+  "bust_ms",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "police0[12]",
+  "police0[14]",
+  "coins",
+  "coins_hud"
+ ],
+ "writes": [
+  {
+   "name": "coins",
+   "value": 30,
+   "at": 100
+  },
+  {
+   "name": "hnr",
+   "value": 100.0,
+   "at": 150
+  },
+  {
+   "name": "car_cm[0]",
+   "at": 240,
+   "hold": 2,
+   "from": {
+    "addr": "a25810",
+    "add": 6.0
+   }
+  },
+  {
+   "name": "car_cm[1]",
+   "at": 240,
+   "hold": 2,
+   "from": {
+    "addr": "a25814",
+    "add": 0.9
+   }
+  },
+  {
+   "name": "car_cm[2]",
+   "at": 240,
+   "hold": 2,
+   "from": {
+    "addr": "a25818",
+    "add": 0.0
+   }
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 246,
+   "hold": 40
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 246,
+   "hold": 40
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 246,
+   "hold": 40
+  }
+ ],
+ "shots": [
+  800
+ ],
+ "note": "штраф: монеты 30 (запись), арест у полицейской машины → сколько останется; экран на кадре 800"
+}

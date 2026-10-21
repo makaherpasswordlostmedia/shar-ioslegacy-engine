@@ -1,0 +1,18 @@
+# Integration fixture: normal NEW GAME L7, then checkpoint m8 main phase stage1
+# Disc m8l.mfk stage0 FMV is intentionally bypassed; actual timer2s + SetGameOver execute
+# No endingtest/lvwin/direct level-complete injection
+flag menu
+flag lvset 7
+scene ending_l7
+wait 1.5
+press cross
+wait 9
+flag lvlog
+flag msnmainat 701
+wait 8
+shot ending_screen
+wait 1
+press triangle
+wait 12
+shot ending_back
+end

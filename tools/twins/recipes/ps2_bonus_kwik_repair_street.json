@@ -1,0 +1,1072 @@
+{
+ "id": "ps2_bonus_kwik_repair_street",
+ "state": "build/twins/o4/ps2_bonus_card12_access/snap_220.p2s",
+ "frames": 220,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_cm",
+  "car_vel",
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_world_x"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_world_y"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_world_z"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "triangle",
+   0
+  ],
+  [
+   0,
+   "lup",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "ldown",
+   0
+  ]
+ ],
+ "writes": [
+  {
+   "at": 2,
+   "name": "car_cm[0]",
+   "value": 224
+  },
+  {
+   "at": 2,
+   "name": "car_cm[1]",
+   "value": 30
+  },
+  {
+   "at": 2,
+   "name": "car_cm[2]",
+   "value": -310
+  },
+  {
+   "at": 2,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 2,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 2,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 4,
+   "name": "car_cm[1]",
+   "value": 30
+  },
+  {
+   "at": 4,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 4,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 4,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 6,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 6,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 6,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 6,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 8,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 8,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 8,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 8,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 10,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 10,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 10,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 10,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 12,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 12,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 12,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 12,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 14,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 14,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 14,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 14,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 16,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 16,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 16,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 16,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 18,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 18,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 18,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 18,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 20,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 20,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 20,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 22,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 22,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 22,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 24,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 24,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 24,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 26,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 26,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 26,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 28,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 28,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 28,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 30,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 30,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 30,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 32,
+   "name": "car_cm[1]",
+   "value": 4.3
+  },
+  {
+   "at": 32,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 32,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 100,
+   "name": "car_cm[0]",
+   "value": 253.307922
+  },
+  {
+   "at": 100,
+   "name": "car_cm[1]",
+   "value": 30
+  },
+  {
+   "at": 100,
+   "name": "car_cm[2]",
+   "value": -298.298035
+  },
+  {
+   "at": 100,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 100,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 100,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 102,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 102,
+   "name": "car_cm[1]",
+   "value": 30
+  },
+  {
+   "at": 102,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 102,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 102,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 102,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 104,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 104,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 104,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 104,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 104,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 104,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 106,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 106,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 106,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 106,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 106,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 106,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 108,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 108,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 108,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 108,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 108,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 108,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 110,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 110,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 110,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 110,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 110,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 110,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 112,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 112,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 112,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 112,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 112,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 112,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 114,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 114,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 114,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 114,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 114,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 114,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 116,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 116,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 116,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 116,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 116,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 116,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 118,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 118,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 118,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 118,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 118,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 118,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 120,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 120,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 120,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 120,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 120,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 120,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 122,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 122,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 122,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 122,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 122,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 122,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 124,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 124,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 124,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 124,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 124,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 124,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 126,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 126,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 126,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 126,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 126,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 126,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 128,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 128,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 128,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 128,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 128,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 128,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 130,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 130,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 130,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 130,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 130,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 130,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 132,
+   "name": "car_cm[0]",
+   "value": 227
+  },
+  {
+   "at": 132,
+   "name": "car_cm[1]",
+   "value": 5.1
+  },
+  {
+   "at": 132,
+   "name": "car_cm[2]",
+   "value": -267.35
+  },
+  {
+   "at": 132,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 132,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 132,
+   "name": "car_vel[2]",
+   "value": 0
+  }
+ ],
+ "shots": [
+  2,
+  80,
+  140,
+  220
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 120,
+ "note": "Access fixture: original Z2W2 repair pickup in loaded l1z2, then O3 street pose227;-267. Only CM/velocity. Three genuine cards retained; no progress/health writes. Original geometry must be verified before next road drive."
+}

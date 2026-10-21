@@ -1,0 +1,68 @@
+# TEST 10 · лесенка Media Engine (04.10, Роб: «ещё больше проверяем возможности и этот virtual engine… тест очень медленный,
+# хоть час… не перегружать сразу, постепенно пробивай»). Часть тура SHARTOUR (tools/tour_make.py --test10), идёт ПОСЛЕДНЕЙ.
+# Каждая ступень — отдельный флаг «melad N» (viewer/me/meprobe.c meLadderRun → sharme.c meLadderStep), строка «ML N …» в smoke.txt,
+# blackbox.txt и me.txt (открыть-записать-закрыть: видно, докуда дошло, даже если PSP встанет). Между ступенями — пауза и ролик
+# проверки (флаг mefmv: gracie.rmv, кадры JPEG разжимает прошивка на ME; строка MSNFMV). ME замолчал — «STUCK»: дальше ступени
+# и ролики пропускаются, игра идёт без ME.
+# Что ищем: TEST 8 — ME принял задание, но не ответил (ящик лежал в верхних 32 МБ памяти PSP-2000, 0x0a6129c0). Ступени разводят
+# причины: ящик в памяти ядра кэшируемым адресом (как у автора MIST) / некэшируемым / буфер в нижней памяти игры / в верхней.
+scene ME_base_movie
+goto 220 172 1.5708
+wait 3
+flag mefmv
+wait 14
+scene ME0_info
+flag melad 0
+wait 10
+scene ME1_mist_restart
+flag melad 1
+wait 8
+flag mefmv
+wait 14
+scene ME2_slot
+flag melad 2
+wait 8
+flag mefmv
+wait 14
+scene ME3_tiny_cached
+flag melad 3
+wait 10
+scene ME4_tiny_uncached
+flag melad 4
+wait 10
+flag mefmv
+wait 14
+scene ME5_sum_kernel
+flag melad 5
+wait 10
+scene ME6_sum_kernel_x200
+flag melad 6
+wait 8
+flag mefmv
+wait 14
+scene ME7_sum_low
+flag melad 7
+wait 10
+flag mefmv
+wait 14
+scene ME8_sum_high
+flag melad 8
+wait 10
+flag mefmv
+wait 14
+scene ME9_tiny_highbox
+flag melad 9
+wait 10
+scene ME99_clean
+flag melad 99
+wait 4
+flag mefmv
+wait 14
+scene ME_after_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 12
+flag stop
+wait 4
+end

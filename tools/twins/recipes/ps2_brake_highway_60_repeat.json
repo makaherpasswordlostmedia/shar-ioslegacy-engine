@@ -1,0 +1,96 @@
+{
+ "id": "ps2_brake_highway_60_repeat",
+ "state": "build/twins/o4/ps2_brake_highway_signed_park/snap_200.p2s",
+ "target_speed_kmh": 60,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "hnr",
+  "cam_pos",
+  "cam_fwd",
+  {
+   "addr": "a23074",
+   "type": "u8",
+   "label": "wheel0_collision_A"
+  },
+  {
+   "addr": "a23104",
+   "type": "u8",
+   "label": "wheel1_collision_A"
+  },
+  {
+   "addr": "a23194",
+   "type": "u8",
+   "label": "wheel2_collision_A"
+  },
+  {
+   "addr": "a23224",
+   "type": "u8",
+   "label": "wheel3_collision_A"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  }
+ ],
+ "note": "Queue14 actualfullgas fromgenuinestoppedroad toactual60/90, thenCircleuntilsignedforwardvelocitycrosses.1m/s, releaseand3sidle. NoRAMwrites, noforcedvelocity. Acceptcleandecelonlyaftertrace/scene/hnr/slope/headingchecks; savedbrake_beginforindependentcoastnegativecontrol.",
+ "frames": 304,
+ "every": 2,
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   108,
+   "cross",
+   0
+  ],
+  [
+   108,
+   "circle",
+   1
+  ],
+  [
+   154,
+   "circle",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  108,
+  118,
+  138,
+  154,
+  158,
+  204,
+  208,
+  304
+ ]
+}

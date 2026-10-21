@@ -1,0 +1,15 @@
+# Счёт монет (правка Роба 51, tests/ui/coins_emu.sh): у Kwik-E-Mart без сбора счёта нет; +5 монет — счёт въехал; через 3 с уехал
+scene coins
+goto 209 279 0
+wait 4
+shot coins_idle
+scene coinsadd
+wait 1
+flag coinadd 5
+wait 0.8
+shot coins_shown
+scene coinsgone
+wait 1
+wait 2.5
+shot coins_gone
+end

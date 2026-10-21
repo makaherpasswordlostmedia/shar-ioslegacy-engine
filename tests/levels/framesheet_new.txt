@@ -1,0 +1,27 @@
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+flag framesheet 0.2
+press cross
+wait 20
+scene FG_new_start
+shot fg_new_0
+wait 12
+end

@@ -1,0 +1,109 @@
+{
+ "id": "b2_cool",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 480,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "hnr_pause_ms",
+  "mat[12]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[2]"
+ ],
+ "writes": [
+  {
+   "value": 205.058,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 4.3,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -161.778,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 10,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 10,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": -2.94,
+   "at": 180,
+   "hold": 6,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 9.54,
+   "at": 180,
+   "hold": 6,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": 1.764,
+   "at": 212,
+   "hold": 4,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": -5.724,
+   "at": 212,
+   "hold": 4,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": -2.94,
+   "at": 232,
+   "hold": 6,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 9.54,
+   "at": 232,
+   "hold": 6,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": 1.764,
+   "at": 290,
+   "hold": 4,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": -5.724,
+   "at": 290,
+   "hold": 4,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": -2.94,
+   "at": 312,
+   "hold": 6,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 9.54,
+   "at": 312,
+   "hold": 6,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": []
+}

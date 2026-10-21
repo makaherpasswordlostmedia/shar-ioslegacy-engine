@@ -1,0 +1,30 @@
+flag policewarmold 1
+scene typo_police
+flag msn
+wait 6
+flag hnr 100
+wait 0.9
+shot hitrun_a
+flag uitypo 1
+wait 0.1
+shot hitrun_b
+flag uitypo 2
+wait 0.1
+shot hitrun_c
+flag uitypo 0
+wait 0.1
+shot hitrun_a2
+wait 2.5
+flag hnrbust
+wait 0.6
+shot busted_a
+flag uitypo 1
+wait 0.1
+shot busted_b
+flag uitypo 2
+wait 0.1
+shot busted_c
+flag uitypo 0
+wait 0.1
+shot busted_a2
+end

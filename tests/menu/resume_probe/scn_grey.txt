@@ -1,0 +1,26 @@
+# Пустая карта, главное меню: RESUME GAME на чистой карте скрыт (PS2), ✕ на двух серых пунктах (SCRAP BOOK, BONUS GAME): только locked_out, без облёта камеры (RESUME_LOCK_OLD)
+# Порядок: NEW GAME -> LOAD GAME -> SCRAP BOOK (серый) -> OPTIONS -> BONUS GAME (серый)
+flag menu
+flag saves
+wait 2
+press right
+wait 0.6
+press right
+wait 1
+shot g2_scrap_before
+press cross
+wait 0.3
+shot g2_scrap_0p3
+wait 2.2
+shot g2_scrap_2s
+press right
+wait 0.6
+press right
+wait 1
+shot g3_bonus_before
+press cross
+wait 0.3
+shot g3_bonus_0p3
+wait 2.2
+shot g3_bonus_2s
+end

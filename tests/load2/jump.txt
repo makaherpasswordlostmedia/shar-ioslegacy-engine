@@ -1,0 +1,30 @@
+# Загрузка 2: большой прыжок глаза на L6 (goto) — видимых недогруженных клеток: строки JUMPRUSH / JUMPDONE и счётчик сцены
+flag menu
+wait 1.5
+press cross
+wait 14
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 6
+press cross
+wait 14
+scene jump0
+foot 58.9 -23.5 1.57
+wait 5
+scene jump1
+foot -300.1 -218.6 4.64
+wait 5
+scene jump2
+foot 300 100 0
+wait 5
+scene jump3
+foot -100 -300 3.1
+wait 5
+scene jump4
+foot 58.9 -23.5 1.57
+wait 5
+end

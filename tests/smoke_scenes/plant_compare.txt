@@ -1,0 +1,16 @@
+# Сравнение вида гаража АЭС L1 (G4-7, старт Resume Роба) между версиями: тот же сценарий на разных EBOOT/данных.
+scene PC_L1_load
+flag golevel 1
+wait 15
+scene PC_plant
+flag repair
+foot -85 -316 1.5708
+wait 4
+shot PC_plant_a
+press left 1
+wait 2
+shot PC_plant_b
+press left 1
+wait 2
+shot PC_plant_c
+end

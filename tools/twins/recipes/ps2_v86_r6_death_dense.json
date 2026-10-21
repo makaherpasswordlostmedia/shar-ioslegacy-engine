@@ -1,0 +1,562 @@
+{
+ "id": "ps2_v86_r6_death_dense",
+ "state": "build/twins/o4/ps2_v86_r6_park/snap_200.p2s",
+ "state_sha256": "7b0d671f20c2eaead74b1760e680fcaf9394359bd237e9f4eaa3434354e2904c",
+ "frames": 906,
+ "every": 2,
+ "trace": [
+  {
+   "addr": "a218a0",
+   "type": "f32",
+   "label": "x"
+  },
+  {
+   "addr": "a218a4",
+   "type": "f32",
+   "label": "y"
+  },
+  {
+   "addr": "a218a8",
+   "type": "f32",
+   "label": "z"
+  },
+  {
+   "addr": "a21890",
+   "type": "f32",
+   "label": "nx"
+  },
+  {
+   "addr": "a21898",
+   "type": "f32",
+   "label": "nz"
+  },
+  {
+   "addr": "a218b0",
+   "type": "f32",
+   "label": "vx"
+  },
+  {
+   "addr": "a218b8",
+   "type": "f32",
+   "label": "vz"
+  },
+  {
+   "addr": "612114",
+   "type": "f32",
+   "label": "hnr"
+  },
+  {
+   "addr": "5167d8",
+   "type": "u32",
+   "label": "frame"
+  },
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "hx"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "hy"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "hz"
+  },
+  {
+   "addr": "7aaba0",
+   "type": "f32",
+   "label": "cx"
+  },
+  {
+   "addr": "7aaba4",
+   "type": "f32",
+   "label": "cy"
+  },
+  {
+   "addr": "7aaba8",
+   "type": "f32",
+   "label": "cz"
+  },
+  {
+   "addr": "7aabb8",
+   "type": "f32",
+   "label": "fx"
+  },
+  {
+   "addr": "7aabbc",
+   "type": "f32",
+   "label": "fy"
+  },
+  {
+   "addr": "7aabc0",
+   "type": "f32",
+   "label": "fz"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  },
+  {
+   "addr": "8470c4",
+   "type": "u32",
+   "label": "gui_screen"
+  },
+  {
+   "addr": "5db570",
+   "type": "u32",
+   "label": "stage_pointer"
+  },
+  {
+   "addr": "b30ec0",
+   "type": "f32",
+   "label": "traffic0_pos0"
+  },
+  {
+   "addr": "b30ec4",
+   "type": "f32",
+   "label": "traffic0_pos1"
+  },
+  {
+   "addr": "b30ec8",
+   "type": "f32",
+   "label": "traffic0_pos2"
+  },
+  {
+   "addr": "b32140",
+   "type": "f32",
+   "label": "traffic1_pos0"
+  },
+  {
+   "addr": "b32144",
+   "type": "f32",
+   "label": "traffic1_pos1"
+  },
+  {
+   "addr": "b32148",
+   "type": "f32",
+   "label": "traffic1_pos2"
+  },
+  {
+   "addr": "b338d0",
+   "type": "f32",
+   "label": "traffic2_pos0"
+  },
+  {
+   "addr": "b338d4",
+   "type": "f32",
+   "label": "traffic2_pos1"
+  },
+  {
+   "addr": "b338d8",
+   "type": "f32",
+   "label": "traffic2_pos2"
+  },
+  {
+   "addr": "b34fa0",
+   "type": "f32",
+   "label": "traffic3_pos0"
+  },
+  {
+   "addr": "b34fa4",
+   "type": "f32",
+   "label": "traffic3_pos1"
+  },
+  {
+   "addr": "b34fa8",
+   "type": "f32",
+   "label": "traffic3_pos2"
+  },
+  {
+   "addr": "b36620",
+   "type": "f32",
+   "label": "traffic4_pos0"
+  },
+  {
+   "addr": "b36624",
+   "type": "f32",
+   "label": "traffic4_pos1"
+  },
+  {
+   "addr": "b36628",
+   "type": "f32",
+   "label": "traffic4_pos2"
+  },
+  {
+   "addr": "a24a70",
+   "type": "f32",
+   "label": "legacy_render_x"
+  },
+  {
+   "addr": "a24a74",
+   "type": "f32",
+   "label": "legacy_render_y"
+  },
+  {
+   "addr": "a24a78",
+   "type": "f32",
+   "label": "legacy_render_z"
+  },
+  {
+   "addr": "a24570",
+   "type": "u32",
+   "label": "homer_simstate_vtable"
+  },
+  {
+   "addr": "a245e4",
+   "type": "u32",
+   "label": "homer_collision_pointer"
+  },
+  {
+   "addr": "a24580",
+   "type": "f32",
+   "label": "homer_mat0"
+  },
+  {
+   "addr": "a24584",
+   "type": "f32",
+   "label": "homer_mat1"
+  },
+  {
+   "addr": "a24588",
+   "type": "f32",
+   "label": "homer_mat2"
+  },
+  {
+   "addr": "a2458c",
+   "type": "f32",
+   "label": "homer_mat3"
+  },
+  {
+   "addr": "a24590",
+   "type": "f32",
+   "label": "homer_mat4"
+  },
+  {
+   "addr": "a24594",
+   "type": "f32",
+   "label": "homer_mat5"
+  },
+  {
+   "addr": "a24598",
+   "type": "f32",
+   "label": "homer_mat6"
+  },
+  {
+   "addr": "a2459c",
+   "type": "f32",
+   "label": "homer_mat7"
+  },
+  {
+   "addr": "a245a0",
+   "type": "f32",
+   "label": "homer_mat8"
+  },
+  {
+   "addr": "a245a4",
+   "type": "f32",
+   "label": "homer_mat9"
+  },
+  {
+   "addr": "a245a8",
+   "type": "f32",
+   "label": "homer_mat10"
+  },
+  {
+   "addr": "a245ac",
+   "type": "f32",
+   "label": "homer_mat11"
+  },
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_mat12"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_mat13"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_mat14"
+  },
+  {
+   "addr": "a245bc",
+   "type": "f32",
+   "label": "homer_mat15"
+  },
+  {
+   "addr": "a244e8",
+   "type": "u32",
+   "label": "homer_collision_backref"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "triangle",
+   0.0
+  ],
+  [
+   60,
+   "triangle",
+   1.0
+  ],
+  [
+   66,
+   "triangle",
+   0.0
+  ],
+  [
+   212,
+   "ldown",
+   0.0
+  ],
+  [
+   212,
+   "lup",
+   1.0
+  ],
+  [
+   212,
+   "lleft",
+   0.0
+  ],
+  [
+   212,
+   "lright",
+   0.0
+  ],
+  [
+   212,
+   "cross",
+   1.0
+  ],
+  [
+   216,
+   "cross",
+   0.0
+  ],
+  [
+   226,
+   "cross",
+   1.0
+  ],
+  [
+   232,
+   "cross",
+   0.0
+  ],
+  [
+   270,
+   "lup",
+   0.372
+  ],
+  [
+   270,
+   "lright",
+   0.928
+  ],
+  [
+   300,
+   "lup",
+   0.596
+  ],
+  [
+   300,
+   "lright",
+   0.803
+  ],
+  [
+   330,
+   "lup",
+   0.816
+  ],
+  [
+   330,
+   "lright",
+   0.578
+  ],
+  [
+   350,
+   "cross",
+   1.0
+  ],
+  [
+   356,
+   "cross",
+   0.0
+  ],
+  [
+   360,
+   "lup",
+   0.957
+  ],
+  [
+   360,
+   "lright",
+   0.29
+  ],
+  [
+   366,
+   "cross",
+   1.0
+  ],
+  [
+   372,
+   "cross",
+   0.0
+  ],
+  [
+   390,
+   "lup",
+   0.99
+  ],
+  [
+   390,
+   "lright",
+   0.143
+  ],
+  [
+   420,
+   "lright",
+   0.142
+  ],
+  [
+   450,
+   "lup",
+   0.991
+  ],
+  [
+   450,
+   "lright",
+   0.135
+  ],
+  [
+   480,
+   "lup",
+   0.851
+  ],
+  [
+   480,
+   "lright",
+   0.0
+  ],
+  [
+   480,
+   "lleft",
+   0.525
+  ],
+  [
+   490,
+   "cross",
+   1.0
+  ],
+  [
+   496,
+   "cross",
+   0.0
+  ],
+  [
+   506,
+   "cross",
+   1.0
+  ],
+  [
+   510,
+   "lup",
+   0.819
+  ],
+  [
+   510,
+   "lleft",
+   0.574
+  ],
+  [
+   512,
+   "cross",
+   0.0
+  ],
+  [
+   540,
+   "lup",
+   0.876
+  ],
+  [
+   540,
+   "lleft",
+   0.483
+  ],
+  [
+   570,
+   "lup",
+   0.981
+  ],
+  [
+   570,
+   "lleft",
+   0.195
+  ],
+  [
+   574,
+   "lup",
+   0.0
+  ],
+  [
+   574,
+   "ldown",
+   0.195
+  ],
+  [
+   574,
+   "lleft",
+   0.981
+  ],
+  [
+   606,
+   "ldown",
+   0.0
+  ],
+  [
+   606,
+   "lleft",
+   0.0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  400,
+  520,
+  558,
+  564,
+  604,
+  606,
+  608,
+  650,
+  700,
+  800,
+  906
+ ],
+ "pngs": [
+  [
+   520,
+   700,
+   2
+  ],
+  [
+   750,
+   906,
+   50
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 180,
+ "note": "Exact native input replay of corrected physics-world route. Dense PNG2vsync through death entry/fade/teleport/reveal, with native Homer SimState matrix. Compare shared trace columns to source before accepting any timings; source transfer606 matches ownerR6D01 destination285.429;5.254;551.421. No RAM writes."
+}

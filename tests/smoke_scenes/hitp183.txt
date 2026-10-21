@@ -1,0 +1,30 @@
+scene V_load
+flag sfxlog 1
+wait 3
+flag golevel 2
+wait 22
+flag repair
+goto 152.0 -38.4 5.716
+wait 3
+scene V_L2
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag pedahead 7
+flag autostraight 4
+wait 6
+flag saystat 1
+wait 1
+end

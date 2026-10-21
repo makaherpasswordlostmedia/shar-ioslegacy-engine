@@ -1,0 +1,43 @@
+#include "AUDIO_SOURCE"
+#include "msncar.h"
+#include "skid.h"
+static Traffic traffic;static MsnCars missionCars;static int haveTraffic,smkOn;
+static float smkT;
+static const MsnCars *mvCars(void){return &missionCars;}
+static void smkWrite(const char *s){(void)s;}
+SELECTOR
+static short pcm[MIX_FRAMES*2];static int bad,checks;
+#define CHECK(v) do{checks++;if(!(v)){bad++;printf("FAIL line%d %s\n",__LINE__,#v);}}while(0)
+static void mix(void){for(int i=0;i<8;i++)audioHostMix(pcm,MIX_FRAMES);}
+static int slot(int source){for(int s=0;s<AUDIO_WORLD_ENGINES;s++)if(worldSource[s]==source && worldEngine[s].eng)return s;return -1;}
+int main(int argc,char**argv){
+ if(argc!=2 || audioInit(argv[1]))return 2;
+ const SabCar *p=(const SabCar*)(bank+H->carOff);missionCars.n=1;
+ for(unsigned i=0;i<H->ncar;i++){
+  McCar *a=&missionCars.c[0];memset(a,0,sizeof *a);a->on=1;a->mode=MC_RACE;
+  snprintf(a->name,sizeof a->name,"%s",p[i].name);snprintf(a->car.p.name,sizeof a->car.p.name,"%s",p[i].name);
+  a->car.p.topSpeed=40;a->car.x=4;a->car.v=10;a->lastIn.throttle=.5f;
+  a->car.grounded=1;a->car.slip=1;a->car.vl=4;
+  trafficMotorFrame(.016f,0,0,0);mix();int s=slot(TR_MAXCAR);
+  CHECK(s>=0);if(s>=0){
+   CHECK(worldProfile[s]==(int)i);CHECK(worldEngine[s].eng);
+   int h=worldEngine[s].eng;a->car.x=5;trafficMotorFrame(.016f,0,0,0);mix();CHECK(worldEngine[s].eng==h);
+   a->on=0;trafficMotorFrame(.016f,0,0,0);mix();CHECK(!audioPlaying(h));
+  }
+ }
+ /* Ordinary traffic and mission/police cars share the same bounded slots. */
+ TrHeader hd={0};TrModel models[1]={0};hd.nModel=1;traffic.hd=&hd;traffic.model=models;
+ snprintf(models[0].name,sizeof models[0].name,"%s",p[0].name);traffic.maxCars=1;haveTraffic=1;
+ traffic.car[0].mode=TRM_DRIVE;traffic.car[0].model=0;traffic.car[0].car.x=3;traffic.car[0].car.p.topSpeed=40;
+ missionCars.n=MC_MAX;
+ for(int i=0;i<MC_MAX;i++){
+  McCar*a=&missionCars.c[i];memset(a,0,sizeof *a);a->on=1;a->mode=MC_CHASE;
+  snprintf(a->name,sizeof a->name,"%s",p[(i+1)%H->ncar].name);a->car.x=5+i*5;a->car.p.topSpeed=40;
+ }
+ trafficMotorFrame(.016f,0,0,0);mix();CHECK(slot(0)>=0);CHECK(slot(TR_MAXCAR)>=0);CHECK(slot(TR_MAXCAR+1)>=0);CHECK(slot(TR_MAXCAR+2)<0);
+ missionCars.c[0].car.destroyed=1;trafficMotorFrame(.016f,0,0,0);mix();CHECK(slot(TR_MAXCAR)<0);CHECK(slot(TR_MAXCAR+2)>=0);
+ missionCars.n=0;haveTraffic=0;trafficMotorFrame(.016f,0,0,0);mix();
+ for(int i=0;i<AUDIO_WORLD_ENGINES;i++)CHECK(!worldEngine[i].eng && !worldEngine[i].skid);
+ printf("%s NPC profiles=%u checks=%d failures=%d slots=%d\n",bad?"FAIL":"PASS",H->ncar,checks,bad,AUDIO_WORLD_ENGINES);
+ audioShutdown();return !!bad;
+}

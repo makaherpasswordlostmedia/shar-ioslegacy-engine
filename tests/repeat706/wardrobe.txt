@@ -1,0 +1,21 @@
+# №706: гардероб, зажатая ► 1,5 с (путь как tests/shop/wardrobe_scenario.txt до открытия страницы)
+scene wardrobe
+flag msn
+wait 3
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene wr_room
+foot 493.61 291.4 3.1416 -19.5
+wait 1.5
+press triangle
+wait 2
+press right 0.15
+wait 1.2
+press right 1.5
+wait 1.9
+end

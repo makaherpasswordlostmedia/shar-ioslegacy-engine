@@ -1,0 +1,20 @@
+# TEST 15 · функция ME в памяти игры (04.10 вечер). TEST 13–14: ME задание принимает (ME_STATE 0 → 1), но не заканчивает — ни строки
+# в ящике при любом адресе ящика. Версия: защита памяти не пускает ME в память ядра модуля, где лежал meTask (у автора MIST задача —
+# в памяти обычной программы). 15 — meGameTask игры, ящик кэшируемым адресом памяти игры; 16 — то же, ящик | 0x40000000. ~1 мин.
+scene ME15_gamefn
+goto 220 172 1.5708
+wait 3
+flag melad 0
+wait 2
+flag melad 15
+wait 2
+flag melad 16
+wait 2
+scene ME15_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 10
+flag stop
+wait 3
+end

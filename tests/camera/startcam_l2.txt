@@ -1,0 +1,120 @@
+# Камеры старта миссий L2 в режиме игрока (tests/camera/startcam_levels_gen.py): msnsel 0..15
+scene L2_load
+flag golevel 2
+wait 20
+flag player 1
+flag msn
+wait 8
+scene L2_sel0
+flag msnsel 0
+wait 1.5
+shot l2_sel0
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel1
+flag msnsel 1
+wait 1.5
+shot l2_sel1
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel2
+flag msnsel 2
+wait 1.5
+shot l2_sel2
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel3
+flag msnsel 3
+wait 1.5
+shot l2_sel3
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel4
+flag msnsel 4
+wait 1.5
+shot l2_sel4
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel5
+flag msnsel 5
+wait 1.5
+shot l2_sel5
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel6
+flag msnsel 6
+wait 1.5
+shot l2_sel6
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel7
+flag msnsel 7
+wait 1.5
+shot l2_sel7
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel8
+flag msnsel 8
+wait 1.5
+shot l2_sel8
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel9
+flag msnsel 9
+wait 1.5
+shot l2_sel9
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel10
+flag msnsel 10
+wait 1.5
+shot l2_sel10
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel11
+flag msnsel 11
+wait 1.5
+shot l2_sel11
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel12
+flag msnsel 12
+wait 1.5
+shot l2_sel12
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel13
+flag msnsel 13
+wait 1.5
+shot l2_sel13
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel14
+flag msnsel 14
+wait 1.5
+shot l2_sel14
+wait 5
+press cross 0.3
+wait 1
+scene L2_sel15
+flag msnsel 15
+wait 1.5
+shot l2_sel15
+wait 5
+press cross 0.3
+wait 1
+end

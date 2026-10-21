@@ -1,0 +1,90 @@
+{
+ "id": "ps2_brake_highway_signed_park",
+ "state": "build/twins/o4/b2_loop/snap_12000.p2s",
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "hnr",
+  "cam_pos",
+  "cam_fwd",
+  {
+   "addr": "a23074",
+   "type": "u8",
+   "label": "wheel0_collision_A"
+  },
+  {
+   "addr": "a23104",
+   "type": "u8",
+   "label": "wheel1_collision_A"
+  },
+  {
+   "addr": "a23194",
+   "type": "u8",
+   "label": "wheel2_collision_A"
+  },
+  {
+   "addr": "a23224",
+   "type": "u8",
+   "label": "wheel3_collision_A"
+  },
+  {
+   "addr": "6093cc",
+   "type": "u32",
+   "label": "active_supercam_ptr"
+  }
+ ],
+ "note": "Nativehighway signedstopprep. EarlierCircleuntilnorm<.1 missedzerocross42 andreversedfar; fixed inputreleasesCircleat42, then3.16sidle. Exactsourceused. Acceptonlyactualquiet/upright/noobstacle sourcegeometry, notgenericreportok. No writes.",
+ "frames": 200,
+ "every": 2,
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "circle",
+   1
+  ],
+  [
+   42,
+   "circle",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  40,
+  42,
+  60,
+  100,
+  200
+ ],
+ "pngs": [
+  [
+   0,
+   200,
+   20
+  ]
+ ],
+ "timeout": 120
+}

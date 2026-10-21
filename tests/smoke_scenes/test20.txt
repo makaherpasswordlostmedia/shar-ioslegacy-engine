@@ -1,0 +1,350 @@
+# TEST20 · короткий тур ≤ 10 минут стены: игровое время ≈ 430 с (на железе в 1,25 раза дольше из-за загрузок, по видео TEST19: 440 с игры = 9,3 мин).
+# Основа TEST19 + исправленные артефакты + места из голоса Роба по видео IMG_7849 (docs/handoff/ВИДЕО_TEST19_РОБ_ГОЛОСОМ.md).
+# Исправлено против TEST19: после будки и лавки перед телепортом wait 3 (камера будки уходит); гонки не сбрасываем 'flag msn' прямо перед msnmainat,
+# после Continue гонка едет 16 с (проверить, остаётся ли «BONUS MISSION COMPLETE»: гонка L1 без сброса, Лиза со сбросом и wait 3 — разные условия); мост L6 с прогревом 2 с;
+# убраны A/B TQ_FAST (разницы нет, см. РАЗБОР_ЖЕЛЕЗА_TEST19_Сборка.md), полиция и вторая гонка света L3.
+# Места из голоса: изгородь у будки (камера будки), дом и арка J9-5, скамья и Милхаус на L2, столб F2-7, вид вдаль с причала L3 стоя с медленным поворотом, погоня L5 при въезде.
+# НЕ ПОКРЫТО: пузырь без аватарки (№616), сбитый проп вне взгляда (№589), перекрёстки трафика 0/3 отдельно, карточка с телепортом (№625, взята L5 502 как предположение).
+# Метка сцены 12x12 с чёрной каймой рисуется сама на каждой 'scene' (viewer/hud.c cf25587c). Имена сцен ≤ 23 знака. Дописывать блоки внутри своего уровня, перед следующей строкой *_load.
+scene T20_L1_load
+flag golevel 1
+wait 20
+# карточка 1: старт на месте (L1 m2, таймер со значком цели)
+scene T20_card_timer
+flag repair
+flag msn
+wait 3
+flag msnmainat 201
+wait 4
+shot T20_card_timer_in
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T20_timer_icon
+flag stop
+flag msn
+wait 3
+# карточка 2: гонка L1 (без сброса перед msnmainat), едет 16 с
+scene T20_card_race_L1
+flag msnmainat 801
+wait 4
+shot T20_card_race_in
+press cross 0.3
+wait 1
+flag msngo
+wait 2
+shot T20_race_after_card
+flag autostraight 14
+wait 16
+shot T20_race_hud
+flag stop
+wait 1
+scene T20_pause_cellcode
+press start 0.15
+wait 2
+shot T20_pause_cellcode
+press start 0.15
+wait 1
+scene T20_fail_screen
+flag msnfail
+wait 3
+shot T20_fail_hints
+press cross 0.3
+wait 2
+flag msn
+wait 1
+# будка: камера будки и изгородь (Роб 2:07), перед лавкой ждём конец камеры
+scene T20_booth_hedge
+flag phoneplant
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+shot T20_booth_before
+press triangle
+wait 1.5
+shot T20_booth_open
+press cross
+wait 2
+shot T20_booth_cam
+wait 1
+shot T20_booth_hedge
+press circle 0.3
+wait 3
+scene T20_shop_barney
+flag coinadd 200
+foot 325.5 -121.9 -1.5708 4
+wait 2
+shot T20_shop_barney
+press triangle
+wait 1.5
+shot T20_shop_dark
+press circle 0.3
+wait 3
+# трафик у перекрёстка и арка J9-5 (тот же маршрут автопилота: арка на 10-й секунде)
+scene T20_traffic_arch
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 9
+shot T20_arch_in
+wait 2
+shot T20_arch_J95
+wait 9
+flag stop
+wait 1
+scene T20_cam_houses_J95
+goto 150 150 1.5708
+wait 2
+flag autostraight 14
+wait 7
+shot T20_cam_houses
+flag stop
+wait 1
+scene T20_ramp9_crown
+flag bisect 0
+goto 229.3 -536.0 0.785
+wait 2
+flag autostraight 8
+wait 7
+shot T20_ramp9_far
+flag stop
+wait 1
+scene T20_light_aes
+goto 40 -296 1.5708
+flag repair
+flag autostraight 4
+wait 1
+shot T20_aes_light
+wait 3
+flag stop
+wait 1
+scene T20_L2_load
+flag golevel 2
+wait 20
+# скамья закрывает героя и Милхаус ходит у камеры (Роб 4:08-4:28): стоим на старте уровня
+scene T20_L2_bench
+wait 3
+shot T20_L2_bench_1
+wait 3
+shot T20_L2_bench_2
+wait 3
+shot T20_L2_bench_3
+scene T20_L2_pole_F2-7
+flag repair
+goto -206 -498 1.5708
+wait 3
+flag autostraight 3
+wait 4
+shot T20_L2_pole_hit
+flag stop
+wait 1
+scene T20_L3_load
+flag golevel 3
+wait 20
+# карточка 3: гонка Лизы, старт с ирисом (самый тяжёлый кадр), едет 16 с
+scene T20_card_lisa_L3
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+shot T20_card_lisa_in
+press cross 0.3
+wait 1
+flag msngo
+wait 2
+shot T20_lisa_after_card
+flag autostraight 14
+wait 14
+shot T20_lisa_race
+flag stop
+flag msn
+wait 2
+# вид вдаль с причала (Роб: «вдалеке ничего не видно»): 5 с стоя, потом медленный поворот ступенями
+scene T20_L3_pier_view
+flag repair
+goto -469.4 -35.9 3.927
+wait 5
+shot T20_pier_view_0
+goto -469.4 -35.9 3.4
+wait 2
+shot T20_pier_view_1
+goto -469.4 -35.9 2.9
+wait 2
+shot T20_pier_view_2
+goto -469.4 -35.9 2.4
+wait 2
+shot T20_pier_view_3
+scene T20_L3_pier
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_L3_pier
+flag stop
+wait 0.5
+scene T20_L3_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 18
+shot T20_L3_chase
+flag stop
+flag hnr 0
+wait 1
+# --- Сборка: вода причала (полупрозрачная tex264) есть/скрыта; пол регулятора дальности 150 / 200 м (дальние версии кусков far_plain 140)
+scene T20_W_on
+flag ddfloor 0
+flag tqskip -1
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 7
+shot T20_W_on
+flag stop
+wait 0.5
+scene T20_W_off
+flag tqskip 264
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 7
+shot T20_W_off
+flag stop
+wait 0.5
+scene T20_L3_dd150
+flag tqskip -1
+flag ddfloor 150
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 9
+shot T20_L3_dd150
+flag stop
+wait 0.5
+scene T20_L3_dd200
+flag ddfloor 200
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 9
+shot T20_L3_dd200
+flag stop
+wait 0.5
+flag ddfloor 0
+# свет у причала: ВКЛ и со сдвигом глубины
+scene T20_SV_L3_pier_on
+flag neonglow 1
+flag glowbias 0
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_pier_on
+flag stop
+wait 0.5
+scene T20_SV_L3_pier_bias
+flag glowbias 40
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_pier_bias
+flag stop
+flag neonglow 0
+flag glowbias 0
+wait 1
+scene T20_L5_load
+flag golevel 5
+wait 20
+# карточка 4 и погоня L5 при въезде
+scene T20_card_L5
+flag msn
+wait 3
+flag msnmainat 502
+wait 3
+shot T20_card_L5_in
+press cross 0.3
+wait 1
+flag msngo
+wait 3
+shot T20_card_L5_go
+flag stop
+flag msn
+wait 1
+scene T20_L5_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 22
+shot T20_L5_chase
+flag stop
+flag hnr 0
+wait 1
+# --- Сборка: погоня L5, пол дальности 150 / 200 м
+scene T20_L5_dd150
+flag ddfloor 150
+flag repair
+flag hnr 100
+flag drive 75
+wait 14
+shot T20_L5_dd150
+flag stop
+wait 0.5
+flag hnr 0
+scene T20_L5_dd200
+flag ddfloor 200
+flag repair
+flag hnr 100
+flag drive 75
+wait 14
+shot T20_L5_dd200
+flag stop
+wait 0.5
+flag hnr 0
+flag ddfloor 0
+scene T20_L6_load
+flag golevel 6
+wait 20
+wait 2
+scene T20_L6_bridge
+flag repair
+flag drive 75
+wait 20
+flag stop
+wait 1
+scene T20_L7_load
+flag golevel 7
+wait 20
+scene T20_SV_L7_lamps_on
+flag neonglow 1
+flag glowbias 0
+goto 230 160 1.5708
+flag repair
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_L7_on
+flag stop
+wait 1
+scene T20_SV_L7_lamps_bias
+flag glowbias 40
+goto 230 160 1.5708
+flag repair
+wait 2
+flag autostraight 4
+wait 5
+shot T20_SV_L7_bias
+flag stop
+flag neonglow 0
+flag glowbias 0
+wait 1
+end

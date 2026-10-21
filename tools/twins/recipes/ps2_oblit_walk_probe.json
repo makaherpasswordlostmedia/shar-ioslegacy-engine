@@ -1,0 +1,100 @@
+{
+ "id": "ps2_oblit_walk_probe",
+ "state": "build/twins/o4/ps2_v105_oblit_boot3/snap_6250.p2s",
+ "frames": 200,
+ "every": 10,
+ "trace": [
+  {
+   "addr": "a24a70",
+   "type": "f32",
+   "label": "hx"
+  },
+  {
+   "addr": "a24a74",
+   "type": "f32",
+   "label": "hy"
+  },
+  {
+   "addr": "a24a78",
+   "type": "f32",
+   "label": "hz"
+  },
+  {
+   "addr": "a21870",
+   "type": "f32",
+   "label": "m0"
+  },
+  {
+   "addr": "c8460c",
+   "type": "f32",
+   "label": "eye0"
+  },
+  {
+   "addr": "c84614",
+   "type": "f32",
+   "label": "eye2"
+  },
+  {
+   "addr": "c84618",
+   "type": "f32",
+   "label": "tgt0"
+  },
+  {
+   "addr": "c84620",
+   "type": "f32",
+   "label": "tgt2"
+  },
+  {
+   "addr": "1298884",
+   "type": "f32",
+   "label": "cmx"
+  },
+  {
+   "addr": "129888c",
+   "type": "f32",
+   "label": "cmz"
+  }
+ ],
+ "pad": [
+  [
+   5,
+   "square",
+   1
+  ],
+  [
+   12,
+   "square",
+   0
+  ],
+  [
+   40,
+   "cross",
+   1
+  ],
+  [
+   48,
+   "cross",
+   0
+  ],
+  [
+   100,
+   "lleft",
+   1
+  ],
+  [
+   160,
+   "lleft",
+   0
+  ]
+ ],
+ "shots": [],
+ "pngs": [
+  [
+   0,
+   200,
+   20
+  ]
+ ],
+ "timeout": 300,
+ "renderer": "metal"
+}

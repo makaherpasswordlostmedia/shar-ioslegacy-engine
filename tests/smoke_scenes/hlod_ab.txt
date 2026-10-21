@@ -1,0 +1,92 @@
+# HLOD L3: A/B по плану: 250 м без HLOD | 150 м без HLOD | 150 м + HLOD (1 без тумана, 2 туман города, 3 мягкий)
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag horizon 0
+scene HR_A0
+flag hlod 0
+flag repair
+goto -330 90 1.57
+flag drawdist 100
+wait 3
+shot HR_A0_250
+flag drawdist 60
+wait 3
+shot HR_A0_150
+flag hlod 1
+wait 1
+shot HR_A0_m1
+flag hlod 2
+wait 1
+shot HR_A0_m2
+flag hlod 3
+wait 1
+shot HR_A0_m3
+flag hlod 0
+flag drawdist 100
+scene HR_A1
+flag hlod 0
+flag repair
+goto -330 90 0.8
+flag drawdist 100
+wait 3
+shot HR_A1_250
+flag drawdist 60
+wait 3
+shot HR_A1_150
+flag hlod 1
+wait 1
+shot HR_A1_m1
+flag hlod 2
+wait 1
+shot HR_A1_m2
+flag hlod 3
+wait 1
+shot HR_A1_m3
+flag hlod 0
+flag drawdist 100
+scene HR_C0
+flag hlod 0
+flag repair
+goto -420 -120 1.57
+flag drawdist 100
+wait 3
+shot HR_C0_250
+flag drawdist 60
+wait 3
+shot HR_C0_150
+flag hlod 1
+wait 1
+shot HR_C0_m1
+flag hlod 2
+wait 1
+shot HR_C0_m2
+flag hlod 3
+wait 1
+shot HR_C0_m3
+flag hlod 0
+flag drawdist 100
+scene HR_D0
+flag hlod 0
+flag repair
+goto -300 -20 1.2
+flag drawdist 100
+wait 3
+shot HR_D0_250
+flag drawdist 60
+wait 3
+shot HR_D0_150
+flag hlod 1
+wait 1
+shot HR_D0_m1
+flag hlod 2
+wait 1
+shot HR_D0_m2
+flag hlod 3
+wait 1
+shot HR_D0_m3
+flag hlod 0
+flag drawdist 100
+end

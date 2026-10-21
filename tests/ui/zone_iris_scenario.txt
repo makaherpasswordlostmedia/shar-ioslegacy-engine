@@ -1,0 +1,18 @@
+# №349 (Роб 17.10: «просто ирис на все обходные пути»): въезд во двор горящих покрышек L1 K2-8 (зона DEATH R6D01) — возврат ирисом.
+# tests/ui/zone_iris.sh: строка DEATH ... iris=1; красный — движок с -DZONE_IRIS_OLD=1 (fade=1 iris=0)
+scene ZI_WARM
+flag repair
+flag warmhere
+wait 2
+goto 236 -508.5 1.5708
+flag warmhere
+wait 3
+scene ZI_ENTER
+goto 274 -515 3.1416
+wait 0.15
+shot zi_a
+wait 0.25
+shot zi_b
+wait 2
+shot zi_c
+end

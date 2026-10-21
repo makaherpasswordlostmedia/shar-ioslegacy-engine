@@ -1,0 +1,18 @@
+# №620 (ответ PS2 ps2-camera-wall-reverse): задним ходом в фасад Kwik-E-Mart: камера не пробивает, подтягивается ближе и поднимается
+flag caminlog
+wait 3
+scene rev_kwik
+goto 218 262 3.1416
+flag repair
+wait 1.5
+shot r0
+flag camin 1
+press down 3
+wait 1.5
+shot r1
+wait 2
+shot r2
+wait 3
+shot r3
+flag camin
+end

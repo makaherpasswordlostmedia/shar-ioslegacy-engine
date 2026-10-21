@@ -1,0 +1,25 @@
+# Правка 593: музыка клуба Legitimate Businessmen (L2, ворота события 61 у (-161; 3,6), рядом ворота атмосферы light_city_122 у (-150; -1)).
+# A: с востока на запад: ворота атмосферы light_city_122, потом плита клуба -> enter, клуб держится.
+# B: с запада на восток: плита клуба (клуб остаётся), проезд мимо light_city_122 — клуб ДОЛЖЕН играть (атмосферные ворота музыку не прерывают).
+# Выход по расстоянию (CLUB_EXIT_R) проверяется сборкой с -DCLUB_EXIT_R=8.
+scene S593_L1_load
+flag golevel 2
+wait 25
+scene S593_A_west
+flag repair
+flag warmhere
+goto -140 3.6 4.7124
+wait 3
+flag autostraight 3
+wait 6
+flag stop
+wait 2
+scene S593_B_east
+flag repair
+goto -190 3.6 1.5708
+wait 3
+flag autostraight 3
+wait 6
+flag stop
+wait 2
+end

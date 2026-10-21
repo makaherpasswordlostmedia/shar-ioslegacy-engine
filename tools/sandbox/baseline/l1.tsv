@@ -1,0 +1,3 @@
+# база миссий уровня 1 для tools/sandbox/level_check.py: «пройдена» обязана оставаться пройденной
+# источник: гейт Б2 (tools/bots/missions.py --gate, m0 «пройдена») и ночь 28.09 05:12 (build/bots/runs/mission/20260928-051207)
+m0	пройдена

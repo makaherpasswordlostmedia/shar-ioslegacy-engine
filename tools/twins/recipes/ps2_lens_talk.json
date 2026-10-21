@@ -1,0 +1,43 @@
+{
+ "every": 10,
+ "trace": [
+  {
+   "addr": "c84550",
+   "type": "f32",
+   "label": "lens_a"
+  },
+  {
+   "addr": "c84554",
+   "type": "f32",
+   "label": "lens_b"
+  },
+  {
+   "addr": "c84558",
+   "type": "f32",
+   "label": "lens_c"
+  },
+  {
+   "addr": "c8460c",
+   "type": "f32",
+   "label": "eye0"
+  },
+  {
+   "addr": "c84610",
+   "type": "f32",
+   "label": "eye1"
+  },
+  {
+   "addr": "c84614",
+   "type": "f32",
+   "label": "eye2"
+  }
+ ],
+ "shots": [],
+ "pngs": [],
+ "timeout": 300,
+ "renderer": "metal",
+ "id": "ps2_lens_talk",
+ "state": "build/АТЛАС_МИССИЙ_L1/ps2/m0d/snaps/snap_00517.p2s",
+ "frames": 200,
+ "pad": []
+}

@@ -1,0 +1,529 @@
+{
+ "id": "ps2_traffic_idle_crossroad",
+ "state": "build/twins/o4/b2_loop/snap_15000.p2s",
+ "frames": 1200,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "hnr",
+  {
+   "addr": "b30e90",
+   "type": "f32",
+   "label": "traffic0_body0"
+  },
+  {
+   "addr": "b30e94",
+   "type": "f32",
+   "label": "traffic0_body1"
+  },
+  {
+   "addr": "b30e98",
+   "type": "f32",
+   "label": "traffic0_body2"
+  },
+  {
+   "addr": "b30e9c",
+   "type": "f32",
+   "label": "traffic0_body3"
+  },
+  {
+   "addr": "b30ea0",
+   "type": "f32",
+   "label": "traffic0_body4"
+  },
+  {
+   "addr": "b30ea4",
+   "type": "f32",
+   "label": "traffic0_body5"
+  },
+  {
+   "addr": "b30ea8",
+   "type": "f32",
+   "label": "traffic0_body6"
+  },
+  {
+   "addr": "b30eac",
+   "type": "f32",
+   "label": "traffic0_body7"
+  },
+  {
+   "addr": "b30eb0",
+   "type": "f32",
+   "label": "traffic0_body8"
+  },
+  {
+   "addr": "b30eb4",
+   "type": "f32",
+   "label": "traffic0_body9"
+  },
+  {
+   "addr": "b30eb8",
+   "type": "f32",
+   "label": "traffic0_body10"
+  },
+  {
+   "addr": "b30ebc",
+   "type": "f32",
+   "label": "traffic0_body11"
+  },
+  {
+   "addr": "b30ec0",
+   "type": "f32",
+   "label": "traffic0_body12"
+  },
+  {
+   "addr": "b30ec4",
+   "type": "f32",
+   "label": "traffic0_body13"
+  },
+  {
+   "addr": "b30ec8",
+   "type": "f32",
+   "label": "traffic0_body14"
+  },
+  {
+   "addr": "b30ecc",
+   "type": "f32",
+   "label": "traffic0_body15"
+  },
+  {
+   "addr": "b30ed0",
+   "type": "f32",
+   "label": "traffic0_vel0"
+  },
+  {
+   "addr": "b30ed4",
+   "type": "f32",
+   "label": "traffic0_vel1"
+  },
+  {
+   "addr": "b30ed8",
+   "type": "f32",
+   "label": "traffic0_vel2"
+  },
+  {
+   "addr": "b30ef4",
+   "type": "u32",
+   "label": "traffic0_collision_ptr"
+  },
+  {
+   "addr": "b32110",
+   "type": "f32",
+   "label": "traffic1_body0"
+  },
+  {
+   "addr": "b32114",
+   "type": "f32",
+   "label": "traffic1_body1"
+  },
+  {
+   "addr": "b32118",
+   "type": "f32",
+   "label": "traffic1_body2"
+  },
+  {
+   "addr": "b3211c",
+   "type": "f32",
+   "label": "traffic1_body3"
+  },
+  {
+   "addr": "b32120",
+   "type": "f32",
+   "label": "traffic1_body4"
+  },
+  {
+   "addr": "b32124",
+   "type": "f32",
+   "label": "traffic1_body5"
+  },
+  {
+   "addr": "b32128",
+   "type": "f32",
+   "label": "traffic1_body6"
+  },
+  {
+   "addr": "b3212c",
+   "type": "f32",
+   "label": "traffic1_body7"
+  },
+  {
+   "addr": "b32130",
+   "type": "f32",
+   "label": "traffic1_body8"
+  },
+  {
+   "addr": "b32134",
+   "type": "f32",
+   "label": "traffic1_body9"
+  },
+  {
+   "addr": "b32138",
+   "type": "f32",
+   "label": "traffic1_body10"
+  },
+  {
+   "addr": "b3213c",
+   "type": "f32",
+   "label": "traffic1_body11"
+  },
+  {
+   "addr": "b32140",
+   "type": "f32",
+   "label": "traffic1_body12"
+  },
+  {
+   "addr": "b32144",
+   "type": "f32",
+   "label": "traffic1_body13"
+  },
+  {
+   "addr": "b32148",
+   "type": "f32",
+   "label": "traffic1_body14"
+  },
+  {
+   "addr": "b3214c",
+   "type": "f32",
+   "label": "traffic1_body15"
+  },
+  {
+   "addr": "b32150",
+   "type": "f32",
+   "label": "traffic1_vel0"
+  },
+  {
+   "addr": "b32154",
+   "type": "f32",
+   "label": "traffic1_vel1"
+  },
+  {
+   "addr": "b32158",
+   "type": "f32",
+   "label": "traffic1_vel2"
+  },
+  {
+   "addr": "b32174",
+   "type": "u32",
+   "label": "traffic1_collision_ptr"
+  },
+  {
+   "addr": "b338a0",
+   "type": "f32",
+   "label": "traffic2_body0"
+  },
+  {
+   "addr": "b338a4",
+   "type": "f32",
+   "label": "traffic2_body1"
+  },
+  {
+   "addr": "b338a8",
+   "type": "f32",
+   "label": "traffic2_body2"
+  },
+  {
+   "addr": "b338ac",
+   "type": "f32",
+   "label": "traffic2_body3"
+  },
+  {
+   "addr": "b338b0",
+   "type": "f32",
+   "label": "traffic2_body4"
+  },
+  {
+   "addr": "b338b4",
+   "type": "f32",
+   "label": "traffic2_body5"
+  },
+  {
+   "addr": "b338b8",
+   "type": "f32",
+   "label": "traffic2_body6"
+  },
+  {
+   "addr": "b338bc",
+   "type": "f32",
+   "label": "traffic2_body7"
+  },
+  {
+   "addr": "b338c0",
+   "type": "f32",
+   "label": "traffic2_body8"
+  },
+  {
+   "addr": "b338c4",
+   "type": "f32",
+   "label": "traffic2_body9"
+  },
+  {
+   "addr": "b338c8",
+   "type": "f32",
+   "label": "traffic2_body10"
+  },
+  {
+   "addr": "b338cc",
+   "type": "f32",
+   "label": "traffic2_body11"
+  },
+  {
+   "addr": "b338d0",
+   "type": "f32",
+   "label": "traffic2_body12"
+  },
+  {
+   "addr": "b338d4",
+   "type": "f32",
+   "label": "traffic2_body13"
+  },
+  {
+   "addr": "b338d8",
+   "type": "f32",
+   "label": "traffic2_body14"
+  },
+  {
+   "addr": "b338dc",
+   "type": "f32",
+   "label": "traffic2_body15"
+  },
+  {
+   "addr": "b338e0",
+   "type": "f32",
+   "label": "traffic2_vel0"
+  },
+  {
+   "addr": "b338e4",
+   "type": "f32",
+   "label": "traffic2_vel1"
+  },
+  {
+   "addr": "b338e8",
+   "type": "f32",
+   "label": "traffic2_vel2"
+  },
+  {
+   "addr": "b33904",
+   "type": "u32",
+   "label": "traffic2_collision_ptr"
+  },
+  {
+   "addr": "b34f70",
+   "type": "f32",
+   "label": "traffic3_body0"
+  },
+  {
+   "addr": "b34f74",
+   "type": "f32",
+   "label": "traffic3_body1"
+  },
+  {
+   "addr": "b34f78",
+   "type": "f32",
+   "label": "traffic3_body2"
+  },
+  {
+   "addr": "b34f7c",
+   "type": "f32",
+   "label": "traffic3_body3"
+  },
+  {
+   "addr": "b34f80",
+   "type": "f32",
+   "label": "traffic3_body4"
+  },
+  {
+   "addr": "b34f84",
+   "type": "f32",
+   "label": "traffic3_body5"
+  },
+  {
+   "addr": "b34f88",
+   "type": "f32",
+   "label": "traffic3_body6"
+  },
+  {
+   "addr": "b34f8c",
+   "type": "f32",
+   "label": "traffic3_body7"
+  },
+  {
+   "addr": "b34f90",
+   "type": "f32",
+   "label": "traffic3_body8"
+  },
+  {
+   "addr": "b34f94",
+   "type": "f32",
+   "label": "traffic3_body9"
+  },
+  {
+   "addr": "b34f98",
+   "type": "f32",
+   "label": "traffic3_body10"
+  },
+  {
+   "addr": "b34f9c",
+   "type": "f32",
+   "label": "traffic3_body11"
+  },
+  {
+   "addr": "b34fa0",
+   "type": "f32",
+   "label": "traffic3_body12"
+  },
+  {
+   "addr": "b34fa4",
+   "type": "f32",
+   "label": "traffic3_body13"
+  },
+  {
+   "addr": "b34fa8",
+   "type": "f32",
+   "label": "traffic3_body14"
+  },
+  {
+   "addr": "b34fac",
+   "type": "f32",
+   "label": "traffic3_body15"
+  },
+  {
+   "addr": "b34fb0",
+   "type": "f32",
+   "label": "traffic3_vel0"
+  },
+  {
+   "addr": "b34fb4",
+   "type": "f32",
+   "label": "traffic3_vel1"
+  },
+  {
+   "addr": "b34fb8",
+   "type": "f32",
+   "label": "traffic3_vel2"
+  },
+  {
+   "addr": "b34fd4",
+   "type": "u32",
+   "label": "traffic3_collision_ptr"
+  },
+  {
+   "addr": "b365f0",
+   "type": "f32",
+   "label": "traffic4_body0"
+  },
+  {
+   "addr": "b365f4",
+   "type": "f32",
+   "label": "traffic4_body1"
+  },
+  {
+   "addr": "b365f8",
+   "type": "f32",
+   "label": "traffic4_body2"
+  },
+  {
+   "addr": "b365fc",
+   "type": "f32",
+   "label": "traffic4_body3"
+  },
+  {
+   "addr": "b36600",
+   "type": "f32",
+   "label": "traffic4_body4"
+  },
+  {
+   "addr": "b36604",
+   "type": "f32",
+   "label": "traffic4_body5"
+  },
+  {
+   "addr": "b36608",
+   "type": "f32",
+   "label": "traffic4_body6"
+  },
+  {
+   "addr": "b3660c",
+   "type": "f32",
+   "label": "traffic4_body7"
+  },
+  {
+   "addr": "b36610",
+   "type": "f32",
+   "label": "traffic4_body8"
+  },
+  {
+   "addr": "b36614",
+   "type": "f32",
+   "label": "traffic4_body9"
+  },
+  {
+   "addr": "b36618",
+   "type": "f32",
+   "label": "traffic4_body10"
+  },
+  {
+   "addr": "b3661c",
+   "type": "f32",
+   "label": "traffic4_body11"
+  },
+  {
+   "addr": "b36620",
+   "type": "f32",
+   "label": "traffic4_body12"
+  },
+  {
+   "addr": "b36624",
+   "type": "f32",
+   "label": "traffic4_body13"
+  },
+  {
+   "addr": "b36628",
+   "type": "f32",
+   "label": "traffic4_body14"
+  },
+  {
+   "addr": "b3662c",
+   "type": "f32",
+   "label": "traffic4_body15"
+  },
+  {
+   "addr": "b36630",
+   "type": "f32",
+   "label": "traffic4_vel0"
+  },
+  {
+   "addr": "b36634",
+   "type": "f32",
+   "label": "traffic4_vel1"
+  },
+  {
+   "addr": "b36638",
+   "type": "f32",
+   "label": "traffic4_vel2"
+  },
+  {
+   "addr": "b36654",
+   "type": "u32",
+   "label": "traffic4_collision_ptr"
+  }
+ ],
+ "writes": [],
+ "pad": [],
+ "shots": [
+  2,
+  200,
+  400,
+  600,
+  800,
+  1000,
+  1200
+ ],
+ "timeout": 150,
+ "renderer": "metal",
+ "note": "Input-free traffic observation 24 seconds PAL. Native body/velocity five known traffic roots; shapes must re-bind per state before assigning model names. Legacy eee320 not used as body."
+}

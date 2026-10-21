@@ -1,0 +1,19 @@
+# TEST21 (видео IMG_7851): погоня L5, jmax 2,1 м на железе. Пакет TEST20 (EMU=test20_emu). Смотреть CAMIN (jump, jmax, строка JUMPSEC) и CAMJUMP
+flag player
+scene T20_L5_load
+flag golevel 5
+wait 20
+scene T20_L5_chase
+flag camin 1
+flag caminlog
+flag msn
+wait 3
+flag repair
+flag hnr 100
+flag drive 75
+wait 16
+flag stop
+flag hnr 0
+wait 1
+flag camin
+end

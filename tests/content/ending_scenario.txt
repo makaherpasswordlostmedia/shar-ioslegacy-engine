@@ -1,0 +1,11 @@
+flag player
+scene ending
+wait 3
+flag endingtest
+wait 5
+shot ending_screen
+wait 1
+press triangle
+wait 2
+shot ending_back
+end

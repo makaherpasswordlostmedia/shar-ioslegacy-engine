@@ -1,0 +1,1 @@
+{"id": "walk_v1", "state": "build/ps2ref/state_l1_incar.p2s", "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44", "frames": 330, "every": 10, "trace": ["frame"], "pad": [[60, "triangle", 1], [66, "triangle", 0], [210, "lup", 1], [320, "lup", 0]], "writes": [], "shots": [], "timeout": 180, "pngs": [[300, 300, 1]]}

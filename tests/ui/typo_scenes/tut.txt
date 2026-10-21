@@ -1,0 +1,20 @@
+scene typo_tut
+flag msn
+wait 2
+flag tutorial
+flag tutnovoice
+foot 230 172 1.5708
+wait 0.6
+press up 1
+wait 4
+shot tut_a
+flag uitypo 1
+wait 0.1
+shot tut_b
+flag uitypo 2
+wait 0.1
+shot tut_c
+flag uitypo 0
+wait 0.1
+shot tut_a2
+end

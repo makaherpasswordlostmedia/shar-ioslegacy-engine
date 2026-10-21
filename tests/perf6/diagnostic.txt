@@ -1,0 +1,65 @@
+flag camlog
+flag gglog 1
+scene start
+wait 3
+flag rfold 7
+scene house_m7
+foot 240 190 2.4
+flag camstat 1
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+flag camstat
+shot house_m7
+flag gglog 1
+scene exit3_m7
+goto 225 176 0
+wait 2
+press triangle
+wait 3
+shot exit3_m7
+scene exit6_m7
+wait 3
+shot exit6_m7
+flag rfold 4
+scene house_m4
+foot 240 190 2.4
+flag camstat 1
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+flag camstat
+shot house_m4
+flag gglog 1
+scene exit3_m4
+goto 225 176 0
+wait 2
+press triangle
+wait 3
+shot exit3_m4
+scene exit6_m4
+wait 3
+shot exit6_m4
+flag rfold 0
+scene house_m0
+foot 240 190 2.4
+flag camstat 1
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+flag camstat
+shot house_m0
+flag gglog 1
+scene exit3_m0
+goto 225 176 0
+wait 2
+press triangle
+wait 3
+shot exit3_m0
+scene exit6_m0
+wait 3
+shot exit6_m0
+end

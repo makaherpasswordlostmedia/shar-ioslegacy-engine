@@ -1,0 +1,108 @@
+{
+ "id": "ps2_v100_fly_options_real",
+ "state": "build/twins/o4/ps2_v100_fly_options/snap_1000.p2s",
+ "frames": 1600,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  {
+   "addr": "f6e084",
+   "type": "u32",
+   "label": "main_menu_vtable"
+  },
+  {
+   "addr": "f6e120",
+   "type": "s32",
+   "label": "gag_current"
+  },
+  {
+   "addr": "f6e124",
+   "type": "s32",
+   "label": "gag_pending"
+  },
+  {
+   "addr": "f6e128",
+   "type": "s32",
+   "label": "gag_homer_segment"
+  },
+  {
+   "addr": "f6e12c",
+   "type": "u32",
+   "label": "gag_elapsed_ms"
+  },
+  {
+   "addr": "f6e130",
+   "type": "u32",
+   "label": "gag_delay_ms"
+  }
+ ],
+ "pad": [
+  [
+   10,
+   "triangle",
+   1
+  ],
+  [
+   16,
+   "triangle",
+   0
+  ],
+  [
+   250,
+   "right",
+   1
+  ],
+  [
+   256,
+   "right",
+   0
+  ],
+  [
+   310,
+   "right",
+   1
+  ],
+  [
+   316,
+   "right",
+   0
+  ],
+  [
+   600,
+   "cross",
+   1
+  ],
+  [
+   606,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  100,
+  250,
+  400,
+  600,
+  800,
+  1000,
+  1200,
+  1600
+ ],
+ "pngs": [
+  [
+   2,
+   1600,
+   4
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 150,
+ "renderer": "metal",
+ "note": "Previous target was Load Game, not Options (verified screenshots). Back to main, right twice toward actual Options, Accept once. Screenshots and timer decide actual screen/flight; names alone are not evidence."
+}

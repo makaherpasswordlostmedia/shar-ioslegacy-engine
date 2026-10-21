@@ -1,0 +1,37 @@
+# Прогон 4 (DATA.BIN слота 1 испорчен гейтом): игра не падает — слот «< Damaged Save >», при выборе сообщение оригинала
+# «Load failed! ... corrupt and must be deleted. OK?» -> запись удаляется -> «No ... save data» -> меню -> NEW GAME без записи
+flag menu
+flag saves
+wait 1.5
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 1
+shot sv_damaged_slots
+press cross
+wait 1
+shot sv_corrupt_msg
+press cross
+wait 2.5
+shot sv_nodata
+press cross
+# после закрытия слотов камера летит от видика назад (~1 с, главное меню 3D): нажатия в перелёте не принимаются
+wait 2.5
+press right
+wait 0.3
+press right
+wait 0.3
+press right
+wait 0.3
+press right
+wait 0.4
+press cross
+wait 5
+flag svlog
+end

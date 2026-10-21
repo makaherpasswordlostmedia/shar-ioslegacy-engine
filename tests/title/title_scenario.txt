@@ -1,0 +1,11 @@
+# №405/№409 гейт титульного экрана (tests/title/title.sh): меню -> простой 1 с -> титульный (Splash.scr). Строки TITLEPS —
+# рамка «Press START button» по кадрам первых 3 с (пульс); снимок title — свечение логотипа (ступени/сетка, tools/title_band.py)
+flag menu
+wait 2
+flag idle 1
+wait 3.6
+shot title
+wait 0.3
+press cross
+wait 1
+end

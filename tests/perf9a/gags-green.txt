@@ -1,0 +1,95 @@
+flag gagskinstreamold 0
+scene start
+flag trace 1
+wait 3
+scene gag0
+flag gagsnap 0
+wait 1
+shot gag0
+wait .5
+scene gag1
+flag gagsnap 1
+wait 1
+shot gag1
+wait .5
+scene gag2
+flag gagsnap 2
+wait 1
+shot gag2
+wait .5
+scene gag3
+flag gagsnap 3
+wait 1
+shot gag3
+wait .5
+scene gag4
+flag gagsnap 4
+wait 1
+shot gag4
+wait .5
+scene gag5
+flag gagsnap 5
+wait 1
+shot gag5
+wait .5
+scene gag6
+flag gagsnap 6
+wait 1
+shot gag6
+wait .5
+scene gag7
+flag gagsnap 7
+wait 1
+shot gag7
+wait .5
+scene gag8
+flag gagsnap 8
+wait 1
+shot gag8
+wait .5
+scene gag9
+flag gagsnap 9
+wait 1
+shot gag9
+wait .5
+scene gag10
+flag gagsnap 10
+wait 1
+shot gag10
+wait .5
+scene gag11
+flag gagsnap 11
+wait 1
+shot gag11
+wait .5
+scene gag12
+flag gagsnap 12
+wait 1
+shot gag12
+wait .5
+scene gag13
+flag gagsnap 13
+wait 1
+shot gag13
+wait .5
+scene gag14
+flag gagsnap 14
+wait 1
+shot gag14
+wait .5
+scene gag15
+flag gagsnap 15
+wait 1
+shot gag15
+wait .5
+scene gag16
+flag gagsnap 16
+wait 1
+shot gag16
+wait .5
+scene gag17
+flag gagsnap 17
+wait 1
+shot gag17
+wait .5
+end

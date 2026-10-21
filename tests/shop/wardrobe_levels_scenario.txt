@@ -1,0 +1,124 @@
+scene wardrobe_levels
+flag msn
+wait 2
+flag golevel 2
+wait 3
+scene ward_l2
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l2_default
+press right
+wait .7
+shot l2_costume
+press cross
+wait 1.5
+shot l2_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l2_restored
+flag golevel 3
+wait 3
+scene ward_l3
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l3_default
+press right
+wait .7
+shot l3_costume
+press cross
+wait 1.5
+shot l3_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l3_restored
+flag golevel 4
+wait 3
+scene ward_l4
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l4_default
+press right
+wait .7
+shot l4_costume
+press cross
+wait 1.5
+shot l4_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l4_restored
+flag golevel 5
+wait 3
+scene ward_l5
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l5_default
+press right
+wait .7
+shot l5_costume
+press cross
+wait 1.5
+shot l5_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l5_restored
+flag golevel 6
+wait 3
+scene ward_l6
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l6_default
+press right
+wait .7
+shot l6_costume
+press cross
+wait 1.5
+shot l6_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l6_restored
+flag golevel 7
+wait 3
+scene ward_l7
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot l7_default
+press right
+wait .7
+shot l7_costume
+press cross
+wait 1.5
+shot l7_worn
+flag wardtestopen
+wait 1.2
+press left
+wait .7
+press cross
+wait 1.5
+shot l7_restored
+end

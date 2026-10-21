@@ -1,0 +1,198 @@
+# Тур всех уровней (Роб 08.10: «апка, в которой всё проверяется с Media Engine; все уровни, разные точки; медленно, но качественно»).
+# Одна и та же дорога для трёх апок (CPU / ME звук / ME звук+эффекты) — отличаются только флаг-файлами (tools/tour_psp.sh).
+# Учтено из истории зависаний: без «flag msn» из комнаты (FOV 0, ловушка FPU), без места F10-4/F10-5, без 24 голосов+400 FX,
+# ролик — последней частью (TEST 8: ролик после сбоя ME вешал PSP). Уровень меняется игровым путём levelAdvance (flag golevel N).
+scene start
+flag trace 1
+flag meprof 1
+wait 6
+scene L1_spawn
+wait 4
+shot L1_spawn
+scene L1_drive
+flag autostraight 8
+wait 14
+shot L1_drive
+flag stop
+wait 2
+scene L1_traffic
+wait 10
+shot L1_traffic
+scene L1_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L1_fire
+flag stop
+scene L1_boom
+flag testboom
+wait 3
+shot L1_boom
+wait 9
+scene L2_load
+flag golevel 2
+wait 20
+scene L2_spawn
+wait 4
+shot L2_spawn
+scene L2_drive
+flag autostraight 8
+wait 14
+shot L2_drive
+flag stop
+wait 2
+scene L2_traffic
+wait 10
+shot L2_traffic
+scene L2_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L2_fire
+flag stop
+scene L2_boom
+flag testboom
+wait 3
+shot L2_boom
+wait 9
+scene L3_load
+flag golevel 3
+wait 20
+scene L3_spawn
+wait 4
+shot L3_spawn
+scene L3_drive
+flag autostraight 8
+wait 14
+shot L3_drive
+flag stop
+wait 2
+scene L3_traffic
+wait 10
+shot L3_traffic
+scene L3_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L3_fire
+flag stop
+scene L3_boom
+flag testboom
+wait 3
+shot L3_boom
+wait 9
+scene L4_load
+flag golevel 4
+wait 20
+scene L4_spawn
+wait 4
+shot L4_spawn
+scene L4_drive
+flag autostraight 8
+wait 14
+shot L4_drive
+flag stop
+wait 2
+scene L4_traffic
+wait 10
+shot L4_traffic
+scene L4_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L4_fire
+flag stop
+scene L4_boom
+flag testboom
+wait 3
+shot L4_boom
+wait 9
+scene L5_load
+flag golevel 5
+wait 20
+scene L5_spawn
+wait 4
+shot L5_spawn
+scene L5_drive
+flag autostraight 8
+wait 14
+shot L5_drive
+flag stop
+wait 2
+scene L5_traffic
+wait 10
+shot L5_traffic
+scene L5_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L5_fire
+flag stop
+scene L5_boom
+flag testboom
+wait 3
+shot L5_boom
+wait 9
+scene L6_load
+flag golevel 6
+wait 20
+scene L6_spawn
+wait 4
+shot L6_spawn
+scene L6_drive
+flag autostraight 8
+wait 14
+shot L6_drive
+flag stop
+wait 2
+scene L6_traffic
+wait 10
+shot L6_traffic
+scene L6_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L6_fire
+flag stop
+scene L6_boom
+flag testboom
+wait 3
+shot L6_boom
+wait 9
+scene L7_load
+flag golevel 7
+wait 20
+scene L7_spawn
+wait 4
+shot L7_spawn
+scene L7_drive
+flag autostraight 8
+wait 14
+shot L7_drive
+flag stop
+wait 2
+scene L7_traffic
+wait 10
+shot L7_traffic
+scene L7_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L7_fire
+flag stop
+scene L7_boom
+flag testboom
+wait 3
+shot L7_boom
+wait 9
+scene movie
+flag mefmv
+wait 12
+shot movie_after
+scene after_movie
+flag autostraight 6
+wait 10
+shot after_movie
+flag stop
+wait 2
+end

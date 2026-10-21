@@ -1,0 +1,20 @@
+# №355: в остов (после взрыва) можно сесть и поехать, L1: разбитая и взорванная машина игрока; Гомер рядом, △, газ
+wait 3
+scene sit_boom
+cam 213.5 6.0 169.5 6.0 -2.6 2.5 55
+flag testboom
+wait 6
+shot sit_a
+foot 217.2 172.0 1.5708
+wait 1.5
+shot sit_b
+press triangle
+wait 2.5
+shot sit_c
+flag autostraight 9
+wait 4
+shot sit_d
+wait 4
+shot sit_e
+wait 1
+end

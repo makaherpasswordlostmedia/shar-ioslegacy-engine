@@ -1,0 +1,25 @@
+scene start
+wait 3
+flag repair
+wait 3
+flag wrenchgo 0
+wait 6
+scene Wd0
+wait 1
+shot Wd0
+flag wrenchgo 1
+wait 6
+scene Wd1
+wait 1
+shot Wd1
+flag wrenchgo 3
+wait 6
+scene Wd3
+wait 1
+shot Wd3
+flag wrenchgo 5
+wait 6
+scene Wd5
+wait 1
+shot Wd5
+end

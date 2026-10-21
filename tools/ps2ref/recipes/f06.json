@@ -1,0 +1,167 @@
+{
+ "id": "f06",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 880,
+ "every": 1,
+ "trace": [
+  "car_cm[0]",
+  "car_cm[1]",
+  "car_cm[2]",
+  "car_vel[0]",
+  "car_vel[1]",
+  "car_vel[2]",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]"
+ ],
+ "writes": [
+  {
+   "name": "car_cm[0]",
+   "value": 338.35,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 6.56,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": 207.77,
+   "at": 150,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 150,
+   "hold": 20
+  },
+  {
+   "name": "car_cm[0]",
+   "value": 294.087,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 13.21,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": 80.358,
+   "at": 400,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 400,
+   "hold": 10
+  },
+  {
+   "name": "car_cm[0]",
+   "value": 295.33,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 13.06,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_cm[2]",
+   "value": 82.67,
+   "at": 600,
+   "hold": 2
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0.0,
+   "at": 600,
+   "hold": 10
+  },
+  {
+   "name": "car_vel[0]",
+   "value": -3.748,
+   "at": 630,
+   "hold": 50
+  },
+  {
+   "name": "car_vel[2]",
+   "value": -6.977,
+   "at": 630,
+   "hold": 50
+  }
+ ],
+ "shots": [
+  550,
+  874
+ ],
+ "note": {
+  "place": 6,
+  "loader": "loader7",
+  "zone": "l1r7",
+  "depart": [
+   295.33,
+   11.56,
+   82.67
+  ],
+  "edge": [
+   295.27,
+   11.71,
+   82.56
+  ],
+  "beyond": [
+   294.09,
+   80.36
+  ],
+  "course_orig_deg": -151.8,
+  "speed": 7.92,
+  "foot": true
+ }
+}

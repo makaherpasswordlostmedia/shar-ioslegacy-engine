@@ -1,0 +1,42 @@
+{
+ "id": "tree_c",
+ "state": "build/twins/o4/ps2_v105_oblit_boot3/snap_6250.p2s",
+ "frames": 420,
+ "every": 5,
+ "trace": [
+  "homer_root",
+  "cam_pos"
+ ],
+ "pad": [
+  [
+   5,
+   "square",
+   1
+  ],
+  [
+   12,
+   "square",
+   0
+  ],
+  [
+   30,
+   "lup",
+   1.0
+  ],
+  [
+   330,
+   "lup",
+   0
+  ]
+ ],
+ "shots": [],
+ "pngs": [
+  [
+   30,
+   420,
+   30
+  ]
+ ],
+ "timeout": 600,
+ "renderer": "metal"
+}

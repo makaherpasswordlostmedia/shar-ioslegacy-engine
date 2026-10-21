@@ -1,0 +1,11 @@
+flag level 6
+scene nelson
+flag msn
+wait 3
+foot -136.5 101.08 1.57
+wait 5
+shot nelson
+press triangle
+wait 3
+shot talk
+end

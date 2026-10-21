@@ -1,0 +1,50 @@
+# разведка точек обзора на маяк L3 (без горизонта)
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_s0_247
+flag repair
+goto -366 94 4.120
+wait 4
+shot HZ_s0_247
+scene HZ_s1_276
+flag repair
+goto -330 90 4.205
+wait 4
+shot HZ_s1_276
+scene HZ_s2_261
+flag repair
+goto -310 -38 4.688
+wait 4
+shot HZ_s2_261
+scene HZ_s3_256
+flag repair
+goto -346 -166 5.207
+wait 4
+shot HZ_s3_256
+scene HZ_s4_318
+flag repair
+goto -290 -194 5.201
+wait 4
+shot HZ_s4_318
+scene HZ_s5_364
+flag repair
+goto -402 278 3.626
+wait 4
+shot HZ_s5_364
+scene HZ_s6_263
+flag repair
+goto -450 190 3.620
+wait 4
+shot HZ_s6_263
+scene HZ_s7_356
+flag repair
+goto -258 126 4.215
+wait 4
+shot HZ_s7_356
+end

@@ -1,0 +1,46 @@
+# Homer test (tests/homer/build.sh copies it to build/homertest/): car next to crate #30, exit, run, kick, jump, back in, drive
+scene homer
+goto 184.3 209.9 1.5708
+wait 4
+shot h0_car
+flag henter
+wait 0.55
+flag hfreeze 0
+shot h1_exit_door
+flag hfreeze 1
+wait 1.2
+flag hgx 184.3
+flag hgz 204.9
+wait 0.45
+flag hfreeze 0
+shot h2_run
+flag hfreeze 1
+wait 1.5
+flag hkick
+wait 0.30
+flag hfreeze 0
+shot h3_kick
+flag hfreeze 1
+wait 1.0
+flag hjump
+wait 0.35
+flag hfreeze 0
+shot h4_jump
+flag hfreeze 1
+wait 2.5
+shot h5_coins
+flag hgx 184.3
+flag hgz 207.2
+wait 1.5
+flag henter
+wait 1.3
+flag hfreeze 0
+shot h6_getin
+flag hfreeze 1
+wait 2.5
+shot h7_incar
+flag autostraight 3
+wait 2.0
+shot h8_drive
+wait 1
+end

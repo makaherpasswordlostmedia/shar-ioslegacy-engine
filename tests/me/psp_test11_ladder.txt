@@ -1,0 +1,54 @@
+# TEST 11 · лесенка Media Engine подряд (04.10 вечер). TEST 10 на железе: ступени 1 (MIST) и 2 (ячейка) прошли, на 3 ME не ответил
+# вовсе (st=0, beat=0) — между 2 и 3 играл ролик проверки, а ролик тоже работает на ME: прошивка его перезапускает и наша ячейка
+# стирается. Здесь ступени идут подряд, ролик — только до и в самом конце; потом повтор 1–3 после ролика (перезапуск MIST заново).
+# Строки «ML N … st0/1/10/100ms=» — слово состояния ME до запуска и через 1/10/100 мс: реагирует ли ME вообще. ~3 мин.
+scene ME11_base_movie
+goto 220 172 1.5708
+wait 3
+flag mefmv
+wait 14
+scene ME11_steps
+flag melad 0
+wait 2
+flag melad 1
+wait 1
+flag melad 2
+wait 1
+flag melad 3
+wait 1
+flag melad 4
+wait 1
+flag melad 5
+wait 1
+flag melad 6
+wait 2
+flag melad 7
+wait 1
+flag melad 8
+wait 1
+flag melad 9
+wait 1
+flag melad 99
+wait 2
+scene ME11_movie_after
+flag mefmv
+wait 14
+scene ME11_again_after_movie
+flag melad 1
+wait 1
+flag melad 2
+wait 1
+flag melad 3
+wait 1
+flag melad 99
+wait 2
+flag mefmv
+wait 14
+scene ME11_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 10
+flag stop
+wait 3
+end

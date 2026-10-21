@@ -1,0 +1,139 @@
+{
+ "id": "ps2_v85_marge_rtti_bound",
+ "state": "build/ps2ref/answers/observer_queue/input/m0d/snap_00010.p2s",
+ "frames": 500,
+ "every": 2,
+ "trace": [
+  "frame",
+  "cam_pos",
+  "cam_fwd",
+  {
+   "addr": "a24a70",
+   "type": "f32",
+   "label": "hx"
+  },
+  {
+   "addr": "a24a74",
+   "type": "f32",
+   "label": "hy"
+  },
+  {
+   "addr": "a24a78",
+   "type": "f32",
+   "label": "hz"
+  },
+  {
+   "addr": "a62210",
+   "type": "f32",
+   "label": "marge_x"
+  },
+  {
+   "addr": "a62214",
+   "type": "f32",
+   "label": "marge_y"
+  },
+  {
+   "addr": "a62218",
+   "type": "f32",
+   "label": "marge_z"
+  },
+  {
+   "addr": "a62310",
+   "type": "f32",
+   "label": "marge_sc_x"
+  },
+  {
+   "addr": "a62314",
+   "type": "f32",
+   "label": "marge_sc_y"
+  },
+  {
+   "addr": "a62318",
+   "type": "f32",
+   "label": "marge_sc_z"
+  },
+  {
+   "addr": "8470c4",
+   "type": "u32",
+   "label": "gui_screen"
+  },
+  {
+   "addr": "5db570",
+   "type": "u32",
+   "label": "stage_pointer"
+  },
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_simple_x"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_simple_y"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_simple_z"
+  },
+  {
+   "addr": "a621d0",
+   "type": "u32",
+   "label": "marge_simple_vtable"
+  },
+  {
+   "addr": "a24570",
+   "type": "u32",
+   "label": "homer_simple_vtable"
+  },
+  {
+   "addr": "14939ac",
+   "type": "u32",
+   "label": "talk_objective_action"
+  },
+  {
+   "addr": "15f2930",
+   "type": "u32",
+   "label": "talk_action_simstate"
+  },
+  {
+   "addr": "a5f8d0",
+   "type": "u32",
+   "label": "marge_collision_vtable"
+  },
+  {
+   "addr": "a5f8e8",
+   "type": "u32",
+   "label": "marge_collision_backref"
+  },
+  {
+   "addr": "a5f8ec",
+   "type": "u32",
+   "label": "shared_physics_properties"
+  },
+  {
+   "addr": "a24540",
+   "type": "u32",
+   "label": "physics_properties_vtable"
+  }
+ ],
+ "writes": [],
+ "pad": [],
+ "shots": [
+  2,
+  100,
+  250,
+  500
+ ],
+ "pngs": [
+  [
+   0,
+   500,
+   50
+  ]
+ ],
+ "renderer": "metal",
+ "timeout": 90,
+ "note": "Original native TalkToObjective named marge \u2192 action-button15f28c0 \u2192 SimStatea621d0 (+0x70), RTTI2d86d8. SimState virtual GetPosition2d8748 returns+0x40. Independent choreo::RootTransformController a622d0 world translation+0x40 matches; legacy trace aliases marge_sc_x/y/z mean render root, not SimState. CollisionObjecta5f8d0 backlink+0x18 equalsa621d0; +0x1c is shared PhysicsPropertiesa24540, not an NPC controller or actor. Homer SimpleSimStatea24570+0x40 agrees with validated choreo root translationa24a70. No game-memory writes."
+}

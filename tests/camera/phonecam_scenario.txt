@@ -1,0 +1,23 @@
+scene booth
+flag msn
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+shot b_before
+press triangle
+wait 1.5
+shot b_open
+press cross
+wait 0.5
+shot b_cam1
+wait 0.5
+shot b_cam2
+wait 0.5
+shot b_cam3
+wait 0.5
+shot b_cam4
+wait 0.6
+shot b_cam5
+wait 0.8
+shot b_cam6
+end

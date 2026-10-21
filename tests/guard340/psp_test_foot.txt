@@ -1,0 +1,77 @@
+# Правка Роба 340 («по краям экрана иногда обламывается тень от деревьев на траве»): проверка на ЖЕЛЕЗЕ. Часть тура (строки
+# без «#» и без «end» — как берёт tools/tour_make.py части tests/*/psp_test*.txt); читает tests/guard340/emu340.py ПАПКА_ТУРА.
+# Причина (модель GE tests/guard340/ge340.py, безголовый эмулятор): пешком у стены/дерева/машины ближняя плоскость кадра
+# опускается до 0,25–0,3 м, защитная полоса GE у near сужается до ±2,3 м, и треугольник земли или тени дерева (7 м), уходящий
+# краем за камеру, железо выбрасывает целиком — у края кадра светлый клин травы без тени или тёмная дыра. Правка: такие
+# треугольники движок режет сам по пирамиде полосы (viewer/ge_guard.h). У каждой позы два снимка подряд: P?_old (flag ggold 1 —
+# как было) и P?_new (как стало); a–f — ближняя 0,25–0,28 м, g, h — 1,5 м (контроль: снимки равны). Строки CAMF — поза камеры
+# для модели; GGSTAT — сколько треугольников движок нарезал. Робу: в P?_old у края кадра клин без тени/дыра, в P?_new — нет.
+scene G340_foot
+flag camlog
+wait 2
+foot 209.50 203.20 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pa_old
+flag ggold 0
+wait 0.05
+shot Pa_new
+foot -170.33 168.64 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pb_old
+flag ggold 0
+wait 0.05
+shot Pb_new
+foot 108.81 190.18 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pc_old
+flag ggold 0
+wait 0.05
+shot Pc_new
+foot -190.51 252.80 3.5416
+wait 2
+flag ggold 1
+wait 0.05
+shot Pd_old
+flag ggold 0
+wait 0.05
+shot Pd_new
+foot -326.67 29.80 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pe_old
+flag ggold 0
+wait 0.05
+shot Pe_new
+foot 367.92 -350.74 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pf_old
+flag ggold 0
+wait 0.05
+shot Pf_new
+foot 209.50 203.20 0.4000
+wait 2
+flag ggold 1
+wait 0.05
+shot Pg_old
+flag ggold 0
+wait 0.05
+shot Pg_new
+foot -170.33 168.64 0.4000
+wait 2
+flag ggold 1
+wait 0.05
+shot Ph_old
+flag ggold 0
+wait 0.05
+shot Ph_new
+flag gglog 1
+flag camlog 0

@@ -1,0 +1,96 @@
+{
+ "id": "ps2_camera_follow_numbers_foot",
+ "state": "build/ps2ref/state_l1_start.p2s",
+ "frames": 760,
+ "every": 2,
+ "trace": [
+  {
+   "addr": "c8460c",
+   "type": "f32",
+   "label": "cam_eye0"
+  },
+  {
+   "addr": "c84610",
+   "type": "f32",
+   "label": "cam_eye1"
+  },
+  {
+   "addr": "c84614",
+   "type": "f32",
+   "label": "cam_eye2"
+  },
+  {
+   "addr": "c845e8",
+   "type": "f32",
+   "label": "cam_fwd0"
+  },
+  {
+   "addr": "c845ec",
+   "type": "f32",
+   "label": "cam_fwd1"
+  },
+  {
+   "addr": "c845f0",
+   "type": "f32",
+   "label": "cam_fwd2"
+  },
+  {
+   "addr": "c84618",
+   "type": "f32",
+   "label": "cam_tgt0"
+  },
+  {
+   "addr": "c8461c",
+   "type": "f32",
+   "label": "cam_tgt1"
+  },
+  {
+   "addr": "c84620",
+   "type": "f32",
+   "label": "cam_tgt2"
+  }
+ ],
+ "pad": [
+  [
+   10,
+   "lup",
+   1
+  ],
+  [
+   260,
+   "lleft",
+   1
+  ],
+  [
+   400,
+   "lleft",
+   0
+  ],
+  [
+   560,
+   "lup",
+   0
+  ],
+  [
+   600,
+   "ldown",
+   1
+  ],
+  [
+   700,
+   "ldown",
+   0
+  ]
+ ],
+ "shots": [
+  100,
+  250,
+  350,
+  450,
+  550,
+  700
+ ],
+ "timeout": 240,
+ "renderer": "metal",
+ "note": "Гомер пешком: вперёд 5 с, поворот влево 2,8 с, вперёд, затем назад; камера tPointCamera 0xc84540"
+}

@@ -1,0 +1,11 @@
+scene g646
+flag msn
+wait 0.6
+shot t1
+wait 0.6
+shot t2
+wait 0.6
+shot t3
+wait 0.8
+shot t4
+end

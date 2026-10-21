@@ -1,0 +1,20 @@
+flag menu
+flag saves
+wait 11.6
+press left
+wait .3
+press left
+wait .3
+press left
+wait .3
+press left
+wait .3
+press cross
+wait 4
+shot load_pause
+wait 5
+shot load_still
+press triangle
+wait 4
+shot load_return
+end

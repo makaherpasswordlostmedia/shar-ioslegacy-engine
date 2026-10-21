@@ -1,0 +1,59 @@
+# Правка Роба 362 (tests/camera/camturn.py): Гомер пешком на улице; R 1 с — поворот камеры (по умолчанию Invert Camera Control On);
+# пауза -> OPTIONS -> SETTINGS (курсор на Invert Camera Control) -> ► Off -> в игру -> R 1 с; снова SETTINGS -> ► On -> в игру -> R 1 с
+flag camlog
+wait 3
+scene turn
+foot 232 275 0
+wait 2
+press r 1.0
+wait 1.3
+shot turn_default
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 0.8
+shot set_inv_default
+press right
+wait 0.6
+shot set_inv_toggled
+press triangle
+wait 0.4
+press triangle
+wait 0.4
+press start
+wait 1
+press r 1.0
+wait 1.3
+shot turn_toggled
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 0.8
+press right
+wait 0.6
+press triangle
+wait 0.4
+press triangle
+wait 0.4
+press start
+wait 1
+press r 1.0
+wait 1.3
+shot turn_back
+end

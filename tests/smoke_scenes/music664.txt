@@ -1,0 +1,59 @@
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+press right
+wait 2
+shot pl_menu_resume
+press cross
+wait 8
+scene PL_game_start
+shot pl_game0
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+shot pl_game0b
+wait 20
+scene M_after_resume
+shot m_resume
+scene M_teleport_car
+flag repair
+wait 3
+scene M_drive
+flag drive 100
+wait 25
+shot m_drive
+end

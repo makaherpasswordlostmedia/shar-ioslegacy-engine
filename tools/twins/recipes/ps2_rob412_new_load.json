@@ -1,0 +1,42 @@
+{
+ "id": "ps2_rob412_new_load",
+ "state": "build/twins/o4/ps2_v100_main_idle_native_180s/snap_2.p2s",
+ "frames": 320,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   160,
+   "right",
+   1
+  ],
+  [
+   166,
+   "right",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  100,
+  150,
+  200,
+  250,
+  320
+ ],
+ "pngs": [
+  [
+   2,
+   320,
+   2
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 150,
+ "note": "Rob412: main carousel native caption first then one right tap to Load Game; no RAM writes; private profile."
+}

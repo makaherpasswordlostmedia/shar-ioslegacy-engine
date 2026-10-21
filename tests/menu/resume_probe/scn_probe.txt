@@ -1,0 +1,15 @@
+# Пустая карта, главное меню: RESUME GAME скрыт; ► от NEW GAME сразу LOAD GAME, ✕ на нём (облёт к видику, «No save data»)
+flag menu
+flag saves
+wait 2
+press right
+wait 1.5
+shot l0_before_load
+press cross
+wait 0.3
+shot l1_load_0p3
+wait 1.7
+shot l2_load_2s
+wait 2
+shot l3_load_4s
+end

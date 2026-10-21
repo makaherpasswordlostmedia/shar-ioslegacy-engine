@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.10)
+project(gebench C)
+# шаг 0 аудита: микробенч подачи геометрии в GE; данные build/gebench/cell.bin (tools/strips.py)
+add_executable(gebench main.c)
+target_compile_options(gebench PRIVATE -O2 -Wall -Wno-misleading-indentation -fno-math-errno -fsingle-precision-constant)
+target_link_libraries(gebench pspgum pspgu pspdebug pspdisplay pspctrl psprtc psppower pspge m)
+create_pbp_file(TARGET gebench TITLE "SHAR GE bench" BUILD_PRX)

@@ -1,0 +1,889 @@
+# Тур 15 = тур 14 с поправками и сценами проверки правок пакета 11.10:
+# (1) №540 таймер со значком (L1 m2: T_timer_icon, время правее круглого значка цели);
+# (2) №545 позиция в гонке 1ST/2ND (L3 P3_sr3_D: P3_race_grid, P3_race_pos с плотным кернингом ordinal);
+# (3) №547/550 карточка миссии крупно (P3_sr3_T: T_brief_card с Continue);
+# (4) №546 проезд мимо грузовика glastruc у края кадра (L1: T_truck_cull);
+# (5) №544 погоня с контактом полиции (L3: D_L3_chase, D_police_chase и D_police_contact).
+# Базовые поправки: repair перед автопилотом в D_L3_chase / D_L1_city, goto перед expect в L1_gb и L3_gb.
+scene start
+flag meprof 1
+wait 6
+scene L3_load
+flag golevel 3
+wait 20
+scene L3_idle
+wait 20
+scene L3_drive
+flag repair
+flag autostraight 14
+wait 15
+flag autostraight 14
+wait 15
+shot L3_drive
+flag stop
+wait 1
+scene P3_sr3_T
+flag msnmainat 901
+wait 3
+shot T_brief_card
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P3_sr3_D
+flag autostraight 14
+wait 6
+shot P3_race_pos
+wait 6
+shot P3_sr3
+flag stop
+wait 1
+scene H_L3m7_T
+flag msnmainat 601
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L3m7_D
+goto -406 -34 1.5708
+wait 2
+expect -406 -34 30
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L3m7
+flag stop
+flag hnr 0
+wait 1
+# Автопилот L3 погоня (Физика §5, гейт №544 — полиция в контакте)
+scene D_L3_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 15
+shot D_police_chase
+wait 20
+shot D_police_contact
+wait 41
+flag stop
+flag hnr 0
+wait 1
+scene L4_load
+flag golevel 4
+wait 20
+scene P4_m1e5_T
+flag msnmainat 5
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P4_m1e5_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P4_m1e5
+flag stop
+flag hnr 0
+wait 1
+scene L5_load
+flag golevel 5
+wait 20
+scene P5_m6e2_T
+flag msnmainat 502
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6e2_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e2
+flag stop
+flag hnr 0
+wait 1
+scene P5_m6e4_T
+flag msnmainat 504
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6e4_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e4
+flag stop
+flag hnr 0
+wait 1
+scene P5_m1e2_T
+flag msnmainat 2
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m1e2_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m1e2
+flag stop
+flag hnr 0
+wait 1
+scene P5_m6stage_T
+flag msnmainat 502
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 3
+flag msnmainat 503
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P5_m6stage_D
+flag hnr 85
+flag autostraight 14
+wait 10
+shot P5_m6stage
+flag stop
+flag hnr 0
+wait 1
+# Автопилот L5 погоня (Физика §5)
+scene D_L5_chase
+flag hnr 100
+flag drive 75
+wait 76
+flag stop
+flag hnr 0
+wait 1
+scene L6_load
+flag golevel 6
+wait 20
+scene P6_bm1e5_T
+flag msnmainat 1205
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_bm1e5_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_bm1e5
+flag stop
+flag hnr 0
+wait 1
+scene P6_m2e1_T
+flag msnmainat 101
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_m2e1_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m2e1
+flag stop
+flag hnr 0
+wait 1
+scene P6_m7e1_T
+flag msnmainat 600
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene P6_m7e1_D
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m7e1
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m8a_D
+goto -413 -142 1.5708
+wait 2
+expect -413 -142 30
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m8a
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m8b_D
+goto -336 -124 1.5708
+wait 2
+expect -336 -124 30
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m8b
+flag stop
+flag hnr 0
+wait 1
+scene H_L6m5_T
+flag msnmainat 401
+wait 6
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+scene H_L6m5_D
+goto -468 -107 1.5708
+wait 2
+expect -468 -107 30
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L6m5
+flag stop
+flag hnr 0
+wait 1
+# Автопилот L6 мост (Физика §5)
+scene D_L6_bridge
+flag drive 75
+wait 76
+flag stop
+wait 1
+scene L7_load
+flag golevel 7
+wait 20
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+scene H_L7m8_D
+goto 230 160 1.5708
+wait 2
+expect 230 160 30
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot H_L7m8
+flag stop
+flag hnr 0
+wait 1
+# L1 места дня: трамплин J9-8 (150,183), кусты J9-5 (150,150), АЭС (стоянка Power Plant Parking Lot, движок 40,-296; свет, лучи)
+scene L1x_load
+flag golevel 1
+wait 20
+# Автопилот L1 город и тротуар (Физика §5)
+scene D_L1_city
+flag repair
+goto 220 172 1.5708
+wait 2
+expect 220 172 30
+wait 2
+flag drive 75
+wait 76
+flag stop
+wait 1
+scene D_L1_walk
+foot 222 177 0
+wait 2
+expect 222 177 30
+wait 2
+flag walk 30
+wait 31
+flag stop
+wait 1
+# №540: таймер со значком цели в углу (L1 m2 stage 1: 40 с, значок lawnmwr/tuxedo)
+scene T_timer_icon
+flag repair
+flag msn
+wait 3
+flag msnmainat 201
+wait 5
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T_timer_icon
+flag stop
+wait 1
+# №546: проезд мимо грузовика glastruc у края кадра (отсечение длинных моделей)
+scene T_truck_cull
+flag repair
+goto 310 176 -1.5708
+wait 2
+shot T_truck_approach
+flag autostraight 8
+wait 2
+shot T_truck_edge1
+wait 2
+shot T_truck_edge2
+wait 2
+shot T_truck_leave
+flag stop
+wait 1
+scene J98_trampoline_D
+goto 150 183 1.5708
+wait 2
+expect 150 183 30
+wait 2
+flag autostraight 14
+wait 10
+shot J98_trampoline
+flag stop
+wait 1
+scene J95_bushes_D
+goto 150 150 1.5708
+wait 2
+expect 150 150 30
+wait 2
+flag autostraight 14
+wait 10
+shot J95_bushes
+flag stop
+wait 1
+scene L1_aes_D
+goto 40 -296 1.5708
+wait 2
+expect 40 -296 30
+wait 2
+flag autostraight 14
+wait 10
+shot L1_aes
+flag stop
+wait 1
+# №523 (трамплин jumpzone9, курс 45°): старт за 40 м, газ прямо 8 с (бисект 0 и 1)
+scene D_L1_ramp9_b0
+flag bisect 0
+goto 229.3 -536.0 0.785
+wait 2
+expect 229.3 -536.0 30
+wait 2
+flag autostraight 8
+wait 9
+shot ramp9_b0
+flag stop
+wait 1
+scene D_L1_ramp9_b1
+flag bisect 1
+goto 229.3 -536.0 0.785
+wait 2
+expect 229.3 -536.0 30
+wait 2
+flag autostraight 8
+wait 9
+shot ramp9_b1
+flag stop
+flag bisect 0
+wait 1
+# №538 (мигание лучей): перекрёсток L1 у Kwik-E-Mart (209,285), розыск 85 (полиция, лучи), трафик; камера стоит, 12 снимков подряд при каждой маске bisect (hex: 0 как есть, 3fff все прежние пути, 1000 только TQ_FAST, 2000 только TQ_STABLE)
+scene B538_prep
+goto 209 285 1.5708
+wait 2
+expect 209 285 30
+flag hnr 85
+wait 10
+scene B538_b0
+flag bisect 0
+wait 3
+shot b538_b0_01
+wait 0.25
+shot b538_b0_02
+wait 0.25
+shot b538_b0_03
+wait 0.25
+shot b538_b0_04
+wait 0.25
+shot b538_b0_05
+wait 0.25
+shot b538_b0_06
+wait 0.25
+shot b538_b0_07
+wait 0.25
+shot b538_b0_08
+wait 0.25
+shot b538_b0_09
+wait 0.25
+shot b538_b0_10
+wait 0.25
+shot b538_b0_11
+wait 0.25
+shot b538_b0_12
+wait 0.25
+scene B538_b3fff
+flag bisect 3fff
+wait 3
+shot b538_b3fff_01
+wait 0.25
+shot b538_b3fff_02
+wait 0.25
+shot b538_b3fff_03
+wait 0.25
+shot b538_b3fff_04
+wait 0.25
+shot b538_b3fff_05
+wait 0.25
+shot b538_b3fff_06
+wait 0.25
+shot b538_b3fff_07
+wait 0.25
+shot b538_b3fff_08
+wait 0.25
+shot b538_b3fff_09
+wait 0.25
+shot b538_b3fff_10
+wait 0.25
+shot b538_b3fff_11
+wait 0.25
+shot b538_b3fff_12
+wait 0.25
+scene B538_b1000
+flag bisect 1000
+wait 3
+shot b538_b1000_01
+wait 0.25
+shot b538_b1000_02
+wait 0.25
+shot b538_b1000_03
+wait 0.25
+shot b538_b1000_04
+wait 0.25
+shot b538_b1000_05
+wait 0.25
+shot b538_b1000_06
+wait 0.25
+shot b538_b1000_07
+wait 0.25
+shot b538_b1000_08
+wait 0.25
+shot b538_b1000_09
+wait 0.25
+shot b538_b1000_10
+wait 0.25
+shot b538_b1000_11
+wait 0.25
+shot b538_b1000_12
+wait 0.25
+scene B538_b2000
+flag bisect 2000
+wait 3
+shot b538_b2000_01
+wait 0.25
+shot b538_b2000_02
+wait 0.25
+shot b538_b2000_03
+wait 0.25
+shot b538_b2000_04
+wait 0.25
+shot b538_b2000_05
+wait 0.25
+shot b538_b2000_06
+wait 0.25
+shot b538_b2000_07
+wait 0.25
+shot b538_b2000_08
+wait 0.25
+shot b538_b2000_09
+wait 0.25
+shot b538_b2000_10
+wait 0.25
+shot b538_b2000_11
+wait 0.25
+shot b538_b2000_12
+wait 0.25
+flag bisect 0
+flag hnr 0
+wait 1
+# №538 АЭС (мигание лучей/световых столбов): камера стоит, по 12 снимков при bisect 0, 3fff, 1000, 2000
+scene B538_aes_prep
+goto 40 -296 1.5708
+wait 2
+expect 40 -296 30
+wait 2
+scene B538_aes_b0
+flag bisect 0
+wait 3
+shot b538_aes_b0_01
+wait 0.25
+shot b538_aes_b0_02
+wait 0.25
+shot b538_aes_b0_03
+wait 0.25
+shot b538_aes_b0_04
+wait 0.25
+shot b538_aes_b0_05
+wait 0.25
+shot b538_aes_b0_06
+wait 0.25
+shot b538_aes_b0_07
+wait 0.25
+shot b538_aes_b0_08
+wait 0.25
+shot b538_aes_b0_09
+wait 0.25
+shot b538_aes_b0_10
+wait 0.25
+shot b538_aes_b0_11
+wait 0.25
+shot b538_aes_b0_12
+wait 0.25
+scene B538_aes_b3fff
+flag bisect 3fff
+wait 3
+shot b538_aes_b3fff_01
+wait 0.25
+shot b538_aes_b3fff_02
+wait 0.25
+shot b538_aes_b3fff_03
+wait 0.25
+shot b538_aes_b3fff_04
+wait 0.25
+shot b538_aes_b3fff_05
+wait 0.25
+shot b538_aes_b3fff_06
+wait 0.25
+shot b538_aes_b3fff_07
+wait 0.25
+shot b538_aes_b3fff_08
+wait 0.25
+shot b538_aes_b3fff_09
+wait 0.25
+shot b538_aes_b3fff_10
+wait 0.25
+shot b538_aes_b3fff_11
+wait 0.25
+shot b538_aes_b3fff_12
+wait 0.25
+scene B538_aes_b1000
+flag bisect 1000
+wait 3
+shot b538_aes_b1000_01
+wait 0.25
+shot b538_aes_b1000_02
+wait 0.25
+shot b538_aes_b1000_03
+wait 0.25
+shot b538_aes_b1000_04
+wait 0.25
+shot b538_aes_b1000_05
+wait 0.25
+shot b538_aes_b1000_06
+wait 0.25
+shot b538_aes_b1000_07
+wait 0.25
+shot b538_aes_b1000_08
+wait 0.25
+shot b538_aes_b1000_09
+wait 0.25
+shot b538_aes_b1000_10
+wait 0.25
+shot b538_aes_b1000_11
+wait 0.25
+shot b538_aes_b1000_12
+wait 0.25
+scene B538_aes_b2000
+flag bisect 2000
+wait 3
+shot b538_aes_b2000_01
+wait 0.25
+shot b538_aes_b2000_02
+wait 0.25
+shot b538_aes_b2000_03
+wait 0.25
+shot b538_aes_b2000_04
+wait 0.25
+shot b538_aes_b2000_05
+wait 0.25
+shot b538_aes_b2000_06
+wait 0.25
+shot b538_aes_b2000_07
+wait 0.25
+shot b538_aes_b2000_08
+wait 0.25
+shot b538_aes_b2000_09
+wait 0.25
+shot b538_aes_b2000_10
+wait 0.25
+shot b538_aes_b2000_11
+wait 0.25
+shot b538_aes_b2000_12
+wait 0.25
+flag bisect 0
+wait 1
+# №539 (Наблюдатель, рябь дали): множители наклона мипа земли 1.0 1.5 2.0, снимок стоя + 12 подряд при проезде 2 м/с (tests/groundbias/gen.sh OUT "1.0 1.5 2.0" 12 <уровень>); выбор: tools/groundbias_pick.py
+# в smoke SHOT на L1 y около 3, на L3 около −68; GROUNDBIAS ground=N>0 только в данных с меткой «земля» (пересборка level.shr)
+scene L1_gb
+flag long
+flag repair
+goto 100 265 1.5708
+wait 3
+expect 100 265 30
+wait 2
+flag groundbias 1.0
+wait 2
+shot gb1_10_near
+flag wpclear
+flag wpv 2
+flag wp 210 265
+flag wpgo
+wait 1
+shot gb1_10_01
+wait 0.25
+shot gb1_10_02
+wait 0.25
+shot gb1_10_03
+wait 0.25
+shot gb1_10_04
+wait 0.25
+shot gb1_10_05
+wait 0.25
+shot gb1_10_06
+wait 0.25
+shot gb1_10_07
+wait 0.25
+shot gb1_10_08
+wait 0.25
+shot gb1_10_09
+wait 0.25
+shot gb1_10_10
+wait 0.25
+shot gb1_10_11
+wait 0.25
+shot gb1_10_12
+wait 0.25
+flag stop
+flag groundbias 1.5
+goto 100 265 1.5708
+wait 5
+shot gb1_15_near
+flag wpclear
+flag wpv 2
+flag wp 210 265
+flag wpgo
+wait 1
+shot gb1_15_01
+wait 0.25
+shot gb1_15_02
+wait 0.25
+shot gb1_15_03
+wait 0.25
+shot gb1_15_04
+wait 0.25
+shot gb1_15_05
+wait 0.25
+shot gb1_15_06
+wait 0.25
+shot gb1_15_07
+wait 0.25
+shot gb1_15_08
+wait 0.25
+shot gb1_15_09
+wait 0.25
+shot gb1_15_10
+wait 0.25
+shot gb1_15_11
+wait 0.25
+shot gb1_15_12
+wait 0.25
+flag stop
+flag groundbias 2.0
+goto 100 265 1.5708
+wait 5
+shot gb1_20_near
+flag wpclear
+flag wpv 2
+flag wp 210 265
+flag wpgo
+wait 1
+shot gb1_20_01
+wait 0.25
+shot gb1_20_02
+wait 0.25
+shot gb1_20_03
+wait 0.25
+shot gb1_20_04
+wait 0.25
+shot gb1_20_05
+wait 0.25
+shot gb1_20_06
+wait 0.25
+shot gb1_20_07
+wait 0.25
+shot gb1_20_08
+wait 0.25
+shot gb1_20_09
+wait 0.25
+shot gb1_20_10
+wait 0.25
+shot gb1_20_11
+wait 0.25
+shot gb1_20_12
+wait 0.25
+flag stop
+scene L3gb_load
+flag golevel 3
+wait 20
+scene L3_gb
+flag long
+flag repair
+goto -469.5 -116.2 1.5708
+wait 3
+expect -469.5 -116.2 30 -68 10
+wait 2
+flag groundbias 1.0
+wait 2
+shot gb3_10_near
+flag wpclear
+flag wpv 2
+flag wp -320 -116.2
+flag wpgo
+wait 1
+shot gb3_10_01
+wait 0.25
+shot gb3_10_02
+wait 0.25
+shot gb3_10_03
+wait 0.25
+shot gb3_10_04
+wait 0.25
+shot gb3_10_05
+wait 0.25
+shot gb3_10_06
+wait 0.25
+shot gb3_10_07
+wait 0.25
+shot gb3_10_08
+wait 0.25
+shot gb3_10_09
+wait 0.25
+shot gb3_10_10
+wait 0.25
+shot gb3_10_11
+wait 0.25
+shot gb3_10_12
+wait 0.25
+flag stop
+flag groundbias 1.5
+goto -469.5 -116.2 1.5708
+wait 5
+shot gb3_15_near
+flag wpclear
+flag wpv 2
+flag wp -320 -116.2
+flag wpgo
+wait 1
+shot gb3_15_01
+wait 0.25
+shot gb3_15_02
+wait 0.25
+shot gb3_15_03
+wait 0.25
+shot gb3_15_04
+wait 0.25
+shot gb3_15_05
+wait 0.25
+shot gb3_15_06
+wait 0.25
+shot gb3_15_07
+wait 0.25
+shot gb3_15_08
+wait 0.25
+shot gb3_15_09
+wait 0.25
+shot gb3_15_10
+wait 0.25
+shot gb3_15_11
+wait 0.25
+shot gb3_15_12
+wait 0.25
+flag stop
+flag groundbias 2.0
+goto -469.5 -116.2 1.5708
+wait 5
+shot gb3_20_near
+flag wpclear
+flag wpv 2
+flag wp -320 -116.2
+flag wpgo
+wait 1
+shot gb3_20_01
+wait 0.25
+shot gb3_20_02
+wait 0.25
+shot gb3_20_03
+wait 0.25
+shot gb3_20_04
+wait 0.25
+shot gb3_20_05
+wait 0.25
+shot gb3_20_06
+wait 0.25
+shot gb3_20_07
+wait 0.25
+shot gb3_20_08
+wait 0.25
+shot gb3_20_09
+wait 0.25
+shot gb3_20_10
+wait 0.25
+shot gb3_20_11
+wait 0.25
+shot gb3_20_12
+wait 0.25
+flag stop
+flag groundbias 1.0
+flag long
+wait 1
+# Хвост: счётчик щелей, 3 точки по 10 с, скорость не считается
+scene C_L1_load
+flag clearchk 0
+flag golevel 1
+wait 20
+scene C_L1
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L1
+flag stop
+scene C_L2_load
+flag clearchk 0
+flag golevel 2
+wait 20
+scene C_L2
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L2
+flag stop
+scene C_L7_load
+flag clearchk 0
+flag golevel 7
+wait 20
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+goto 230 160 1.5708
+wait 3
+scene C_L7
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L7
+flag stop
+flag clearchk 0
+end

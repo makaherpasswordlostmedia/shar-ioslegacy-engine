@@ -1,0 +1,65 @@
+{
+ "id": "ps2_bonus_main_selection",
+ "state": "build/twins/o4/ps2_v100_main_idle_native_180s/snap_9000.p2s",
+ "frames": 300,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "right",
+   1
+  ],
+  [
+   26,
+   "right",
+   0
+  ],
+  [
+   80,
+   "right",
+   1
+  ],
+  [
+   86,
+   "right",
+   0
+  ],
+  [
+   140,
+   "right",
+   1
+  ],
+  [
+   146,
+   "right",
+   0
+  ],
+  [
+   200,
+   "right",
+   1
+  ],
+  [
+   206,
+   "right",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  110,
+  170,
+  230,
+  300
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 100,
+ "note": "Native main menu right pulses only. Identify Bonus availability by actual GS; no unlock writes or user cards."
+}

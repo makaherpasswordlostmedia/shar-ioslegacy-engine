@@ -1,0 +1,8 @@
+# №706: главное меню, зажатая ► 1,5 с (карусель по кругу)
+flag menu
+wait 4
+press right 0.15
+wait 1.2
+press right 1.5
+wait 1.9
+end

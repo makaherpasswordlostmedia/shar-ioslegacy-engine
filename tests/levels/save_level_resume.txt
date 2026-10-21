@@ -1,0 +1,13 @@
+# Гейт «сохранение несёт уровень», прогон 3 (новый запуск): главное меню -> RESUME GAME (► от NEW GAME) — самое свежее сохранение,
+# прочитанное при запуске (SVSCAN / SVLATEST) -> уровень записи (LEVEL ev=load n=2, SVPROG src=load level=2)
+flag menu
+flag saves
+wait 1.5
+press right
+wait 0.4
+press cross
+wait 7
+flag lvlog
+flag svlog
+shot lv_game_resumed
+end

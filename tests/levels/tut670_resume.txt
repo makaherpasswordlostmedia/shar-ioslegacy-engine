@@ -1,0 +1,105 @@
+# №670: RESUME сохранения Роба, ~3 мин пешком + за рулём; подсказок Барта быть не должно
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+press start
+wait 4
+press right
+wait 2
+press cross
+wait 14
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+press cross 0.3
+wait 1
+press up 6
+press right 3
+wait 1
+flag repair
+wait 3
+flag drive 100
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+end

@@ -1,0 +1,62 @@
+# L3 контраст: точка настила A, 4 направления к закату, выкл/6/8
+scene start
+wait 3
+flag golevel 3
+wait 25
+scene PC_0
+flag horizon 0
+flag repair
+goto -330 90 3.93
+wait 3
+flag horizon 0
+wait 1
+shot PC_0_off
+flag horizon 6
+wait 1
+shot PC_0_6
+flag horizon 8
+wait 1
+shot PC_0_8
+scene PC_1
+flag horizon 0
+flag repair
+goto -330 90 4.205
+wait 3
+flag horizon 0
+wait 1
+shot PC_1_off
+flag horizon 6
+wait 1
+shot PC_1_6
+flag horizon 8
+wait 1
+shot PC_1_8
+scene PC_2
+flag horizon 0
+flag repair
+goto -330 90 4.71
+wait 3
+flag horizon 0
+wait 1
+shot PC_2_off
+flag horizon 6
+wait 1
+shot PC_2_6
+flag horizon 8
+wait 1
+shot PC_2_8
+scene PC_3
+flag horizon 0
+flag repair
+goto -330 90 5.5
+wait 3
+flag horizon 0
+wait 1
+shot PC_3_off
+flag horizon 6
+wait 1
+shot PC_3_6
+flag horizon 8
+wait 1
+shot PC_3_8
+end

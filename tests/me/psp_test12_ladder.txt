@@ -1,0 +1,49 @@
+# TEST 12 · лесенка ME ДО любого ролика (04.10 вечер). Исследование: у автора MIST (psp-media-engine-safe-task README) —
+# «all sceUtilityLoadAvModule calls should be done after injections». Наши журналы: TEST 8 — ролика до пробы не было, ME отреагировал
+# (ME_STATE 0 → 1), ответа не было из-за ящика в верхних 32 МБ; TEST 10 и 11 — ролик Gracie (AVCODEC) до установки ячейки, ME не
+# реагирует вовсе. Здесь: ступени сразу после загрузки уровня, ролик — только после них (проверка, что прошивка жива). ~2,5 мин.
+scene ME12_steps
+flag melad 0
+wait 2
+flag melad 1
+wait 1
+flag melad 2
+wait 1
+flag melad 3
+wait 1
+flag melad 4
+wait 1
+flag melad 5
+wait 1
+flag melad 6
+wait 2
+flag melad 7
+wait 1
+flag melad 8
+wait 1
+flag melad 9
+wait 1
+flag melad 99
+wait 2
+scene ME12_movie_after
+flag mefmv
+wait 14
+scene ME12_again_after_movie
+flag melad 1
+wait 1
+flag melad 2
+wait 1
+flag melad 3
+wait 1
+flag melad 99
+wait 2
+flag mefmv
+wait 14
+scene ME12_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 10
+flag stop
+wait 3
+end

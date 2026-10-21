@@ -1,0 +1,19 @@
+# Правка Роба 239 (tests/fe_music/quit.sh): NEW GAME -> основная часть миссии 1 (её музыка) -> пауза -> QUIT GAME -> главное меню.
+# В меню обязан быть слышен обычный набор шин (не «Pause» — тишина) и тема меню simpsons_theme
+flag menu
+wait 1.5
+press cross
+wait 10
+flag msnmain 1
+wait 4
+press cross
+wait 4
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 6
+shot menu_back
+wait 1
+end

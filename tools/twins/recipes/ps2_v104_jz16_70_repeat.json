@@ -1,0 +1,1166 @@
+{
+ "id": "ps2_v104_jz16_70_repeat",
+ "state": "build/twins/o4/ps2_v104_prepare_jz16/stage.p2s",
+ "target_speed_kmh": 70,
+ "coast": false,
+ "heading_deg": 0,
+ "lip": [
+  -120.5,
+  3.12,
+  -554.33
+ ],
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  "hnr",
+  {
+   "addr": "1298ab8",
+   "type": "f32",
+   "label": "body0"
+  },
+  {
+   "addr": "1298abc",
+   "type": "f32",
+   "label": "body1"
+  },
+  {
+   "addr": "1298ac0",
+   "type": "f32",
+   "label": "body2"
+  },
+  {
+   "addr": "1298ac4",
+   "type": "f32",
+   "label": "body3"
+  },
+  {
+   "addr": "1298ac8",
+   "type": "f32",
+   "label": "body4"
+  },
+  {
+   "addr": "1298acc",
+   "type": "f32",
+   "label": "body5"
+  },
+  {
+   "addr": "1298ad0",
+   "type": "f32",
+   "label": "body6"
+  },
+  {
+   "addr": "1298ad4",
+   "type": "f32",
+   "label": "body7"
+  },
+  {
+   "addr": "1298ad8",
+   "type": "f32",
+   "label": "body8"
+  },
+  {
+   "addr": "1298adc",
+   "type": "f32",
+   "label": "body9"
+  },
+  {
+   "addr": "1298ae0",
+   "type": "f32",
+   "label": "body10"
+  },
+  {
+   "addr": "1298ae4",
+   "type": "f32",
+   "label": "body11"
+  },
+  {
+   "addr": "1298ae8",
+   "type": "f32",
+   "label": "body12"
+  },
+  {
+   "addr": "1298aec",
+   "type": "f32",
+   "label": "body13"
+  },
+  {
+   "addr": "1298af0",
+   "type": "f32",
+   "label": "body14"
+  },
+  {
+   "addr": "1298af4",
+   "type": "f32",
+   "label": "body15"
+  },
+  {
+   "addr": "1489218",
+   "type": "f32",
+   "label": "wheel0_12"
+  },
+  {
+   "addr": "148921c",
+   "type": "f32",
+   "label": "wheel0_13"
+  },
+  {
+   "addr": "1489220",
+   "type": "f32",
+   "label": "wheel0_14"
+  },
+  {
+   "addr": "14892d8",
+   "type": "f32",
+   "label": "wheel1_12"
+  },
+  {
+   "addr": "14892dc",
+   "type": "f32",
+   "label": "wheel1_13"
+  },
+  {
+   "addr": "14892e0",
+   "type": "f32",
+   "label": "wheel1_14"
+  },
+  {
+   "addr": "1489398",
+   "type": "f32",
+   "label": "wheel2_12"
+  },
+  {
+   "addr": "148939c",
+   "type": "f32",
+   "label": "wheel2_13"
+  },
+  {
+   "addr": "14893a0",
+   "type": "f32",
+   "label": "wheel2_14"
+  },
+  {
+   "addr": "1489458",
+   "type": "f32",
+   "label": "wheel3_12"
+  },
+  {
+   "addr": "148945c",
+   "type": "f32",
+   "label": "wheel3_13"
+  },
+  {
+   "addr": "1489460",
+   "type": "f32",
+   "label": "wheel3_14"
+  },
+  {
+   "addr": "12988a4",
+   "type": "f32",
+   "label": "cm_offset_y"
+  },
+  {
+   "addr": "a23054",
+   "type": "f32",
+   "label": "wheel0_raw_disp_candidate"
+  },
+  {
+   "addr": "a23074",
+   "type": "u32",
+   "label": "wheel0_contact_candidate"
+  },
+  {
+   "addr": "a230e4",
+   "type": "f32",
+   "label": "wheel1_raw_disp_candidate"
+  },
+  {
+   "addr": "a23104",
+   "type": "u32",
+   "label": "wheel1_contact_candidate"
+  },
+  {
+   "addr": "a23174",
+   "type": "f32",
+   "label": "wheel2_raw_disp_candidate"
+  },
+  {
+   "addr": "a23194",
+   "type": "u32",
+   "label": "wheel2_contact_candidate"
+  },
+  {
+   "addr": "a23204",
+   "type": "f32",
+   "label": "wheel3_raw_disp_candidate"
+  },
+  {
+   "addr": "a23224",
+   "type": "u32",
+   "label": "wheel3_contact_candidate"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lright",
+   1
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   82,
+   "cross",
+   0
+  ],
+  [
+   84,
+   "cross",
+   1
+  ],
+  [
+   94,
+   "cross",
+   0
+  ],
+  [
+   96,
+   "cross",
+   1
+  ],
+  [
+   138,
+   "lright",
+   0.919
+  ],
+  [
+   140,
+   "lright",
+   0.806
+  ],
+  [
+   142,
+   "lright",
+   0.635
+  ],
+  [
+   144,
+   "lright",
+   0.524
+  ],
+  [
+   146,
+   "lright",
+   0.411
+  ],
+  [
+   148,
+   "lright",
+   0.301
+  ],
+  [
+   150,
+   "lright",
+   0.202
+  ],
+  [
+   152,
+   "lright",
+   0.111
+  ],
+  [
+   154,
+   "lright",
+   0.027
+  ],
+  [
+   156,
+   "lright",
+   0
+  ],
+  [
+   156,
+   "lleft",
+   0.05
+  ],
+  [
+   158,
+   "lleft",
+   0.117
+  ],
+  [
+   160,
+   "lleft",
+   0.176
+  ],
+  [
+   162,
+   "lleft",
+   0.227
+  ],
+  [
+   164,
+   "lleft",
+   0.25
+  ],
+  [
+   166,
+   "lleft",
+   0.292
+  ],
+  [
+   168,
+   "lleft",
+   0.332
+  ],
+  [
+   170,
+   "lleft",
+   0.368
+  ],
+  [
+   172,
+   "lleft",
+   0.398
+  ],
+  [
+   174,
+   "lleft",
+   0.423
+  ],
+  [
+   176,
+   "lleft",
+   0.432
+  ],
+  [
+   178,
+   "lleft",
+   0.447
+  ],
+  [
+   180,
+   "lleft",
+   0.458
+  ],
+  [
+   182,
+   "lleft",
+   0.466
+  ],
+  [
+   184,
+   "lleft",
+   0.476
+  ],
+  [
+   186,
+   "lleft",
+   0.489
+  ],
+  [
+   188,
+   "lleft",
+   0.497
+  ],
+  [
+   190,
+   "cross",
+   0
+  ],
+  [
+   190,
+   "lleft",
+   0.516
+  ],
+  [
+   192,
+   "lleft",
+   0.537
+  ],
+  [
+   194,
+   "cross",
+   1
+  ],
+  [
+   194,
+   "lleft",
+   0.554
+  ],
+  [
+   196,
+   "cross",
+   0
+  ],
+  [
+   196,
+   "lleft",
+   0.564
+  ],
+  [
+   198,
+   "cross",
+   1
+  ],
+  [
+   198,
+   "lleft",
+   0.569
+  ],
+  [
+   200,
+   "cross",
+   0
+  ],
+  [
+   200,
+   "lleft",
+   0.57
+  ],
+  [
+   202,
+   "lleft",
+   0.572
+  ],
+  [
+   204,
+   "lleft",
+   0.578
+  ],
+  [
+   206,
+   "lleft",
+   0.589
+  ],
+  [
+   208,
+   "lleft",
+   0.602
+  ],
+  [
+   210,
+   "lleft",
+   0.609
+  ],
+  [
+   212,
+   "lleft",
+   0.613
+  ],
+  [
+   214,
+   "cross",
+   1
+  ],
+  [
+   214,
+   "lleft",
+   0.614
+  ],
+  [
+   216,
+   "cross",
+   0
+  ],
+  [
+   216,
+   "lleft",
+   0.613
+  ],
+  [
+   218,
+   "cross",
+   1
+  ],
+  [
+   218,
+   "lleft",
+   0.609
+  ],
+  [
+   220,
+   "cross",
+   0
+  ],
+  [
+   220,
+   "lleft",
+   0.602
+  ],
+  [
+   222,
+   "lleft",
+   0.592
+  ],
+  [
+   224,
+   "cross",
+   1
+  ],
+  [
+   224,
+   "lleft",
+   0.578
+  ],
+  [
+   226,
+   "cross",
+   0
+  ],
+  [
+   226,
+   "lleft",
+   0.56
+  ],
+  [
+   228,
+   "cross",
+   1
+  ],
+  [
+   228,
+   "lleft",
+   0.539
+  ],
+  [
+   230,
+   "cross",
+   0
+  ],
+  [
+   230,
+   "lleft",
+   0.516
+  ],
+  [
+   232,
+   "lleft",
+   0.49
+  ],
+  [
+   234,
+   "cross",
+   1
+  ],
+  [
+   234,
+   "lleft",
+   0.464
+  ],
+  [
+   236,
+   "lleft",
+   0.437
+  ],
+  [
+   238,
+   "cross",
+   0
+  ],
+  [
+   238,
+   "lleft",
+   0.411
+  ],
+  [
+   240,
+   "lleft",
+   0.386
+  ],
+  [
+   242,
+   "cross",
+   1
+  ],
+  [
+   242,
+   "lleft",
+   0.348
+  ],
+  [
+   244,
+   "cross",
+   0
+  ],
+  [
+   244,
+   "lleft",
+   0.326
+  ],
+  [
+   246,
+   "cross",
+   1
+  ],
+  [
+   246,
+   "lleft",
+   0.304
+  ],
+  [
+   248,
+   "lleft",
+   0.289
+  ],
+  [
+   250,
+   "cross",
+   0
+  ],
+  [
+   250,
+   "lleft",
+   0.279
+  ],
+  [
+   252,
+   "lleft",
+   0.273
+  ],
+  [
+   254,
+   "lleft",
+   0.274
+  ],
+  [
+   256,
+   "lleft",
+   0.272
+  ],
+  [
+   258,
+   "lleft",
+   0.267
+  ],
+  [
+   260,
+   "cross",
+   1
+  ],
+  [
+   260,
+   "lleft",
+   0.256
+  ],
+  [
+   262,
+   "lleft",
+   0.237
+  ],
+  [
+   264,
+   "cross",
+   0
+  ],
+  [
+   264,
+   "lleft",
+   0.225
+  ],
+  [
+   266,
+   "cross",
+   1
+  ],
+  [
+   266,
+   "lleft",
+   0.214
+  ],
+  [
+   268,
+   "lleft",
+   0.203
+  ],
+  [
+   270,
+   "lleft",
+   0.191
+  ],
+  [
+   272,
+   "lleft",
+   0.186
+  ],
+  [
+   276,
+   "lleft",
+   0.19
+  ],
+  [
+   278,
+   "lleft",
+   0.203
+  ],
+  [
+   280,
+   "lleft",
+   0.216
+  ],
+  [
+   282,
+   "lleft",
+   0.231
+  ],
+  [
+   284,
+   "cross",
+   0
+  ],
+  [
+   284,
+   "lleft",
+   0.249
+  ],
+  [
+   286,
+   "lleft",
+   0.258
+  ],
+  [
+   288,
+   "lleft",
+   0.265
+  ],
+  [
+   290,
+   "lleft",
+   0.271
+  ],
+  [
+   292,
+   "cross",
+   1
+  ],
+  [
+   292,
+   "lleft",
+   0.276
+  ],
+  [
+   294,
+   "cross",
+   0
+  ],
+  [
+   294,
+   "lleft",
+   0.277
+  ],
+  [
+   298,
+   "cross",
+   1
+  ],
+  [
+   298,
+   "lleft",
+   0.274
+  ],
+  [
+   300,
+   "cross",
+   0
+  ],
+  [
+   300,
+   "lleft",
+   0.272
+  ],
+  [
+   302,
+   "cross",
+   1
+  ],
+  [
+   302,
+   "lleft",
+   0.269
+  ],
+  [
+   304,
+   "cross",
+   0
+  ],
+  [
+   304,
+   "lleft",
+   0.265
+  ],
+  [
+   306,
+   "lleft",
+   0.259
+  ],
+  [
+   308,
+   "lleft",
+   0.252
+  ],
+  [
+   310,
+   "lleft",
+   0.244
+  ],
+  [
+   312,
+   "cross",
+   1
+  ],
+  [
+   312,
+   "lleft",
+   0.23
+  ],
+  [
+   314,
+   "cross",
+   0
+  ],
+  [
+   314,
+   "lleft",
+   0.219
+  ],
+  [
+   316,
+   "lleft",
+   0.209
+  ],
+  [
+   318,
+   "lleft",
+   0
+  ],
+  [
+   340,
+   "cross",
+   1
+  ],
+  [
+   406,
+   "cross",
+   0
+  ],
+  [
+   412,
+   "cross",
+   1
+  ],
+  [
+   414,
+   "cross",
+   0
+  ],
+  [
+   424,
+   "cross",
+   1
+  ],
+  [
+   428,
+   "cross",
+   0
+  ],
+  [
+   434,
+   "cross",
+   1
+  ],
+  [
+   436,
+   "cross",
+   0
+  ],
+  [
+   440,
+   "cross",
+   1
+  ],
+  [
+   444,
+   "cross",
+   0
+  ],
+  [
+   446,
+   "cross",
+   1
+  ],
+  [
+   448,
+   "cross",
+   0
+  ],
+  [
+   450,
+   "cross",
+   1
+  ],
+  [
+   454,
+   "cross",
+   0
+  ],
+  [
+   458,
+   "cross",
+   1
+  ],
+  [
+   462,
+   "cross",
+   0
+  ],
+  [
+   464,
+   "cross",
+   1
+  ],
+  [
+   468,
+   "cross",
+   0
+  ],
+  [
+   470,
+   "cross",
+   1
+  ],
+  [
+   474,
+   "cross",
+   0
+  ],
+  [
+   476,
+   "cross",
+   1
+  ],
+  [
+   482,
+   "cross",
+   0
+  ],
+  [
+   486,
+   "cross",
+   1
+  ],
+  [
+   488,
+   "cross",
+   0
+  ],
+  [
+   490,
+   "cross",
+   1
+  ],
+  [
+   492,
+   "cross",
+   0
+  ],
+  [
+   494,
+   "cross",
+   1
+  ],
+  [
+   498,
+   "cross",
+   0
+  ],
+  [
+   500,
+   "cross",
+   1
+  ],
+  [
+   504,
+   "cross",
+   0
+  ],
+  [
+   508,
+   "cross",
+   1
+  ],
+  [
+   510,
+   "cross",
+   0
+  ],
+  [
+   512,
+   "cross",
+   1
+  ],
+  [
+   514,
+   "cross",
+   0
+  ],
+  [
+   518,
+   "cross",
+   1
+  ],
+  [
+   522,
+   "cross",
+   0
+  ],
+  [
+   526,
+   "cross",
+   1
+  ],
+  [
+   528,
+   "cross",
+   0
+  ],
+  [
+   530,
+   "cross",
+   1
+  ],
+  [
+   534,
+   "cross",
+   0
+  ],
+  [
+   536,
+   "cross",
+   1
+  ],
+  [
+   538,
+   "cross",
+   0
+  ],
+  [
+   542,
+   "cross",
+   1
+  ],
+  [
+   544,
+   "cross",
+   0
+  ],
+  [
+   552,
+   "cross",
+   1
+  ],
+  [
+   554,
+   "cross",
+   0
+  ],
+  [
+   560,
+   "cross",
+   1
+  ],
+  [
+   562,
+   "cross",
+   0
+  ],
+  [
+   574,
+   "cross",
+   1
+  ],
+  [
+   576,
+   "cross",
+   0
+  ],
+  [
+   582,
+   "cross",
+   1
+  ],
+  [
+   584,
+   "cross",
+   0
+  ],
+  [
+   590,
+   "cross",
+   1
+  ],
+  [
+   594,
+   "cross",
+   0
+  ],
+  [
+   596,
+   "cross",
+   1
+  ],
+  [
+   610,
+   "cross",
+   0
+  ],
+  [
+   612,
+   "cross",
+   1
+  ],
+  [
+   614,
+   "cross",
+   0
+  ],
+  [
+   618,
+   "cross",
+   1
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  0,
+  318,
+  368,
+  468,
+  618
+ ],
+ "every": 2,
+ "timeout": 180,
+ "note": "Input-only real route stage; native camera/body/articulated wheel positions every2 PAL frames. raw_disp/contact are candidates, never an independently accepted contact measurement.",
+ "frames": 618
+}

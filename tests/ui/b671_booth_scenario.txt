@@ -1,0 +1,14 @@
+# №671/№646: бабл будки «USE TELEPHONE BOOTH» (одна надпись) и его появление по кадрам: старое (№646 без правки) и новое должны совпадать
+scene booth
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 0.3
+shot bb1
+wait 0.15
+shot bb2
+wait 0.15
+shot bb3
+wait 0.6
+shot bb4
+end

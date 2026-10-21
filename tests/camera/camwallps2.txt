@@ -1,0 +1,15 @@
+# CAM_WALL_PS2 (съёмка PS2 L1: стена за камерой пешком, упор -> камера на другую сторону Гомера). Красный: flag camwallps2old 1 (камера прижата к спине Гомера на 1 м), зелёный: перескок на другую сторону, дом позади героя. Пакет test19_emu
+flag player
+scene wps0
+foot 151.3 150 -1.5708
+flag camwallps2old 0
+flag camlog
+wait 3
+shot wp0a
+press up 1.2
+shot wp0b
+wait 1.5
+shot wp0c
+wait 1.5
+shot wp0d
+end

@@ -1,0 +1,8 @@
+Чужой открытый код (лицензия MIT, автор mcidclan / m-c/d), копии без правок — правки 269/273/276, ступень 0 (проба ME).
+Тексты лицензий: me-core-mapper/LICENSE.md, me-safe-task/LICENSE.md (сохранять при любом переносе).
+  me-core-mapper/  <- github.com/mcidclan/psp-media-engine-custom-core   fe871e12754060f3b42fbca6b251bb8ee3ade453 (01.10.2026)
+                      файлы: hw-registers.h me-core-mapper.h me-core-mapping.h me-core-mapping.c dmacplus.h
+  me-safe-task/    <- github.com/mcidclan/psp-media-engine-safe-task     7d4c41f77b0be8815a720e0c8212ed504c01806d (01.10.2026)
+                      файлы: me-stask*.h me-stask-mist.c me-stask-utils.c kernel/kcall-prx.h (метод MIST, MIST.md автора)
+Локальная копия исследования: build/research/2026-10-03_обрыв/me/. Свой код поверх — viewer/me/sharme.c (модуль ядра) и
+viewer/me/meprobe.c (сторона игры). me-stask-kcall.c не берём: в модуле ядра вызовы идут напрямую (viewer/me/sharme.c, kCall_2/3).

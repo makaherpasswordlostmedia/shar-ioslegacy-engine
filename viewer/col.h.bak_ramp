@@ -1,0 +1,76 @@
+// Коллизия уровня по секции COL1 (формат: tools/psp_export.py, «Коллизия: секция COL1»).
+// Чистый C99, float, без PSP-заголовков и без malloc в кадре (одна аллокация в colInit).
+// Координаты мира как у движка: метры, y вверх, z уже отзеркален экспортом.
+#ifndef SHAR_COL_H
+#define SHAR_COL_H
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+enum { COL_TRI = 0, COL_BOX = 1, COL_CYL = 2, COL_SEG = 3 };
+
+typedef struct { char magic[4]; float ox, oz, cell; uint32_t W, H, ntri, nbox, ncyl, nseg, nref, flags; } ColHdr;  // 48 B
+typedef struct { float a[3], b[3], c[3], n[3]; } ColTri;                              // 48 B
+typedef struct { float c[3], ax[3], ay[3], az[3], h[3], pad; } ColBox;                // 64 B
+typedef struct { float c[3], axis[3], r, halfLen; uint32_t flat; float pad[3]; } ColCyl;  // 48 B
+typedef struct { float a[2], b[2], n[2], y0, y1; } ColSeg;                            // 32 B
+
+#define COL_WALK_NY 0.5f      // n.y больше — по поверхности можно ехать (земля); меньше — стена
+#define COL_MAX_CONTACTS 8
+
+typedef struct ColScratch ColScratch;
+
+typedef struct {
+  const ColTri *tri; const ColBox *box; const ColCyl *cyl; const ColSeg *seg;
+  const uint32_t *cellStart, *refs;
+  float ox, oz, cell, inv;
+  int W, H;
+  uint32_t ntri, nbox, ncyl, nseg, nref;
+  ColScratch *scr;            // рабочая память (штампы, заборы, фигуры запроса) — выделяется один раз в colInit
+} ColWorld;
+
+// Кузов машины для colPushCar: прямоугольник в xz + твёрдый слой по высоте над «полом» (плоскость под колёсами).
+typedef struct {
+  // вход
+  float x, z;                 // центр прямоугольника
+  float fx, fz;               // единичная ось «вперёд» в xz
+  float hw, hl;               // полуширина (вдоль оси вправо = (-fz, fx)), полудлина (вдоль fx, fz)
+  float y, gx, gz;            // пол: Y(X,Z) = y + gx*(X-x) + gz*(Z-z)  (x, z — центр на момент вызова)
+  float lo, hi;               // твёрдый слой кузова: Y+lo .. Y+hi (например 0.35 .. 1.6)
+  // выход
+  int n;                                          // число контактов (по одному на примитив)
+  float nx[COL_MAX_CONTACTS], nz[COL_MAX_CONTACTS];  // нормаль контакта: от препятствия к машине, единичная, xz
+  float depth[COL_MAX_CONTACTS];                  // на сколько вытолкнули по этой нормали (сумма по итерациям)
+  unsigned char type[COL_MAX_CONTACTS];           // COL_TRI / COL_BOX / COL_CYL / COL_SEG
+  float maxDepth;             // colPushCar: сколько осталось после выталкивания (0 = чисто); colProbeCar: худшее
+  int behindFence;            // центр кузова оказался за забором (с изнанки)
+  int nshapes;                // сколько примитивов попало в узкую фазу (для статистики)
+} CarBox;
+
+// Секция COL1 в памяти (указатель выровнен на 4, данные живут, пока жив мир). 0 = ок, <0 = ошибка формата/памяти.
+int colInit(ColWorld *w, const void *section, unsigned size);
+void colFree(ColWorld *w);
+const char *colError(int code);
+
+// Самая высокая проходимая поверхность в точке (x, z) с высотой в [yBottom, yTop]: треугольники земли с n.y > 0.5,
+// верхние грани ящиков / торцы цилиндров / купола капсул и сфер, если там n.y > 0.5. 0 = ничего нет.
+int colGround(const ColWorld *w, float x, float z, float yTop, float yBottom, float *outY, float *outN3);
+
+// Вытолкнуть кузов из всего, что пересекает слой [lo, hi]: крутые треугольники, ящики, цилиндры/капсулы/сферы
+// (срез слоем, проекция в xz, SAT), заборы (односторонние: к стороне нормали). Итерации: сначала самый глубокий
+// контакт, потом пересчёт (так стыки соседних стен не цепляют). box->x, box->z сдвигаются в итоговое положение;
+// *mtvX, *mtvZ — суммарный сдвиг; *nX, *nZ — нормаль самого глубокого контакта. Возврат: число контактов.
+int colPushCar(const ColWorld *w, CarBox *box, float *mtvX, float *mtvZ, float *nX, float *nZ);
+
+// То же без сдвига: худшая глубина проникновения в box->maxDepth, контакты — в box. Возврат: число контактов.
+int colProbeCar(const ColWorld *w, CarBox *box);
+
+// Путь точки (x0,z0) -> (x1,z1) пересекает забор с лицевой стороны на изнанку? 1 = да (нормаль забора в *nX, *nZ).
+int colCrossFence(const ColWorld *w, float x0, float z0, float x1, float z1, float *nX, float *nZ);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

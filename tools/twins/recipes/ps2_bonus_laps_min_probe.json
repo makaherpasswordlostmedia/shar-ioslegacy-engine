@@ -1,0 +1,65 @@
+{
+ "id": "ps2_bonus_laps_min_probe",
+ "state": "build/twins/o4/ps2_bonus_minimenu_entry/snap_1000.p2s",
+ "frames": 160,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "down",
+   1
+  ],
+  [
+   26,
+   "down",
+   0
+  ],
+  [
+   50,
+   "down",
+   1
+  ],
+  [
+   56,
+   "down",
+   0
+  ],
+  [
+   80,
+   "down",
+   1
+  ],
+  [
+   86,
+   "down",
+   0
+  ],
+  [
+   110,
+   "down",
+   1
+  ],
+  [
+   116,
+   "down",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  40,
+  70,
+  100,
+  130,
+  160
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 180,
+ "note": "Original default Track0 x3 menu, four Down taps. Inspect each actual numeric state; minimum and zero behavior not assumed. No writes or race entry."
+}

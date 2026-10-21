@@ -1,0 +1,151 @@
+# №678: стик отпущен, △ выход, ждать W с (камера разворачивается), ПОТОМ вперёд: куда идёт Гомер относительно курса машины
+scene EX_L1_load
+flag golevel 1
+wait 15
+flag camlog
+flag homerflipstandold 1
+scene EXW_0_5
+flag repair
+wait 1
+flag drive 4
+wait 5
+flag stop
+wait 3
+press triangle 0.2
+wait 1.7
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 0.5
+scene EXW_1_0
+flag repair
+wait 1
+flag drive 4
+wait 5
+flag stop
+wait 3
+press triangle 0.2
+wait 2.2
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 0.5
+scene EXW_1_5
+flag repair
+wait 1
+flag drive 4
+wait 5
+flag stop
+wait 3
+press triangle 0.2
+wait 2.7
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 0.5
+scene EXW_2_5
+flag repair
+wait 1
+flag drive 4
+wait 5
+flag stop
+wait 3
+press triangle 0.2
+wait 3.7
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+press up 0.3
+wait 0.15
+wait 0.5
+end

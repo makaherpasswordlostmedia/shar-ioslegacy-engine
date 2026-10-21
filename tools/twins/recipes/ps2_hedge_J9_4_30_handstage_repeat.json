@@ -1,0 +1,358 @@
+{
+ "id": "ps2_hedge_J9_4_30_handstage_repeat",
+ "state": "build/twins/o4/ps2_hedge_J9_4_reverse_handbrake/stage.p2s",
+ "target_speed_kmh": 30,
+ "target": [
+  131,
+  3.9,
+  -141
+ ],
+ "heading_deg": -17.182,
+ "runup": 12,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  "hnr",
+  {
+   "addr": "1298ab8",
+   "type": "f32",
+   "label": "body0"
+  },
+  {
+   "addr": "1298abc",
+   "type": "f32",
+   "label": "body1"
+  },
+  {
+   "addr": "1298ac0",
+   "type": "f32",
+   "label": "body2"
+  },
+  {
+   "addr": "1298ac4",
+   "type": "f32",
+   "label": "body3"
+  },
+  {
+   "addr": "1298ac8",
+   "type": "f32",
+   "label": "body4"
+  },
+  {
+   "addr": "1298acc",
+   "type": "f32",
+   "label": "body5"
+  },
+  {
+   "addr": "1298ad0",
+   "type": "f32",
+   "label": "body6"
+  },
+  {
+   "addr": "1298ad4",
+   "type": "f32",
+   "label": "body7"
+  },
+  {
+   "addr": "1298ad8",
+   "type": "f32",
+   "label": "body8"
+  },
+  {
+   "addr": "1298adc",
+   "type": "f32",
+   "label": "body9"
+  },
+  {
+   "addr": "1298ae0",
+   "type": "f32",
+   "label": "body10"
+  },
+  {
+   "addr": "1298ae4",
+   "type": "f32",
+   "label": "body11"
+  },
+  {
+   "addr": "1298ae8",
+   "type": "f32",
+   "label": "body12"
+  },
+  {
+   "addr": "1298aec",
+   "type": "f32",
+   "label": "body13"
+  },
+  {
+   "addr": "1298af0",
+   "type": "f32",
+   "label": "body14"
+  },
+  {
+   "addr": "1298af4",
+   "type": "f32",
+   "label": "body15"
+  },
+  {
+   "addr": "1489218",
+   "type": "f32",
+   "label": "wheel0_12"
+  },
+  {
+   "addr": "148921c",
+   "type": "f32",
+   "label": "wheel0_13"
+  },
+  {
+   "addr": "1489220",
+   "type": "f32",
+   "label": "wheel0_14"
+  },
+  {
+   "addr": "14892d8",
+   "type": "f32",
+   "label": "wheel1_12"
+  },
+  {
+   "addr": "14892dc",
+   "type": "f32",
+   "label": "wheel1_13"
+  },
+  {
+   "addr": "14892e0",
+   "type": "f32",
+   "label": "wheel1_14"
+  },
+  {
+   "addr": "1489398",
+   "type": "f32",
+   "label": "wheel2_12"
+  },
+  {
+   "addr": "148939c",
+   "type": "f32",
+   "label": "wheel2_13"
+  },
+  {
+   "addr": "14893a0",
+   "type": "f32",
+   "label": "wheel2_14"
+  },
+  {
+   "addr": "1489458",
+   "type": "f32",
+   "label": "wheel3_12"
+  },
+  {
+   "addr": "148945c",
+   "type": "f32",
+   "label": "wheel3_13"
+  },
+  {
+   "addr": "1489460",
+   "type": "f32",
+   "label": "wheel3_14"
+  },
+  {
+   "addr": "12988a4",
+   "type": "f32",
+   "label": "cm_offset_y"
+  },
+  {
+   "addr": "a23054",
+   "type": "f32",
+   "label": "wheel0_raw_disp_candidate"
+  },
+  {
+   "addr": "a23074",
+   "type": "u32",
+   "label": "wheel0_contact_candidate"
+  },
+  {
+   "addr": "a230e4",
+   "type": "f32",
+   "label": "wheel1_raw_disp_candidate"
+  },
+  {
+   "addr": "a23104",
+   "type": "u32",
+   "label": "wheel1_contact_candidate"
+  },
+  {
+   "addr": "a23174",
+   "type": "f32",
+   "label": "wheel2_raw_disp_candidate"
+  },
+  {
+   "addr": "a23194",
+   "type": "u32",
+   "label": "wheel2_contact_candidate"
+  },
+  {
+   "addr": "a23204",
+   "type": "f32",
+   "label": "wheel3_raw_disp_candidate"
+  },
+  {
+   "addr": "a23224",
+   "type": "u32",
+   "label": "wheel3_contact_candidate"
+  }
+ ],
+ "source": {
+  "name": "J9_4",
+  "target": [
+   131,
+   3.9,
+   -141
+  ],
+  "heading_deg": -17.182
+ },
+ "note": "Original already settled at hedge;12m reverse and brake by buttons to stage. No new car_cm writes, speed launch once after settling and held throttle regulated. Actual collision speed sampled.",
+ "stage_ready": true,
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   152,
+   "cross",
+   1
+  ],
+  [
+   154,
+   "cross",
+   0
+  ],
+  [
+   160,
+   "cross",
+   1
+  ],
+  [
+   162,
+   "cross",
+   0
+  ],
+  [
+   170,
+   "cross",
+   1
+  ],
+  [
+   172,
+   "cross",
+   0
+  ],
+  [
+   184,
+   "cross",
+   1
+  ],
+  [
+   186,
+   "cross",
+   0
+  ],
+  [
+   190,
+   "cross",
+   1
+  ],
+  [
+   192,
+   "cross",
+   0
+  ],
+  [
+   198,
+   "cross",
+   1
+  ],
+  [
+   200,
+   "cross",
+   0
+  ],
+  [
+   206,
+   "cross",
+   1
+  ],
+  [
+   208,
+   "cross",
+   0
+  ],
+  [
+   244,
+   "cross",
+   1
+  ],
+  [
+   246,
+   "cross",
+   0
+  ],
+  [
+   250,
+   "cross",
+   1
+  ]
+ ],
+ "writes": [
+  {
+   "name": "car_vel[0]",
+   "value": 0.06525604514798587,
+   "at": 150
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0,
+   "at": 150
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 8.333077828330664,
+   "at": 150
+  }
+ ],
+ "frames": 450,
+ "shots": [
+  2,
+  150,
+  152,
+  200,
+  250,
+  350,
+  450
+ ],
+ "every": 2
+}

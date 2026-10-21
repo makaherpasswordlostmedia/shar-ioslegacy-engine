@@ -1,0 +1,26 @@
+flag camlog
+flag gglog 1
+scene warm
+wait 3
+scene car
+goto 220 172 1.5708
+wait 4
+shot car
+scene house3_old
+flag ggbatchold 1
+foot 225 176 1.5708
+wait 3
+shot house3_old
+scene house6_old
+wait 3
+shot house6_old
+scene house3_new
+flag ggbatchold 0
+foot 225 176 1.5708
+wait 3
+shot house3_new
+scene house6_new
+wait 3
+shot house6_new
+wait 2
+end

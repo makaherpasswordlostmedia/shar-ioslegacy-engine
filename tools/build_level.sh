@@ -1,0 +1,59 @@
+#!/bin/sh
+# Сборка уровня целиком: экспорт с диска (tools/psp_export.py) + предрасчёт видимости PVS (tools/pvs)
+# + обход треугольников под отсечение задних граней (tools/wind).
+#   tools/build_level.sh              -> build/level.shr
+#   tools/build_level.sh /path/x.shr  -> /path/x.shr (build/level.shr не трогается)
+# Параметры PVS через переменную окружения (по умолчанию "--samples 9": 9x9 точек глаза на клетку вместо 5x5,
+# в проверке ноль пропусков ближе 60 м, списки на ~2% длиннее, считается ~3 раза дольше), например:
+#   PVS_ARGS="" tools/build_level.sh               -> 5x5, быстрее
+#   PVS_ARGS="--samples 9 --dilate" ...            -> + объединение с 8 соседними клетками
+# Уровень: LEVEL=2 tools/build_level.sh (по умолчанию 1).
+# Качество картинки (закон 1 docs/handoff/LOOP_TERMINAL.md): по умолчанию SHR_TEX_CAP256=1 SHR_SMALL_MIPS=1 SHR_LAYERS=1,
+# как в tools/build_all_levels.sh; три флага печатаются в лог. Снижать только по слову Роба.
+# Проверка результата: python tools/pvs_check.py OUT
+set -eu
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+OUT="${1:-}"
+case "$OUT" in ""|/*) ;; *) OUT="$PWD/$OUT" ;; esac
+cd "$ROOT"
+export SHR_TEX_CAP256="${SHR_TEX_CAP256:-1}" SHR_SMALL_MIPS="${SHR_SMALL_MIPS:-1}" SHR_LAYERS="${SHR_LAYERS:-1}"
+# правка Роба 129 (01.10): SHR_T4=1 — текстуры в 16 цветов 4 битами (уровень 0 без потерь), SHR_SIGN_CAP=1 — вывески 128 px
+export SHR_T4="${SHR_T4:-1}" SHR_SIGN_CAP="${SHR_SIGN_CAP:-1}"
+echo "качество: SHR_TEX_CAP256=$SHR_TEX_CAP256 SHR_SMALL_MIPS=$SHR_SMALL_MIPS SHR_LAYERS=$SHR_LAYERS; память: SHR_T4=$SHR_T4 SHR_SIGN_CAP=$SHR_SIGN_CAP"
+
+# pvs: пересобрать, если бинарника нет или исходник новее
+if [ ! -x tools/pvs ] || [ tools/pvs.c -nt tools/pvs ]; then
+  cc -O3 -o tools/pvs tools/pvs.c -lm
+fi
+. .venv/bin/activate
+
+if [ -n "$OUT" ]; then
+  # без --out экспортёр молча записал бы build/level.shr
+  grep -q -- "--out" tools/psp_export.py || { echo "psp_export.py не знает --out: не пишу в $OUT" >&2; exit 1; }
+  python tools/psp_export.py "${LEVEL:-1}" --out "$OUT"
+else
+  OUT="$ROOT/build/level.shr"
+  python tools/psp_export.py "${LEVEL:-1}"
+fi
+# shellcheck disable=SC2086
+# правка 497: списки PVS до 250 м (режим 30 FPS), а не до 115 — без них за 115 м город идёт по пирамиде без закрытия домами (L2 на PSP
+# 51 тыс. треугольников против 30 на L1). PVS_RANGE_ARG="" — прежние списки до 115 м (движок читает дальность из заголовка PVS1)
+tools/pvs "$OUT" ${PVS_ARGS---samples 9} ${PVS_RANGE_ARG---range 250}
+# обход треугольников под отсечение задних граней (голосование видами, ~10 с): разворот + флаг 8 «двусторонний»
+if [ ! -x tools/wind ] || [ tools/wind.c -nt tools/wind ]; then
+  cc -O3 -o tools/wind tools/wind.c -lm -lpthread
+fi
+tools/wind "$OUT" ${WIND_ARGS-}
+# правка 508: SHR_FAR_PLAIN=1 — у кусков есть дальняя версия без нарезки (флаг F_FARP); второй проход обхода голосует ТОЛЬКО за неё (ближние версии, а с
+# ними результат выключенного far_plain, не меняются), с глаз дальше FAR_PLAIN_WIND_D (по умолчанию 60 м; движок берёт её дальше D из файла far_plain, D >= 60)
+if [ "${SHR_FAR_PLAIN:-0}" = "1" ]; then tools/wind "$OUT" --far-d "${FAR_PLAIN_WIND_D:-60}" --far-only; fi
+# загрузка 2, п.3: порядок секций «одним проходом» — резидент, COL1, PRP2, CAR1, REG1, PVS1, потом блобы клеток (tools/shr_order.py).
+# Последним шагом: tools/pvs читает PVS1 в конце файла. SHR_ORDER_OLD=1 — прежний порядок (клетки перед COL1)
+if [ "${SHR_ORDER_OLD:-0}" != 1 ]; then python3 tools/shr_order.py "$OUT"; fi
+# К4 (ПЛАН_ОПТИМИЗАЦИЙ 17.10 п.1): SHR_STRIPS=1 — куски города неиндексными полосами (tools/strips.c, последним шагом, после порядка секций; нужен shr_order). Без флага файл побайтно прежний.
+# Проверка: python3 tools/strips_check.py СПИСОК.shr ПОЛОСЫ.shr (те же треугольники и обход). Движок читает оба вида (флаг куска 1<<26).
+if [ "${SHR_STRIPS:-0}" = "1" ]; then
+  [ "${SHR_ORDER_OLD:-0}" != 1 ] || { echo "SHR_STRIPS=1 требует порядок секций shr_order (SHR_ORDER_OLD=0)" >&2; exit 1; }
+  tools/strips.sh >/dev/null
+  cp "$OUT" "$OUT.list"; tools/strips "$OUT.list" "$OUT"; rm -f "$OUT.list"
+fi

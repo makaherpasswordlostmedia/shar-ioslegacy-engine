@@ -1,0 +1,14 @@
+# Same real L7 final-stage checkpoint; no skip and no faster credits clock
+flag menu
+flag lvset 7
+scene ending_l7_eof
+wait 1.5
+press cross
+wait 9
+flag lvlog
+flag msnmainat 701
+wait 8
+shot ending_screen
+wait 205
+shot ending_back
+end

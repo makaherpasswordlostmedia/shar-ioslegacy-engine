@@ -1,0 +1,574 @@
+scene start
+wait 2
+scene L1
+flag long
+flag mipauto 1
+foot 220 172 0
+wait 2
+press triangle
+wait 4
+goto 220 172 0
+wait 6
+shot L1h0_a
+wait 0.5
+shot L1h0_n
+flag farprobe 1 60
+wait 0.4
+shot L1h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L1h0_k
+flag clearchk 0
+flag nosky 0
+goto 220.04 172.0 0
+wait 6
+shot L1h0_b
+goto 220 172 1.5708
+wait 6
+shot L1h1_a
+wait 0.5
+shot L1h1_n
+flag farprobe 1 60
+wait 0.4
+shot L1h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L1h1_k
+flag clearchk 0
+flag nosky 0
+goto 220.0 171.96 1.5708
+wait 6
+shot L1h1_b
+goto 220 172 3.1416
+wait 6
+shot L1h3_a
+wait 0.5
+shot L1h3_n
+flag farprobe 1 60
+wait 0.4
+shot L1h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L1h3_k
+flag clearchk 0
+flag nosky 0
+goto 219.96 172.0 3.1416
+wait 6
+shot L1h3_b
+goto 220 172 4.7124
+wait 6
+shot L1h4_a
+wait 0.5
+shot L1h4_n
+flag farprobe 1 60
+wait 0.4
+shot L1h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L1h4_k
+flag clearchk 0
+flag nosky 0
+goto 220.0 172.04 4.7124
+wait 6
+shot L1h4_b
+scene L2_load
+flag golevel 2
+wait 20
+scene L2
+flag long
+flag mipauto 1
+foot 152 -38.44 0
+wait 2
+press triangle
+wait 4
+goto 152 -38.44 0
+wait 6
+shot L2h0_a
+wait 0.5
+shot L2h0_n
+flag farprobe 1 60
+wait 0.4
+shot L2h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L2h0_k
+flag clearchk 0
+flag nosky 0
+goto 152.04 -38.44 0
+wait 6
+shot L2h0_b
+goto 152 -38.44 1.5708
+wait 6
+shot L2h1_a
+wait 0.5
+shot L2h1_n
+flag farprobe 1 60
+wait 0.4
+shot L2h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L2h1_k
+flag clearchk 0
+flag nosky 0
+goto 152.0 -38.48 1.5708
+wait 6
+shot L2h1_b
+goto 152 -38.44 3.1416
+wait 6
+shot L2h3_a
+wait 0.5
+shot L2h3_n
+flag farprobe 1 60
+wait 0.4
+shot L2h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L2h3_k
+flag clearchk 0
+flag nosky 0
+goto 151.96 -38.44 3.1416
+wait 6
+shot L2h3_b
+goto 152 -38.44 4.7124
+wait 6
+shot L2h4_a
+wait 0.5
+shot L2h4_n
+flag farprobe 1 60
+wait 0.4
+shot L2h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L2h4_k
+flag clearchk 0
+flag nosky 0
+goto 152.0 -38.4 4.7124
+wait 6
+shot L2h4_b
+scene L3_load
+flag golevel 3
+wait 20
+scene L3
+flag long
+flag mipauto 1
+foot -3.35 -5.57 0
+wait 2
+press triangle
+wait 4
+goto -3.35 -5.57 0
+wait 6
+shot L3h0_a
+wait 0.5
+shot L3h0_n
+flag farprobe 1 60
+wait 0.4
+shot L3h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L3h0_k
+flag clearchk 0
+flag nosky 0
+goto -3.31 -5.57 0
+wait 6
+shot L3h0_b
+goto -3.35 -5.57 1.5708
+wait 6
+shot L3h1_a
+wait 0.5
+shot L3h1_n
+flag farprobe 1 60
+wait 0.4
+shot L3h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L3h1_k
+flag clearchk 0
+flag nosky 0
+goto -3.35 -5.61 1.5708
+wait 6
+shot L3h1_b
+goto -3.35 -5.57 3.1416
+wait 6
+shot L3h3_a
+wait 0.5
+shot L3h3_n
+flag farprobe 1 60
+wait 0.4
+shot L3h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L3h3_k
+flag clearchk 0
+flag nosky 0
+goto -3.39 -5.57 3.1416
+wait 6
+shot L3h3_b
+goto -3.35 -5.57 4.7124
+wait 6
+shot L3h4_a
+wait 0.5
+shot L3h4_n
+flag farprobe 1 60
+wait 0.4
+shot L3h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L3h4_k
+flag clearchk 0
+flag nosky 0
+goto -3.35 -5.53 4.7124
+wait 6
+shot L3h4_b
+scene L4_load
+flag golevel 4
+wait 20
+scene L4
+flag long
+flag mipauto 1
+foot 214.88 172.27 0
+wait 2
+press triangle
+wait 4
+goto 214.88 172.27 0
+wait 6
+shot L4h0_a
+wait 0.5
+shot L4h0_n
+flag farprobe 1 60
+wait 0.4
+shot L4h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L4h0_k
+flag clearchk 0
+flag nosky 0
+goto 214.92 172.27 0
+wait 6
+shot L4h0_b
+goto 214.88 172.27 1.5708
+wait 6
+shot L4h1_a
+wait 0.5
+shot L4h1_n
+flag farprobe 1 60
+wait 0.4
+shot L4h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L4h1_k
+flag clearchk 0
+flag nosky 0
+goto 214.88 172.23 1.5708
+wait 6
+shot L4h1_b
+goto 214.88 172.27 3.1416
+wait 6
+shot L4h3_a
+wait 0.5
+shot L4h3_n
+flag farprobe 1 60
+wait 0.4
+shot L4h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L4h3_k
+flag clearchk 0
+flag nosky 0
+goto 214.84 172.27 3.1416
+wait 6
+shot L4h3_b
+goto 214.88 172.27 4.7124
+wait 6
+shot L4h4_a
+wait 0.5
+shot L4h4_n
+flag farprobe 1 60
+wait 0.4
+shot L4h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L4h4_k
+flag clearchk 0
+flag nosky 0
+goto 214.88 172.31 4.7124
+wait 6
+shot L4h4_b
+scene L5_load
+flag golevel 5
+wait 20
+scene L5
+flag long
+flag mipauto 1
+foot -154.9 -482.05 0
+wait 2
+press triangle
+wait 4
+goto -154.9 -482.05 0
+wait 6
+shot L5h0_a
+wait 0.5
+shot L5h0_n
+flag farprobe 1 60
+wait 0.4
+shot L5h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L5h0_k
+flag clearchk 0
+flag nosky 0
+goto -154.86 -482.05 0
+wait 6
+shot L5h0_b
+goto -154.9 -482.05 1.5708
+wait 6
+shot L5h1_a
+wait 0.5
+shot L5h1_n
+flag farprobe 1 60
+wait 0.4
+shot L5h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L5h1_k
+flag clearchk 0
+flag nosky 0
+goto -154.9 -482.09 1.5708
+wait 6
+shot L5h1_b
+goto -154.9 -482.05 3.1416
+wait 6
+shot L5h3_a
+wait 0.5
+shot L5h3_n
+flag farprobe 1 60
+wait 0.4
+shot L5h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L5h3_k
+flag clearchk 0
+flag nosky 0
+goto -154.94 -482.05 3.1416
+wait 6
+shot L5h3_b
+goto -154.9 -482.05 4.7124
+wait 6
+shot L5h4_a
+wait 0.5
+shot L5h4_n
+flag farprobe 1 60
+wait 0.4
+shot L5h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L5h4_k
+flag clearchk 0
+flag nosky 0
+goto -154.9 -482.01 4.7124
+wait 6
+shot L5h4_b
+scene L6_load
+flag golevel 6
+wait 20
+scene L6
+flag long
+flag mipauto 1
+foot -300.14 -218.57 0
+wait 2
+press triangle
+wait 4
+goto -300.14 -218.57 0
+wait 6
+shot L6h0_a
+wait 0.5
+shot L6h0_n
+flag farprobe 1 60
+wait 0.4
+shot L6h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L6h0_k
+flag clearchk 0
+flag nosky 0
+goto -300.1 -218.57 0
+wait 6
+shot L6h0_b
+goto -300.14 -218.57 1.5708
+wait 6
+shot L6h1_a
+wait 0.5
+shot L6h1_n
+flag farprobe 1 60
+wait 0.4
+shot L6h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L6h1_k
+flag clearchk 0
+flag nosky 0
+goto -300.14 -218.61 1.5708
+wait 6
+shot L6h1_b
+goto -300.14 -218.57 3.1416
+wait 6
+shot L6h3_a
+wait 0.5
+shot L6h3_n
+flag farprobe 1 60
+wait 0.4
+shot L6h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L6h3_k
+flag clearchk 0
+flag nosky 0
+goto -300.18 -218.57 3.1416
+wait 6
+shot L6h3_b
+goto -300.14 -218.57 4.7124
+wait 6
+shot L6h4_a
+wait 0.5
+shot L6h4_n
+flag farprobe 1 60
+wait 0.4
+shot L6h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L6h4_k
+flag clearchk 0
+flag nosky 0
+goto -300.14 -218.53 4.7124
+wait 6
+shot L6h4_b
+scene L7_load
+flag golevel 7
+wait 20
+scene L7
+flag long
+flag mipauto 1
+foot 214.73 172.41 0
+wait 2
+press triangle
+wait 4
+goto 214.73 172.41 0
+wait 6
+shot L7h0_a
+wait 0.5
+shot L7h0_n
+flag farprobe 1 60
+wait 0.4
+shot L7h0_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L7h0_k
+flag clearchk 0
+flag nosky 0
+goto 214.77 172.41 0
+wait 6
+shot L7h0_b
+goto 214.73 172.41 1.5708
+wait 6
+shot L7h1_a
+wait 0.5
+shot L7h1_n
+flag farprobe 1 60
+wait 0.4
+shot L7h1_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L7h1_k
+flag clearchk 0
+flag nosky 0
+goto 214.73 172.37 1.5708
+wait 6
+shot L7h1_b
+goto 214.73 172.41 3.1416
+wait 6
+shot L7h3_a
+wait 0.5
+shot L7h3_n
+flag farprobe 1 60
+wait 0.4
+shot L7h3_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L7h3_k
+flag clearchk 0
+flag nosky 0
+goto 214.69 172.41 3.1416
+wait 6
+shot L7h3_b
+goto 214.73 172.41 4.7124
+wait 6
+shot L7h4_a
+wait 0.5
+shot L7h4_n
+flag farprobe 1 60
+wait 0.4
+shot L7h4_m
+flag farprobe 0
+flag clearchk 1
+flag nosky 1
+wait 0.4
+shot L7h4_k
+flag clearchk 0
+flag nosky 0
+goto 214.73 172.45 4.7124
+wait 6
+shot L7h4_b
+end

@@ -1,0 +1,15 @@
+# №408 (tests/camera/carzone_emu.sh): камера сбоку на прыжке через дом L1 (jumpzone17, рельс r1_cam1 из carzone-l1.shr).
+# famil_v на прямой перед трамплином (кадр 700 записи PS2 original-house-native2: 116; −127 в осях записи), курс на дом, газ прямо
+# 6 с; движок пишет CARZONE при смене камеры зоны машины (вход/выход) и снимок в полёте.
+flag camlog 0
+wait 2
+scene famil_v
+goto 116.2 125 0.03
+wait 2
+flag autostraight 6
+wait 5.6
+shot carzone_air
+wait 2
+shot carzone_after
+wait 1
+end

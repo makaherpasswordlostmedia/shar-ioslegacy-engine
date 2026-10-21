@@ -1,0 +1,188 @@
+# Замер на настоящей PSP (правка 103, повтор 01.10 ~09:40: «приехал на спортивную площадку у школы — игра зависла, приставка
+# выключилась»): тот же маршрут, что гейт эмулятора tests/crash_school/scenario.txt, но без служебного балласта и медленной карты
+# (на железе своя память и своя карта). Игра сама: NEW GAME (миссии, режим игрока, подсказки Барта), школа с четырёх сторон,
+# бейсбольное поле, детская площадка с пешеходами, трамплины jumpzone16 (с поля через забор) и jumpzone2 (с крыши школы), пешком
+# к Вилли (разговор) и Луи, миссия m6 у школы и снова площадка. В конце — проверка сторожа самописца на железе: «flag freeze 7»
+# (главный поток стоит 7 с — экран застынет на 7 с, это нарочно), потом выход в меню PSP.
+# На карту: этот файл как PSP/GAME/SHARVIEW/scenario.txt и пустой файл smokelog рядом (флаг sfxlog уже лежит). Снимков нет.
+# После замера забрать smoke.txt, blackbox.txt, blackbox_prev.txt, sfxlog.txt в build/psp-logs/<время>/ и убрать scenario.txt и
+# smokelog, иначе игра снова пойдёт в замер. Вылет посреди замера: последняя строка smoke.txt (раз в секунду) и blackbox.txt
+# (раз в 2 с; перед чтением модели с карты — сразу; при зависании кадра — сторож сам, шапка STALL … phase=…) покажут место.
+# В начале каждой езды ✕ дважды через 3 с: подсказка Барта (пузырь держит мир, «продолжить» — через ~2,4 с) не стоит всю сцену.
+flag sfxlog
+flag player
+wait 2
+flag msn
+wait 3
+flag tutorial
+flag tutnow
+wait 3
+press cross
+wait 3
+press cross
+scene sch_front
+goto -17 583 3.1416
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 4
+wait 6
+flag stop
+scene fld_east
+goto -63.5 597.8 4.843
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene fld_ne
+goto -79.1 566.1 5.498
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene fld_w
+goto -156.9 566.1 0.786
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene jump16
+goto -121 615 3.1416
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene roof_jump2
+goto -50 590 0
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 4
+wait 7
+flag stop
+scene playground
+goto -74.4 638.5 4.058
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene foot_field
+foot -118 600 3.1416
+wait 2
+press cross
+press up 3
+wait 4
+press cross
+scene foot_willie
+foot -124 571 4.71
+wait 2
+press triangle
+wait 4
+press cross
+wait 2
+press cross
+scene foot_louie
+foot -10 576 3.1416
+wait 3
+press cross
+wait 2
+scene m6
+flag msnmain 6
+wait 4
+press cross
+wait 8
+press cross
+wait 8
+scene m6_field
+goto -63.5 597.8 4.843
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene m6_jump
+goto -121 615 3.1416
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene m6_front
+goto -17 583 3.1416
+flag repair
+wait 2
+press cross
+wait 3
+press cross
+wait 1
+flag autostraight 4
+wait 8
+flag stop
+# школа объездом 2 × 30 с (подгрузка и выгрузка клеток на ходу, как ехал Роб)
+scene sch_drive1
+goto -17 583 1.5708
+wait 2
+press cross
+wait 3
+press cross
+flag autodrive
+wait 30
+flag stop
+flag repair
+scene sch_drive2
+goto -63.5 597.8 4.843
+wait 2
+press cross
+wait 3
+press cross
+flag autodrive
+wait 30
+flag stop
+flag repair
+scene dog_freeze
+goto -90 610 3.1416
+wait 2
+press cross
+wait 1
+flag freeze 7
+wait 10
+end

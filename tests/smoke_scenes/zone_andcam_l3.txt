@@ -1,0 +1,34 @@
+# №694: L3 проезд через объём камеры andcam (21,4; 6,0) в машине с 4 сторон, журнал CARZONE и курса камеры
+scene Z_L3_load
+flag golevel 3
+wait 20
+flag camlog
+scene Z_in0
+flag repair
+goto 21.40 46.00 3.142
+wait 3
+flag autostraight 12
+wait 12
+flag stop
+scene Z_in90
+flag repair
+goto 61.40 6.00 -1.571
+wait 3
+flag autostraight 12
+wait 12
+flag stop
+scene Z_in180
+flag repair
+goto 21.40 -34.00 -0.000
+wait 3
+flag autostraight 12
+wait 12
+flag stop
+scene Z_in270
+flag repair
+goto -18.60 6.00 1.571
+wait 3
+flag autostraight 12
+wait 12
+flag stop
+end

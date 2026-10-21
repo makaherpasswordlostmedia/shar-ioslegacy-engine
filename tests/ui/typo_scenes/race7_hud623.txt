@@ -1,0 +1,45 @@
+# №623: гонка L1 (миссия 7, с кружком Бёрнса): кадры каждые 0,25 с от начала — пузырь внизу, кружок поднимается, блок времени и места едет вправо
+scene typo_race7_hud623
+wait 3
+flag msn
+wait 3
+flag msnmain 7
+wait 3
+press cross
+wait 1.5
+shot g00
+wait 0.25
+shot g01
+wait 0.25
+shot g02
+wait 0.25
+shot g03
+wait 0.25
+shot g04
+wait 0.25
+shot g05
+wait 0.25
+shot g06
+wait 0.25
+shot g07
+wait 0.25
+shot g08
+wait 0.25
+shot g09
+wait 0.25
+shot g10
+wait 0.25
+shot g11
+wait 0.25
+shot g12
+wait 0.25
+shot g13
+wait 0.25
+shot g14
+wait 0.25
+shot g15
+wait 0.25
+shot g16
+wait 2
+shot g99
+end

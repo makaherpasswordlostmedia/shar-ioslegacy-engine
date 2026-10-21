@@ -1,0 +1,17 @@
+flag menu
+scene menu_warm
+wait 3
+press left
+wait .3
+press left
+wait .3
+scene menu_options_entry
+press cross
+wait 3
+scene menu_options
+wait 5
+shot options_actual
+scene menu_options_exit
+press triangle
+wait 4
+end

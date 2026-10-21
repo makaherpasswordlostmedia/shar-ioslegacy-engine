@@ -1,0 +1,37 @@
+# Гейт анимаций HUD в эмуляторе (tools/ui_anim_gate.sh, сверка tests/ui/anim_check.py): старт в машине у спавна.
+# uipulse — △ поверх игры, покадрово рамка как ушла в GE (UIPULSE); uihnr — кольцо Hit & Run по сценарию ударов (UIHNR);
+# uipop N — тег HUD N всплывает на 1.5 с (UIPOP: нарисованная рамка группы и альфа); uipopmsg — новый текст задания;
+# звуки интерфейса — строки UISFX (id и номер голоса). Пауза: START (pause_on), ↓ (scroll), START (pause_off), снимок заголовка.
+scene anim
+wait 3
+flag uipulse 3.5
+wait 1.3
+shot pulse_a
+wait 0.2
+shot pulse_b
+wait 2.5
+flag uihnr
+wait 4.3
+shot hnr_full
+wait 5
+flag uioff
+wait 0.5
+flag uipop 19
+wait 0.25
+shot pop_stage
+wait 2
+flag uipop 20
+wait 2
+flag uipopmsg
+wait 0.8
+flag uipopmsg 1
+wait 2.2
+flag uioff
+press start
+wait 1
+shot pause_title
+press down
+wait 0.5
+press start
+wait 1
+end

@@ -1,0 +1,88 @@
+# Правка Роба 293 (повторы 244, 265): «в самом начале наезда к газете мигает пол» — проверка на ЖЕЛЕЗЕ, часть M10 тура TEST 10.
+# Собирает tools/tour_make.py --test10 (строки без «#» и без «end»); читает tests/fe_guard/test10_read.py ПАПКА_ТУРА.
+# Правки 293: (0) пол гостиной — один кусок, один слой, без кусков-двойников F_MENUHID (fe.shr: tools/frontend3d_export.py; в первом
+# кадре движения куски пола больше не включаются — в строках FEFR floor= постоянно 1); (1) жёлтая подсветка газеты на ковре при старте перелёта гаснет 0,16 с, как у оригинала (было: пропадала в первом
+# кадре движения — вспышка на полу у газеты); (2) гипотеза, эмулятор её не видит: смена буфера кадра опоздала к обратному ходу
+# луча — экран ещё кадр показывает прежний буфер, а следующий кадр уже его чистит и рисует; низ экрана (пол) дочитывается из
+# полу-нарисованного кадра. Правило (viewer/main.c swapBufG): опоздала — ждать следующего обратного хода. Четыре НАСТОЯЩИХ перелёта NEW GAME из игры
+# (пауза → ↑ → × QUIT GAME → меню → × NEW GAME → газета → снова уровень 1), у каждого строка FEFR на кадр с полем
+# sw=строка луча,опоздала,ждали,guard и итог FEFLY … late= waited=:
+#   M10a — как в игре, обе правки (новое); кадры перелёта в ОЗУ (fecap 21: первые 14 и последние 7) → shots/fe293_*.bmp
+#          после перелёта (~6 с запись, экран стоит на последнем кадре — так и надо);
+#   M10b — как было на PSP до правки: подсветка пропадает за кадр (feglowcut 1) и прежняя смена (swapold 1);
+#   M10c — подсветка новая, опоздание 3 мс у каждой смены (swaplate 3) и прежняя смена: если гипотеза (2) верна, низ комнаты (пол)
+#          мигает ВЕСЬ перелёт;
+#   M10d — опоздание 3 мс и правило: перелёт чистый (медленнее, рывками — так и надо).
+# Робу: смотреть на пол в начале каждого наезда; сказать, в каких частях пол мигал (a, b, c, d) и похоже ли мигание в c на «то самое».
+# Короткий вариант — только M10a (до строки «scene M10b_menu_old»): настоящий перелёт NEW GAME с журналом FEFR и кадрами fecap.
+scene M10a_menu_rule
+flag feframelog 1
+flag feglowcut 0
+flag swapold 0
+flag swaplate 0
+flag fecap 21
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 22
+scene M10b_menu_old
+flag feglowcut 1
+flag swapold 1
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 14
+scene M10c_menu_late_old
+flag feglowcut 0
+flag swapold 1
+flag swaplate 3
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 16
+scene M10d_menu_late_rule
+flag swapold 0
+flag swaplate 3
+wait 1
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 4
+flag idle 1000
+press cross
+wait 3
+press cross
+wait 16
+scene M10_after
+flag swaplate 0
+flag swapold 0
+flag feglowcut 0
+flag feframelog 0
+wait 3
+end

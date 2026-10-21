@@ -1,0 +1,24 @@
+# №623 (оригинал PS2): вне миссии слева вверху значок дома; миссия 7 (гонка L1) — кружок цели подменяет его, блок времени и места правее кружка
+scene typo_home623
+wait 6
+shot free_a
+wait 3
+shot free_b
+flag msn
+wait 3
+flag msnmain 7
+wait 3
+press cross
+wait 2
+shot m_a
+wait 2.5
+shot m_b
+wait 0.12
+shot m_c
+wait 0.12
+shot m_d
+wait 0.12
+shot m_e
+wait 2
+shot m_f
+end

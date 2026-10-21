@@ -1,0 +1,48 @@
+# L3 подбор контраста ленты (режим 8, hzmix 0..4)
+scene start
+wait 3
+flag golevel 3
+wait 25
+scene PM_0
+flag horizon 0
+flag repair
+goto -330 90 4.205
+wait 3
+flag horizon 8
+flag hzmix 0
+wait 1
+shot PM_0_m0
+flag hzmix 1
+wait 1
+shot PM_0_m1
+flag hzmix 2
+wait 1
+shot PM_0_m2
+flag hzmix 3
+wait 1
+shot PM_0_m3
+flag hzmix 4
+wait 1
+shot PM_0_m4
+scene PM_1
+flag horizon 0
+flag repair
+goto -330 90 4.71
+wait 3
+flag horizon 8
+flag hzmix 0
+wait 1
+shot PM_1_m0
+flag hzmix 1
+wait 1
+shot PM_1_m1
+flag hzmix 2
+wait 1
+shot PM_1_m2
+flag hzmix 3
+wait 1
+shot PM_1_m3
+flag hzmix 4
+wait 1
+shot PM_1_m4
+end

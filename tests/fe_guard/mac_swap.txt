@@ -1,0 +1,23 @@
+# Правка Роба 293 (tests/fe_guard/gate293.sh, Мак, безголовый эмулятор): меню → NEW GAME → в игре флаги → пауза → QUIT GAME →
+# меню → × NEW GAME: НАСТОЯЩИЙ перелёт к газете (часы идут), строка FEFR на кадр с полем sw=строка,опоздала,ждали (смена буфера
+# прошлого кадра), кадры перелёта в ОЗУ (fecap 18) → shots/fe293_*.bmp. Флаги смены (swaplate, swapold) gate.sh дописывает перед «wait 2.5»
+flag menu
+wait 1.5
+press cross
+wait 2
+flag feframelog 1
+flag fecap 18
+#SWAPFLAGS
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1.5
+press cross
+wait 8
+flag swaplate 0
+flag swapold 0
+wait 3
+end

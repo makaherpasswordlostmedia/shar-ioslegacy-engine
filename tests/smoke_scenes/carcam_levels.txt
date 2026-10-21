@@ -1,0 +1,58 @@
+# №554: дальность камеры за машиной стартовой машины L1–L7 (строка CARCAM: back/eye), правило №494 включено
+scene CC_load1
+flag golevel 1
+wait 14
+flag player 1
+flag carcamlog 1
+scene CC_L1
+flag repair
+wait 3
+scene CC_load2
+flag golevel 2
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L2
+flag repair
+wait 3
+scene CC_load3
+flag golevel 3
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L3
+flag repair
+wait 3
+scene CC_load4
+flag golevel 4
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L4
+flag repair
+wait 3
+scene CC_load5
+flag golevel 5
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L5
+flag repair
+wait 3
+scene CC_load6
+flag golevel 6
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L6
+flag repair
+wait 3
+scene CC_load7
+flag golevel 7
+wait 16
+flag player 1
+flag carcamlog 1
+scene CC_L7
+flag repair
+wait 3
+end

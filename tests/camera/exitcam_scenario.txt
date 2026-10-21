@@ -1,0 +1,29 @@
+scene exitcam
+flag camlog
+goto 220 172 1.5708
+wait 2
+shot x0
+press triangle
+wait 1.2
+shot x1
+wait 0.4
+shot x2
+wait 0.4
+shot x3
+wait 0.8
+shot x4
+wait 1.5
+shot x5
+press left 0.5
+wait 1.5
+shot w1
+press triangle
+wait 2.0
+shot i1
+wait 1.0
+shot i2
+wait 2.0
+shot i3
+wait 2.0
+shot i4
+end

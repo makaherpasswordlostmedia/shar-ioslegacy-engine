@@ -1,0 +1,32 @@
+# Трафик у Kwik-E-Mart (tests/traffic/emu.sh): стоящие машины, движение, пешеходы, Гомер о пешехода.
+# Места — телепорт Kwik E Mart из level.mfk (209, -285; z зеркалим): машина за 6 м до стоянки курсом на неё; улица перед
+# магазином — полоса дороги 12 (z 279.9, курс +x) из l1_terra.p3d. Как в tools/smoke_scenario.txt: снимок — последняя
+# команда сцены, следующая начинается с wait 1 (кадр снимка окна медленный, дрожь эмулятора не в счёт).
+scene kwik
+flag trflog
+goto 209 279 0
+wait 4
+shot kwik_parked
+scene traffic
+wait 1
+goto 188 279.9 1.5708
+wait 2
+flag trfahead 16
+wait 1
+shot traffic1
+scene traffic2
+wait 1
+wait 3
+shot traffic2
+scene homer
+wait 1
+goto 209 279 0
+wait 2
+press triangle
+wait 3
+flag pedtest
+wait 0.3
+press up 3
+wait 3.5
+shot pedtest
+end

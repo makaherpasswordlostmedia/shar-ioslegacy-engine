@@ -1,0 +1,23 @@
+# Лестница пожарной машины у Kwik-E-Mart (материал firetruck_ladder_m: альфа-тест + смешивание, трамплин на крышу)
+# с разных сторон и расстояний: где пропадает рисунок ступеней. SMOKE_SCN=tests/levelobj/ladder_views.txt tools/smoke.sh DIR
+scene lad_near
+goto 185 312 0.095
+wait 4
+shot lad_near
+scene lad_side
+goto 170 318 1.9
+wait 3
+shot lad_side
+scene lad_far
+goto 150 300 0.84
+wait 3
+shot lad_far
+scene lad_back
+goto 214 330 -1.35
+wait 3
+shot lad_back
+scene lad_top
+goto 181 345 2.6
+wait 3
+shot lad_top
+end

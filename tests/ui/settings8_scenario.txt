@@ -1,0 +1,64 @@
+# Рамка Settings с 8 строками (Cartoon последней), tests/ui/settings8_frame.sh: L1 пешком -> пауза -> OPTIONS -> SETTINGS: кадр с курсором на первой выбираемой строке (a1) и на Cartoon (b1: четыре вниз);
+# затем то же на L4 (golevel 4, нужен набор с l4 рядом с EBOOT: SHIP_LEVELS). Пауза и выход через △, дальше следующий уровень
+scene start
+wait 3
+scene S1
+foot 225 176 1.5708
+wait 4
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 1.0
+shot a1
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.6
+shot b1
+press triangle
+wait 0.4
+press triangle
+wait 0.4
+press start
+wait 1.5
+scene L4_load
+flag golevel 4
+wait 30
+scene S4
+foot 214.88 172.27 3.322
+wait 4
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 1.0
+shot a4
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.6
+shot b4
+end

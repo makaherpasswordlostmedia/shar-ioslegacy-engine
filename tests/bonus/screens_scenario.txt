@@ -1,0 +1,26 @@
+# Service-open tracks for resource/visual checks; unlock has its separate real-card gate.
+flag menu
+flag bonusopen
+flag bonuslaps 1
+flag bonusauto 1
+flag bonusshots 1
+flag bonusquit 1
+flag bonustrack 2
+wait 2
+press left
+wait 0.6
+press cross
+wait 4
+press cross
+wait 2
+flag bonusgo
+wait 30
+flag bonustrack 1
+wait 1
+flag bonusgo
+wait 110
+press triangle
+wait 1
+press triangle
+wait 5
+end

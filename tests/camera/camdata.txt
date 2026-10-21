@@ -1,0 +1,94 @@
+# Правка Роба 331 (tests/camera/camin.py): машина — езда вдоль стен (места — стена сбоку 1,5–3,5 м на 40 м пути по коллизии),
+# разворот задом у Kwik-E-Mart, удар в фасад, трафик и прохожие вплотную, трамплины jumpzone16 / крыша школы / jumpzone4 / jumpzone5
+# (путь F10 с ящика 01.10), машина разбита на посадке и на ударе (выброс Гомера). «flag camin 1» — замер с 1 с, «flag camin» — строка CAMIN
+# Правка 341 (поле у школы, L1 F14 — базы -118…-141, 598…623): разгон по полю к холму jumpzone16, прыжок через стенку Buzz Cola, жёсткая
+# посадка, в том числе разбитой машиной и при 20 кадрах/с (40–60 длинных кадров по 45 мс — как PSP в тяжёлых местах); то же с крыши школы и F10-5
+flag caminlog
+wait 3
+scene wall_evg
+goto 223 253 1.5708
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 3
+wait 5
+flag stop
+flag camin
+scene wall_kwik
+goto 232 292 0
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 3
+wait 2.5
+shot wall_kwik
+wait 2.5
+flag stop
+flag camin
+scene uturn_kwik
+goto 218 297 3.1416
+flag repair
+wait 1.5
+flag camin 1
+press down 1.5
+wait 1.6
+press up 2.0
+press left 2.0
+wait 2.1
+press down 1.5
+press right 1.5
+wait 1.6
+shot uturn_kwik
+press up 1.5
+press left 1.5
+wait 2
+flag camin
+scene jump16
+goto -121 615 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 5
+wait 3.2
+shot jump16_a
+wait 0.6
+shot jump16_b
+wait 4
+flag stop
+flag camin
+scene roofjump
+goto -50 590 0
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 4
+wait 3.4
+shot roofjump_a
+wait 0.6
+shot roofjump_b
+wait 3
+flag stop
+flag camin
+scene ramp4
+flag wpclear
+goto -117 520 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag wpv 24
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wpgo
+wait 3.5
+shot ramp4_a
+wait 1
+shot ramp4_b
+wait 5
+flag stop
+flag camin
+end

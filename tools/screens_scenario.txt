@@ -1,0 +1,43 @@
+# Экраны вокруг игры (tools/screens_gate.sh): весь путь игрока в эмуляторе. «flag bootshots» — снимки лицензии и BootupLoad
+# (smoke.txt открыт сразу после заставки, viewer/smoke.h smokeEarly).
+# Ролики пропускаются START; после них СРАЗУ меню (правка Роба 33: титульного на старте нет, гостиная читается под
+# LoadingFE.scr); «flag idle 2» — простой меню 2 с вместо MENU_IDLE_S: титульный «Press START button» — снимок и ОДНО
+# нажатие START (правка Роба 24: назад в меню с первого нажатия, отклик ≤ 0,3 с); NEW GAME — снимок загрузки уровня
+# после разворота газеты (flag loadshot); игра; «flag feshot» — снимок загрузки меню с середины при выходе; пауза →
+# QUIT GAME → меню. Проверка — tools/screens_check.py (снимок окна против макета tools/load_export.py при том же
+# состоянии экрана, порядок экранов, строки TITLE и LOADSHOW)
+flag menu
+flag intro
+flag bootshots
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1.5
+shot menu0
+flag idle 2
+wait 3
+shot splash
+press start
+wait 1
+shot menu
+flag idle 0
+flag loadshot 1.6
+press cross
+wait 6
+shot game
+flag feshot 1.3
+press start
+wait 1
+press up
+wait 0.5
+press cross
+wait 1.5
+shot menu2
+end

@@ -1,0 +1,36 @@
+# Меню бонус-игры и пауза: выбор персонажа (mmchar), выбор трассы (mmtrack, поверх него подписи кнопок), пауза в гонке; итоги не снимаются
+flag menu
+flag bonusopen
+flag bonuslaps 1
+flag bonusauto 1
+flag bonusshots 1
+flag bonusquit 1
+flag bonustrack 2
+wait 2
+press left
+wait 0.6
+press cross
+wait 5
+shot chars_a
+flag uitypo 1
+wait 0.2
+shot chars_b
+flag uitypo 2
+wait 0.2
+shot chars_c
+flag uitypo 0
+wait 0.2
+press cross
+wait 3
+shot track_a
+flag uitypo 1
+wait 0.2
+shot track_b
+flag uitypo 2
+wait 0.2
+shot track_c
+flag uitypo 0
+wait 0.2
+flag bonusgo
+wait 45
+end

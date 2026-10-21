@@ -1,0 +1,41 @@
+# Правки Роба 37 и 43 (29.09): семейство плоских деталей уровня 1 в эмуляторе — было/стало (tests/decals/emu.sh,
+# лист tests/decals/sheet.py). На каждом месте два снимка через 0.5 с: машина стоит, камера стоит — разница кадров
+# в картинке мира = мерцание (снимки мира без HUD сравнивает sheet.py). Места — по данным диска (tools/decals.py):
+#   house  — улица у дома Симпсонов издали (≈50 м): слои и швы города у дома (видео Роба 2:57–3:07)
+#   mat    — коврик Welcome у двери дома Симпсонов (welcomemat, 7 см над крыльцом), Гомер пешком левее двери (не заслоняет)
+#   school — вывеска SCHOOL над входом в школу (elementarysign, 19 см перед стеной), машина перед фасадом
+#   kwik   — вывеска Kwik-E-Mart (kwiki24) с улицы
+#   road   — разметка: пешеходный переход у дома (rd2_crosswalk) впереди по улице
+scene start
+wait 3
+scene house
+goto 170 172 1.5708
+wait 3
+shot house_a
+wait 0.5
+shot house_b
+scene road
+goto 206 151 1.5708
+wait 3
+shot road_a
+wait 0.5
+shot road_b
+scene school
+goto -6 589.6 -1.5708
+wait 3
+shot school_a
+wait 0.5
+shot school_b
+scene kwik
+goto 208 278 0
+wait 3
+shot kwik_a
+wait 0.5
+shot kwik_b
+scene mat
+foot 226.6 178.4 0
+wait 3
+shot mat_a
+wait 0.5
+shot mat_b
+end

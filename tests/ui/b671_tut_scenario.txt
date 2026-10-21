@@ -1,0 +1,11 @@
+scene tut
+flag msn
+wait 2
+flag tutorial
+flag tutnovoice
+foot 230 172 1.5708
+wait 0.6
+press up 1
+wait 0.4
+shot tut_walk
+end

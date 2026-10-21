@@ -1,0 +1,22 @@
+# №675: L1 улица и Гомер крупно (глаза): t0 мультик выкл, t1 вкл (tests/toon/v675.sh)
+scene start
+wait 3
+scene street_t0
+foot 225 176 1.5708
+wait 6
+shot street_t0
+scene homer_t0
+cam 227.2 4.6 176 225 4.3 176 38
+wait 1.5
+shot homer_t0
+cam off
+scene street_t1
+flag toon 1
+wait 3
+shot street_t1
+scene homer_t1
+cam 227.2 4.6 176 225 4.3 176 38
+wait 1.5
+shot homer_t1
+cam off
+end

@@ -1,0 +1,65 @@
+{
+ "id": "ps2_bonus_reverse_selection",
+ "state": "build/twins/o4/ps2_bonus_minimenu_entry/snap_1000.p2s",
+ "frames": 400,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "square",
+   1
+  ],
+  [
+   26,
+   "square",
+   0
+  ],
+  [
+   100,
+   "cross",
+   1
+  ],
+  [
+   106,
+   "cross",
+   0
+  ],
+  [
+   180,
+   "cross",
+   1
+  ],
+  [
+   186,
+   "cross",
+   0
+  ],
+  [
+   260,
+   "cross",
+   1
+  ],
+  [
+   266,
+   "cross",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  50,
+  140,
+  220,
+  300,
+  400
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 150,
+ "note": "Restore original x3 first track, Square changes direction, then same three-stage Cross track/character/vehicle confirmation. Inspect reversed icon and ready UI before loading; no writes or gameplay input."
+}

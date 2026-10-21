@@ -1,0 +1,46 @@
+# №681: honor_v (L2) стоя и на скорости, снимки
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+press start
+wait 4
+press right
+wait 2
+press cross
+wait 14
+flag golevel 2
+wait 25
+flag repair
+wait 4
+shot hv_stand
+flag drive 100
+press cross 0.3
+wait 1.5
+shot hv_s0
+press cross 0.3
+wait 1.5
+shot hv_s1
+press cross 0.3
+wait 1.5
+shot hv_s2
+press cross 0.3
+wait 1.5
+shot hv_s3
+press cross 0.3
+wait 1.5
+shot hv_s4
+press cross 0.3
+wait 1.5
+shot hv_s5
+end

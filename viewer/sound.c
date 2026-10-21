@@ -1,0 +1,1035 @@
+// SHAR PSP: game sound layer (stage 6). API and rules: sound.h; data: tools/sound_export.py; mixer: audio.c.
+// Everything here runs on the main thread in microseconds: lookups are done once in sndInit, per-frame work is a
+// few dozen gate tests (segment vs box) and one nearest-emitter search. No allocation after sndInit/sndBindObjects.
+#include "sound.h"
+#include "audio.h"
+#include "police_sound_data.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+// ---------------------------------------------------------------- pack extension (tools/sound_export.py "SXT1")
+typedef struct { char name[16]; float v[5]; } XMode;                                          // 36 B
+typedef struct { float x, y, z, r; unsigned char kind, pad; short res; } XObj;                 // 20 B
+typedef struct { unsigned type, event; float half[3], ax[9], t[3]; char track[28]; } XZone;   // 96 B
+typedef struct { float x, y, z, r, mn, mx; unsigned short track, pad; float gain; } XEmit;    // 32 B
+typedef char chk_mode[sizeof(XMode) == 36 ? 1 : -1];
+typedef char chk_obj[sizeof(XObj) == 20 ? 1 : -1];
+typedef char chk_zone[sizeof(XZone) == 96 ? 1 : -1];
+typedef char chk_emit[sizeof(XEmit) == 32 ? 1 : -1];
+typedef struct { char event[28]; short track[3]; unsigned char n, kind; } XMEvt;              // 36 B: музыка миссий
+typedef char chk_mevt[sizeof(XMEvt) == 36 ? 1 : -1];
+enum { MEV_START, MEV_DRAMA, MEV_WIN, MEV_LOSE, MEV_SUS, MEV_TENSEC };   // tools/sound_export.py MEV_KIND
+
+static const XMEvt *mevts; static unsigned nmevt;
+typedef struct { char room[28], track[28]; } XRamb;                                           // 56 B: атмосфера комнаты (правка 345)
+typedef char chk_ramb[sizeof(XRamb) == 56 ? 1 : -1];
+static const XRamb *rambs; static unsigned nramb;
+static int mOwned;                 // музыку ведёт миссия (sndMusicEvent), main.c её не перебивает
+static int curMode;
+static int pauseMode;              // правка 87: пауза — шины «Pause» поверх всего (sndPause)
+static int lbMode;                 // правка 55: полосы разговора — шины «Letterbox» поверх curMode (sndLetterbox)
+static const XMode *modes; static unsigned nmode;
+static const XObj *objs; static unsigned nobj;
+static const XZone *zones; static unsigned nzone; static short *zoneTrack;
+static const XEmit *emits; static unsigned nemit;
+typedef struct { char prefix[28]; unsigned kind; float p[3], half[3], axes[9]; unsigned pad; } XDoor;
+_Static_assert(sizeof(XDoor) == 96, "DORB record");
+static const XDoor *doors; static unsigned ndoor;
+
+#define SND_HEADROOM 0.7f   // master gain: see sndInit
+static int ready; static char err[96];
+static unsigned rng = 0x9E3779B9u;
+// №685 (Роб, TEST27: «рандом звуков сломался, все NPC говорят одно и то же»): семя генератора было одно на каждый запуск (0x9E3779B9), первые реплики и треки каждой игры совпадали.
+// Теперь в игре семя от времени старта; в смоуке/туре фиксированное (повторяемость), гейт tests/levels/seed685.sh. SND_SEED_OLD=1 — прежнее
+#ifndef SND_SEED_OLD
+#define SND_SEED_OLD 0
+#endif
+void audioSeed(unsigned);
+void sndSeed(unsigned t) { if (SND_SEED_OLD || !t) return; rng = 0x9E3779B9u ^ (t * 2654435761u); if (!rng) rng = 1; audioSeed(t); }   // №685: семя от времени старта (в игре); смоук его не зовёт
+static float frand(void) { rng ^= rng << 13; rng ^= rng >> 17; rng ^= rng << 5; return (rng >> 8) * (1.f / 16777216.f); }
+static float clampf(float v, float a, float b) { return v < a ? a : v > b ? b : v; }
+
+// resource ids (looked up once)
+static int rCrash[3], rCoin, rCoinLose, rJump, rStomp, rFeet[4], rLand[4], rRonks, rCarJump, rExplode, rSpray, rHydrant,
+           rDoor[2], rShrub, rPed, rTree, rCrate;
+static float topKmh = 120.f;
+static int hAir;
+static int rSiren, hSiren[MC_MAX];
+static float crashCool, lastCrash;
+static float objCool, lastObjV; static int lastObj = -1;   // правка 135.2: звук объекта при скрежете вдоль него — не каждый кадр
+// правка 135.7: журнал эффектов (sndLogHook): событие текущего запуска — crash, obj, prop, sprop, land, air, gear, ped, wreck…
+static void (*sfxLog)(const char *line);
+static const char *sfxWhy = "fx";
+static void sfxNote(int id, float x, float y, float z, float vol, const char *why) {
+  if (!sfxLog || id < 0) return;
+  char s[128]; const char *nm = audioSoundName(id);
+  snprintf(s, sizeof s, "SFX %s %s %.1f %.1f %.1f vol=%.2f", nm ? nm : "?", why, x, y, z, vol);
+  sfxLog(s);
+}
+static void audioNoteHook(int id, const char *why) { sfxNote(id, 0, 0, 0, 1.f, why); }   // audio.c: gearshift
+void sndLogHook(void (*fn)(const char *)) { sfxLog = fn; audioNote = fn ? audioNoteHook : 0; }
+
+// music
+static int mState = SND_MUS_OFF, mReturn = -1;
+// Правка 179 (близнец Б2, ступень 3): пока Гомер пешком, оригинал каждые 15–20 с играет новую короткую тубу (событие
+// OF_explore_mission композиции, 47 туб, logic_or) — когда своя музыка молчит. Правка 182: в тоннеле и зале Stonecutters
+// (атмосфера amb_stonecutters_tunnel / amb_stonecutters_hall, ворота 37/38) — Vivaldi (Enter_StoneCutters_Tunnel), вышел — как было
+#define TUBA_MAX 64
+// №468 (Роб: пешком музыка изредка короткими отрывками, больше слышно улицу; в машине музыка уровня всегда; туннель со своей темой — в машине
+// как на диске, пешком в нём — как пешком): тубы пешком раз в 40–70 с вместо 15–20 с, Vivaldi тоннеля Stonecutters только из машины.
+// MUSIC_FOOT_OLD=1 — прежнее
+#ifndef MUSIC_FOOT_OLD
+#define MUSIC_FOOT_OLD 0
+#endif
+#define TUBA_MIN (MUSIC_FOOT_OLD ? 15.f : 40.f)
+#define TUBA_MAX_S (MUSIC_FOOT_OLD ? 20.f : 70.f)
+static short tubaId[TUBA_MAX]; static int nTuba, tubaLast = -1, vivId = -1, vivOn; static float tubaT;
+// правка 593: музыка клуба Legitimate Businessmen (L2 E7-6, L5): события 61 локаторов legit_business_music*, композиция lN_music.rms: Social_Club -> social_club.rsd, петля.
+// Зона на шине музыки: вошёл (внутри объёма) — играет дорожка, вышел — обычная музыка. Громкость и переход — константы ниже (замер PS2 ps2-l2-club-music.yaml подставить). SND_CLUB_OFF=1 — как было (тихий регион)
+#ifndef SND_CLUB_OFF
+#define SND_CLUB_OFF 0
+#endif
+#ifndef CLUB_FADE_IN
+#define CLUB_FADE_IN 2.0f   // [PS2 ps2-l2-club-music.yaml] переход ~8 с: фейд ~2 с + узнавание ~6 с (внешнее видео, YouTube cIcRJ1YMEjw)
+#endif
+#ifndef CLUB_EXIT_R
+#define CLUB_EXIT_R 350   // м от центра ближайшей плиты клуба: [PS2] зона широкая, 3,7 мин езды по району; точной границы нет (оценка порта: район от (-150; 0) до (-270; -230))
+#endif
+#ifndef CLUB_FADE_OUT
+#define CLUB_FADE_OUT 4.0f  // [PS2] тема сходит за ~4–5 с
+#endif
+#ifndef CLUB_GAIN
+#define CLUB_GAIN 0.708f    // [PS2] клубная на ~3 дБ тише обычной
+#endif
+#define CLUB_EVENT 61
+static int clubId = -1, clubOn;
+static int onFootNow;   // Гомер пешком (sndOnFoot из main.c, в том числе во время миссии): возврат после миссии/погони — ONFOOT, не FREEROAM
+enum { T_SD_INTRO, T_SD, T_SD_SUS1, T_SD_SUS2, T_SD_SUS3, T_M_PICKUP, T_M_MAIN, T_M_POS, T_M_NEG, T_M_SUS1, T_M_SUS2,
+       T_KWIK, T_MUZAK, T_HR_INTRO, T_HR_MAIN, T_HR_NEG, T_FE, NT };
+static const char *const tName[NT] = {"sunday_drive_intro", "sunday_drive", "sunday_drive_end_sus1",
+  "sunday_drive_end_sus2", "sunday_drive_end_sus3", "collection02_pickup", "collection02_main", "collection02_end_pos",
+  "collection02_end_neg", "collection02_end_sus1", "collection02_end_sus2", "kwik_e_mart_muzak", "muzak",
+  "hit_run_intro", "hit_run_main", "hit_run_end_neg", "simpsons_theme"};
+static int tId[NT];
+
+// ambience / positional
+static int ambZone = -1, ambTrack = -1, emitCur = -1;
+static float ppx, ppy, ppz; static int havePrev;
+
+// dialogue (Homer's in-car lines): tracks grouped by name prefix d_<event>_hom_
+// Правка 345: выход из машины (W_GOC_). [PS2] своя pcsx2-twins, 05.10 (agent345/ps2 goc1, goc2: state_l1_incar, △ выход / △ посадка
+// по кадрам; атлас m0d): реплика через 6–8 кадров после △ на 5 выходах из 11 (m0d 1/1; goc1 1/6 — выходы через 6 с; goc2 3/4 — через
+// 40, 20 с да, через 30 с нет); строки подряд разные (legs -> walk -> horse). Правило порта: шанс GOC_CHANCE, без охлаждения
+#ifndef GOC_CHANCE
+#define GOC_CHANCE .5f
+#endif
+static const char *const sayKey[SND_SAY_COUNT] = {"bcrash", "mcrash", "damage", "burn", "dcar", "break", "air", "hitp",
+  "missp", "carway", "door", "arrive", "time", "mstart", "goc", "gic",
+  "card", "mvic", "mfail", "springboard", "fall", "newai", "pass", "passed", "hitbyc", "tail", "aidestroy", "turbo", "dodge", "longjump"};   // аудит 09.10 п. 12/58
+// аудит 09.10: SND_VO_OLD=1 — как до аудита (новых реплик нет: красный tests/sound/vo_check.sh)
+#ifndef SND_VO_OLD
+#define SND_VO_OLD 0
+#endif
+// rules (the original's trigger code is not on the disc; these are our tuning, see docs/sound_integration.md)
+// Правка 345 (PS2, своя pcsx2-twins, 05.10): MSTART — 3 старта m0 из 3 с репликой (✕ Continue на 420 -> w_mstart_hom_03, на 500 ->
+// _04, атлас m0d — _03): каждый раз, выбор случайный. GOC — см. GOC_CHANCE выше
+// аудит 09.10, ПРАВИЛО ПОРТА (шанса и паузы оригинала в данных нет; у PS2 записана одна реплика w_newai_hom_02 в погоне, близнец
+// b2_loop кадр 11250): карточка, итог миссии, падение — всегда; подкидывающая точка, новая машина погони, обгон — через раз и не чаще
+// 10–15 с (у оригинала обгон около равенства мигает 4 раза за 2 с — ps2-race-position)
+// GIC chance 4/11 and cooldown0 are PORT_RULE, not a probability proved by В84.
+// Extra-event chance/cooldown are port rules; event contexts must be measured before wiring unknown triggers.
+static const float sayChance[SND_SAY_COUNT] = {.5f, .3f, 1.f, 1.f, 1.f, .25f, .5f, .5f, .3f, .4f, 1.f, 1.f, 1.f, 1.f, GOC_CHANCE, 4.f / 11.f,
+                                               1.f, 1.f, 1.f, .5f, 1.f, .5f, .5f, .5f, 1.f, 1.f, 1.f, 1.f, 1.f, 1.f};
+static const float sayCool[SND_SAY_COUNT] = {12, 12, 0, 0, 0, 15, 15, 10, 10, 12, 0, 0, 20, 0, 0, 0,
+                                             0, 0, 0, 10, 10, 15, 10, 10, 0, 10, 0, 10, 10, 10};
+#ifndef LONGJUMP_AIR_OLD
+#define LONGJUMP_AIR_OLD 0
+#endif
+#define SAY_MAX 16   // правка 183: D_ + W_ (Bcrash 8 + 4, Break 5 + 9, HitP 5 + 8)
+static short sayTrack[SND_SAY_COUNT][SAY_MAX]; static unsigned char sayN[SND_SAY_COUNT], sayLast[SND_SAY_COUNT];
+static float sayT[SND_SAY_COUNT], sinceLine = 99.f;
+static float vT[SND_V_COUNT] = {99, 99, 99, 99}; static int vLast = -1;   // аудит 09.10: реплики соперников (sndRivalSay)
+static int getInWas = -1; // reset при sndInit, загрузка за рулём не озвучивается
+// голоса улицы (правки 180/184): пулы дорожек p_<вид>_<голос>_* и d_<событие>_<голос>_* (tools/sound_export.py STREET)
+static const char *const pedPre[SND_PED_KINDS] = {"p_hitbyc_", "p_nhitbyc_", "p_hitbyw_"};
+static const char *const pedVoc[8] = {"mn1", "mn2", "fm1", "fm2", "by1", "by2", "gr1", "gr2"};
+static const char *const drvPre[SND_DRV_KINDS] = {"d_carway_", "d_mcrash_", "d_bcrash_"};
+static const char *const drvVoc[4] = {"vm1", "vm2", "vf1", "vf2"};
+#define STREET_MAX 12
+static short pedTrack[SND_PED_KINDS][8][STREET_MAX], drvTrack[SND_DRV_KINDS][4][STREET_MAX];
+static unsigned char pedN[SND_PED_KINDS][8], drvN[SND_DRV_KINDS][4];
+static int streetTrack = -1;static unsigned streetSerial;
+static float streetT = 99.f;   // с последней реплики улицы, с
+int sndStreetOff;   // служебное: красный контроль гейта tests/traffic/streetvoice_twins.py — голоса улицы молчат
+static int dmgStage;
+
+// bound object sets
+static short *setRes[SND_NSET]; static unsigned setN[SND_NSET];
+
+const char *sndError(void) { return err; }
+int sndReady(void) { return ready; }
+
+static void parseExt(void) {
+  unsigned size; const unsigned char *e = audioBankExt(&size);
+  if (!e || size < 8 || memcmp(e, "SXT1", 4)) return;
+  unsigned ns = *(const unsigned *)(e + 4);
+  for (unsigned i = 0; i < ns && 8 + i * 16 + 16 <= size; i++) {
+    const unsigned char *s = e + 8 + i * 16;
+    unsigned off = *(const unsigned *)(s + 4), cnt = *(const unsigned *)(s + 8), stride = *(const unsigned *)(s + 12);
+    if (off + cnt * stride > size) continue;
+    const void *p = e + off;
+    if (!memcmp(s, "MODE", 4) && stride == 36) { modes = p; nmode = cnt; }
+    else if (!memcmp(s, "OBJS", 4) && stride == 20) { objs = p; nobj = cnt; }
+    else if (!memcmp(s, "ZONE", 4) && stride == 96) { zones = p; nzone = cnt; }
+    else if (!memcmp(s, "EMIT", 4) && stride == 32) { emits = p; nemit = cnt; }
+    else if (!memcmp(s, "MEVT", 4) && stride == 36) { mevts = p; nmevt = cnt; }
+    else if (!memcmp(s, "DORB", 4) && stride == 96 && !SND_VO_OLD) { doors = p; ndoor = cnt; }
+    else if (!memcmp(s, "RAMB", 4) && stride == 56) { rambs = p; nramb = cnt; }   // правка 345: атмосфера комнат
+  }
+  if (nzone) {
+    zoneTrack = malloc(nzone * sizeof *zoneTrack);
+    if (!zoneTrack) nzone = 0;
+    for (unsigned i = 0; i < nzone; i++) {
+      char nm[29]; memcpy(nm, zones[i].track, 28); nm[28] = 0;
+      zoneTrack[i] = (short)audioTrack(nm);
+    }
+  }
+}
+
+#ifndef SND_250_OLD
+#define SND_250_OLD 0
+#endif
+static int s250 = !SND_250_OLD;   // правка 250 на этом уровне (sndInit: только audio/ уровня 1)
+static void applyMode(int m);
+static int lastApplied = -1, applyCalls; static float lastAppliedMus = -1.f;   // правка 279: служебно
+static int levelOfDir(const char *dir) {   // «…/l3/audio/» -> 3, «…/audio/» уровня 1 -> 1 (viewer/main.c levelFile)
+  for (const char *p = dir; p && *p; p++) if ((p == dir || p[-1] == '/') && p[0] == 'l' && p[1] >= '2' && p[1] <= '7' && p[2] == '/') return p[1] - '0';
+  return 1;
+}
+int sndInit(const char *dir) {
+  ready = 0;
+  s250 = !SND_250_OLD && levelOfDir(dir) == 1; audioMix250(s250);   // правка 250: сведение по замерам уровня 1 — только на уровне 1
+  if (audioInit(dir) < 0) { snprintf(err, sizeof err, "%s", audioError()); return -1; }
+  snprintf(err, sizeof err, "%s", audioError());   // "music.sap not found: effects only" is not fatal
+  static const char *const crash[3] = {"small_car_crash", "medium_car_crash", "large_car_crash"};
+  static const char *const feet[4] = {"feet_concrete", "feet_metal", "feet_wood", "feet_dirt"};
+  static const char *const land[4] = {"feet_concrete_jump", "feet_metal_jump", "feet_wood_jump", "feet_dirt_jump"};
+  for (int i = 0; i < 3; i++) rCrash[i] = audioFind(crash[i]);
+  for (int i = 0; i < 4; i++) { rFeet[i] = audioFind(feet[i]); rLand[i] = audioFind(land[i]); }
+  rCoin = audioFind("coin_collect_01"); rCoinLose = audioFind("coin_lose"); rJump = audioFind("jump");
+  rSiren = audioFind("siren"); memset(hSiren,0,sizeof hSiren);
+  rStomp = audioFind("homer_stomp"); rRonks = audioFind("suspension_ronks"); rCarJump = audioFind("car_jump");
+  rExplode = audioFind("generic_car_explode"); rSpray = audioFind("hydrant_spray"); rHydrant = audioFind("car_hit_hydrant");
+  rShrub = audioFind("hit_shrub"); rPed = audioFind("car_hit_pedestrian"); rTree = audioFind("car_hit_tree"); rCrate = audioFind("car_hit_crate");   // правка 135.5 / 135.6
+  rDoor[0] = audioFind("famil_close"); rDoor[1] = audioFind("famil_open");   // not on the disc: stay -1 (silent)
+  for (int i = 0; i < NT; i++) tId[i] = audioTrack(tName[i]);
+  nTuba = 0; vivId = audioTrack("vivaldi"); clubId = SND_CLUB_OFF ? -1 : audioTrack("social_club"); clubOn = 0;   // правки 179 и 182 (tools/sound_export.py music_table)
+  for (int t = 0, n = audioTrackCount(); t < n && nTuba < TUBA_MAX; t++) {
+    const char *nm = audioTrackName(t);
+    if (!strcmp(nm, "of_explore") || !strncmp(nm, "of_explore~", 11)) tubaId[nTuba++] = (short)t;
+  }
+  tubaT = TUBA_MIN + frand() * (TUBA_MAX_S - TUBA_MIN); tubaLast = -1; vivOn = 0;
+  // Семейства вождения принадлежат герою уровня; код берём из его стартовой реплики
+  char sayCode[8] = "hom";
+#ifndef SOUND_DRIVER_OLD
+  for (int t = 0, n = audioTrackCount(); t < n; t++) {
+    const char *nm = audioTrackName(t);
+    if (audioTrackBus(t) == 2 && !strncmp(nm, "w_mstart_", 9)) {
+      const char *end = strchr(nm + 9, '_'); size_t len = end ? (size_t)(end - nm - 9) : 0;
+      if (len && len < sizeof sayCode) { memcpy(sayCode, nm + 9, len); sayCode[len] = 0; break; }
+    }
+  }
+#endif
+  getInWas = -1;
+  memset(sayN, 0, sizeof sayN);
+  for (int t = 0, n = audioTrackCount(); t < n; t++) {
+    if (audioTrackBus(t) != 2) continue;
+    const char *nm = audioTrackName(t);
+    for (int e = 0; e < SND_SAY_COUNT; e++) {   // правка 183: реплики события — из наборов D_ и W_ (оригинал читает оба, близнец Б2)
+      char pre[24]; snprintf(pre, sizeof pre, "d_%s_%s_", sayKey[e], sayCode);
+      int hit = !strncmp(nm, pre, strlen(pre)); pre[0] = 'w'; hit |= !strncmp(nm, pre, strlen(pre));
+      if (e >= SND_SAY_MSTART) { snprintf(pre, sizeof pre, "w_%s_", sayKey[e]); hit = !strncmp(nm, pre, strlen(pre)); }   // правка 345: водитель уровня (пакет кладёт только его)
+      if (hit && SND_VO_OLD && e >= SND_SAY_CARD) hit = 0;
+      if (hit && sayN[e] < SAY_MAX) { sayTrack[e][sayN[e]++] = (short)t; break; }
+    }
+  }
+  // №467: у диска нет группы W_LongJump (в пакете пусто, реплика молчала) — длинный прыжок пешком говорит W_Air (те же дорожки, что у события air). ПРАВИЛО ПОРТА; LONGJUMP_AIR_OLD=1 — прежнее
+  if (!LONGJUMP_AIR_OLD && !sayN[SND_SAY_LONGJUMP])
+    for (int t = 0, n = audioTrackCount(); t < n; t++)
+      if (audioTrackBus(t) == 2 && !strncmp(audioTrackName(t), "w_air_", 6) && sayN[SND_SAY_LONGJUMP] < SAY_MAX) sayTrack[SND_SAY_LONGJUMP][sayN[SND_SAY_LONGJUMP]++] = (short)t;
+  for (int e = 0; e < SND_SAY_COUNT; e++) { sayT[e] = 99.f; sayLast[e] = 0xFF; }
+  for (int k = 0; k < SND_V_COUNT; k++) vT[k] = 99.f;
+  vLast = -1;
+  memset(pedN, 0, sizeof pedN); memset(drvN, 0, sizeof drvN); streetT = 99.f; streetTrack = -1;
+  for (int t = 0, n = audioTrackCount(); t < n; t++) {   // правки 180/184: голоса улицы
+    if (audioTrackBus(t) != 2) continue;
+    const char *nm = audioTrackName(t); char pre[24];
+    for (int k = 0; k < SND_PED_KINDS; k++) for (int v = 0; v < 8; v++) {
+      snprintf(pre, sizeof pre, "%s%s_", pedPre[k], pedVoc[v]);
+      if (!strncmp(nm, pre, strlen(pre)) && pedN[k][v] < STREET_MAX) pedTrack[k][v][pedN[k][v]++] = (short)t;
+    }
+    for (int k = 0; k < SND_DRV_KINDS; k++) for (int v = 0; v < 4; v++) {
+      snprintf(pre, sizeof pre, "%s%s_", drvPre[k], drvVoc[v]);
+      if (!strncmp(nm, pre, strlen(pre)) && drvN[k][v] < STREET_MAX) drvTrack[k][v][drvN[k][v]++] = (short)t;
+    }
+  }
+  doors = 0; ndoor = 0; parseExt();
+  audioMaster(SND_HEADROOM);   // the disc levels sum above full scale (engine + music + ambience + hits)
+  mState = SND_MUS_OFF; mReturn = -1; ambZone = -1; ambTrack = -1; emitCur = -1; havePrev = 0; dmgStage = 0;
+  mOwned = 0; curMode = SND_MODE_NORMAL; lbMode = 0; pauseMode = 0;
+  ready = 1;
+  // правка 279 (страховка): шины пакета до первого sndMode — музыка 0; пути запуска 263 (sndInit без sndMode) полагались на
+  // поздний вызов sndMode. Запуск звука сам ставит набор тюнера «Normal»
+  applyMode(SND_MODE_NORMAL);
+  return 0;
+}
+
+void sndShutdown(void) {
+  if (!ready) return;
+  audioShutdown(); ready = 0;
+  for (int s = 0; s < SND_NSET; s++) { free(setRes[s]); setRes[s] = 0; setN[s] = 0; }
+  free(zoneTrack); zoneTrack = 0; nzone = 0;
+  mevts = 0; nmevt = 0; mOwned = 0; rambs = 0; nramb = 0;
+}
+
+// ---------------------------------------------------------------- effects
+int sndId(const char *name) { return ready ? audioFind(name) : -1; }
+int sndPlayId(int id, float x, float y, float z, float vol) {
+  if (!ready || id < 0 || vol <= 0) return 0;
+  float g, pan; audioSpatial(x, y, z, 4.f, 60.f, &g, &pan);
+  g *= vol; if (g <= 0.005f) return 0;
+  sfxNote(id, x, y, z, clampf(g, 0, 1), sfxWhy);
+  return audioPlayAtGain(id,clampf(vol,0,1),x,y,z,4.f,60.f);
+}
+static int playW(const char *why, int id, float x, float y, float z, float vol) {   // запуск с событием для журнала 135.7
+  sfxWhy = why; int h = sndPlayId(id, x, y, z, vol); sfxWhy = "fx"; return h;
+}
+int sndPlay(const char *name, float x, float y, float z, float vol) { return sndPlayId(sndId(name), x, y, z, vol); }
+int sndPlay2D(int id, float vol) {
+  if (!ready || id < 0) return 0;
+  sfxNote(id, 0, 0, 0, clampf(vol, 0, 1), sfxWhy[0] == 'f' && sfxWhy[1] == 'x' ? "2d" : sfxWhy);
+  return audioPlay(id, clampf(vol, 0, 1), 0, 1.f);
+}
+int sndPlayUi(int id, float vol) { return ready && id >= 0 ? audioPlayBus(id, clampf(vol, 0, 1), 0, 1.f, AUDIO_BUS_UI) : 0; }   // правка 114
+void sndStop(int h) { if (ready) audioStop(h); }
+
+// ---------------------------------------------------------------- car
+void sndCarSetup(float topSpeedMs) { topKmh = topSpeedMs > 1.f ? topSpeedMs * 3.6f : 120.f; }
+void sndCarPosition(float x,float y,float z,int outside) { if(ready)audioEnginePosition(x,y,z,outside); }
+void sndEngine(float speedMs, float throttle, unsigned flags) {
+  if (!ready) return;
+  unsigned f = (flags & SND_ENG_ON ? AUDIO_ENGINE_ON : 0) | (flags & SND_ENG_REVERSE ? AUDIO_ENGINE_REVERSE : 0) |
+               (flags & SND_ENG_DAMAGED ? AUDIO_ENGINE_DAMAGED : 0);
+  audioEngine(speedMs * 3.6f, topKmh, clampf(throttle, 0, 1), f);
+}
+void sndHorn(int on) { if (ready) audioHorn(on); }
+#ifndef POLICE_SIREN_OLD
+#define POLICE_SIREN_OLD 0
+#endif
+void sndPoliceCars(const MsnCars *cars) {
+  if (!ready) return;
+  for (int i=0;i<MC_MAX;i++) {
+    const McCar *c=cars && i<cars->n ? &cars->c[i] : NULL;
+    int active=!POLICE_SIREN_OLD && rSiren>=0 && c && c->on && c->police && !c->car.destroyed;
+    if (active) {
+      if (!audioPlaying(hSiren[i])) {
+        sfxNote(rSiren,c->car.x,c->car.ry,c->car.z,1.f,"police");
+        hSiren[i]=audioPlayAtGain(rSiren,1.f,c->car.x,c->car.ry,c->car.z,POLICE_SIREN_MIN,POLICE_SIREN_MAX);
+      } else audioSetAt(hSiren[i],c->car.x,c->car.ry,c->car.z,POLICE_SIREN_MIN,POLICE_SIREN_MAX);
+    } else if (hSiren[i]) { audioStop(hSiren[i]); hSiren[i]=0; }
+  }
+}
+void sndMiniGame(int on) {
+  static const char *const normal[3]={"small_car_crash","medium_car_crash","large_car_crash"};
+  static const char *const mini[3]={"small_crash","med_crash","lrg_crash"};
+  if(ready)for(int i=0;i<3;i++)rCrash[i]=audioFind(on?mini[i]:normal[i]);
+}
+void sndSkid(float a, int dirt) { if (ready) audioSkid(clampf(a, 0, 1), dirt); }
+// правка 413а: мотор, занос, гудок — профилем машины, которую ведёт игрок (имя .con; нет в пакете — машина уровня). Раз в кадр до sndEngine
+void sndPlayerCar(const char *name) { static char last[16]; static int lastP = -2; if (!ready) return;
+  int p = audioPlayerCar(name);   // до 10 профилей по имени — дешевле, чем следить за сменой пакета
+  if (p != lastP || strncmp(last, name, sizeof last)) { lastP = p; strncpy(last, name, sizeof last);
+    if (sfxLog) { char m[80]; snprintf(m, sizeof m, "CARSND car=%.15s profile=%d", name, p); sfxLog(m); } } }
+void sndCarSndOld(int on) { audioCarSndOld(on); }
+void sndPlayerCarState(const char *name, int wrecked) {
+#ifdef CAR_WRECK_AUDIO_OLD
+  wrecked = 0;
+#endif
+  /* The rendered/drivable wreck is huskA, loaded by every level.mfk. */
+  sndPlayerCar(wrecked ? "huskA" : name);
+}
+// Правка Роба 135.9 (01.10 ~09:40): «гул, как будто вращение колёс, когда прыгаю с трамплина где угодно — этого звука быть не должно».
+// Петля car_jump в полёте была гипотезой порта (в данных оригинала не привязана к полёту) — выключена: SND_CAR_AIR 0
+#ifndef SND_CAR_AIR
+#define SND_CAR_AIR 0
+#endif
+void sndCarAir(int on) {
+  if (!ready || rCarJump < 0) return;
+  if (SND_CAR_AIR && on && !audioPlaying(hAir)) { sfxNote(rCarJump, 0, 0, 0, 0.6f, "air"); hAir = audioPlay(rCarJump, 0.6f, 0, 1.f); }
+  else if (!on && hAir) { audioStop(hAir); hAir = 0; }
+}
+void sndCarLand(float v) {
+  if (ready && v > 4.f) { sfxWhy = "land"; sndPlay2D(rRonks, clampf(0.4f + (v - 4.f) / 8.f, 0, 1)); sfxWhy = "fx"; }
+}
+
+// статичный объект уровня (kind InstStatPhys: деревья, столбы, кульверты…) со звуком, которому принадлежит примитив COL1
+// с центром x,y,z. Правка Роба 135.2: звук объекта принадлежит ему (CollisionEffect 0x3000600 его InstStatPhys, данные диска),
+// поэтому звучит только при контакте с его собственным примитивом: центр примитива в r (1.5 м, tools/sound_export.py) от
+// объекта. Раньше — любой удар (стена дома, земля, другая машина) в r + 2 = 3.5 м от центра машины: шорох изгороди, стук
+// столба, «бонг» кульверта поверх удара о соседний дом. ПРАВИЛО ПОРТА по данным (кода движка на диске нет)
+static int staticObjAt(float x, float y, float z) {
+  int best = -1; float bd = 1e9f;
+  for (unsigned i = 0; i < nobj; i++) {
+    const XObj *o = &objs[i];
+    if (o->kind != 2 || o->res < 0) continue;
+    float dx = o->x - x, dz = o->z - z, dy = o->y - y, d = dx * dx + dz * dz;
+    if (dy > 12.f || dy < -6.f) continue;
+    float lim = o->r;
+    if (d < lim * lim && d < bd) { bd = d; best = (int)i; }
+  }
+  return best;
+}
+
+// Правка Роба 250 (03.10, «эффекты слишком громкие — свести, как в оригинале», видео IMG_7707 2:06–2:13). Удары машины игрока —
+// металлический crash и звук задетого или сбитого предмета (collide.spt) — по замерам оригинала (гейт tests/sfx250):
+//  - клип: таран машиной 10,5 м/с у оригинала — small_car_crash (выход SPU2 близнеца, build/twins/o4/v13_wreck, тараны 12 и 13);
+//    в записи PS2 (43 мин, скан клипов диска) small — 52 удара (в том числе о деревья и рекламные щиты), medium — 3 (сильные удары в
+//    машины), large — 8 проверенных (телефонные будки, бельевая верёвка, тараны грузовиком-снегоуборщиком и внедорожником): около
+//    80 % ударов — small. У порта medium звучал с 6 м/с, large с 12 м/с — больше половины ударов (журнал Роба 03.10: 5 small,
+//    5 medium, 1 large за 80 с), а эти клипы длиннее и плотнее (энергия medium в 2,4 раза, large в 7 раз больше small). Пороги ×2:
+//    medium с 12, large с 24 м/с — ПРАВИЛО ПОРТА (как оригинал выбирает размер — по силе, массе или предмету — вопрос близнецу);
+//  - громкость: множитель клипа к множителю музыки у оригинала 0,457 при 10,5 м/с (−6,8 дБ; тараны 0,431 и 0,483); в записи PS2
+//    26 ударов small: медиана 0,63 (−4,0 дБ; 13 ударов 0,58–0,67, 6 — 0,69–0,76), слабые — 0,40–0,51 (7); medium и large там же
+//    (0,45–0,74); фонарь, сбитый машиной, — только свой клип, 0,52 и 0,53. У порта было 0,45 + s/20 при 4–60 м: полная громкость
+//    уже с 11 м/с (0,669 при 10,5 — на 3,3 дБ громче). Теперь громкость растёт с силой удара и упирается в медиану оригинала:
+//    0,745 × min(1, s/14,5) (0,457 при 10,5 м/с, 0,63 с 14,5 м/с) — ПРАВИЛО ПОРТА по замерам;
+//  - расстояние: positionalsettings.spt collision_sounds — полная громкость до 15 м, тишина за 60 м (диск); было 4–60 м, как у всех;
+//  - реплики Гомера на удар — прежние пороги 6 и 12 м/с (голоса не трогаем); пешком (пинок Гомера) — прежняя громкость.
+// SND_250_OLD=1 — прежнее сведение (красный контроль гейта)
+// Второй проход 04.10 (перепроверка 03.10): только уровень 1 (s250 — пакет звука audio/ уровня 1, у L2–L7 прежнее, пока они «потом»);
+// неподвижные предметы (деревья, щиты — «obj») — прежнее расстояние 4–60 м (у оригинала удар о дерево в записи PS2 не найден ни разу:
+// громче делать нельзя), слабые касания — не тише 0,47 (= 0,40 музыки, слабые удары small в записи PS2 0,40–0,51)
+#ifndef SND_250_OLD
+#define SND_250_OLD 0
+#endif
+#ifndef COLL_FULL
+#define COLL_FULL 14.5f    // сила удара (м/с), с которой громкость упирается в потолок
+#endif
+#ifndef COLL_VMAX
+#define COLL_VMAX 0.745f   // потолок: 0,63 музыки / (трим 0,75 × шина эффектов 0,88 / шина музыки 0,78)
+#endif
+#define COLL_FLOOR 0.47f   // 0,40 музыки: слабые удары оригинала (запись PS2, 7 ударов 0,40–0,51)
+#define COLL_MIN 15.f      // positionalsettings.spt collision_sounds: SetMinDistance 15, SetMaxDistance 60
+#define COLL_MAX 60.f
+static float collVol(float s, float oldBase, float oldDiv) {   // громкость удара машины силой s (м/с) до расстояния
+  if (!s250) return clampf(oldBase + s / oldDiv, 0, 1);
+  float v = COLL_VMAX * clampf(s / COLL_FULL, 0, 1); return v < COLL_FLOOR ? COLL_FLOOR : v;
+}
+static int collPlay(const char *why, int id, float x, float y, float z, float vol, int nearDisc) {   // nearDisc: расстояние диска 15–60 м
+  if (!s250 || !nearDisc) return playW(why, id, x, y, z, vol);
+  if (!ready || id < 0 || vol <= 0) return 0;
+  float g, pan; audioSpatial(x, y, z, COLL_MIN, COLL_MAX, &g, &pan);
+  g *= vol; if (g <= 0.005f) return 0;
+  sfxNote(id, x, y, z, clampf(g, 0, 1), why);
+  return audioPlayAtGain(id,clampf(vol,0,1),x,y,z,COLL_MIN,COLL_MAX);
+}
+
+// металлический удар (small/medium/large_car_crash = *_vehicle_crash_01..03, collide.spt) в точке контакта + реплики
+static void crash(float s, float x, float y, float z) {
+  if (!ready || s < 2.f) return;
+  if (crashCool > 0 && s < lastCrash * 1.5f) return;       // scraping along a wall: not a new crash every frame
+  crashCool = 0.25f; lastCrash = s;
+  int size = s250 ? (s >= 24.f ? 2 : s >= 12.f ? 1 : 0) : (s >= 12.f ? 2 : s >= 6.f ? 1 : 0);   // правка 250: пороги ×2 (правило порта)
+  collPlay("crash", rCrash[size], x, y, z, collVol(s, 0.45f, 20.f), 1);
+  if (s >= 12.f) sndSay(SND_SAY_BCRASH, 0); else if (s >= 6.f) sndSay(SND_SAY_MCRASH, 0);   // реплики — прежние пороги (правка 250)
+}
+void sndCarHit(float s, float x, float y, float z) { crash(s, x, y, z); }
+// Правка Роба 135.2 / 135.4 / 135.5: удар машины игрока о мир. crash — только от твёрдого (hardV): посадка (днище о землю) сюда
+// не приходит, её звук — suspension_ronks (sndCarLand, homer_car_land по имени файла на диске); листва (FOLIAGE, у изгородей и
+// кустов атрибут hit_shrub) не гремит железом, а шуршит своим клипом. ПРАВИЛО ПОРТА по данным (имена клипов и атрибуты объектов)
+void sndCarHitWorld(float hardV, float softV, float px, float py, float pz, int prim, float ox, float oy, float oz) {
+  if (!ready) return;
+  crash(hardV, px, py, pz);
+  float v = hardV > softV ? hardV : softV;
+  if (v < 2.f) return;
+  int o = prim ? staticObjAt(ox, oy, oz) : -1;
+  int r = o >= 0 ? objs[o].res : softV >= 2.f && softV >= hardV ? rShrub : -1;
+  if (r < 0) return;
+  if (objCool > 0 && o == lastObj && v < lastObjV * 1.5f) return;   // скрежет вдоль того же объекта
+  objCool = 0.25f; lastObjV = v; lastObj = o;
+  float x = o >= 0 ? objs[o].x : px, y = o >= 0 ? objs[o].y : py, z = o >= 0 ? objs[o].z : pz;
+  collPlay("obj", r, x, y, z, collVol(v, 0.5f, 15.f), 0);   // правка 250: громкость как удар машины, расстояние прежнее (деревья не громче)
+  // №459 (Роб: удар о дерево должен звучать глухим «тук» с треском): к глухому клипу дерева car_hit_tree добавляется древесный треск
+  // деревянного клипа диска car_hit_crate, вполовину тише. Подбор по именам клипов диска, на слух не проверен. TREE_SND_OLD=1 — прежнее
+#ifndef TREE_SND_OLD
+#define TREE_SND_OLD 0
+#endif
+  if (!TREE_SND_OLD && r >= 0 && r == rTree && rCrate >= 0) collPlay("obj", rCrate, x, y, z, .5f * collVol(v, 0.5f, 15.f), 0);
+}
+void sndCarHitCar(float s, float x, float y, float z) {   // правка 135.3: машина о машину — без объектных звуков
+  if (!ready || s < 2.f) return;
+  crash(s, x, y, z); sndSay(SND_SAY_CARWAY, 0);
+}
+// правка 135.6: события трафика (связь по именам ресурсов collide.spt / dialog.spt): car_hit_pedestrian = car_hit_body_01..03
+// (удар по телу) + реплика D_HitP_Hom; разбитая машина трафика — generic_car_explode (car_explosion_*). ПРАВИЛО ПОРТА по именам
+static float hitpWait;   // секунд, пока герой ещё ждёт конца реплики прохожего, чтобы сказать w_hitp (№183)
+void sndPedHit(float x, float y, float z) {
+  if (!ready) return;
+  playW("ped", rPed, x, y, z, 1.f);
+  if (onFootNow) return;
+  // №183/№685 (журнал Персонажей 17.10: STREETSAY p_hitbyc_* занимает поток диалога и ставит паузу 5 с, поэтому w_hitp героя при наезде не звучала ни разу):
+  // реплика прохожего идёт раньше, реплика героя ждёт её конца (до 4 с) и звучит следом. SND_HITP_QUEUE_OLD=1 — прежнее (герой молчит, если прохожий кричит)
+#ifndef SND_HITP_QUEUE_OLD
+#define SND_HITP_QUEUE_OLD 0
+#endif
+  if (!sndSay(SND_SAY_HITP, 0) && !SND_HITP_QUEUE_OLD && audioStreamTrack(AUDIO_ST_DIALOG) >= 0) hitpWait = 4.f;
+}
+void sndTrafficWreck(float x, float y, float z) { if (ready) playW("wreck", rExplode, x, y, z, 1.f); }
+#ifndef BURN_REPEAT_OLD
+#define BURN_REPEAT_OLD 0
+#endif
+static int burnRepeatOld = BURN_REPEAT_OLD; static float burnT;   // секунд до следующей реплики горящей машины
+void sndBurnRepeatOld(int on) { burnRepeatOld = on; }
+static void burnNext(void) { burnT = 22.f + frand() * 7.f; }
+void sndCarDamage(float d) {
+  if (!ready) return;
+  if (d < 0.05f) { dmgStage = 0; return; }                 // repaired
+  int st = d >= .85f ? 3 : d >= .6f ? 2 : d >= .33f ? 1 : 0;
+  if (st > dmgStage) { sndSay(st == 3 ? SND_SAY_BURN : SND_SAY_DAMAGE, 1); dmgStage = st; if (st == 3) burnNext(); }
+  // №180/№184 (запись PS2 ps2_dlg_homer_drive, 17.10): горящая машина — W_Burn_Hom_04 повторяется каждые 22–29 с, пока условие держится (6,25 / 31,48 / 53,86 / 82,96 с,
+  // сила 0,83–0,86; тот же вариант); у порта реплика звучала один раз при переходе в стадию. Повтор — только в машине; BURN_REPEAT_OLD=1 / flag burnrepold 1 — прежнее
+  if (!burnRepeatOld && st == 3 && dmgStage == 3 && !onFootNow && burnT <= 0.f) { sndSay(SND_SAY_BURN, 1); burnNext(); }
+}
+void sndCarExplode(float x, float y, float z) {
+  if (!ready) return;
+  playW("explode", rExplode, x, y, z, 1.f);
+  sinceLine = 99.f; sndSay(SND_SAY_DCAR, 1);
+}
+void sndCarDoor(int open) { if (ready) sndPlay2D(rDoor[open ? 1 : 0], 1.f); }
+
+// ---------------------------------------------------------------- level objects
+// №517 (газета без рывков 70–100 мс): привязка звуков к сотням предметов — n × nobj проверок подряд (~40 мс на PSP за вызов, два вызова в уровне). Кадр экрана загрузки
+// зовётся каждые 32 предмета (loadPump сам не рисует чаще LOAD_PUMP_MS), список объектов нужного вида собирается один раз. SNDBIND_PUMP_OLD=1 — прежний полный перебор без кадров
+#ifndef SNDBIND_PUMP_OLD
+#define SNDBIND_PUMP_OLD 0
+#endif
+void (*sndBindPump)(void);
+void sndBindObjects(int set, unsigned n, const void *xyz, unsigned stride) {
+  if (set < 0 || set >= SND_NSET) return;
+  free(setRes[set]); setRes[set] = 0; setN[set] = 0;
+  if (!ready || !n || !xyz || !nobj) return;
+  setRes[set] = malloc(n * sizeof(short));
+  if (!setRes[set]) return;
+  setN[set] = n;
+  int want = set == SND_SET_PROPS ? 0 : 1;                 // DynaPhys / AnimDynaPhys
+  unsigned *ks = SNDBIND_PUMP_OLD ? 0 : malloc(nobj * sizeof *ks), nk = 0;   // индексы объектов нужного вида (результат тот же, перебор короче)
+  if (ks) for (unsigned k = 0; k < nobj; k++) if (objs[k].kind == want) ks[nk++] = k;
+  for (unsigned i = 0; i < n; i++) {
+    if (!SNDBIND_PUMP_OLD && sndBindPump && (i & 31) == 31) sndBindPump();
+    const float *p = (const float *)((const char *)xyz + (size_t)i * stride);
+    int best = -1; float bd = 0.5f * 0.5f;                  // same object: same placement (export rounding only)
+    for (unsigned kk = 0, kn = ks ? nk : nobj; kk < kn; kk++) {
+      unsigned k = ks ? ks[kk] : kk;
+      if (objs[k].kind != want) continue;
+      float dx = objs[k].x - p[0], dy = objs[k].y - p[1], dz = objs[k].z - p[2], d = dx * dx + dy * dy + dz * dz;
+      if (d < bd) { bd = d; best = objs[k].res; }
+    }
+    setRes[set][i] = (short)best;
+  }
+  free(ks);
+}
+int sndObjectSound(int set, unsigned i) { return set >= 0 && set < SND_NSET && i < setN[set] ? setRes[set][i] : -1; }
+void sndObjectHit(int set, unsigned i, float x, float y, float z, float speed) {
+  int r = sndObjectSound(set, i);
+  if (!ready || r < 0) return;
+  const char *why = set == SND_SET_PROPS ? "prop" : "sprop";
+  if (onFootNow) {                                          // пинок/стомп Гомера — прежняя громкость (правка 250 только про машину)
+    float v = clampf(0.6f + speed / 15.f, 0, 1);
+    playW(why, r, x, y, z, v);
+    if (r == rHydrant) playW(why, rSpray, x, y, z, v);     // the water jet of the hydrant (collide.spt hydrant_spray)
+  } else {                                                  // правка 250: предмет сбит машиной — как удар машины
+    float v = collVol(speed, 0.6f, 15.f);
+    collPlay(why, r, x, y, z, v, 1);
+    if (r == rHydrant) collPlay(why, rSpray, x, y, z, v, 1);
+    if (!TREE_SND_OLD && r == rTree && rCrate >= 0) collPlay(why, rCrate, x, y, z, .5f * v, 1);   // №459/№460: сбитое дерево и заборы-барьеры звучат одинаково: глухой «тук» с древесным треском
+  }
+  // правка 135.1: реплики D_* — набор «в машине» (dialog.spt D_<event>_Hom); пинок Гомера пешком — без D_Break
+  if (!onFootNow) sndSay(SND_SAY_BREAK, 0);
+}
+
+// ---------------------------------------------------------------- pickups, Homer
+void sndCoin(void) { sndPlay2D(rCoin, 1.f); }
+void sndCoinLose(float x, float y, float z) { sndPlayId(rCoinLose, x, y, z, 1.f); }
+void sndFootstep(int g, float x, float y, float z) { sndPlayId(rFeet[g & 3] >= 0 ? rFeet[g & 3] : rFeet[0], x, y, z, 1.f); }
+void sndJump(float x, float y, float z) { sndPlayId(rJump, x, y, z, 1.f); }
+void sndLand(int g, float x, float y, float z) { sndPlayId(rLand[g & 3] >= 0 ? rLand[g & 3] : rLand[0], x, y, z, 1.f); }
+void sndStomp(float x, float y, float z) { sndPlayId(rStomp, x, y, z, 1.f); }
+
+int sndPcSayOld;
+static const char *sayLastName;
+// №683 (Роб, TEST27: «у Барта нет ни одной фразы»): учёт попыток реплик водителя уровня по событиям — сколько раз звали, сколько сказано, почему отказ (flag saystat → строка SAYSTAT)
+static char sayHist[256];   // имена сказанных дорожек подряд (гейт семени: две игры с разным семенем говорят по-разному)
+static unsigned sayCall[SND_SAY_COUNT], sayOk[SND_SAY_COUNT], sayNoPool[SND_SAY_COUNT], sayGap[SND_SAY_COUNT], sayBusy[SND_SAY_COUNT], sayRoll[SND_SAY_COUNT];
+int sndSayStats(char *b, int n) {
+  int l = snprintf(b, n, "SAYSTAT"); unsigned all = 0;
+  for (int e = 0; e < SND_SAY_COUNT && l < n - 40; e++) { all += sayOk[e]; if (sayCall[e] || sayN[e]) l += snprintf(b + l, n - l, " %d:pool%d,call%u,ok%u,nopool%u,gap%u,busy%u,roll%u", e, sayN[e], sayCall[e], sayOk[e], sayNoPool[e], sayGap[e], sayBusy[e], sayRoll[e]); }
+  l += snprintf(b + l, n - l, " total_ok=%u ready=%d hist=%s\n", all, ready, sayHist); return l;
+}
+int sndSay(int e, int force) {
+  if (!ready || e < 0 || e >= SND_SAY_COUNT) return 0;
+  sayCall[e]++;
+  if (!sayN[e]) { sayNoPool[e]++; return 0; }
+  if (sndPcSayOld && e >= SND_SAY_MSTART && e <= SND_SAY_GIC) return 0;   // правка 345: красный контроль — как до правки
+  if (sinceLine < 5.f) { sayGap[e]++; return 0; }
+  if (audioStreamTrack(AUDIO_ST_DIALOG) >= 0) { sayBusy[e]++; return 0; }
+  if (!force && (sayT[e] < sayCool[e] || frand() >= sayChance[e])) { sayRoll[e]++; return 0; }
+  int k = (int)(frand() * sayN[e]) % sayN[e];
+  if (sayN[e] > 1 && k == sayLast[e]) k = (k + 1) % sayN[e];
+  sayLast[e] = (unsigned char)k; sayT[e] = 0; sinceLine = 0; sayOk[e]++;
+  audioStream(AUDIO_ST_DIALOG, sayTrack[e][k], 0);
+  sayLastName = audioTrackName(sayTrack[e][k]);
+  { size_t hl = strlen(sayHist), nl = strlen(sayLastName); if (hl + nl + 2 < sizeof sayHist) { memcpy(sayHist + hl, sayLastName, nl); sayHist[hl + nl] = ','; sayHist[hl + nl + 1] = 0; } }
+  if (sfxLog) { char t[64]; snprintf(t, sizeof t, "SAY %d %s", e, sayLastName); sfxLog(t); }   // журнал смоука: событие и дорожка (раньше только e >= SND_SAY_CARD)
+  return 1;
+}
+const char *sndSayLastName(void) { return sayLastName ? sayLastName : "-"; }
+
+// ---- реплики соперников (аудит 09.10): дорожки v_<семейство>_<код>_* пакета (tools/sound_export.py rival_codes)
+static const char *const vKey[SND_V_COUNT] = {"mvic", "mfail", "damage", "tail", "hitcar"};
+static const float vCool[SND_V_COUNT] = {0, 0, 10, 10, 10};   // правило порта: удар и «соперник впереди» — не чаще 10 с
+static int codeOf(const char *driver, const char *code, int len) {   // буквы кода по порядку в имени водителя, первая совпадает
+  if (!driver || !*driver || len <= 0 || (driver[0] | 32) != (code[0] | 32)) return 0;
+  int k = 0; for (const char *d = driver; *d && k < len; d++) if ((*d | 32) == (code[k] | 32)) k++;
+  return k == len;
+}
+static int rivalPool(const char *driver, int kind, short *out, int max) {
+  int n = 0; char pre[16]; snprintf(pre, sizeof pre, "v_%s_", vKey[kind]); size_t pl = strlen(pre);
+  for (int t = 0, nt = audioTrackCount(); t < nt && n < max; t++) {
+    if (audioTrackBus(t) != 2) continue;
+    const char *nm = audioTrackName(t); if (strncmp(nm, pre, pl)) continue;
+    const char *c = nm + pl, *e = strchr(c, '_'); if (!e) continue;
+    if (codeOf(driver, c, (int)(e - c))) out[n++] = (short)t;
+  }
+  return n;
+}
+// 15.10 (TEST18, разбивка UIPH/MVHUD: mvhud 2,0–2,9 мс на кадр в погонях и гонках, 0,03 вне миссий): msn_view.c voTick звал sndRivalHas на каждую машину миссии КАЖДЫЙ кадр, а он
+// перебирал все дорожки звука (SND_V_COUNT видов × все дорожки с snprintf и сравнением строк). Ответ зависит только от имени водителя и набора дорожек — кэш по имени, сбрасывается
+// при смене набора (число дорожек, первая и последняя). SND_RIVAL_CACHE_OLD=1 — прежнее
+#ifndef SND_RIVAL_CACHE_OLD
+#define SND_RIVAL_CACHE_OLD 0
+#endif
+int sndRivalHas(const char *driver) {
+  if (!ready || SND_VO_OLD) return 0;
+  static struct { char d[24]; int has; } cache[16]; static int ncache, cnt; static const char *first, *last;
+  int nt = SND_RIVAL_CACHE_OLD ? 0 : audioTrackCount();
+  if (!SND_RIVAL_CACHE_OLD) {
+    const char *f = nt ? audioTrackName(0) : 0, *l = nt ? audioTrackName(nt - 1) : 0;
+    if (nt != cnt || f != first || l != last) { ncache = 0; cnt = nt; first = f; last = l; }
+    for (int i = 0; i < ncache; i++) if (!strncmp(cache[i].d, driver, sizeof cache[i].d - 1) && strlen(driver) < sizeof cache[i].d) return cache[i].has;
+  }
+  int has = 0; short p[4]; for (int k = 0; k < SND_V_COUNT && !has; k++) if (rivalPool(driver, k, p, 4)) has = 1;
+  if (!SND_RIVAL_CACHE_OLD && ncache < 16 && strlen(driver) < sizeof cache[0].d) { snprintf(cache[ncache].d, sizeof cache[ncache].d, "%s", driver); cache[ncache].has = has; ncache++; }
+  return has;
+}
+int sndRivalSay(const char *driver, int kind, int force) {
+  if (!ready || SND_VO_OLD || kind < 0 || kind >= SND_V_COUNT) return 0;
+  if (sinceLine < 5.f || audioStreamTrack(AUDIO_ST_DIALOG) >= 0) return 0;
+  if (!force && vT[kind] < vCool[kind]) return 0;
+  short pool[SAY_MAX]; int n = rivalPool(driver, kind, pool, SAY_MAX); if (!n) return 0;
+  int k = (int)(frand() * n) % n; if (n > 1 && pool[k] == vLast) k = (k + 1) % n;
+  vLast = pool[k]; vT[kind] = 0; sinceLine = 0;
+  audioStream(AUDIO_ST_DIALOG, pool[k], 0);
+  sayLastName = audioTrackName(pool[k]);
+  if (sfxLog) { char t[64]; snprintf(t, sizeof t, "SAY %s", sayLastName); sfxLog(t); }
+  return 1;
+}
+const char *sndGetOut(int on) {   // правка 345: выход из машины начался (фронт) — реплика водителя W_GOC_ (шанс GOC_CHANCE)
+  static int was; int edge = on && !was; was = on;
+  if (!edge) return 0;
+  return sndSay(SND_SAY_GOC, 0) ? sayLastName : "";
+}
+
+// [PS2] W_GIC Hom: 4 из 11 посадок, atlas_findings.tsv m0.2
+// Шанс для семейства W_GIC остальных героев пока правило порта; Апу не подменяется другим событием
+const char *sndGetIn(int on) {
+  int edge = on && getInWas == 0; getInWas = on;
+  if (!edge) return 0;
+  return sndSay(SND_SAY_GIC, 0) ? sayLastName : "";
+}
+
+// правки 180/184: голос прохожего по имени модели — ПРАВИЛО ПОРТА (в данных диска связи модели с голосом нет): класс по имени
+// (fem/olady/busw/hooker/nurse — женский, girl — девочка, boy — мальчик, остальные — мужской), какой из двух — по сумме букв имени
+// Правка 240: персонажи миссий (game_msn.c, имя как в скриптах) — тем же правилом: женщины marge/patty/selma/zfem1, девочка lisa,
+// мальчики bart/milhouse/nelson/ralph/jimbo, остальные — мужской голос. Свои реплики персонажей (<имя>/p_hitbyc_*.rsd на диске)
+// в звуковой пакет не выгружаются (tools/sound_export.py STREET — только generic_*) — пока голос класса
+static int nameIn(const char *m, const char *const *list) { for (; *list; list++) if (!strcmp(m, *list)) return 1; return 0; }
+int sndPedVoice(const char *m) {
+  if (!m) return 0;
+  static const char *const women[] = {"marge", "patty", "selma", "zfem1", 0}, *const girls[] = {"lisa", 0},
+                           *const boys[] = {"bart", "milhouse", "nelson", "ralph", "jimbo", 0};
+  unsigned h = 0; for (const char *c = m; *c; c++) h += (unsigned char)*c;
+  int cls = !strncmp(m, "girl", 4) || nameIn(m, girls) ? 3 : !strncmp(m, "boy", 3) || nameIn(m, boys) ? 2 :
+            (!strncmp(m, "fem", 3) || !strncmp(m, "olady", 5) || !strncmp(m, "busw", 4) || !strncmp(m, "hooker", 6) || !strncmp(m, "nurse", 5) ||
+             nameIn(m, women)) ? 1 : 0;
+  return cls * 2 + (int)(h & 1u);
+}
+static int streetSay(const short *tr, unsigned char n) {
+  if (!ready || !n || sndStreetOff || streetT < 1.5f || audioStreamTrack(AUDIO_ST_DIALOG) >= 0) return 0;
+  int k = (int)(frand() * n) % n;
+#ifndef SND_STREET_REPEAT_OLD
+#define SND_STREET_REPEAT_OLD 0   // 1 — прохожие могут сказать ту же реплику два раза подряд (как было)
+#endif
+  static short lastStreet = -1; if (!SND_STREET_REPEAT_OLD && n > 1 && tr[k] == lastStreet) k = (k + 1) % n;   // №685: та же реплика подряд не звучит
+  lastStreet = tr[k];
+  audioStream(AUDIO_ST_DIALOG, tr[k], 0); streetT = 0.f; sinceLine = 0.f;
+  if (sfxLog) { char t_[64]; snprintf(t_, sizeof t_, "STREETSAY %s", audioTrackName(tr[k])); sfxLog(t_); }   // журнал смоука: какая дорожка улицы взята
+  return 1;
+}
+int sndPedSay(int kind, int v) {
+  if (kind < 0 || kind >= SND_PED_KINDS || v < 0 || v > 7) return 0;
+  if (!pedN[kind][v]) v ^= 1;   // у голоса нет реплик этого вида — второй голос того же класса
+  return streetSay(pedTrack[kind][v], pedN[kind][v]);
+}
+int sndDriverSay(int kind, int v) {
+  if (kind < 0 || kind >= SND_DRV_KINDS) return 0;
+  v &= 3; if (!drvN[kind][v]) v ^= 1;
+  return streetSay(drvTrack[kind][v], drvN[kind][v]);
+}
+
+#ifndef SND_STREET_SPATIAL_OLD
+#define SND_STREET_SPATIAL_OLD 0
+#endif
+static int streetAt(int started,float x,float y,float z) {
+  if(!started)return 0;
+  streetTrack=audioStreamTrack(AUDIO_ST_DIALOG);streetSerial=audioStreamRequestSerial(AUDIO_ST_DIALOG);
+  if(!SND_STREET_SPATIAL_OLD)audioStreamAt(AUDIO_ST_DIALOG,x,y,z,4.f,60.f);
+  return 1;
+}
+// Named source folders identify characters exactly; generic voices remain the
+// fallback when a character has no authored line or the voice stream is busy.
+static int namedPool(const char *prefix, short *pool, int max) {
+  int n = 0; size_t len = strlen(prefix);
+  for (int t = 0; t < audioTrackCount() && n < max; t++)
+    if (audioTrackBus(t) == 2 && !strncmp(audioTrackName(t), prefix, len)) pool[n++] = t;
+  return n;
+}
+int sndPedNamedSayAt(int kind, const char *name, float x, float y, float z) {
+  if (!SND_VO_OLD && name && kind >= 0 && kind < SND_PED_KINDS) {
+    char prefix[64]; short pool[64]; snprintf(prefix, sizeof prefix, "%s%s_", pedPre[kind], name);
+    if (streetAt(streetSay(pool, namedPool(prefix, pool, 64)), x, y, z)) return 1;
+  }
+  return sndPedSayAt(kind, sndPedVoice(name), x, y, z);
+}
+int sndDoorbellNear(float x, float y, float z) {
+  if (SND_VO_OLD || !ready) return -1;
+  for (unsigned i = 0; i < ndoor; i++) {
+    const XDoor *d = doors + i; float v[3] = {x-d->p[0], y-d->p[1], z-d->p[2]};
+    if (!d->kind) { if (v[0]*v[0]+v[1]*v[1]+v[2]*v[2] <= d->half[0]*d->half[0]) return i; }
+    else { int in = 1; for (int k = 0; k < 3; k++)
+      if (fabsf(v[0]*d->axes[k*3]+v[1]*d->axes[k*3+1]+v[2]*d->axes[k*3+2]) > d->half[k]) in = 0;
+      if (in) return i; }
+  }
+  return -1;
+}
+int sndDoorbellSay(int index) {
+  if (SND_VO_OLD || index < 0 || (unsigned)index >= ndoor) return 0;
+  short pool[64]; int n = namedPool(doors[index].prefix, pool, 64);
+  int ok = streetSay(pool, n);
+  return streetAt(ok, doors[index].p[0], doors[index].p[1], doors[index].p[2]);
+}
+int sndPedSayAt(int kind,int voice,float x,float y,float z) {return streetAt(sndPedSay(kind,voice),x,y,z);}
+int sndDriverSayAt(int kind,int voice,float x,float y,float z) {return streetAt(sndDriverSay(kind,voice),x,y,z);}
+int sndStreetMove(float x,float y,float z) {
+  if(!ready||streetTrack<0||audioStreamTrack(AUDIO_ST_DIALOG)!=streetTrack||audioStreamRequestSerial(AUDIO_ST_DIALOG)!=streetSerial){streetTrack=-1;return 0;}
+  if(!SND_STREET_SPATIAL_OLD)audioStreamAt(AUDIO_ST_DIALOG,x,y,z,4.f,60.f);
+  return 1;
+}
+void sndStreetStop(void) {
+  if(ready&&streetTrack>=0&&audioStreamTrack(AUDIO_ST_DIALOG)==streetTrack&&audioStreamRequestSerial(AUDIO_ST_DIALOG)==streetSerial)audioStream(AUDIO_ST_DIALOG,-1,.15f);
+  streetTrack=-1;
+}
+
+// ---------------------------------------------------------------- music / mode
+static float musicFadeOver = -1.f;   // правка 593: выход из клуба — своё затухание (PS2 ~4 с)
+static void music(int t, float fade) { audioMusic(t >= 0 ? tId[t] : -1, musicFadeOver >= 0.f ? musicFadeOver : fade); }
+void sndMusic(int st) {
+  if (!ready || st < 0 || st >= SND_MUS_COUNT) return;
+  if (mOwned && st != SND_MUS_OFF) return;   // музыку ведёт миссия (sndMusicEvent): пешком/в машине решает она
+  if (clubOn && musicFadeOver < 0.f) { clubOn = 0; audioStreamSet(AUDIO_ST_MUSIC, 1.f, 0.f); if (sfxLog) sfxLog("SNDCLUB end by music change"); }   // ревью 16.10: чужая смена музыки заканчивает клуб — громкость 1,0 и туба снова доступна (clubExit сам ставит musicFadeOver)
+  int cur = audioStreamTrack(AUDIO_ST_MUSIC);
+  mReturn = -1;
+  switch (st) {
+    case SND_MUS_OFF: music(-1, 1.f); break;
+    case SND_MUS_FREEROAM:
+      if (mState == SND_MUS_FREEROAM && cur >= 0 && (cur == tId[T_SD] || cur == tId[T_SD_INTRO])) break;
+      music(tId[T_SD_INTRO] >= 0 ? T_SD_INTRO : T_SD, 0.5f); break;   // без вступления (уровни 2, 3, 5, 6) — сразу петля езды
+    case SND_MUS_ONFOOT: {   // выход из машины: случайный из вариантов, которые есть у уровня (у 1, 2, 4, 6 — три, у 3 и 7 — один)
+      int pick[3], n = 0; for (int k = 0; k < 3; k++) if (tId[T_SD_SUS1 + k] >= 0) pick[n++] = T_SD_SUS1 + k;
+      music(n ? pick[(int)(frand() * n) % n] : -1, 0.15f);
+    } break;
+    case SND_MUS_MISSION: music(T_M_PICKUP, 0.3f); break;
+    case SND_MUS_MISSION_WIN: music(T_M_POS, 0.15f); mReturn = SND_MUS_FREEROAM; break;
+    case SND_MUS_MISSION_LOSE: music(T_M_NEG, 0.15f); mReturn = SND_MUS_FREEROAM; break;
+    case SND_MUS_MISSION_ONFOOT: music(frand() < .5f ? T_M_SUS1 : T_M_SUS2, 0.15f); break;
+    case SND_MUS_HITRUN: music(T_HR_INTRO, 0.3f); break;
+    case SND_MUS_HITRUN_CAUGHT: music(T_HR_NEG, 0.15f); mReturn = SND_MUS_FREEROAM; break;
+    case SND_MUS_KWIKEMART: music(T_KWIK, 0.5f); break;
+    case SND_MUS_STORE: music(T_MUZAK, 0.5f); break;
+    case SND_MUS_FRONTEND:   // FE_region: поток Simpsons_Theme = simpsons_theme.rsd (строки всех l?_music.rms), петля
+      if (mState == SND_MUS_FRONTEND && cur >= 0 && cur == tId[T_FE]) break;
+      music(T_FE, 0.5f); break;
+  }
+  mState = st;
+}
+int sndMusicState(void) { return mState; }
+
+// музыка миссий: таблица MEVT (tools/sound_export.py mission_music). Концовки win/lose — один проход, потом свободная езда
+// (как SND_MUS_MISSION_WIN/LOSE); get_out_of_car — один проход, потом тишина до следующего события миссии
+int sndSusLoopOld;   // правка 303: служебное — концовка «вышел из машины» петлёй, как в данных
+int sndMusicEvent(const char *ev, const char **track) {
+  if (track) *track = "-";
+  if (!ready || !ev) return -1;
+  for (unsigned i = 0; i < nmevt; i++) {
+    const XMEvt *e = &mevts[i];
+    if (strncmp(e->event, ev, sizeof e->event) != 0) continue;
+    if (!e->n) return 0;
+    int t = e->track[e->n > 1 ? (int)(frand() * e->n) % e->n : 0];
+    if (t < 0) return 0;
+    if (track) *track = audioTrackName(t);
+    int end = e->kind == MEV_WIN || e->kind == MEV_LOSE;
+    // Правка Роба 303 (04.10: «после выхода из машины снова и снова мелодия — играет две секунды и начинается заново»): концовка
+    // get_out_of_car (…_end_sus) у M2/M3/M5/M6/M7 в данных — петлёй (logic_repeat), короткий отрывок начинался сначала каждые
+    // ~2 с. Один проход, как у M0/M1; дальше тишина и тубы прогулки (правка 179). sndSusLoopOld (flag susloopold 1) — прежнее
+    if (e->kind == MEV_SUS && !sndSusLoopOld) audioMusicOnce(t, 0.15f);
+    else audioMusic(t, end || e->kind == MEV_SUS ? 0.15f : 0.3f);
+    mState = end ? (e->kind == MEV_WIN ? SND_MUS_MISSION_WIN : SND_MUS_MISSION_LOSE) : SND_MUS_MISSION;
+    mReturn = end ? SND_MUS_FREEROAM : -1;
+    mOwned = !end;
+    return 1;
+  }
+  return -1;
+}
+void sndMusicMission(int own) {
+  if (!ready) return;
+  if (own) { mOwned = 1; return; }
+  if (!mOwned) return;
+  mOwned = 0; mReturn = -1; mState = SND_MUS_OFF; sndMusic(onFootNow ? SND_MUS_ONFOOT : SND_MUS_FREEROAM);
+}
+int sndMusicOwned(void) { return mOwned; }
+void sndMusicRelease(void) { mOwned = 0; mReturn = -1; }
+void sndOnFoot(int on) { onFootNow = on; }
+static int voiceTrack = -1;   // реплика разговора миссии в потоке диалогов (sndVoice)
+void sndVoice(int t) { if (ready) { audioStream(AUDIO_ST_DIALOG, t, t < 0 ? 0.1f : 0.f); voiceTrack = t; } }
+int sndVoiceBusy(void) { return ready && voiceTrack >= 0 && audioStreamTrack(AUDIO_ST_DIALOG) == voiceTrack; }
+int sndVoicePlaying(int t) { return ready && t >= 0 && audioStreamTrack(AUDIO_ST_DIALOG) == t; }
+int sndModeCur(void) { return curMode; }
+
+// Правка Роба 55 (29.09): разговор миссии с полосами (экран LetterBox) звучит набором шин тюнера диска «Letterbox»
+// (global.spt: музыка 0.29, эффекты 0.5, мотор 0.28, фон 0.5, голос 1) поверх текущего режима — реплики слышно, музыка
+// места не останавливается и после разговора играет дальше на прежней громкости (режим под полосами не теряется)
+static void applyMode(int m);
+void sndMode(int m) {
+  if (!ready || m < 0 || m > SND_MODE_CREDITS) return;
+  curMode = m;
+  applyMode(pauseMode ? SND_MODE_PAUSE : lbMode ? SND_MODE_LETTERBOX : m);
+}
+// Правка Роба 87: пауза — набор шин тюнера диска «Pause» (global.spt: музыка, эффекты, мотор, голос, фон = 0 — тишина) поверх всего
+void sndPause(int on) {
+  on = !!on; if (!ready || on == pauseMode) return;
+  pauseMode = on; applyMode(on ? SND_MODE_PAUSE : lbMode ? SND_MODE_LETTERBOX : curMode);
+}
+void sndLetterbox(int on) {
+  on = !!on; if (!ready || on == lbMode) return;
+  lbMode = on; if (!pauseMode) applyMode(on ? SND_MODE_LETTERBOX : curMode);
+}
+int sndModeApplied(void) { return lbMode ? SND_MODE_LETTERBOX : curMode; }
+static void applyMode(int m) {
+  applyCalls++;
+  static const char *const names[] = {"Normal", "Pause", "MissionScreen", "Letterbox", "Dialogue", "Store", "OnFoot",
+                                      "Minigame", "JustMusic", "Credits"};
+  for (unsigned i = 0; i < nmode; i++)
+    if (!strncmp(modes[i].name, names[m], 16)) {
+      audioBus(AUDIO_BUS_SFX, modes[i].v[0]); audioBus(AUDIO_BUS_CAR, modes[i].v[1]);
+      audioBus(AUDIO_BUS_MUSIC, modes[i].v[2]); audioBus(AUDIO_BUS_AMBIENCE, modes[i].v[3]);
+      audioBus(AUDIO_BUS_DIALOG, modes[i].v[4]);
+      lastApplied = m; lastAppliedMus = modes[i].v[2];
+      if (sfxLog) { char t[96]; snprintf(t, sizeof t, "SNDMODE %s music=%.2f sfx=%.2f pause=%d lb=%d cur=%d", names[m], modes[i].v[2], modes[i].v[0], pauseMode, lbMode, curMode); sfxLog(t); }   // правка 279
+      return;
+    }
+}
+int sndModeDebug(char *out, int n) { return snprintf(out, n, "applied=%d mus=%.2f calls=%d nmode=%u pause=%d lb=%d", lastApplied, lastAppliedMus, applyCalls, nmode, pauseMode, lbMode); }
+void sndMaster(float v) { if (ready) audioMaster(v * SND_HEADROOM); }
+// громкость игрока из меню Sound оригинала (MUSIC / EFFECTS / VEHICLE / VOICE, 0..1): поверх шин тюнера диска
+void sndUserVolumes(float music, float effects, float vehicle, float voice) {
+  audioUserVolume(AUDIO_BUS_MUSIC, music); audioUserVolume(AUDIO_BUS_SFX, effects); audioUserVolume(AUDIO_BUS_AMBIENCE, effects);
+  audioUserVolume(AUDIO_BUS_UI, effects);   // правка 114: звуки меню — громкость эффектов
+  audioUserVolume(AUDIO_BUS_CAR, vehicle); audioUserVolume(AUDIO_BUS_DIALOG, voice);
+}
+
+// ---------------------------------------------------------------- per frame: gates, emitters, timers
+// segment a->b against zone i in its local frame; returns entry parameter 0..1 or -1
+static float gateHit(unsigned i, const float a[3], const float b[3]) {
+  const XZone *zn = &zones[i];
+  float la[3], lb[3];
+  for (int k = 0; k < 3; k++) {
+    const float *ax = zn->ax + 3 * k;
+    la[k] = ax[0] * (a[0] - zn->t[0]) + ax[1] * (a[1] - zn->t[1]) + ax[2] * (a[2] - zn->t[2]);
+    lb[k] = ax[0] * (b[0] - zn->t[0]) + ax[1] * (b[1] - zn->t[1]) + ax[2] * (b[2] - zn->t[2]);
+  }
+  if (zn->type == 0) {                                     // sphere: end point inside
+    float r = zn->half[0], d = lb[0] * lb[0] + lb[1] * lb[1] + lb[2] * lb[2];
+    return d <= r * r ? 1.f : -1.f;
+  }
+  float t0 = 0, t1 = 1;
+  for (int k = 0; k < 3; k++) {                            // slab test
+    float d = lb[k] - la[k], h = zn->half[k];
+    if (fabsf(d) < 1e-6f) { if (la[k] < -h || la[k] > h) return -1; continue; }
+    float u = (-h - la[k]) / d, v = (h - la[k]) / d;
+    if (u > v) { float s = u; u = v; v = s; }
+    if (u > t0) t0 = u; if (v < t1) t1 = v;
+    if (t0 > t1) return -1;
+  }
+  return t0;
+}
+
+// Правка Роба 422 (09.10: «птицы / фон улицы всё ещё громкие»): ВКУС ВЛАДЕЛЬЦА, НЕ PS2 — замер В25 (правка 161, tests/amb161) держит
+// фон улицы на уровне записи PS2; Роб просит тише. Шаг −3 дБ только на атмосфере улицы (зоны ambience.rms, старт уровня); атмосфера
+// комнат (правка 345, roomAmb), музыка, мотор и эффекты — без изменений. AMB422_OLD=1 — прежнее (как PS2; красный tests/amb161)
+#ifndef AMB422_OLD
+#define AMB422_OLD 0
+#endif
+#define AMB_OUT_DB (AMB422_OLD ? 0.f : -3.f)   // правило порта (вкус Роба 09.10), шаг −3 дБ
+float sndTestAmbOutDb(void) { return AMB_OUT_DB; }   // tests/amb161: поправка фона улицы этой сборки
+static int roomAmb;
+static void setAmbience(int zone, int track, float fade) {
+  ambZone = zone;
+  if (track != ambTrack) { ambTrack = track; audioAmbience(track, fade); }
+  audioStreamSet(AUDIO_ST_AMBIENCE, roomAmb ? 1.f : powf(10.f, AMB_OUT_DB / 20.f), 0.f);   // 422: улица −3 дБ, комната как была
+}
+
+// Правка 345: атмосфера комнаты. [PS2] атлас m0d: в Kwik-E-Mart оригинал читает AMBIENCE.RCF room_small_01 (кадр 6296 — Гомер уже
+// в комнате, 63 кадра после △ у двери); в доме Симпсонов — тоже room_small_01 (agent345/ps2 house2, кадр 521, в комнате с 507). [диск] события L1_Kwik_E_Mart / L1_School / L1_House / L2_DMV композиции ambience.rms без
+// локаторов — включаются входом в комнату. Выход — атмосфера улицы, что звучала до входа ([правило порта]: выход оригинала не снят)
+int sndRoomAmbOld;
+static int roomOutZone = -1, roomOutTrack = -1;
+const char *sndRoom(const char *room) {
+  if (!ready) return "-";
+  int t = -1;
+  if (room && !sndRoomAmbOld)
+    for (unsigned i = 0; i < nramb; i++) {
+      const char *a = rambs[i].room, *b = room; int n = 0;
+      while (n < 28 && *a && *b && ((*a | 32) == (*b | 32))) { a++; b++; n++; }
+      if (n < 28 && !*a && !*b) { char nm[29]; memcpy(nm, rambs[i].track, 28); nm[28] = 0; t = audioTrack(nm); break; }
+    }
+  if (t >= 0) {
+    if (!roomAmb) { roomOutZone = ambZone; roomOutTrack = ambTrack; roomAmb = 1; }
+    setAmbience(-1, t, 0.5f);
+  } else if (!room && roomAmb) { roomAmb = 0; setAmbience(roomOutZone, roomOutTrack, 0.5f); }
+  return ambTrack >= 0 ? audioTrackName(ambTrack) : "-";
+}
+
+void sndLevelStart(float px, float py, float pz) {
+  if (!ready) return;
+  // атмосфера старта — первая дорожка атмосферы пакета: tools/sound_export.py кладёт первой атмосферу старта уровня
+  // (AMB_DEFAULT; у уровня 1 — amb_l1_suburbs_day, как было по имени до 29.09)
+  int t = -1;
+  for (int k = 0, n = audioTrackCount(); k < n; k++) if (audioTrackBus(k) == 1) { t = k; break; }
+  ambTrack = -2; roomAmb = 0; setAmbience(-1, t, 0.5f);   // правка 345: старт уровня — улица
+  if (clubOn) { clubOn = 0; audioStreamSet(AUDIO_ST_MUSIC, 1.f, 0.f); }   // правка 593
+  ppx = px; ppy = py; ppz = pz; havePrev = 1;
+}
+
+static void clubExit(void) {   // правка 593: выход из клуба — затухание 4 с и обычная музыка (PS2: тема сходит за ~4–5 с)
+  clubOn = 0; audioStreamSet(AUDIO_ST_MUSIC, 1.f, 0.f); musicFadeOver = CLUB_FADE_OUT;
+  sndMusic(onFootNow ? SND_MUS_ONFOOT : SND_MUS_FREEROAM); musicFadeOver = -1.f; if (sfxLog) sfxLog("SNDCLUB exit");
+}
+
+void sndFrame(float dt, float cx, float cy, float cz, float rx, float rz, float px, float py, float pz) {
+  if (!ready) return;
+  if (dt < 0) dt = 0; if (dt > 0.25f) dt = 0.25f;
+  audioListener(cx, cy, cz, rx, rz);
+  crashCool -= dt; objCool -= dt; sinceLine += dt; streetT += dt;
+  for (int e = 0; e < SND_SAY_COUNT; e++) sayT[e] += dt;
+  if (hitpWait > 0.f) {   // №183: очередь реплики героя после крика прохожего
+    hitpWait -= dt;
+    if (onFootNow) hitpWait = 0.f;
+    else if (audioStreamTrack(AUDIO_ST_DIALOG) < 0) { hitpWait = 0.f; sinceLine = 99.f; sndSay(SND_SAY_HITP, 0); }
+  }
+  if (dmgStage == 3 && !onFootNow) burnT -= dt;   // №180/№184: повтор реплики горящей машины (sndCarDamage)
+  for (int k = 0; k < SND_V_COUNT; k++) vT[k] += dt;
+  // music: endings go back to free roam once they have played
+  if (mReturn >= 0 && audioStreamTrack(AUDIO_ST_MUSIC) < 0) { int r = mReturn; mReturn = -1; sndMusic(r == SND_MUS_FREEROAM && onFootNow ? SND_MUS_ONFOOT : r); }
+  { // правка 182: Vivaldi в тоннеле/зале Stonecutters
+    const char *an = ambTrack >= 0 ? audioTrackName(ambTrack) : "";
+    int inSc = vivId >= 0 && !mOwned && (MUSIC_FOOT_OLD || !onFootNow) && (!strcmp(an, "amb_stonecutters_tunnel") || !strcmp(an, "amb_stonecutters_hall"));
+    int cur = audioStreamTrack(AUDIO_ST_MUSIC), hr = cur >= 0 && (cur == tId[T_HR_INTRO] || cur == tId[T_HR_MAIN] || cur == tId[T_HR_NEG]);
+    if (inSc && !vivOn && !hr) { vivOn = 1; mReturn = -1; audioMusic(vivId, 1.f); }
+    else if (vivOn && !inSc) { vivOn = 0; sndMusic(onFootNow ? SND_MUS_ONFOOT : SND_MUS_FREEROAM); }
+  }
+  // правка 179: туба пешком — своя музыка молчит, не миссия, не Vivaldi
+  if (onFootNow && nTuba && !mOwned && !vivOn && !clubOn && audioStreamTrack(AUDIO_ST_MUSIC) < 0) {
+    if ((tubaT -= dt) <= 0.f) {
+      int k = (int)(frand() * nTuba) % nTuba; if (nTuba > 1 && k == tubaLast) k = (k + 1) % nTuba;
+      tubaLast = k; audioMusic(tubaId[k], 0.f); tubaT = TUBA_MIN + frand() * (TUBA_MAX_S - TUBA_MIN);
+    }
+  } else if (!onFootNow) tubaT = TUBA_MIN + frand() * (TUBA_MAX_S - TUBA_MIN);
+  // ambience gates crossed by the player this frame; the last one along the path wins
+  if (!havePrev) { ppx = px; ppy = py; ppz = pz; havePrev = 1; }
+  float a[3] = {ppx, ppy, ppz}, b[3] = {px, py, pz};
+  float mv = (px - ppx) * (px - ppx) + (pz - ppz) * (pz - ppz);
+  if (mv > 1e-6f && mv < 50.f * 50.f && !roomAmb) {       // a teleport is not a walk through gates; правка 345: в комнате — её атмосфера
+    int best = -1; float bt = -1;
+    for (unsigned i = 0; i < nzone; i++) {
+      float t = zones[i].event == CLUB_EVENT && clubId >= 0 ? -1.f : gateHit(i, a, b);   // правка 593: зона клуба — музыка, не атмосфера
+      if (t >= 0 && t >= bt && zoneTrack[i] >= 0) { bt = t; best = (int)i; }
+    }
+    if (best >= 0 && zoneTrack[best] != ambTrack) setAmbience(best, zoneTrack[best], 0.6f);
+  }
+  { // правка 593: клуб Legitimate Businessmen. Зоны события 61 — тонкие плиты-ворота (L2: 2,4 м и 2,8 м толщиной): вход в плиту включает Social_Club;
+    // повторное пересечение плиты — снова клуб (без переключения); конец — удаление от плит на CLUB_EXIT_R м, телепорт или миссия
+    if (clubOn && mv >= 50.f * 50.f) clubExit();
+    if (clubOn) {   // нет музыкальных событий вокруг клуба (локаторы L2/L5: кроме 61 только атмосфера и пауза), выход — удаление от обеих плит на CLUB_EXIT_R м
+      float md = 1e30f;
+      for (unsigned i = 0; i < nzone; i++) if (zones[i].event == CLUB_EVENT) { float dx = px - zones[i].t[0], dz = pz - zones[i].t[2], d2 = dx * dx + dz * dz; if (d2 < md) md = d2; }
+      if (md > (float)CLUB_EXIT_R * (float)CLUB_EXIT_R) clubExit();
+    }
+    if (clubId >= 0 && !mOwned && !roomAmb && mv > 1e-6f && mv < 50.f * 50.f && !clubOn) {
+      int hit = 0;
+      for (unsigned i = 0; i < nzone && !hit; i++) if (zones[i].event == CLUB_EVENT) hit = gateHit(i, a, b) >= 0 && gateHit(i, a, a) < 0;   // только вход в плиту
+      if (hit) { clubOn = 1; mReturn = -1; audioMusic(clubId, CLUB_FADE_IN); audioStreamSet(AUDIO_ST_MUSIC, CLUB_GAIN, 0.f); if (sfxLog) sfxLog("SNDCLUB enter"); }
+    }
+  }
+  ppx = px; ppy = py; ppz = pz;
+  // positional loop: the nearest audible emitter (they are far apart in the level; one stream)
+  int best = -1; float bd = 1e18f;
+  for (unsigned i = 0; i < nemit; i++) {
+    const XEmit *e = &emits[i];
+    float dx = e->x - cx, dy = e->y - cy, dz = e->z - cz, d = dx * dx + dy * dy + dz * dz;
+    if (d < e->mx * e->mx && d < bd) { bd = d; best = (int)i; }
+  }
+  if (best != emitCur) {
+    if (best >= 0 && (emitCur < 0 || emits[best].track != emits[emitCur].track)) audioStream(AUDIO_ST_POSITIONAL, emits[best].track, 0.3f);
+    if (best < 0) audioStream(AUDIO_ST_POSITIONAL, -1, 1.f);
+    emitCur = best;
+  }
+  if (best >= 0) {
+    audioStreamSet(AUDIO_ST_POSITIONAL, emits[best].gain, 0.f);
+    audioStreamAt(AUDIO_ST_POSITIONAL,emits[best].x,emits[best].y,emits[best].z,emits[best].mn,emits[best].mx);
+  }
+}
+
+void sndStats(SndStats *s) {
+  memset(s, 0, sizeof *s);
+  if (!ready) return;
+  AudioStats a; audioStats(&a);
+  s->musicState = mState; s->ambZone = ambZone; s->posEmitter = emitCur;
+  s->modeApplied = pauseMode ? SND_MODE_PAUSE : lbMode ? SND_MODE_LETTERBOX : curMode;
+  s->dialogPlaying = a.track[AUDIO_ST_DIALOG] >= 0;
+  s->voices = a.voices; s->underruns = a.underruns; s->cpu = a.cpu; s->mixUsMax = a.mixUsMax;
+  s->music = a.track[0] >= 0 ? audioTrackName(a.track[0]) : "-";
+  s->ambience = a.track[1] >= 0 ? audioTrackName(a.track[1]) : "-";
+  s->dialog = a.track[2] >= 0 ? audioTrackName(a.track[2]) : "-";
+  s->positional = a.track[3] >= 0 ? audioTrackName(a.track[3]) : "-";
+}

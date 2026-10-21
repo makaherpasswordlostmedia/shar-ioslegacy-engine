@@ -1,0 +1,15 @@
+# гараж АЭС L1: две точки из сетки plant_grid (p3 и p7), сравнение данных TEST19 и TEST25
+scene PG_L1_load
+flag golevel 1
+wait 15
+scene PG_g1
+flag repair
+foot -98 -310 1.5708
+wait 2.5
+shot PG_g1
+scene PG_g2
+flag repair
+foot -85 -310 1.5708
+wait 2.5
+shot PG_g2
+end

@@ -1,0 +1,48 @@
+scene start
+wait 3
+flag repair
+wait 4
+flag eyex 5
+flag eyey 3.5
+flag eyez 3
+flag eyeon 3
+scene carL1_s_now
+flag carshspr 0
+flag homerspot 0
+wait 3
+shot carL1_s_now
+scene carL1_s_tex
+flag carshspr 1
+flag homerspot 1
+flag shfanold 1
+wait 3
+shot carL1_s_tex
+scene carL1_s_fan
+flag carshspr 1
+flag homerspot 1
+flag shfanold 0
+wait 3
+shot carL1_s_fan
+flag eyex 0.5
+flag eyey 9
+flag eyez 0.5
+flag eyeon 3
+scene carL1_t_now
+flag carshspr 0
+flag homerspot 0
+wait 3
+shot carL1_t_now
+scene carL1_t_tex
+flag carshspr 1
+flag homerspot 1
+flag shfanold 1
+wait 3
+shot carL1_t_tex
+scene carL1_t_fan
+flag carshspr 1
+flag homerspot 1
+flag shfanold 0
+wait 3
+shot carL1_t_fan
+flag eyeon 0
+end

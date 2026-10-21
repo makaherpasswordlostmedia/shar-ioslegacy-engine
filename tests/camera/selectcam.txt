@@ -1,0 +1,19 @@
+# №617: SELECT за рулём переключает вид камеры (дальний -> ближний -> дальний); пешком ничего. Журнал: SVC camview N. Красный контроль: flag selectcamold 1 — сброс машины (SVC reset select)
+wait 3
+scene selcam
+goto 232 292 0
+flag player
+flag repair
+wait 2
+shot view_far
+press select
+wait 1.5
+shot view_near
+press select
+wait 1.5
+shot view_far2
+flag selectcamold 1
+press select
+wait 1.5
+shot old_reset
+end

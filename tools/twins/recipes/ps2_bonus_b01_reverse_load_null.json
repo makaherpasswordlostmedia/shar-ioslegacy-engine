@@ -1,0 +1,97 @@
+{
+ "id": "ps2_bonus_b01_reverse_load_null",
+ "state": "build/twins/o4/ps2_bonus_reverse_selection/snap_400.p2s",
+ "frames": 1800,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   0,
+   "start",
+   0
+  ],
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "triangle",
+   0
+  ],
+  [
+   0,
+   "left",
+   0
+  ],
+  [
+   0,
+   "right",
+   0
+  ],
+  [
+   0,
+   "up",
+   0
+  ],
+  [
+   0,
+   "down",
+   0
+  ],
+  [
+   0,
+   "lup",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "ldown",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  300,
+  400,
+  500,
+  600,
+  700,
+  800,
+  900,
+  1000,
+  1200,
+  1500,
+  1800
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "null": true,
+ "renderer": "sw",
+ "timeout": 600,
+ "note": "Reverse direction selected by native Square, same3-stage confirmed Lisa/Family. Null only for waiting/load/state preparation; no Screenshot.png expected. Snapshot every100 near start to locate actual grid/ready/flyover. No writes or input; render selected states afterward."
+}

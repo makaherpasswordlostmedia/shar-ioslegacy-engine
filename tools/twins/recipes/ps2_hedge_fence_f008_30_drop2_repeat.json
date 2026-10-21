@@ -1,0 +1,491 @@
+{
+ "id": "ps2_hedge_fence_f008_30_drop2_repeat",
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "target_speed_kmh": 30,
+ "target": [
+  28.559192597935034,
+  4.249,
+  -254.35575628901762
+ ],
+ "heading_deg": -139.98887738468795,
+ "runup": 12,
+ "trace": [
+  "frame",
+  "mat",
+  "car_vel",
+  "car_cm",
+  "cam_pos",
+  "cam_fwd",
+  "cam_up",
+  "hnr",
+  {
+   "addr": "1298ab8",
+   "type": "f32",
+   "label": "body0"
+  },
+  {
+   "addr": "1298abc",
+   "type": "f32",
+   "label": "body1"
+  },
+  {
+   "addr": "1298ac0",
+   "type": "f32",
+   "label": "body2"
+  },
+  {
+   "addr": "1298ac4",
+   "type": "f32",
+   "label": "body3"
+  },
+  {
+   "addr": "1298ac8",
+   "type": "f32",
+   "label": "body4"
+  },
+  {
+   "addr": "1298acc",
+   "type": "f32",
+   "label": "body5"
+  },
+  {
+   "addr": "1298ad0",
+   "type": "f32",
+   "label": "body6"
+  },
+  {
+   "addr": "1298ad4",
+   "type": "f32",
+   "label": "body7"
+  },
+  {
+   "addr": "1298ad8",
+   "type": "f32",
+   "label": "body8"
+  },
+  {
+   "addr": "1298adc",
+   "type": "f32",
+   "label": "body9"
+  },
+  {
+   "addr": "1298ae0",
+   "type": "f32",
+   "label": "body10"
+  },
+  {
+   "addr": "1298ae4",
+   "type": "f32",
+   "label": "body11"
+  },
+  {
+   "addr": "1298ae8",
+   "type": "f32",
+   "label": "body12"
+  },
+  {
+   "addr": "1298aec",
+   "type": "f32",
+   "label": "body13"
+  },
+  {
+   "addr": "1298af0",
+   "type": "f32",
+   "label": "body14"
+  },
+  {
+   "addr": "1298af4",
+   "type": "f32",
+   "label": "body15"
+  },
+  {
+   "addr": "1489218",
+   "type": "f32",
+   "label": "wheel0_12"
+  },
+  {
+   "addr": "148921c",
+   "type": "f32",
+   "label": "wheel0_13"
+  },
+  {
+   "addr": "1489220",
+   "type": "f32",
+   "label": "wheel0_14"
+  },
+  {
+   "addr": "14892d8",
+   "type": "f32",
+   "label": "wheel1_12"
+  },
+  {
+   "addr": "14892dc",
+   "type": "f32",
+   "label": "wheel1_13"
+  },
+  {
+   "addr": "14892e0",
+   "type": "f32",
+   "label": "wheel1_14"
+  },
+  {
+   "addr": "1489398",
+   "type": "f32",
+   "label": "wheel2_12"
+  },
+  {
+   "addr": "148939c",
+   "type": "f32",
+   "label": "wheel2_13"
+  },
+  {
+   "addr": "14893a0",
+   "type": "f32",
+   "label": "wheel2_14"
+  },
+  {
+   "addr": "1489458",
+   "type": "f32",
+   "label": "wheel3_12"
+  },
+  {
+   "addr": "148945c",
+   "type": "f32",
+   "label": "wheel3_13"
+  },
+  {
+   "addr": "1489460",
+   "type": "f32",
+   "label": "wheel3_14"
+  },
+  {
+   "addr": "12988a4",
+   "type": "f32",
+   "label": "cm_offset_y"
+  },
+  {
+   "addr": "a23054",
+   "type": "f32",
+   "label": "wheel0_raw_disp_candidate"
+  },
+  {
+   "addr": "a23074",
+   "type": "u32",
+   "label": "wheel0_contact_candidate"
+  },
+  {
+   "addr": "a230e4",
+   "type": "f32",
+   "label": "wheel1_raw_disp_candidate"
+  },
+  {
+   "addr": "a23104",
+   "type": "u32",
+   "label": "wheel1_contact_candidate"
+  },
+  {
+   "addr": "a23174",
+   "type": "f32",
+   "label": "wheel2_raw_disp_candidate"
+  },
+  {
+   "addr": "a23194",
+   "type": "u32",
+   "label": "wheel2_contact_candidate"
+  },
+  {
+   "addr": "a23204",
+   "type": "f32",
+   "label": "wheel3_raw_disp_candidate"
+  },
+  {
+   "addr": "a23224",
+   "type": "u32",
+   "label": "wheel3_contact_candidate"
+  }
+ ],
+ "source": {
+  "name": "fence_f008",
+  "point": [
+   30.488,
+   4.249,
+   -252.058
+  ],
+  "source_seg": 893,
+  "source_segment": [
+   17.202539443969727,
+   244.8226318359375,
+   39.915306091308594,
+   263.888427734375,
+   0.6429362893104553,
+   -0.7659196257591248,
+   -1000000.0,
+   7.940000057220459
+  ],
+  "target": [
+   28.559192597935034,
+   4.249,
+   -254.35575628901762
+  ],
+  "direction": [
+   -0.6429362893104553,
+   -0.7659196257591248
+  ],
+  "heading_deg": -139.98887738468795,
+  "approach_side": "face",
+  "region": "l1r1"
+ },
+ "note": "Private loaded L1 snapshot; heading reached by real steering, body-only permitted placement to12m run-up,150+frames settled, one initial velocity assignment. Actual speed/contact path must be read, target30/60 not automatic proof of entry speed. Full throttle regulated to target, straight line6s; source segment anchors are exported owner disc geometry, not native contact proof.",
+ "placement_method": "drop",
+ "drop_height": 1.5,
+ "pad": [
+  [
+   0,
+   "cross",
+   1
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   1
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   32,
+   "cross",
+   0
+  ],
+  [
+   40,
+   "cross",
+   1
+  ],
+  [
+   42,
+   "cross",
+   0
+  ],
+  [
+   98,
+   "cross",
+   1
+  ],
+  [
+   100,
+   "cross",
+   0
+  ],
+  [
+   102,
+   "cross",
+   1
+  ],
+  [
+   104,
+   "cross",
+   0
+  ],
+  [
+   122,
+   "circle",
+   1
+  ],
+  [
+   122,
+   "lleft",
+   0
+  ],
+  [
+   134,
+   "circle",
+   0
+  ],
+  [
+   302,
+   "cross",
+   1
+  ],
+  [
+   304,
+   "cross",
+   0
+  ],
+  [
+   310,
+   "cross",
+   1
+  ],
+  [
+   312,
+   "cross",
+   0
+  ],
+  [
+   318,
+   "cross",
+   1
+  ],
+  [
+   320,
+   "cross",
+   0
+  ],
+  [
+   324,
+   "cross",
+   1
+  ],
+  [
+   328,
+   "cross",
+   0
+  ],
+  [
+   332,
+   "cross",
+   1
+  ],
+  [
+   334,
+   "cross",
+   0
+  ],
+  [
+   338,
+   "cross",
+   1
+  ],
+  [
+   340,
+   "cross",
+   0
+  ],
+  [
+   344,
+   "cross",
+   1
+  ],
+  [
+   348,
+   "cross",
+   0
+  ],
+  [
+   352,
+   "cross",
+   1
+  ],
+  [
+   356,
+   "cross",
+   0
+  ],
+  [
+   362,
+   "cross",
+   1
+  ]
+ ],
+ "writes": [
+  {
+   "name": "car_cm[0]",
+   "value": 36.2744282809218,
+   "at": 146
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 6.649,
+   "at": 146
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -245.16472052823593,
+   "at": 146
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0,
+   "at": 146
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0,
+   "at": 146
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0,
+   "at": 146
+  },
+  {
+   "name": "car_cm[0]",
+   "value": 36.2744282809218,
+   "at": 148
+  },
+  {
+   "name": "car_cm[1]",
+   "value": 6.649,
+   "at": 148
+  },
+  {
+   "name": "car_cm[2]",
+   "value": -245.16472052823593,
+   "at": 148
+  },
+  {
+   "name": "car_vel[0]",
+   "value": 0,
+   "at": 148
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0,
+   "at": 148
+  },
+  {
+   "name": "car_vel[2]",
+   "value": 0,
+   "at": 148
+  },
+  {
+   "name": "car_vel[0]",
+   "value": -4.303533430883679,
+   "at": 300
+  },
+  {
+   "name": "car_vel[1]",
+   "value": 0,
+   "at": 300
+  },
+  {
+   "name": "car_vel[2]",
+   "value": -7.136108495091076,
+   "at": 300
+  }
+ ],
+ "frames": 600,
+ "shots": [
+  2,
+  300,
+  302,
+  350,
+  400,
+  500,
+  600
+ ],
+ "every": 2
+}

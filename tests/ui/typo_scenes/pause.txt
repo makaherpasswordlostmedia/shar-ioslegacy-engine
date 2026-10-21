@@ -1,0 +1,35 @@
+scene typo_pause
+flag msn
+flag player
+wait 2
+press start
+wait 1
+shot pause_a
+flag uitypo 1
+wait 0.1
+shot pause_b
+flag uitypo 2
+wait 0.1
+shot pause_c
+flag uitypo 0
+wait 0.1
+shot pause_a2
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot ls_a
+flag uitypo 1
+wait 0.1
+shot ls_b
+flag uitypo 2
+wait 0.1
+shot ls_c
+flag uitypo 0
+wait 0.1
+shot ls_a2
+end

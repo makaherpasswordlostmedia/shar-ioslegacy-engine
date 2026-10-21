@@ -1,0 +1,29 @@
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 1
+scene HZ_h0
+flag repair
+goto -469.4 -35.9 0
+wait 3
+shot HZ_h0
+scene HZ_h1
+flag repair
+goto -469.4 -35.9 1.5708
+wait 3
+shot HZ_h1
+scene HZ_h2
+flag repair
+goto -469.4 -35.9 3.1416
+wait 3
+shot HZ_h2
+scene HZ_h3
+flag repair
+goto -469.4 -35.9 4.7124
+wait 3
+shot HZ_h3
+end

@@ -1,0 +1,34 @@
+{
+ "id": "ps2_bonus_return_pause",
+ "state": "build/twins/o4/ps2_bonus_card17_access/snap_250.p2s",
+ "frames": 300,
+ "every": 2,
+ "trace": [
+  "frame"
+ ],
+ "pad": [
+  [
+   20,
+   "start",
+   1
+  ],
+  [
+   26,
+   "start",
+   0
+  ]
+ ],
+ "writes": [],
+ "shots": [
+  2,
+  50,
+  150,
+  300
+ ],
+ "pngs": [],
+ "wav": 0,
+ "cdvd": true,
+ "renderer": "metal",
+ "timeout": 150,
+ "note": "After genuine7/7 original unlock message, native Start opens pause. Read screen before choosing Quit Game, no writes or private/user card changes."
+}

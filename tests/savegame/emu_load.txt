@@ -1,0 +1,26 @@
+# Прогон 2 (новый запуск эмулятора): главное меню -> LOAD GAME (карусель ◄ x4: NEW GAME -> LOAD GAME) -> слот 1 ->
+# «Load Successful» -> уровень -> строка прогресса SVPROG src=load (сверка с прогоном 1)
+flag menu
+flag saves
+wait 1.5
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+shot sv_menu_load
+press cross
+# перелёт камеры к видику (~1 с), потом слоты
+wait 2
+shot sv_load_slots
+press cross
+wait 2.5
+shot sv_loaded
+press cross
+wait 5
+flag svlog
+shot sv_game_loaded
+end

@@ -1,0 +1,65 @@
+# Горизонт L3: шов проявления башни: точки по настилу от 276 м до 247 м, граница настоящего 3D около 250 м, выкл и вкл в один момент
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_sm276
+flag horizon 0
+flag repair
+goto -330 90.0 4.205
+wait 4
+flag horizon 0
+wait 1
+shot HZ_sm276_off
+flag horizon 8
+wait 1
+shot HZ_sm276_on
+scene HZ_sm266
+flag horizon 0
+flag repair
+goto -342 91.3 4.179
+wait 4
+flag horizon 0
+wait 1
+shot HZ_sm266_off
+flag horizon 8
+wait 1
+shot HZ_sm266_on
+scene HZ_sm260
+flag horizon 0
+flag repair
+goto -350 92.2 4.160
+wait 4
+flag horizon 0
+wait 1
+shot HZ_sm260_off
+flag horizon 8
+wait 1
+shot HZ_sm260_on
+scene HZ_sm253
+flag horizon 0
+flag repair
+goto -358 93.1 4.141
+wait 4
+flag horizon 0
+wait 1
+shot HZ_sm253_off
+flag horizon 8
+wait 1
+shot HZ_sm253_on
+scene HZ_sm247
+flag horizon 0
+flag repair
+goto -366 94.0 4.120
+wait 4
+flag horizon 0
+wait 1
+shot HZ_sm247_off
+flag horizon 8
+wait 1
+shot HZ_sm247_on
+end

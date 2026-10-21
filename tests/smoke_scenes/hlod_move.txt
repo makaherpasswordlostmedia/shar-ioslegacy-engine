@@ -1,0 +1,63 @@
+# HLOD шов в движении L3: езда по дороге, 150 м; проход без HLOD и с HLOD, кадр каждые 0,7 с
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag horizon 0
+flag drawdist 60
+scene HM_off
+flag repair
+goto 60 -30 1.57
+wait 3
+flag hlod 0
+flag autodrive
+wait 0.7
+shot HM_off_0
+wait 0.7
+shot HM_off_1
+wait 0.7
+shot HM_off_2
+wait 0.7
+shot HM_off_3
+wait 0.7
+shot HM_off_4
+wait 0.7
+shot HM_off_5
+wait 0.7
+shot HM_off_6
+wait 0.7
+shot HM_off_7
+wait 0.7
+shot HM_off_8
+wait 0.7
+shot HM_off_9
+flag stop
+scene HM_on
+flag repair
+goto 60 -30 1.57
+wait 3
+flag hlod 1
+flag autodrive
+wait 0.7
+shot HM_on_0
+wait 0.7
+shot HM_on_1
+wait 0.7
+shot HM_on_2
+wait 0.7
+shot HM_on_3
+wait 0.7
+shot HM_on_4
+wait 0.7
+shot HM_on_5
+wait 0.7
+shot HM_on_6
+wait 0.7
+shot HM_on_7
+wait 0.7
+shot HM_on_8
+wait 0.7
+shot HM_on_9
+flag stop
+end

@@ -1,0 +1,93 @@
+# HLOD L3: взгляд на город с запада (настил -330,90) на восток и на север; выкл / 4 пурпур / 1 без тумана / 2 туман города
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag horizon 0
+scene HL_A0
+flag hlod 0
+flag repair
+goto -330 90 1.57
+wait 3
+flag hlod 0
+wait 1
+shot HL_A0_off
+flag hlod 4
+wait 1
+shot HL_A0_m4
+flag hlod 1
+wait 1
+shot HL_A0_m1
+flag hlod 2
+wait 1
+shot HL_A0_m2
+scene HL_A1
+flag hlod 0
+flag repair
+goto -330 90 0.0
+wait 3
+flag hlod 0
+wait 1
+shot HL_A1_off
+flag hlod 4
+wait 1
+shot HL_A1_m4
+flag hlod 1
+wait 1
+shot HL_A1_m1
+flag hlod 2
+wait 1
+shot HL_A1_m2
+scene HL_A2
+flag hlod 0
+flag repair
+goto -330 90 0.8
+wait 3
+flag hlod 0
+wait 1
+shot HL_A2_off
+flag hlod 4
+wait 1
+shot HL_A2_m4
+flag hlod 1
+wait 1
+shot HL_A2_m1
+flag hlod 2
+wait 1
+shot HL_A2_m2
+scene HL_C0
+flag hlod 0
+flag repair
+goto -420 -120 1.57
+wait 3
+flag hlod 0
+wait 1
+shot HL_C0_off
+flag hlod 4
+wait 1
+shot HL_C0_m4
+flag hlod 1
+wait 1
+shot HL_C0_m1
+flag hlod 2
+wait 1
+shot HL_C0_m2
+scene HL_C1
+flag hlod 0
+flag repair
+goto -420 -120 0.3
+wait 3
+flag hlod 0
+wait 1
+shot HL_C1_off
+flag hlod 4
+wait 1
+shot HL_C1_m4
+flag hlod 1
+wait 1
+shot HL_C1_m1
+flag hlod 2
+wait 1
+shot HL_C1_m2
+end

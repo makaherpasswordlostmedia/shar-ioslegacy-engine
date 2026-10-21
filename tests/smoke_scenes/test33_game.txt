@@ -1,0 +1,398 @@
+# TEST33 · тур (18.10 ночь, integ/test33 = TEST32 + render-perf): всё из тура TEST32 (интерфейс, будка, лавка, гардероб, звуковой блок L1, рендер),
+# плюс блок TEST33: Settings (Tree Shadows, шрифт Bart, Saturation), Cartoon включается строкой меню (пресет 90-х, заливки, тушь, контур у всех),
+# лучи будки гаснут с фоном и не прыгают, лучи гардероба крутятся, Гил на земле, SELECT по кругу. Без golevel. Настройки Роба тур не сохраняет (saveBlocked)
+scene T31_HOME_ICON
+flag repair
+flag warmhere
+wait 4
+shot t31_home
+flag coinadd 26
+wait 0.6
+shot t31_hud_coins
+scene T31_AVATAR
+flag msn
+wait 14
+shot t31_avatar
+scene T31_BOOTH
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+shot t31_booth_00
+press right
+wait 0.6
+shot t31_booth_01
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+wait 0.4
+shot t31_booth_sedan
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+wait 0.4
+shot t31_booth_limo
+press triangle
+wait 3
+scene T31_SHOP
+flag coinadd 2000
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.5
+shot t31_shop_0
+press right
+wait 1
+shot t31_shop_survvan
+press right
+wait 1
+shot t31_shop_2
+press triangle
+wait 3
+scene T31_WARDROBE
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag warmhere
+wait 1
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+foot 493.61 291.4 3.1416 -19.5
+wait 1.5
+press triangle
+wait 1.5
+shot t31_wardrobe
+press right
+wait 0.8
+shot t31_wardrobe_2
+press triangle
+wait 2
+scene T31_DESTROYED
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag testboom
+wait 3.8
+shot t31_destroyed
+wait 1
+shot t31_destroyed_2
+scene T31_BUBBLES
+flag msn
+wait 0.8
+shot t31_bub_a_talk
+wait 2.5
+flag uipopdest 1
+wait 1.2
+shot t31_bub_b_dest
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 2
+wait 1
+shot t31_bub_c_m2
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 3
+wait 1
+shot t31_bub_d_m3
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 5
+wait 1
+shot t31_bub_e_m5
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 6
+wait 1
+shot t31_bub_f_m6
+flag uipopmsg 0
+wait 2.5
+flag uipopmsgl 1
+wait 1
+shot t31_bub_g_long
+scene ZI_WARM
+flag repair
+flag warmhere
+wait 2
+goto 236 -508.5 1.5708
+flag warmhere
+wait 3
+scene ZI_ENTER
+goto 274 -515 3.1416
+wait 0.15
+shot t31_zi_a
+wait 0.25
+shot t31_zi_b
+wait 2
+shot t31_zi_c
+# Звуковой блок L1 для общего теста (терминал игры 17.10; Роб: «тест вместе со звуком»). Без смены уровня (она висит — №700/находка 17.10).
+# Что слушать и что пишет журнал: наезды — крики прохожих и водителей, реплика героя после крика (№180/184/467, №183/685, STREETSAY);
+# пешком — шаги, прыжки, туба (№179); выход и посадка — W_GOC/W_GIC (№345); будка; Kwik-E-Mart — атмосфера комнаты (№345, ROOMAMB);
+# лавка — музыка muzak (№235); горящая машина — повтор W_Burn (№180); в конце SAYSTAT — счёт разных фраз (№685: не одна и та же)
+flag sfxlog 1
+scene S_L1_START
+flag repair
+flag warmhere
+wait 3
+scene S_L1_HITS
+flag repair
+flag warmhere
+wait 3
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag stop
+wait 1
+scene S_L1_GETOUTIN
+press triangle
+wait 3
+press triangle
+wait 3
+# №617: SELECT за рулём по кругу — дальний, с бампера, ближний, снова дальний
+scene T33_SELECT
+flag player 1
+wait 1
+shot t33_sel_far
+press select 0.2
+wait 1.5
+shot t33_sel_bumper
+press select 0.2
+wait 1.5
+shot t33_sel_near
+press select 0.2
+wait 1.5
+shot t33_sel_far2
+flag player 0
+scene S_L1_FOOT
+press triangle
+wait 2
+flag walk 24
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 4
+flag stop
+scene S_L1_BOOTH
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+press triangle
+wait 4
+scene S_L1_KWIK
+foot 213.9 301.4 3.1416
+wait 1
+press triangle
+wait 8
+scene S_L1_SHOP
+flag coinadd 300
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 6
+press triangle
+wait 3
+scene S_L1_BURN
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag testboom
+wait 30
+scene S_L1_SAYSTAT
+flag saystat 1
+wait 1
+# --- блок TEST33 (терминал рендера, 18.10 ночь) ---
+# №764/765/753: страница Settings — Tree Shadows, все строки шрифтом Bart, Saturation; №754: Cartoon включается строкой меню (pause → Options → Settings)
+scene T33_SETTINGS
+foot 214 210 -2.4
+wait 3
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 1.0
+shot t33_settings
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.6
+flag tonebud 20000
+press right
+wait 3
+shot t33_cartoon_on
+press triangle
+wait 0.6
+press triangle
+wait 0.6
+press start
+wait 3
+shot t33_toon_house
+# мультик: заливки и пресет 90-х, тушь у Гомера и прохожих, линии; цена кадра — сцены R_TOON_* против R_STD_* в одном месте
+scene R_TOON_KWIK
+foot 213.9 299 0 5.2
+wait 4
+shot t33_toon_kwik
+scene R_TOON_STREET
+foot 222 176 1.5708
+wait 4
+shot t33_toon_street
+scene R_STD_STREET
+foot 222 176 1.5708
+flag toon 0
+wait 4
+shot t33_std_street
+scene R_STD_KWIK
+foot 213.9 299 0 5.2
+wait 4
+shot t33_std_kwik
+flag tonebud 3000
+# №761/№763: лучи гардероба крутятся и гаснут с фоном; будка: в тёмной фазе лучи не горят, на «назад» угол не прыгает
+scene T33_WARDROBE
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag warmhere
+wait 1
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+foot 493.61 291.4 3.1416 -19.5
+wait 1.5
+press triangle
+wait 0.15
+shot t33_ward_dark
+wait 1.5
+shot t33_ward_a
+wait 1
+shot t33_ward_b
+press triangle
+wait 2
+scene T33_BOOTH
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 0.15
+shot t33_booth_dark
+wait 1.5
+shot t33_booth_idle
+press triangle 0.1
+shot t33_booth_back
+wait 2
+# №762: Гил после лавки стоит на земле (в TEST32 шёл по воздуху на уровне колен)
+scene T33_GIL
+flag coinadd 2000
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.5
+press triangle
+wait 1.2
+shot t33_gil_a
+wait 0.6
+shot t33_gil_b
+# №748/749 тени людей у Мардж (14 %), прыжок — тень меньше; №756 монета-спрайт вблизи (из TEST32)
+scene R_MARGE
+foot 228.94 180.5 3.1416 3.83
+wait 4
+shot r_marge
+press cross 0.1
+wait 0.35
+shot r_jump
+scene R_COIN
+foot 222 204 -1.4
+wait 3
+shot r_coin
+# самое плотное по предметам место L1 — отбор ближних для теней предметов под нагрузкой на железе (из TEST32)
+scene R_PROPS
+foot 200 -380 0
+wait 3
+press up 2
+wait 2.5
+end

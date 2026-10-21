@@ -1,0 +1,114 @@
+# HLOD + лента горизонта (оба слоя): 250 | 150 | 150+лента 8 | 150+HLOD+лента 8
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+scene HC_E3_init
+flag hlod 0
+flag repair
+goto 100 200 0
+wait 4
+flag eyex 100
+flag eyey 32
+flag eyez 200
+flag eyedx -0.7
+flag eyedy -0.12
+flag eyedz -0.7
+flag eyeon 1
+wait 2
+scene HC_E3_250
+flag drawdist 100
+flag hlod 0
+flag horizon 0
+wait 4
+shot HC_E3_250
+scene HC_E3_150
+flag drawdist 60
+wait 4
+shot HC_E3_150
+scene HC_E3_HZ
+flag horizon 8
+wait 4
+shot HC_E3_HZ
+scene HC_E3_HZH
+flag hlod 1
+wait 4
+shot HC_E3_HZH
+flag hlod 0
+flag horizon 0
+flag eyeon 0
+flag drawdist 100
+scene HC_E4_init
+flag hlod 0
+flag repair
+goto 0 300 0
+wait 4
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz -1
+flag eyeon 1
+wait 2
+scene HC_E4_250
+flag drawdist 100
+flag hlod 0
+flag horizon 0
+wait 4
+shot HC_E4_250
+scene HC_E4_150
+flag drawdist 60
+wait 4
+shot HC_E4_150
+scene HC_E4_HZ
+flag horizon 8
+wait 4
+shot HC_E4_HZ
+scene HC_E4_HZH
+flag hlod 1
+wait 4
+shot HC_E4_HZH
+flag hlod 0
+flag horizon 0
+flag eyeon 0
+flag drawdist 100
+scene HC_E6_init
+flag hlod 0
+flag repair
+goto 150 -300 0
+wait 4
+flag eyex 150
+flag eyey 32
+flag eyez -300
+flag eyedx -1
+flag eyedy -0.1
+flag eyedz 0.2
+flag eyeon 1
+wait 2
+scene HC_E6_250
+flag drawdist 100
+flag hlod 0
+flag horizon 0
+wait 4
+shot HC_E6_250
+scene HC_E6_150
+flag drawdist 60
+wait 4
+shot HC_E6_150
+scene HC_E6_HZ
+flag horizon 8
+wait 4
+shot HC_E6_HZ
+scene HC_E6_HZH
+flag hlod 1
+wait 4
+shot HC_E6_HZH
+flag hlod 0
+flag horizon 0
+flag eyeon 0
+flag drawdist 100
+end

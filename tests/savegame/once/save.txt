@@ -1,0 +1,73 @@
+# Правка 334, прогон 2: отметка прогресса (svmark) -> таран ящика i30 -> SAVE слот 1 -> QUIT -> LOAD слот 1 -> снова таран того же
+# места: ящика нет (SVONCE op=apply), кошелёк после загрузки тот же и не растёт
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 5
+flag svmark
+foot 212.5 168.5 0.8
+wait 1
+press triangle
+wait 3
+goto 184.26 211.0 3.1416
+wait 2
+press cross 2.5
+wait 3
+shot b1_broken
+flag svlog
+flag svonce
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 1
+press cross
+wait 2.5
+shot b2_saved
+press cross
+wait 0.8
+press down
+wait 0.4
+press cross
+wait 1
+press down
+wait 0.3
+press cross
+wait 3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2
+press cross
+wait 1.5
+press cross
+wait 2.5
+shot b3_loaded
+press cross
+wait 5
+flag svlog
+flag svonce
+shot b4_after_load
+foot 212.5 168.5 0.8
+wait 1
+press triangle
+wait 3
+goto 184.26 211.0 3.1416
+wait 2
+shot b5_place
+press cross 2.5
+wait 3
+shot b6_ram
+flag svlog
+flag svonce
+end

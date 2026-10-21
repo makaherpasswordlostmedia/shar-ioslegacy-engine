@@ -1,0 +1,15 @@
+# Гейт REGPRE-гистерезис: NEW GAME уровня 1, первая ходьба (flag walk) от места старта; журнал REGPRE в smoke.txt (tests/levels/regpre_hyst.sh)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 25
+scene RP_stand
+wait 5
+scene RP_walk1
+flag walk 12
+wait 20
+scene RP_walk2
+flag walk 12
+wait 20
+end

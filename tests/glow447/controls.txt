@@ -1,0 +1,10 @@
+flag level 4
+wait 3
+foot 283.333 283.333 0
+wait 2
+flag spbillnear 80
+shot control4a
+foot 270 283.333 1.5708
+wait 2
+shot control4b
+end

@@ -1,0 +1,28 @@
+# №241: красная стрелка полиции на радаре Hit & Run (запись PS2 b3_bust, b3_moving, b3_chase): прежнее (radarharassold 1) | новое; L1, игрок стоит на улице, шкала 100 -> полиция через ~0,6 с в 100 м
+scene hnrhud
+wait 2
+flag msn
+wait 14
+goto 220 172 1.5708
+wait 1
+flag radarlog 1
+flag radarharassold 1
+flag hnr 100
+wait 1.8
+shot h_old_0
+wait 0.4
+shot h_old_1
+flag radarharassold 0
+wait 0.4
+shot h_new_0
+wait 0.5
+shot h_new_1
+wait 0.5
+shot h_new_2
+wait 1
+shot h_new_3
+wait 1.5
+shot h_new_4
+wait 1.5
+shot h_new_5
+end

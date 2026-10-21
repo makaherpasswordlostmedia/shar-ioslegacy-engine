@@ -1,0 +1,26 @@
+# A/B №PFETCH на железе (сцена для тура Карты): путь игрока титул → Start → меню → RESUME GAME, потом 20 с игры; режим on: фоновое чтение traffic.shr/fx.shr (по умолчанию).
+# Что сравнить в smoke.txt: PFETCH take (wait_ms), TAILBG wait_ms, CELLRING wait_ms, LOADPH traffic/fx/tail, GAME ms (от нажатия RESUME до игры). Два тура (on и off) подряд на одном наборе; в игровом наборе TEST27 лежит файл pfetchold — для режима on его убрать.
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+press start
+wait 4
+press right
+wait 2
+press cross
+wait 25
+scene AB_pfetch_on
+shot ab_pfetch_on
+wait 10
+end

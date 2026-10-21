@@ -1,0 +1,326 @@
+# TEST19 · короткий тур ≤ 10 мин только по недоработкам самоаудитов 15.10 (наряд docs/handoff/НАРЯД_TEST19_2026-10-15.md).
+# Сцены собраны из тура 16 и блока TEST17; имена ≤ 23 знаков (сцена в оверлее). Каждая сцена начинается белой меткой 12x12 (чёрная кайма) внизу слева.
+# НЕ ПОКРЫТО (нет триггера или отдельной сцены): пузырь без аватарки (№616); сбитый проп вне взгляда (№589); перекрёстки трафика с поведением 0/3 отдельно (есть только общий проезд T19_traffic_cross); карточка с телепортом (№625) — вместо неё L5 502, предположение.
+# ФОРМАТ ДЛЯ ДОПИСЫВАНИЯ (Сборка: свет ВКЛ/приподнятый, A/B TQ_FAST): сцены вставлять блоками 'scene ИМЯ' (≤23 знака, префикс T19_), внутри своего уровня, до строки 'scene T19_L2_load' для L1 и т.д.; общий предел 600 с (сейчас игровое время ≈ 350 с, остаток ≈ 250 с минус загрузки PSP). Метка 12x12 с каймой рисуется сама на каждой 'scene'.
+# Порядок уровней: L1 -> L2 -> L3 -> L5 -> L6 -> L7 (по одной загрузке на уровень; смена L1->L2 считается отдельной сценой).
+scene T19_L1_load
+flag golevel 1
+wait 20
+# карточка 1: старт на месте (L1 m2, таймер со значком цели)
+scene T19_card_timer
+flag repair
+flag msn
+wait 3
+flag msnmainat 201
+wait 4
+shot T19_card_timer_in
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T19_timer_icon
+flag stop
+flag msn
+wait 1
+# карточка 2: гонка L1, место и время без кружка, пузырь
+scene T19_card_race_L1
+flag msnmainat 801
+wait 4
+shot T19_card_race_in
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+shot T19_race_bubble
+flag autostraight 14
+wait 8
+shot T19_race_hud
+flag stop
+flag msn
+wait 1
+scene T19_pause_cellcode
+press start 0.15
+wait 2
+shot T19_pause_cellcode
+press start 0.15
+wait 1
+scene T19_fail_screen
+flag msnfail
+wait 3
+shot T19_fail_hints
+press cross 0.3
+wait 2
+flag msn
+wait 1
+scene T19_booth
+flag phoneplant
+wait 3
+foot 229.2 150.6 1.5708
+wait 1.5
+shot T19_booth_before
+press triangle
+wait 1.5
+shot T19_booth_open
+press cross
+wait 1
+shot T19_booth_hint
+press circle 0.3
+wait 1
+scene T19_shop_barney
+flag coinadd 200
+foot 325.5 -121.9 -1.5708 4
+wait 2
+shot T19_shop_barney
+press triangle
+wait 1.5
+shot T19_shop_dark
+press circle 0.3
+wait 1
+scene T19_traffic_cross
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 20
+flag stop
+wait 1
+scene T19_cam_houses_J95
+goto 150 150 1.5708
+wait 2
+flag autostraight 14
+wait 9
+shot T19_cam_houses
+flag stop
+wait 1
+scene T19_ramp9_crown
+flag bisect 0
+goto 229.3 -536.0 0.785
+wait 2
+flag autostraight 8
+wait 9
+shot T19_ramp9_far
+flag stop
+wait 1
+scene T19_light_aes
+goto 40 -296 1.5708
+flag repair
+flag autostraight 4
+wait 1
+shot T19_aes_light
+wait 3
+flag stop
+scene T19_light_street
+goto 220 172 1.5708
+flag repair
+flag autostraight 4
+wait 1
+shot T19_street_light
+wait 3
+flag stop
+# --- Сборка: A/B перегруппировки полупрозрачного (TQ_FAST) на тяжёлой сцене города, по 14 с, один и тот же маршрут
+scene T19_SV_tq1
+flag tqfast 1
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 14
+shot T19_SV_tq1
+flag stop
+wait 1
+scene T19_SV_tq0
+flag tqfast 0
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 14
+shot T19_SV_tq0
+flag stop
+flag tqfast 1
+wait 1
+scene T19_L2_load
+flag golevel 2
+wait 20
+scene T19_L2_pole_F2-7
+flag repair
+goto -206 -498 1.5708
+wait 2
+flag autostraight 3
+wait 4
+shot T19_L2_pole_hit
+flag stop
+wait 1
+scene T19_L3_load
+flag golevel 3
+wait 20
+# карточка 3: гонка Лизы, старт с ирисом (самый тяжёлый кадр 44 мс)
+scene T19_card_lisa_L3
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+shot T19_card_lisa_in
+press cross 0.3
+wait 1
+flag msngo
+wait 4
+shot T19_lisa_start
+flag autostraight 14
+wait 6
+shot T19_lisa_race
+flag stop
+flag msn
+wait 1
+scene T19_L3_pier
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 5
+shot T19_L3_pier
+flag stop
+wait 0.5
+scene T19_L3_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 20
+shot T19_L3_chase
+flag stop
+flag hnr 0
+wait 1
+# --- Сборка: свет ВКЛЮЧЁН (ореолы, неон, пятна, мигалка), затем тот же свет со сдвигом глубины к камере (проверка z-fighting пятен 8 см)
+scene T19_SV_L3_pier_on
+flag neonglow 1
+flag glowbias 0
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 6
+shot T19_SV_pier_on
+flag stop
+wait 0.5
+scene T19_SV_L3_pier_bias
+flag glowbias 40
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 6
+shot T19_SV_pier_bias
+flag stop
+wait 0.5
+scene T19_SV_L3_police
+flag policeflash 1
+flag glowbias 0
+flag repair
+flag hnr 100
+flag drive 75
+wait 8
+shot T19_SV_police_on
+flag stop
+flag hnr 0
+flag policeflash 0
+wait 0.5
+scene T19_SV_L3_mil_on
+flag glowbias 0
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T19_SV_mil_on
+flag stop
+flag msn
+wait 1
+scene T19_SV_L3_mil_bias
+flag glowbias 40
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 5
+shot T19_SV_mil_bias
+flag stop
+flag msn
+flag glowbias 0
+flag neonglow 0
+wait 1
+scene T19_L5_load
+flag golevel 5
+wait 20
+# карточка 4: другой уровень, миссия с переносом на старт
+scene T19_card_L5
+flag msn
+wait 3
+flag msnmainat 502
+wait 3
+shot T19_card_L5_in
+press cross 0.3
+wait 1
+flag msngo
+wait 3
+shot T19_card_L5_go
+flag stop
+flag msn
+wait 1
+scene T19_L5_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 20
+flag stop
+flag hnr 0
+wait 1
+scene T19_L6_load
+flag golevel 6
+wait 20
+scene T19_L6_bridge
+flag repair
+flag drive 75
+wait 20
+flag stop
+wait 1
+scene T19_L7_load
+flag golevel 7
+wait 20
+scene T19_L7_lamps
+goto 230 160 1.5708
+flag repair
+flag autostraight 4
+wait 1
+shot T19_L7_lamps
+wait 3
+flag stop
+wait 1
+# --- Сборка: фонари L7 со светом ВКЛ и со сдвигом глубины
+scene T19_SV_L7_lamps_on
+flag neonglow 1
+flag glowbias 0
+goto 230 160 1.5708
+flag repair
+flag autostraight 4
+wait 6
+shot T19_SV_L7_on
+flag stop
+wait 1
+scene T19_SV_L7_lamps_bias
+flag glowbias 40
+goto 230 160 1.5708
+flag repair
+flag autostraight 4
+wait 6
+shot T19_SV_L7_bias
+flag stop
+flag neonglow 0
+flag glowbias 0
+wait 1
+end

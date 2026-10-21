@@ -1,0 +1,22 @@
+# №355 (вторая половина): ключ рядом, остов, подобрал ключ (машина починена), сел △ и поехал; L1
+wait 3
+scene wr_boom
+cam 213.5 6.0 169.5 6.0 -2.6 2.5 55
+flag testboom
+wait 6
+shot wr_a
+foot 156.71 159.9 3.1416
+wait 3
+shot wr_b
+foot 217.2 172.0 1.5708
+wait 2
+cam 213.5 6.0 169.5 6.0 -2.6 2.5 55
+shot wr_c
+press triangle
+wait 2.5
+shot wr_d
+flag autostraight 9
+wait 5
+shot wr_e
+wait 1
+end

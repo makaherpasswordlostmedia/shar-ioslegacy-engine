@@ -1,0 +1,32 @@
+# Загрузка 3: силуэты L1 — кадры вдаль в четыре стороны без/с «flag silh 1» (камера 20 м над улицей у старта)
+scene sil_start
+flag loadacc 1
+wait 3
+cam 220 20 172 1 -0.04 0
+wait 2
+shot sil_E_off
+flag silh 1
+wait 2
+shot sil_E_on
+flag silh 0
+cam 220 20 172 -1 -0.04 0
+wait 2
+shot sil_W_off
+flag silh 1
+wait 2
+shot sil_W_on
+flag silh 0
+cam 220 20 172 0 -0.04 1
+wait 2
+shot sil_S_off
+flag silh 1
+wait 2
+shot sil_S_on
+flag silh 0
+cam 220 20 172 0 -0.04 -1
+wait 2
+shot sil_N_off
+flag silh 1
+wait 2
+shot sil_N_on
+end

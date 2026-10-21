@@ -1,0 +1,61 @@
+# Автотур «ИГРОК», быстрый вариант: режим игрока с первого кадра (flag player среди первых flag), логотипы пропускаются START, дальше путь игрока:
+# титул → Start → главное меню → RESUME GAME (курсор с NEW GAME вправо; нужно сохранение в ~/.ppsspp/PSP/SAVEDATA или на карте PSP) → игра; по каждой сцене учёт ACCT (viewer/acct.h) раз в секунду.
+# На старте у АЭС (G4-7) всплывает подсказка Барта (ходьба/прыжок/бег): Continue (крест) работает только после конца реплики Барта (tutorial.c canContinue), поэтому крест нажимается каждые 3 с до 30 с, как Роб на видео (2:17 → 2:19). flag nosave: тур не пишет settings.bin и сохранения.
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+press right
+wait 2
+shot pl_menu_resume
+press cross
+wait 8
+scene PL_game_start
+shot pl_game0
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+shot pl_game0b
+scene PL_game_walk
+press up 14
+wait 15
+shot pl_game1
+scene PL_game_walk2
+press right 6
+wait 3
+press up 10
+wait 12
+end

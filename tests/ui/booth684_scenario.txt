@@ -1,0 +1,25 @@
+# №684: будка, картинки машин c0..c5 (tests/ui/booth684_check.py OLD NEW). Путь как tests/shop/booth_scenario.txt до открытия страницы
+scene booth
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+shot c0
+press right
+wait 1
+shot c1
+press right
+wait 1
+shot c2
+press right
+wait 1
+shot c3
+press right
+wait 1
+shot c4
+press right
+wait 1
+shot c5
+end

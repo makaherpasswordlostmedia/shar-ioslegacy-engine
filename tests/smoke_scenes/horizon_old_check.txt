@@ -1,0 +1,21 @@
+# HORIZON_OLD побайтно: те же сцены на трёх сборках (база 7ee35d20 / новая с flag 0 / HORIZON_OLD=1 с flag 8)
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_chk
+flag repair
+goto -330 90 4.205
+wait 5
+shot chk_a
+flag horizon 8
+wait 1
+shot chk_b
+flag horizon 0
+wait 1
+shot chk_c
+end

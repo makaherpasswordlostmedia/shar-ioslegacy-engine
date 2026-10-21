@@ -1,0 +1,155 @@
+# Горизонт L1-L7: лист для Роба «выкл / 1 / 6 / 8» по одному виду на уровень (точка спавна, курс на самый высокий силуэт), пары в один момент; гейт tools/horizon_gate.py
+scene start
+wait 3
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L1
+flag repair
+goto 220 172 4.206
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L1_off
+flag horizon 1
+wait 1
+shot HZ_L1_c1
+flag horizon 6
+wait 1
+shot HZ_L1_c6
+flag horizon 8
+wait 1
+shot HZ_L1_c8
+scene HZ_L2_load
+flag golevel 2
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L2
+flag repair
+goto 152 -38.44 3.543
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L2_off
+flag horizon 1
+wait 1
+shot HZ_L2_c1
+flag horizon 6
+wait 1
+shot HZ_L2_c6
+flag horizon 8
+wait 1
+shot HZ_L2_c8
+scene HZ_L3_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L3
+flag repair
+goto -3.35 -5.57 2.758
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L3_off
+flag horizon 1
+wait 1
+shot HZ_L3_c1
+flag horizon 6
+wait 1
+shot HZ_L3_c6
+flag horizon 8
+wait 1
+shot HZ_L3_c8
+scene HZ_L4_load
+flag golevel 4
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L4
+flag repair
+goto 214.88 172.27 4.198
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L4_off
+flag horizon 1
+wait 1
+shot HZ_L4_c1
+flag horizon 6
+wait 1
+shot HZ_L4_c6
+flag horizon 8
+wait 1
+shot HZ_L4_c8
+scene HZ_L5_load
+flag golevel 5
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L5
+flag repair
+goto -154.9 -482.05 1.126
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L5_off
+flag horizon 1
+wait 1
+shot HZ_L5_c1
+flag horizon 6
+wait 1
+shot HZ_L5_c6
+flag horizon 8
+wait 1
+shot HZ_L5_c8
+scene HZ_L6_load
+flag golevel 6
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L6
+flag repair
+goto -300.14 -218.57 0.995
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L6_off
+flag horizon 1
+wait 1
+shot HZ_L6_c1
+flag horizon 6
+wait 1
+shot HZ_L6_c6
+flag horizon 8
+wait 1
+shot HZ_L6_c8
+scene HZ_L7_load
+flag golevel 7
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L7
+flag repair
+goto 214.73 172.41 3.709
+wait 5
+flag horizon 0
+wait 1
+shot HZ_L7_off
+flag horizon 1
+wait 1
+shot HZ_L7_c1
+flag horizon 6
+wait 1
+shot HZ_L7_c6
+flag horizon 8
+wait 1
+shot HZ_L7_c8
+end

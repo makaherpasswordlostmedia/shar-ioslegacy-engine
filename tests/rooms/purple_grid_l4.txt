@@ -1,0 +1,731 @@
+# Пурпур ходячей камерой, L4: сетка пола 2,5 м, два курса (tests/rooms/purple_grid_gen.py); пакет интерфейса комнат закрашен (фон 0xFFFF00FF)
+scene start
+wait 3
+scene L4_load
+flag golevel 4
+wait 20
+scene SimpsonsHouse_door
+foot 228.94 180.42 0.0000 4.23
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Simpso_001
+foot 496.271 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_001
+scene Simpso_002
+foot 496.271 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_002
+scene Simpso_003
+foot 498.771 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_003
+scene Simpso_004
+foot 498.771 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_004
+scene Simpso_005
+foot 501.271 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_005
+scene Simpso_006
+foot 501.271 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_006
+scene Simpso_007
+foot 503.771 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_007
+scene Simpso_008
+foot 503.771 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_008
+scene Simpso_009
+foot 506.271 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_009
+scene Simpso_010
+foot 506.271 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_010
+scene Simpso_011
+foot 508.771 388.069 0.0000 -19.50
+wait 1.0
+shot Simpso_011
+scene Simpso_012
+foot 508.771 388.069 3.1416 -19.50
+wait 1.0
+shot Simpso_012
+scene Simpso_013
+foot 503.771 390.569 0.0000 -19.50
+wait 1.0
+shot Simpso_013
+scene Simpso_014
+foot 503.771 390.569 3.1416 -19.50
+wait 1.0
+shot Simpso_014
+scene Simpso_015
+foot 506.271 390.569 0.0000 -19.50
+wait 1.0
+shot Simpso_015
+scene Simpso_016
+foot 506.271 390.569 3.1416 -19.50
+wait 1.0
+shot Simpso_016
+scene Simpso_017
+foot 508.771 390.569 0.0000 -19.50
+wait 1.0
+shot Simpso_017
+scene Simpso_018
+foot 508.771 390.569 3.1416 -19.50
+wait 1.0
+shot Simpso_018
+scene Simpso_019
+foot 506.271 393.069 0.0000 -19.50
+wait 1.0
+shot Simpso_019
+scene Simpso_020
+foot 506.271 393.069 3.1416 -19.50
+wait 1.0
+shot Simpso_020
+scene Simpso_021
+foot 508.771 393.069 0.0000 -19.50
+wait 1.0
+shot Simpso_021
+scene Simpso_022
+foot 508.771 393.069 3.1416 -19.50
+wait 1.0
+shot Simpso_022
+scene Simpso_023
+foot 496.271 395.569 0.0000 -19.50
+wait 1.0
+shot Simpso_023
+scene Simpso_024
+foot 496.271 395.569 3.1416 -19.50
+wait 1.0
+shot Simpso_024
+scene Simpso_025
+foot 506.271 395.569 0.0000 -19.50
+wait 1.0
+shot Simpso_025
+scene Simpso_026
+foot 506.271 395.569 3.1416 -19.50
+wait 1.0
+shot Simpso_026
+scene Simpso_027
+foot 508.771 395.569 0.0000 -19.50
+wait 1.0
+shot Simpso_027
+scene Simpso_028
+foot 508.771 395.569 3.1416 -19.50
+wait 1.0
+shot Simpso_028
+scene Simpso_029
+foot 498.771 398.069 0.0000 -19.50
+wait 1.0
+shot Simpso_029
+scene Simpso_030
+foot 498.771 398.069 3.1416 -19.50
+wait 1.0
+shot Simpso_030
+scene Simpso_031
+foot 501.271 398.069 0.0000 -19.50
+wait 1.0
+shot Simpso_031
+scene Simpso_032
+foot 501.271 398.069 3.1416 -19.50
+wait 1.0
+shot Simpso_032
+scene Simpso_033
+foot 506.271 398.069 0.0000 -19.50
+wait 1.0
+shot Simpso_033
+scene Simpso_034
+foot 506.271 398.069 3.1416 -19.50
+wait 1.0
+shot Simpso_034
+scene Simpso_035
+foot 508.771 398.069 0.0000 -19.50
+wait 1.0
+shot Simpso_035
+scene Simpso_036
+foot 508.771 398.069 3.1416 -19.50
+wait 1.0
+shot Simpso_036
+scene Simpso_037
+foot 496.271 400.569 0.0000 -19.50
+wait 1.0
+shot Simpso_037
+scene Simpso_038
+foot 496.271 400.569 3.1416 -19.50
+wait 1.0
+shot Simpso_038
+scene Simpso_039
+foot 506.271 400.569 0.0000 -19.50
+wait 1.0
+shot Simpso_039
+scene Simpso_040
+foot 506.271 400.569 3.1416 -19.50
+wait 1.0
+shot Simpso_040
+scene Simpso_041
+foot 508.771 400.569 0.0000 -19.50
+wait 1.0
+shot Simpso_041
+scene Simpso_042
+foot 508.771 400.569 3.1416 -19.50
+wait 1.0
+shot Simpso_042
+scene KwikEMart_door
+foot 213.91 299.04 0.0000 5.56
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene KwikEM_001
+foot 494.230 290.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_001
+scene KwikEM_002
+foot 494.230 290.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_002
+scene KwikEM_003
+foot 496.730 290.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_003
+scene KwikEM_004
+foot 496.730 290.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_004
+scene KwikEM_005
+foot 499.230 290.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_005
+scene KwikEM_006
+foot 499.230 290.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_006
+scene KwikEM_007
+foot 504.230 290.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_007
+scene KwikEM_008
+foot 504.230 290.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_008
+scene KwikEM_009
+foot 509.230 290.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_009
+scene KwikEM_010
+foot 509.230 290.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_010
+scene KwikEM_011
+foot 499.230 293.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_011
+scene KwikEM_012
+foot 499.230 293.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_012
+scene KwikEM_013
+foot 504.230 293.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_013
+scene KwikEM_014
+foot 504.230 293.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_014
+scene KwikEM_015
+foot 509.230 293.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_015
+scene KwikEM_016
+foot 509.230 293.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_016
+scene KwikEM_017
+foot 494.230 295.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_017
+scene KwikEM_018
+foot 494.230 295.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_018
+scene KwikEM_019
+foot 496.730 295.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_019
+scene KwikEM_020
+foot 496.730 295.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_020
+scene KwikEM_021
+foot 499.230 295.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_021
+scene KwikEM_022
+foot 499.230 295.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_022
+scene KwikEM_023
+foot 509.230 295.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_023
+scene KwikEM_024
+foot 509.230 295.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_024
+scene KwikEM_025
+foot 499.230 298.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_025
+scene KwikEM_026
+foot 499.230 298.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_026
+scene KwikEM_027
+foot 509.230 298.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_027
+scene KwikEM_028
+foot 509.230 298.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_028
+scene KwikEM_029
+foot 494.230 300.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_029
+scene KwikEM_030
+foot 494.230 300.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_030
+scene KwikEM_031
+foot 496.730 300.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_031
+scene KwikEM_032
+foot 496.730 300.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_032
+scene KwikEM_033
+foot 499.230 300.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_033
+scene KwikEM_034
+foot 499.230 300.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_034
+scene KwikEM_035
+foot 509.230 300.931 0.0000 -19.50
+wait 1.0
+shot KwikEM_035
+scene KwikEM_036
+foot 509.230 300.931 3.1416 -19.50
+wait 1.0
+shot KwikEM_036
+scene KwikEM_037
+foot 494.230 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_037
+scene KwikEM_038
+foot 494.230 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_038
+scene KwikEM_039
+foot 496.730 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_039
+scene KwikEM_040
+foot 496.730 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_040
+scene KwikEM_041
+foot 499.230 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_041
+scene KwikEM_042
+foot 499.230 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_042
+scene KwikEM_043
+foot 501.730 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_043
+scene KwikEM_044
+foot 501.730 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_044
+scene KwikEM_045
+foot 504.230 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_045
+scene KwikEM_046
+foot 504.230 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_046
+scene KwikEM_047
+foot 509.230 303.431 0.0000 -19.50
+wait 1.0
+shot KwikEM_047
+scene KwikEM_048
+foot 509.230 303.431 3.1416 -19.50
+wait 1.0
+shot KwikEM_048
+scene SpringfieldElementary_door
+foot -31.48 589.45 -1.5708 5.04
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Spring_001
+foot 507.250 339.775 0.0000 -19.50
+wait 1.0
+shot Spring_001
+scene Spring_002
+foot 507.250 339.775 3.1416 -19.50
+wait 1.0
+shot Spring_002
+scene Spring_003
+foot 509.750 339.775 0.0000 -19.50
+wait 1.0
+shot Spring_003
+scene Spring_004
+foot 509.750 339.775 3.1416 -19.50
+wait 1.0
+shot Spring_004
+scene Spring_005
+foot 512.250 339.775 0.0000 -19.50
+wait 1.0
+shot Spring_005
+scene Spring_006
+foot 512.250 339.775 3.1416 -19.50
+wait 1.0
+shot Spring_006
+scene Spring_007
+foot 507.250 342.275 0.0000 -19.50
+wait 1.0
+shot Spring_007
+scene Spring_008
+foot 507.250 342.275 3.1416 -19.50
+wait 1.0
+shot Spring_008
+scene Spring_009
+foot 509.750 342.275 0.0000 -19.50
+wait 1.0
+shot Spring_009
+scene Spring_010
+foot 509.750 342.275 3.1416 -19.50
+wait 1.0
+shot Spring_010
+scene Spring_011
+foot 512.250 342.275 0.0000 -19.50
+wait 1.0
+shot Spring_011
+scene Spring_012
+foot 512.250 342.275 3.1416 -19.50
+wait 1.0
+shot Spring_012
+scene Spring_013
+foot 499.750 344.775 0.0000 -19.50
+wait 1.0
+shot Spring_013
+scene Spring_014
+foot 499.750 344.775 3.1416 -19.50
+wait 1.0
+shot Spring_014
+scene Spring_015
+foot 507.250 344.775 0.0000 -19.50
+wait 1.0
+shot Spring_015
+scene Spring_016
+foot 507.250 344.775 3.1416 -19.50
+wait 1.0
+shot Spring_016
+scene Spring_017
+foot 509.750 344.775 0.0000 -19.50
+wait 1.0
+shot Spring_017
+scene Spring_018
+foot 509.750 344.775 3.1416 -19.50
+wait 1.0
+shot Spring_018
+scene Spring_019
+foot 512.250 344.775 0.0000 -19.50
+wait 1.0
+shot Spring_019
+scene Spring_020
+foot 512.250 344.775 3.1416 -19.50
+wait 1.0
+shot Spring_020
+scene Spring_021
+foot 499.750 347.275 0.0000 -19.50
+wait 1.0
+shot Spring_021
+scene Spring_022
+foot 499.750 347.275 3.1416 -19.50
+wait 1.0
+shot Spring_022
+scene Spring_023
+foot 507.250 347.275 0.0000 -19.50
+wait 1.0
+shot Spring_023
+scene Spring_024
+foot 507.250 347.275 3.1416 -19.50
+wait 1.0
+shot Spring_024
+scene Spring_025
+foot 509.750 347.275 0.0000 -19.50
+wait 1.0
+shot Spring_025
+scene Spring_026
+foot 509.750 347.275 3.1416 -19.50
+wait 1.0
+shot Spring_026
+scene Spring_027
+foot 512.250 347.275 0.0000 -19.50
+wait 1.0
+shot Spring_027
+scene Spring_028
+foot 512.250 347.275 3.1416 -19.50
+wait 1.0
+shot Spring_028
+scene Spring_029
+foot 499.750 349.775 0.0000 -19.50
+wait 1.0
+shot Spring_029
+scene Spring_030
+foot 499.750 349.775 3.1416 -19.50
+wait 1.0
+shot Spring_030
+scene Spring_031
+foot 507.250 349.775 0.0000 -19.50
+wait 1.0
+shot Spring_031
+scene Spring_032
+foot 507.250 349.775 3.1416 -19.50
+wait 1.0
+shot Spring_032
+scene Spring_033
+foot 509.750 349.775 0.0000 -19.50
+wait 1.0
+shot Spring_033
+scene Spring_034
+foot 509.750 349.775 3.1416 -19.50
+wait 1.0
+shot Spring_034
+scene Spring_035
+foot 512.250 349.775 0.0000 -19.50
+wait 1.0
+shot Spring_035
+scene Spring_036
+foot 512.250 349.775 3.1416 -19.50
+wait 1.0
+shot Spring_036
+scene Spring_037
+foot 499.750 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_037
+scene Spring_038
+foot 499.750 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_038
+scene Spring_039
+foot 507.250 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_039
+scene Spring_040
+foot 507.250 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_040
+scene Spring_041
+foot 509.750 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_041
+scene Spring_042
+foot 509.750 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_042
+scene Spring_043
+foot 512.250 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_043
+scene Spring_044
+foot 512.250 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_044
+scene Spring_045
+foot 514.750 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_045
+scene Spring_046
+foot 514.750 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_046
+scene Spring_047
+foot 517.250 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_047
+scene Spring_048
+foot 517.250 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_048
+scene Spring_049
+foot 519.750 352.275 0.0000 -19.50
+wait 1.0
+shot Spring_049
+scene Spring_050
+foot 519.750 352.275 3.1416 -19.50
+wait 1.0
+shot Spring_050
+scene Spring_051
+foot 499.750 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_051
+scene Spring_052
+foot 499.750 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_052
+scene Spring_053
+foot 502.250 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_053
+scene Spring_054
+foot 502.250 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_054
+scene Spring_055
+foot 504.750 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_055
+scene Spring_056
+foot 504.750 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_056
+scene Spring_057
+foot 507.250 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_057
+scene Spring_058
+foot 507.250 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_058
+scene Spring_059
+foot 509.750 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_059
+scene Spring_060
+foot 509.750 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_060
+scene Spring_061
+foot 512.250 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_061
+scene Spring_062
+foot 512.250 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_062
+scene Spring_063
+foot 514.750 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_063
+scene Spring_064
+foot 514.750 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_064
+scene Spring_065
+foot 517.250 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_065
+scene Spring_066
+foot 517.250 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_066
+scene Spring_067
+foot 519.750 354.775 0.0000 -19.50
+wait 1.0
+shot Spring_067
+scene Spring_068
+foot 519.750 354.775 3.1416 -19.50
+wait 1.0
+shot Spring_068
+scene Spring_069
+foot 499.750 357.275 0.0000 -19.50
+wait 1.0
+shot Spring_069
+scene Spring_070
+foot 499.750 357.275 3.1416 -19.50
+wait 1.0
+shot Spring_070
+scene Spring_071
+foot 514.750 357.275 0.0000 -19.50
+wait 1.0
+shot Spring_071
+scene Spring_072
+foot 514.750 357.275 3.1416 -19.50
+wait 1.0
+shot Spring_072
+scene Spring_073
+foot 499.750 359.775 0.0000 -19.50
+wait 1.0
+shot Spring_073
+scene Spring_074
+foot 499.750 359.775 3.1416 -19.50
+wait 1.0
+shot Spring_074
+scene Spring_075
+foot 514.750 359.775 0.0000 -19.50
+wait 1.0
+shot Spring_075
+scene Spring_076
+foot 514.750 359.775 3.1416 -19.50
+wait 1.0
+shot Spring_076
+scene Spring_077
+foot 499.750 362.275 0.0000 -19.50
+wait 1.0
+shot Spring_077
+scene Spring_078
+foot 499.750 362.275 3.1416 -19.50
+wait 1.0
+shot Spring_078
+scene BartRoom_door
+foot 224.69 204.46 3.1416 7.00
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene BartRo_001
+foot 499.984 448.250 0.0000 -19.50
+wait 1.0
+shot BartRo_001
+scene BartRo_002
+foot 499.984 448.250 3.1416 -19.50
+wait 1.0
+shot BartRo_002
+scene BartRo_003
+foot 502.484 448.250 0.0000 -19.50
+wait 1.0
+shot BartRo_003
+scene BartRo_004
+foot 502.484 448.250 3.1416 -19.50
+wait 1.0
+shot BartRo_004
+end

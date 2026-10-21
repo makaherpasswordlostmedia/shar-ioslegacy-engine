@@ -1,0 +1,44 @@
+wait 2
+flag golevel 7
+wait 5
+scene bush_east
+goto 155 286 1.5707963
+flag repair
+wait 1
+shot east_start
+press cross 4
+wait 4
+flag carv
+shot east_end
+wait 1
+scene bush_west
+goto 162 286 -1.5707963
+flag repair
+wait 1
+shot west_start
+press cross 4
+wait 4
+flag carv
+shot west_end
+wait 1
+scene bush_inside
+goto 158.7 286.7 1.5707963
+flag repair
+wait 1
+shot inside_start
+press cross 4
+wait 4
+flag carv
+shot inside_end
+wait 1
+scene bush_north
+goto 149.5 273 0
+flag repair
+wait 1
+shot north_start
+press cross 4
+wait 4
+flag carv
+shot north_end
+wait 1
+end

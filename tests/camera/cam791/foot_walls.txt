@@ -1,0 +1,123 @@
+# правка 331: пешком — у стен (камера обходит Гомера по кругу L/R), узкие проходы, у машин и прохожих
+flag caminlog
+wait 3
+flag player 1
+flag camingeom 1
+flag diaglog 1
+scene f_school
+foot -33.2 580 1.5708
+wait 1.5
+flag camin 1
+press r 4
+wait 4.2
+press up 1.5
+press circle 1.5
+wait 1.6
+shot f_school
+flag camin
+scene f_kwik
+foot 219 300.4 3.1416
+wait 1.5
+flag camin 1
+press l 4
+wait 4.2
+press up 1.2
+wait 1.3
+shot f_kwik
+flag camin
+scene f_house
+foot 240 190 2.4
+wait 1.5
+flag camin 1
+press r 4
+wait 4.2
+press up 1.5
+press circle 1.5
+wait 1.6
+flag camin
+scene al_184
+foot 184 181 0.7854
+wait 1.5
+flag camin 1
+press up 2.5
+wait 2.6
+press r 2
+wait 2.1
+press up 1.5
+wait 1.6
+shot al_184
+flag camin
+scene al_196
+foot 196 319 0
+wait 1.5
+flag camin 1
+press up 2.5
+wait 2.6
+press l 2
+wait 2.1
+press up 1.5
+wait 1.6
+flag camin
+scene al_85
+foot 85 118 2.3562
+wait 1.5
+flag camin 1
+press up 2.5
+wait 2.6
+press r 2
+wait 2.1
+press up 1.5
+wait 1.6
+shot al_85
+flag camin
+scene al_97
+foot 97 238 0.7854
+wait 1.5
+flag camin 1
+press up 2.5
+wait 2.6
+press l 2
+wait 2.1
+press up 1.5
+wait 1.6
+flag camin
+scene al_58
+foot 58 154 2.3562
+wait 1.5
+flag camin 1
+press up 2.5
+wait 2.6
+press r 2
+wait 2.1
+press up 1.5
+wait 1.6
+flag camin
+scene f_car
+goto 232 280 0
+wait 1
+foot 232 275.2 0
+wait 1.5
+flag camin 1
+press up 1
+wait 1.1
+press r 4
+wait 4.2
+shot f_car
+press l 2
+wait 2.1
+flag camin
+scene f_ped
+foot 228 262 0
+wait 1.5
+flag pedtest 0
+wait 0.5
+flag camin 1
+press up 0.8
+wait 0.9
+press r 4
+wait 4.2
+shot f_ped
+press up 1
+wait 1.1
+flag camin
+end

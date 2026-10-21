@@ -1,0 +1,26 @@
+# Гейт «сохранение несёт уровень», прогон 2 (новый запуск эмулятора): главное меню -> LOAD GAME (карусель ◄ x4) -> слот 1 ->
+# «Load Successful» -> уровень записи (строки LEVEL ev=load n=2, SVPROG src=load level=2; газета уровня 2 на загрузке)
+flag menu
+flag saves
+flag lvshot 1.5
+wait 1.5
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2
+shot lv_load_slots
+press cross
+wait 2.5
+shot lv_loaded
+press cross
+wait 7
+flag lvlog
+flag svlog
+shot lv_game_loaded
+end

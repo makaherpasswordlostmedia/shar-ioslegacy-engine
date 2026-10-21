@@ -1,0 +1,988 @@
+{
+ "id": "ps2_bonus_card12_access",
+ "state": "build/twins/o4/ps2_bonus_kwik_road_stage_sw/stage.p2s",
+ "frames": 220,
+ "every": 2,
+ "trace": [
+  "frame",
+  "mat",
+  "car_cm",
+  "car_vel",
+  {
+   "addr": "a245b0",
+   "type": "f32",
+   "label": "homer_world_x"
+  },
+  {
+   "addr": "a245b4",
+   "type": "f32",
+   "label": "homer_world_y"
+  },
+  {
+   "addr": "a245b8",
+   "type": "f32",
+   "label": "homer_world_z"
+  }
+ ],
+ "pad": [
+  [
+   0,
+   "cross",
+   0
+  ],
+  [
+   0,
+   "circle",
+   0
+  ],
+  [
+   0,
+   "square",
+   0
+  ],
+  [
+   0,
+   "triangle",
+   0
+  ],
+  [
+   0,
+   "lup",
+   0
+  ],
+  [
+   0,
+   "lleft",
+   0
+  ],
+  [
+   0,
+   "lright",
+   0
+  ],
+  [
+   0,
+   "ldown",
+   0
+  ]
+ ],
+ "writes": [
+  {
+   "at": 20,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 20,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 20,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 20,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 20,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 22,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 22,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 22,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 22,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 24,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 24,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 24,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 24,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 26,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 26,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 26,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 26,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 28,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 28,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 28,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 28,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 30,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 30,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 30,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 30,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 32,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 32,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 32,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 32,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 34,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 34,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 34,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 34,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 36,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 36,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 36,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 36,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 38,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 38,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 38,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 38,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 40,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 40,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 40,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 40,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 42,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 42,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 42,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 42,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 44,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 44,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 44,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 44,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 46,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 46,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 46,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 46,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 48,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 48,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 48,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 48,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 50,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 50,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 50,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 50,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 52,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 52,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 52,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 52,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 54,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 54,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 54,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 54,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 56,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 56,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 56,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 56,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 58,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 58,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 58,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 58,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 60,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 60,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 60,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 60,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 62,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 62,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 62,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 62,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 64,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 64,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 64,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 64,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 66,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 66,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 66,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 66,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 68,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 68,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 68,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 68,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 70,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 70,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 70,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 70,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 72,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 72,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 72,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 72,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 74,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 74,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 74,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 74,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 76,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 76,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 76,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 76,
+   "name": "car_vel[2]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_cm[0]",
+   "value": 223.406784
+  },
+  {
+   "at": 78,
+   "name": "car_cm[1]",
+   "value": 19.251114
+  },
+  {
+   "at": 78,
+   "name": "car_cm[2]",
+   "value": -310.434509
+  },
+  {
+   "at": 78,
+   "name": "car_vel[0]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_vel[1]",
+   "value": 0
+  },
+  {
+   "at": 78,
+   "name": "car_vel[2]",
+   "value": 0
+  }
+ ],
+ "shots": [
+  2,
+  90,
+  150,
+  220
+ ],
+ "pngs": [
+  [
+   80,
+   160,
+   10
+  ]
+ ],
+ "wav": 0,
+ "cdvd": true,
+ "timeout": 120,
+ "note": "Access only: l1z2 reached by normal road driving through streaming gates; O3 CM/velocity only at native card12 locator. Verify original 3/7 CRAB JUICE before proceeding. No progress or health writes."
+}

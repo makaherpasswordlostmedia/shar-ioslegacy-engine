@@ -1,0 +1,32 @@
+# Гейт «КАДР ИГРОКА»: NEW GAME 30 с: режим игрока с первого кадра (flag player среди первых flag), логотипы пропускаются START, дальше путь игрока:
+# титул → Start → главное меню → NEW GAME (RESUME не нужен) в ~/.ppsspp/PSP/SAVEDATA или на карте PSP) → игра; по каждой сцене учёт ACCT (viewer/acct.h) раз в секунду.
+# На старте у АЭС (G4-7) всплывает подсказка Барта (ходьба/прыжок/бег): Continue (крест) работает только после конца реплики Барта (tutorial.c canContinue), поэтому крест нажимается каждые 3 с до 30 с, как Роб на видео (2:17 → 2:19). flag nosave: тур не пишет settings.bin и сохранения.
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+press cross
+wait 20
+scene FG_new_start
+shot fg_new_0
+wait 15
+shot fg_new_1
+wait 15
+shot fg_new_2
+end
