@@ -2138,8 +2138,21 @@ static void stackOn(Car *t, Car *b) {
   syncOut(t); syncOut(b);
 }
 
+// №879 (Роб 23.10 после TEST50: «можем наехать на машину или заехать под неё — в зависимости от того, едем в горку или с горки; в оригинале в NPC
+// врезались»): высота одной машины над другой мерилась по мировой отметке центров (a->y − b->y). На склоне 25 % машины в 5 м друг от друга
+// расходятся по отметке на 1,2 м: нижняя «под» верхней (больше 2,5 м — удара нет вовсе), верхняя «на крыше» нижней (STACK_DY) — наезд и
+// проныр. PS2 (объёмные тела) этого не знает. Теперь высота — вдоль общей оси «вверх» обеих машин (на склоне это поперёк склона, а не по отвесу),
+// а толчок удара — вдоль склона (нормаль без составляющей по этой оси): удар не подбрасывает въезжающую на крышу. Гейт tests/carslope (уклоны
+// 0–35 %, в горку/с горки, вдоль/поперёк). CARSLOPE879_OLD=1 — как было
+#ifndef CARSLOPE879_OLD
+#define CARSLOPE879_OLD 0
+#endif
 int carHitCar(Car *a, Car *b, const ColWorld *w) {
-  if (fabsf(a->y - b->y) > 2.5f) return 0;
+  V3 Uc = v3(0.f, 1.f, 0.f);
+  if (!CARSLOPE879_OLD) { M3 Ma_ = quatM(a->q), Mb_ = quatM(b->q); V3 s_ = add(Ma_.U, Mb_.U); float l_ = len(s_);
+    if (l_ > 1e-3f && s_.y > .7f * l_) Uc = scl(s_, 1.f / l_); }   // перевёрнутая / на боку — ось мира
+  float sab = CARSLOPE879_OLD ? a->y - b->y : dot(v3(a->x - b->x, a->y - b->y, a->z - b->z), Uc);   // a над b поперёк склона
+  if (fabsf(sab) > 2.5f) return 0;
   CarBox A, B; carBox(a, &A); carBox(b, &B);
   float ax[4][2] = {{A.fx, A.fz}, {-A.fz, A.fx}, {B.fx, B.fz}, {-B.fz, B.fx}};
   float dx = A.x - B.x, dz = A.z - B.z, depth = 1e9f, nx = 0, nz = 0;
@@ -2152,8 +2165,8 @@ int carHitCar(Car *a, Car *b, const ColWorld *w) {
     if (ov < depth) { depth = ov; nx = o < 0 ? -ux : ux; nz = o < 0 ? -uz : uz; }   // от B к A
   }
   // одна над другой (пункт 8): верхняя встаёт на крышу нижней, вбок не сталкивается
-  if (a->y - b->y >= STACK_DY * b->p.bodyHi) { stackOn(a, b); return 1; }
-  if (b->y - a->y >= STACK_DY * a->p.bodyHi) { stackOn(b, a); return 1; }
+  if (sab >= STACK_DY * b->p.bodyHi) { stackOn(a, b); return 1; }
+  if (-sab >= STACK_DY * a->p.bodyHi) { stackOn(b, a); return 1; }
   float ma = bodyMass(a), mb = bodyMass(b), sa = mb / (ma + mb), sb = ma / (ma + mb);
   // разведение с учётом мира (пункт 6: машина у стены не вдавливается в неё соседкой): каждая сдвигается, насколько
   // пускает мир; недостачу упёршейся берёт другая; упёрлись обе — остаётся перекрытие, его разведёт импульс
@@ -2165,6 +2178,7 @@ int carHitCar(Car *a, Car *b, const ColWorld *w) {
   a->x += nx * ga; a->z += nz * ga; b->x -= nx * gb; b->z -= nz * gb;
   float pax, paz, pbx, pbz; hitPoint(&A, nx, nz, &pax, &paz); hitPoint(&B, -nx, -nz, &pbx, &pbz);
   V3 p = v3((pax + pbx) * .5f, (a->y + b->y) * .5f + a->p.hitY, (paz + pbz) * .5f), n = v3(nx, 0.f, nz);
+  if (!CARSLOPE879_OLD) { V3 t_ = sub(n, scl(Uc, dot(n, Uc))); float l_ = len(t_); if (l_ > .3f) n = scl(t_, 1.f / l_); }   // №879: толчок вдоль склона
   M3 Ma = quatM(a->q), Mb = quatM(b->q);
   V3 ca = add(v3(a->x, a->y, a->z), mulM(&Ma, v3(a->com[0], a->com[1], a->com[2])));
   V3 cb = add(v3(b->x, b->y, b->z), mulM(&Mb, v3(b->com[0], b->com[1], b->com[2])));

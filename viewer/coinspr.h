@@ -20,7 +20,8 @@ static CsHdr csH; static unsigned char *csMem; static const unsigned char *csPal
 static unsigned char csPalRaw[1024]; static int csRawOk;   // проверка 18.10: исходная палитра монеты — для смены тона (Cartoon, Saturation) без перезагрузки
 static void coinSprRetone(void) { wsRetone();   // №803: и палитра ключа-спрайта (Cartoon, Saturation)
   if (!csRawOk || csState != 1 || !csPal) return; memcpy((void *)csPal, csPalRaw, 1024); palTone((void *)csPal); }
-static void csLoad(void) {
+static void csLoad(void) {   // №877: повторный вызов не теряет прежнюю ленту
+  if (csMem) { free(csMem); csMem = 0; csPal = 0; }
   csState = -1; char fn[256]; sibling(fn, "coinspr.bin"); SceUID fd = sceIoOpen(fn, PSP_O_RDONLY, 0); if (fd < 0) return;
   int n = (int)sceIoLseek32(fd, 0, PSP_SEEK_END); sceIoLseek32(fd, 0, PSP_SEEK_SET);
   if (n > 32 + 1024 && n < 1 << 20 && (csMem = (unsigned char *)memalign(16, (size_t)n)) && sceIoRead(fd, csMem, (SceSize)n) == n) {

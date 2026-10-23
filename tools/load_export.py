@@ -275,14 +275,17 @@ class Loader:
         self.img = {}
         self.img.update(sprite_images(GAME / 'scrooby/bootup.p3d'))
         self.img.update(sprite_images(GAME / 'scrooby/backend.p3d'))
-        self.img['licensep.png'] = sprite_images(GAME / 'dynaload/images/license/licensep.p3d')['licensep.png']
+        lp_ = GAME / 'dynaload/images/license/licensep.p3d'   # №880: на NTSC файла нет — картинка лицензии license.png в scrooby/bootup.p3d (тот же экран 640x480)
+        self.img['licensep.png'] = sprite_images(lp_)['licensep.png'] if lp_.exists() else next(v for k, v in self.img.items() if k.lower() == 'license.png')
         lic = self.img['licensep.png']; m = np.asarray(lic.convert('RGB')).astype(int).sum(2) > 60   # правка 243: содержимое
         ys, xs = np.where(m); x0, y0 = max(0, xs.min() - LIC_MARGIN), max(0, ys.min() - LIC_MARGIN)
         x1, y1 = min(lic.width, xs.max() + 1 + LIC_MARGIN), min(lic.height, ys.max() + 1 + LIC_MARGIN)
         self.lic_box = (x0, y0, x1, y1); self.img['licensep_c.png'] = lic.crop(self.lic_box)
         self.lic_ink = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)   # правка 255: чернила без поля
         for lv in range(1, NEWS_LEVELS + 1):
-            self.img['loading%d.png' % lv] = sprite_images(GAME / ('dynaload/images/loading/loading%d.p3d' % lv))['loading%d.png' % lv]
+            lp_ = GAME / ('dynaload/images/loading/loading%d.p3d' % lv)   # №880: на NTSC без папки loading/
+            if not lp_.exists(): lp_ = GAME / ('dynaload/images/loading%d.p3d' % lv)
+            self.img['loading%d.png' % lv] = sprite_images(lp_)['loading%d.png' % lv]
         frames, self.anim = fe_anim()
         # квадрат 4:3 с квадратной текстурой: в оригинале её растягивает сам квадрат -> картинка кадра сразу 4:3
         aw, ah = frames[0].size

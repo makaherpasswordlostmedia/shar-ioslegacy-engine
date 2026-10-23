@@ -39,7 +39,8 @@ static void uiMenusSetup(void) {   // пункты главного меню и 
   for (int i = 0; i < uiMenuCount(UI_MENU_MAIN); i++) { const char *l = uiMenuLabel(UI_MENU_MAIN, i);
     if (!strcmp(l, "NEW GAME")) mainNew = i; else if (!strcmp(l, "OPTIONS")) mainOpt = i;
     else if (!strcmp(l, "LOAD GAME")) mainLoad = i; else if (!strcmp(l, "RESUME GAME")) mainResume = i;
-    else if (!strcmp(l, "BONUS GAME") || !strcmp(l, "MINI GAME")) mainMini = i; }   // правка 420: бонус-игра (подпись пакета PAL — BONUS GAME)
+    else if (!strcmp(l, "BONUS GAME") || !strcmp(l, "MINI GAME")) mainMini = i;   // правка 420: бонус-игра (подпись пакета PAL — BONUS GAME)
+    else if (!strcmp(l, "SCRAP BOOK") || !strcmp(l, "SCRAPBOOK")) mainScrap = i; }   // №862: альбом карточек
   { char fn[256]; SceIoStat st; sibling(fn, "menu.shr"); if (sceIoGetstat(fn, &st) < 0) mainOpt = -1;   // пакета нет — пункт серый
     pausePackFile(fn, "pmenu.shr"); if (sceIoGetstat(fn, &st) >= 0) { uiMenuEnable(UI_MENU_PAUSE, UI_P_OPTIONS, 1); uiMenuEnable(UI_SCREEN_PAUSEMSN, UI_PM_OPTIONS, 1); } }
   if (mainNew >= 0) for (int i = 0; i < uiMenuCount(UI_MENU_MAIN); i++) uiMenuEnable(UI_MENU_MAIN, i, i == mainNew || i == mainOpt || (svmOn() && i == mainLoad) ||
@@ -246,6 +247,7 @@ static void levelUnload(void) {   // всё, что держит набор ур
   if (!lvLeak) { free(pvsEnt); free(pv2Mem); }
   pv2Mem = 0; memset(&pv2, 0, sizeof pv2); pv2Cur = pv2CurCell = -1;
   lspReset();   // аудит Сборки: таблица света не переживает смену уровня
+  dalFree();    // №877
   pvsEnt = 0; pvsPool = 0; pvsW = pvsH = 0; pvsRange = PVS_RANGE;
   free(regMask); regMask = 0; regW = regH = 0; regEye = 0xFFFFu;   // правка 95: маска регионов уровня
   free(zg); free(zp); zg = 0; zp = 0; nzg = nzp = zgOn = zgInit = zgStart = 0; regRes = 0xFFFFu;   // правка 181
@@ -309,6 +311,7 @@ static void levelService(const char *f, float a) {
   else if (!strcmp(f, "lvfuseslow")) fuseProbeArm(a > 0.f ? (unsigned)(a * 1000.f) : 0);
   else if (!strcmp(f, "lvshot")) { loadShot = 1; loadShotAt = a; }   // снимок «loading» со следующего экрана загрузки (газета уровня)
   else if (!strcmp(f, "lvleak")) { lvLeak = 1; smkWrite("LVLEAK on\n"); }
+  else if (!strcmp(f, "dal")) { dalOn = a != 0.f; dalCur = 1e9f; }   // №877: таблица дали вкл/выкл (замер A/B)
   else if (!strcmp(f, "lvleak696old")) { lvLeak696Old = (int)a; smkWrite("LVLEAK696OLD on\n"); }
   else if (!strcmp(f, "lvnosave")) { lvNoSave = 1; smkWrite("LVNOSAVE on\n"); }
   else if (!strcmp(f, "lvtwice")) { loadOneOld = 1; smkWrite("LVTWICE on\n"); }   // правка 356: красный — прежние газета, ирис, газета
@@ -477,6 +480,31 @@ static void fragHeap(unsigned maxBytes) {
   }
   for (int k = 0; k < nk; k++) free(keep[k]);
   if (smkOn) { char s_[128]; snprintf(s_, sizeof s_, "FRAGHEAP max=%uMB pins=%d heap=%u blk=%u\n", maxBytes >> 20, pins, heapFreeBytes(), memMaxBlock()); smkWrite(s_); }
+}
+// №863 (Роб 23.10: «L3 проседает — что там полупрозрачное?»; «размножить одну картинку моря вдаль»): море L3/L6 (текстура волн) помечено в данных
+// полупрозрачным и рисуется ближней версией (нарезка 4,4 м) до far_plain (140 м): на набережной L3 TEST46 — 20 к/с, 50 тыс. треугольников, из них ≈15 тыс. море.
+// У кусков моря есть дальняя версия (исходная сетка PS2, рёбра до 28 м): 4 575 треугольников против 44 737 — та же картинка волн крупными плитками.
+// Список кусков «полупрозрачное без прозрачности» (все вершины и картинка непрозрачны) печёт Мак (tools/opq863.py, opq863.bin в папке уровня: 'OPQ1',
+// подпись таблицы кусков, n, индексы). Такой кусок берёт дальнюю версию на ЛЮБОЙ дальности, если его ящик целиком в безопасной пирамиде полосы GE
+// (ggBoxRiskW: GE нарисует все треугольники целиком); у воды под камерой — ближняя, как раньше. Нет файла — как было. OPQ863_OLD=1 — файл не читается
+#ifndef OPQ863_OLD
+#define OPQ863_OLD 0
+#endif
+static unsigned opqFarN;   // opqFar[k] (main_render.h) — кусок k: дальняя версия при безопасном ящике; счётчики кадров — в строке GGSTAT (opqfar)
+static void opq863Apply(const unsigned char *tab) {
+  free(opqFar); opqFar = 0; opqFarN = 0;
+  if (OPQ863_OLD || !npc) return;
+  char fn[256]; levelFile(fn, "opq863.bin"); SceUID f = sceIoOpen(fn, PSP_O_RDONLY, 0); if (f < 0) return;
+  unsigned h[3] = {0, 0, 0}, n = 0, tris = 0, trisF = 0, idx[256];
+  if (sceIoRead(f, h, 12) == 12 && !memcmp(h, "OPQ1", 4) && h[1] == pvs2Sig(tab, npc) && (opqFar = (unsigned char *)calloc(npc, 1))) {
+    unsigned left = h[2];
+    while (left) { unsigned k = left < 256 ? left : 256; if (sceIoRead(f, idx, (int)(k * 4)) != (int)(k * 4)) break; left -= k;
+      for (unsigned j = 0; j < k; j++) { unsigned i = idx[j]; n++; if (i >= npc) continue; const Rec *r = &pc[i].r;
+        if (r->owner != 0 || !(r->flags & 2) || (r->flags & (4 | F_ADDITIVE)) || !(r->flags & F_FARP) || !r->nf || !texOpaque(r->tex)) continue;
+        opqFar[i] = 1; opqFarN++; tris += (unsigned)r->ni / 3; trisF += r->nf / 3; } }
+  }
+  sceIoClose(f);
+  if (smkOn) { char s_[140]; snprintf(s_, sizeof s_, "OPQ863 level=%d sig=%d list=%u pieces=%u tris_near=%u tris_far=%u\n", gameLevel, h[1] == pvs2Sig(tab, npc), n, opqFarN, tris, trisF); smkWrite(s_); }
 }
 static void levelLoad(void **fbp) {
   lvaInit();   // №775: участок под три крупных куска уровня — при первой загрузке игры (куча ещё чистая), дальше тот же
@@ -735,6 +763,7 @@ static void levelLoad(void **fbp) {
     if (pc[i].r.owner == 1) carP[ncarP++] = i;
     if (pc[i].r.owner == 2) skyP[nskyP++] = i;
   }
+  opq863Apply(data + tableOff); dalLoad(data + tableOff, npc);   // №877: таблица дали бота-репортёра (viewer/dal877.h); №863: море L3/L6 и прочее «полупрозрачное без прозрачности» — непрозрачным (список с Мака, tools/opq863.py)
   if (!CULL_HOT_OLD && npc) { cr = (CullRec *)memalign(32, sizeof(CullRec) * npc);   // отсечение: горячие записи (main_state.h CullRec)
     for (unsigned i = 0; cr && i < npc; i++) { const Piece *d = &pc[i]; CullRec *h = &cr[i]; memcpy(h->bb, d->r.bb, sizeof h->bb);
       int t = d->r.tex < 0 || d->r.tex > 510 ? 511 : d->r.tex;
@@ -769,6 +798,7 @@ static void levelLoad(void **fbp) {
   // этап 5: трафик, стоящие машины, пешеходы (1.35 МБ, резидентно). Текстуры машин TRF1 — в конец tex[] (trTexBase)
   if (haveCol) { char fn[256]; levelFile(fn, "traffic.shr");
     if (trafficLoad(&traffic, fn) == 0) {
+      if (smkOn) { char z_[64]; snprintf(z_, sizeof z_, "STOP875 level=%d lanes=%d\n", gameLevel, trafficStopCount()); smkWrite(z_); }   // №875
       toneBlkAdd(traffic.base, traffic.size, TF_TRAFFIC, 0);   // правка 144: traffic.shr читается целиком с начала
       int n = trafficTexCount(&traffic); Tex *nt = realloc(tex, (ntex + n + 1) * sizeof(Tex));
       if (nt) { tex = nt; trTexBase = ntex; haveTraffic = 1;
@@ -973,6 +1003,9 @@ static void menuRun(void **fbp) {
 #endif
   uiPause(0); if (levelReady) { cellsDropAll(); mvShutdown(); mcrFreeAll(); msnartRoom = 0; }   // пункт 8: модели и маркеры миссий — из кучи, NEW GAME загрузит заново
   sndEngine(0.f, 0.f, 0); sndSkid(0.f, 0); sndCarAir(0);
+#ifndef C3_ENDING_OLD
+  if (endingPending) { endingPending = 0; creditsRun(fbp); }   // №860: титры конца игры — после записи, уровень уже выгружен; потом меню
+#endif
   // музыка меню оригинала: FE_region музыкальной композиции (l?_music.rms) — Simpsons_Theme
   // 29.09: режим тюнера меню — обычный (значения SetSfxVolume / SetMusicVolume без префикса), не JustMusic: в JustMusic шина
   // эффектов 0, а звуки меню оригинала (frontend.spt: scroll, accept, back, locked_out) в меню слышны. Правило порта
@@ -1021,6 +1054,7 @@ static void menuRun(void **fbp) {
   menuFirstOpen = 0;
   SaveGame menuLoaded; int menuLoadOn = 0;   // правка 448: слот, загруженный на этом экране меню (LOAD GAME возвращает в меню, RESUME GAME берёт его)
   if (mainResume >= 0) uiMenuEnable(UI_MENU_MAIN, mainResume, hl_);   // RESUME GAME — есть целое сохранение
+  if (mainScrap >= 0) uiMenuEnable(UI_MENU_MAIN, mainScrap, !SCRAP862_OLD && (hl_ || (bonusSession && haveColl)));   // №862: SCRAP BOOK — есть запись или игра этой сессии
   if (mainResume >= 0 && !MENU_RESUME_DEFAULT_OLD) uiMenuHide(UI_MENU_MAIN, mainResume, !hl_);   // PS2: на чистой карте пункта RESUME GAME в меню нет (NEW GAME, LOAD GAME…); стрелки обходят
   while (act != mainNew) {
     unsigned t = sceKernelGetSystemTimeLow(); float dt = (t - last) * 1e-6f; last = t; if (dt > .05f) dt = .05f;
@@ -1030,6 +1064,7 @@ static void menuRun(void **fbp) {
     SmokeCmd sc; while (smokeNext(dt, &sc)) if (sc.op == 2 && !strcmp(sc.name, "loadshot")) { loadShot = 1; loadShotAt = sc.a; } else if (sc.op == 2 && !strcmp(sc.name, "newslvred")) newsLvRed = (int)sc.a; else if (sc.op == 2 && !strcmp(sc.name, "framesheet")) { fsInt = sc.a; fsT0 = 0; fsN = 0; } else if (sc.op == 2 && !strcmp(sc.name, "newsshot")) { newsShotOn = (int)sc.a; newsShotK = 0; if (smkOn) smkWrite("NEWSSHOT on\n"); }
                                             else if (sc.op == 2 && !strcmp(sc.name, "feshot")) { feShot = 1; feShotAt = sc.a; }   // гейт: LoadingFE со следующего выхода в меню
                                             else if (sc.op == 2 && !strcmp(sc.name, "feglow")) feGlowTest = (int)sc.a;   // гейт: подсветка пункта N
+                                            else if (sc.op == 2 && !strcmp(sc.name, "scrapon")) { scrapAllTest = sc.a != 0.f; if (mainScrap >= 0) uiMenuEnable(UI_MENU_MAIN, mainScrap, 1); }   // №862 служебно: SCRAP BOOK открыт, все карточки собраны
                                             else if (sc.op == 2 && !strcmp(sc.name, "fegag")) feGagForce = (int)sc.a;    // №404: сценка N сразу
                                             else if (sc.op == 2 && !strcmp(sc.name, "fegagat")) feGagAt = sc.a;          // №404: поза сценки на С (-1 играет)
                                             else if (sc.op == 2 && !strcmp(sc.name, "fegagauto")) feGagAuto = sc.a != 0.f;   // №404: 0 — без расписания
@@ -1064,6 +1099,10 @@ static void menuRun(void **fbp) {
     if (act >= 0 && act == mainMini) {   // правка 420: MINI GAME — бонус-игра (перелёта к треку в данных нет: камера стоит)
       feGagMenu(0); menuFly(act, FE_GO, sel, fbp); bonusRun(sel, fbp); feHome(); feGagMenu(1); hit = 0;
       act = -1; sceCtrlPeekBufferPositive(&pad, 1); prev = pad.Buttons | smokePad(); last = idleT0 = sceKernelGetSystemTimeLow(); }
+    if (act >= 0 && act == mainScrap) {   // №862: SCRAP BOOK — перелёт к альбому, карточки всех уровней (main_save.h scrapRun), перелёт назад
+      unsigned char c_[SV_LEVELS]; scrapCards(c_, menuLoadOn ? &menuLoaded : NULL);
+      feGagMenu(0); menuFly(act, FE_GO, sel, fbp); scrapRun(sel, fbp, c_); menuFly(act, FE_BACK, sel, fbp); feHome(); feGagMenu(1);
+      act = -1; sceCtrlPeekBufferPositive(&pad, 1); prev = pad.Buttons | smokePad(); last = idleT0 = sceKernelGetSystemTimeLow(); }
     if (act >= 0 && act == mainOpt) {   // OPTIONS: перелёт к дивану, экраны оригинала Options / Sound (menu.shr), перелёт назад
       feGagMenu(0);
       menuFly(act, FE_GO, sel, fbp); optionsRun(sel, fbp); menuFly(act, FE_BACK, sel, fbp); feHome();
@@ -1076,7 +1115,7 @@ static void menuRun(void **fbp) {
       if (ok && act == mainLoad) svPending = *svmLoaded();
 #if !LOAD_TO_MENU_OLD
       if (ok && act == mainLoad) {   // правка 448: слот загружен — назад в главное меню (появляется RESUME GAME), игра не стартует; бонус-гонки открыты по его карточкам
-        menuLoaded = svPending; menuLoadOn = 1; bonusOpenFromSave(&menuLoaded, "loaded");
+        menuLoaded = svPending; menuLoadOn = 1; bonusOpenFromSave(&menuLoaded, "loaded"); if (mainScrap >= 0 && !SCRAP862_OLD) uiMenuEnable(UI_MENU_MAIN, mainScrap, 1);
         if (mainResume >= 0) uiMenuEnable(UI_MENU_MAIN, mainResume, 1);
         ok = 0; loadedBack = 1;
         if (smkOn) { snprintf(s, sizeof s, "LOADBACK level=%d resume=%d t=%.1f\n", svPending.level, mainResume, smkT); smkWrite(s); }

@@ -112,6 +112,7 @@ void collectNewGame(Collect *c);                      // новая игра: п
 int  collectRoomId(const char *interior);             // имя комнаты скриптов -> номер (как tools/interior_export.py), NULL/нет -> -1
 // кадр после Гомера/машины/монет (viewer/game.c gameAfterCar): осы, карточки, гэги, SPR1 пакета. homer/car/world/coins — NULL можно
 void collectStep(Collect *c, const CollPlayer *p, Homer *homer, Car *car, const ColWorld *world, Coins *coins, float dt);
+void collectGagPlay(Collect *c, unsigned g);   // №869 служебно: запустить гэг g (как триггер)
 void collectFootKick(Collect *c, const Homer *homer);
 void collectHomerHit(Collect *c, const HomerEvent *e);   // HIT / STOMP Гомера: осы в досягаемости -> DESTROYED
 int  collectWantsAction(const Collect *c);            // action-гэг под Гомером (по игроку прошлого шага): номер или -1

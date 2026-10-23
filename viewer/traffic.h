@@ -182,6 +182,7 @@ int trafficInitMem(Traffic *t, void *data, unsigned size, int own);   // то ж
 void trafficFree(Traffic *t);
 // текстуры TRF1 в формате level.shr: w, h, число уровней, CLUT (256 x 8888), уровни (swizzle, высота кратна 8)
 int trafficTexCount(const Traffic *t);
+int trafficStopCount(void);   // №875: концов полос со стоп-линией у зебры (stop875.bin)
 void trafficTexInfo(const Traffic *t, int i, int *w, int *h, int *levels, int *pre, void **pal, void *lv[8]);
 // всё убрать и поставить стоящие машины на места (старт, NEW GAME, телепорт); движущиеся и пешеходы появятся вокруг игрока
 void trafficReset(Traffic *t, const ColWorld *w);

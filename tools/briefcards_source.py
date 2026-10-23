@@ -5,9 +5,22 @@ We validate the actual pointer-building instructions; string adjacency alone is 
 """
 import struct
 from pathlib import Path
+import disc_exe as DE
 ROOT=Path(__file__).resolve().parents[1]
-DISC=ROOT/'hit-and-run-web/source/disc/SLES_518.97'
+DISC=DE.disc_exe()   # №880: исполняемый файл из SYSTEM.CNF (PAL SLES_518.97, NTSC SLUS_206.24)
+def scan_mappings():
+ # №880 (NTSC: функция брифинга сдвинута на −0x414, адреса PAL не подходят): по коду — addiu a1 "b_<имя>", следом не дальше 96 Б addiu a0 "…/mis…";
+ # на PAL даёт те же 15 пар, что адреса ниже (проверка: python tools/briefcards_source.py --check-scan)
+ b,seg,word,fileoff=DE.elf(DISC);ms=DE.mips_strings(b,seg,fileoff)
+ names=[(va,s) for va,r,s in ms if r==5 and s.startswith('b_') and '%' not in s]
+ paths=[(va,s) for va,r,s in ms if r==4 and s.lower().startswith('art/frontend/dynaload/images/mis')]
+ out={}
+ for nv,nm in names:
+  pp=[s for va,s in paths if nv<va<=nv+96]
+  if pp:out[nm[2:]]=pp[0].lower()
+ return out
 def builtin_mappings():
+ if not DE.pal():return scan_mappings()
  b=DISC.read_bytes();phoff=struct.unpack_from('<I',b,28)[0];size,n=struct.unpack_from('<HH',b,42)
  seg=[]
  for i in range(n):
@@ -37,4 +50,7 @@ def builtin_paths():
  # PS/HW are also loaded by original failure/tutorial flows; all six misXX assets exist on the disc.
  return sorted(set(builtin_mappings().values())|{str(p.relative_to(ROOT/'hit-and-run-web/source/game')).lower() for p in (ROOT/'hit-and-run-web/source/game/art/frontend/dynaload/images').glob('misxx_*.p3d')})
 if __name__=='__main__':
+ import sys
+ if '--check-scan' in sys.argv:
+  a,c=builtin_mappings(),scan_mappings();print('OK' if a==c else 'FAIL',len(a),len(c));sys.exit(0 if a==c else 1)
  for npc,path in builtin_mappings().items():print(npc,path)

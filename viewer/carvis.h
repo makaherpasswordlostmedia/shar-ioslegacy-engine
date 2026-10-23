@@ -42,6 +42,7 @@ typedef struct {
   int shadowValid;
   // №522: высоты тени по узлам сетки 6x6 (опора под каждым узлом, не одна плоскость): держатся между кадрами, растут сразу, спадают за 100 мс
   float shadowH[36]; unsigned char shadowHok[36]; int shadowGrid;
+  int capStill;   // №878: диск колеса не крутится (хром с переливом, carwheels.h carWheelCapStill)
 } CarVis;
 
 // разбор секции CAR1 (буфер можно освободить после вызова); 0 = ок
@@ -57,6 +58,8 @@ void carVisUpdate(CarVis *v, const Car *c, const CarInput *in, float dt);
 // матрица куска машины (столбцы, как ScePspFMatrix4): полная ориентация кузова * анимация сустава.
 // variant 1 (остов) рисуется со своим huskLift.
 void carVisPieceMatrix(const CarVis *v, const Car *c, int joint, int variant, float ox, float oy, float oz, float sc, float m[16]);
+void carVisPieceMatrixEx(const CarVis *v, const Car *c, int joint, int variant, float ox, float oy, float oz, float sc, int noSpin, float m[16]);   // №867: noSpin — без качения колеса
+int carVisWheelJoint(const CarVis *v, int joint);   // №867: сустав — колесо
 // рисовать ли кусок этого варианта сейчас (машина целая / остов)
 int carVisVariantOn(const Car *c, int variant);
 // подмена текстуры по урону (целая -> битая)

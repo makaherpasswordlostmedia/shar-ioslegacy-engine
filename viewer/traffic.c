@@ -6,6 +6,7 @@
 #include <stdio.h>          // snprintf (правка 240: имя в событии)
 #include "traffic.h"
 #include "carwheels.h"       // правка 354: скрытые колёса оригинала
+#include "wheelcap.h"        // №867: боковины колеса (картинка диска) без вращения
 #include "homer.h"          // HOMER_STEP / HOMER_HEIGHT: те же пороги, что у стейтпропов для Гомера
 #ifdef SKIN_HOST
 #include <stdio.h>
@@ -247,6 +248,40 @@ int trafficInitMem(Traffic *t, void *data, unsigned size, int own) {
 
 #include "pfetch.h"
 __attribute__((weak)) void *(*pfTakeHook)(const char *path, unsigned *size);   // pfetch.h; слабый — хост-гейты линкуются без движка
+// №875 (Роб 23.10: «NPC-машины встают прямо на пешеходном переходе»): трафик тормозит передним бампером у конца полосы (stopLine), а плитка с зеброй
+// и надписью STOP лежит перед концом полосы (L1: tex 106, задний край в 2–2,7 м). Бот на Маке (tools/scout/zebra.py) пишет рядом с traffic.shr
+// stop875.bin: 'STP1', n, {u16 дорога, u16 полоса, f32 отступ м}. Машина тормозит на линии, отодвинутой за задний край плитки (brakeLine); уже
+// проехала её, а перекрёсток занят — стоп у прежней линии, как было. «В перекрёстке» (inJunction) — по прежней линии. Нет файла — как было. TRF_STOP875_OLD=1 — файл не читается
+#ifndef TRF_STOP875_OLD
+#define TRF_STOP875_OLD 0
+#endif
+static float *trStopOff; static unsigned trStopRoads, trStopN;
+static void trStopLoad(const char *path, unsigned nRoad) {
+  free(trStopOff); trStopOff = 0; trStopRoads = 0; trStopN = 0;
+  if (TRF_STOP875_OLD || !path) return;
+  char fn[256]; snprintf(fn, sizeof fn, "%s", path); char *sl = strrchr(fn, '/'); snprintf(sl ? sl + 1 : fn, sizeof fn - (size_t)(sl ? sl + 1 - fn : 0), "stop875.bin");
+#ifdef SKIN_HOST
+  FILE *f = fopen(fn, "rb"); if (!f) return; unsigned char h[8]; if (fread(h, 1, 8, f) != 8 || memcmp(h, "STP1", 4)) { fclose(f); return; }
+#else
+  SceUID f = sceIoOpen(fn, PSP_O_RDONLY, 0); if (f < 0) return; unsigned char h[8]; if (sceIoRead(f, h, 8) != 8 || memcmp(h, "STP1", 4)) { sceIoClose(f); return; }
+#endif
+  unsigned n; memcpy(&n, h + 4, 4);
+  trStopOff = calloc((size_t)nRoad * 4u, sizeof *trStopOff); trStopRoads = nRoad;
+  for (unsigned i = 0; trStopOff && i < n; i++) { unsigned char e[8];
+#ifdef SKIN_HOST
+    if (fread(e, 1, 8, f) != 8) break;
+#else
+    if (sceIoRead(f, e, 8) != 8) break;
+#endif
+    uint16_t rd, ln; float off; memcpy(&rd, e, 2); memcpy(&ln, e + 2, 2); memcpy(&off, e + 4, 4);
+    if (rd < nRoad && ln < 4 && off > 0.f && off <= 8.f) { trStopOff[rd * 4u + ln] = off; trStopN++; } }
+#ifdef SKIN_HOST
+  fclose(f);
+#else
+  sceIoClose(f);
+#endif
+}
+int trafficStopCount(void) { return (int)trStopN; }
 int trafficLoad(Traffic *t, const char *path) {
   unsigned char *d = 0; unsigned size = 0;
 #ifdef SKIN_HOST
@@ -266,10 +301,12 @@ int trafficLoad(Traffic *t, const char *path) {
 #endif
   int r = trafficInitMem(t, d, size, 1);
   if (r) { free(d); t->base = 0; t->own = 0; free(t->park); t->park = 0; }
+  else trStopLoad(path, t->hd->nRoad);   // №875: стоп-линии до зебр (бот tools/scout/zebra.py)
   return r;
 }
+static void trFarWheelsFree(void);
 void trafficFree(Traffic *t) {
-  free(t->park); t->park = 0; t->npark = 0;
+  free(t->park); t->park = 0; t->npark = 0; trFarWheelsFree();   // №877: сетки дальних колёс — по моделям этого уровня
   if (t->own) free(t->base);
   t->base = 0; t->hd = 0;
 }
@@ -460,6 +497,11 @@ static float gapAhead(const Traffic *t, const TrCar *c, const Obs *o, int n) {
 }
 // стоп-линия: передний бампер у края перекрёстка (начало машины — между колёсами, перед торчит на halfL + bodyOfs)
 static float stopLine(const Traffic *t, const TrCar *c) { return laneLen(t, c->road, c->lane) - (c->car.p.halfL + c->car.p.bodyOfs) - .3f; }
+static float brakeLine(const Traffic *t, const TrCar *c) {   // №875: линия торможения — за зеброй (stop875.bin), иначе stopLine
+  float sl = stopLine(t, c);
+  if (trStopOff && (unsigned)c->road < trStopRoads && (unsigned)c->lane < 4u) sl -= trStopOff[(unsigned)c->road * 4u + (unsigned)c->lane];
+  return sl;
+}
 // машина в перекрёстке: на кривой или передом за стоп-линией
 static int inJunc(const Traffic *t, const TrCar *c, int j) {
   if (c->mode != TRM_DRIVE || c->junc != j) return 0;
@@ -489,7 +531,7 @@ static float pathGap(const Traffic *t, const TrCar *c, const Obs *o, int n, cons
 static void driveStep(Traffic *t, const ColWorld *w, TrCar *c, const Obs *obs, int nobs, float dt) {
   const TrRoad *r = &t->road[c->road];
   float L = c->elem == 0 ? laneLen(t, c->road, c->lane) : c->bzLen;
-  float decide = TRAFFIC_PACE_OLD || c->elem ? DECIDE : fmaxf(DECIDE, L - stopLine(t, c) + c->v * c->v / (2.f * DECEL) + 1.f);
+  float decide = TRAFFIC_PACE_OLD || c->elem ? DECIDE : fmaxf(DECIDE, L - brakeLine(t, c) + c->v * c->v / (2.f * DECEL) + 1.f);
   if (c->elem == 0 && !c->next && L - c->s < decide && !chooseNext(t, c)) c->next = -1;   // тупик: стоп у конца, удалится вне кадра
   float vRoad = ROAD_V(t, c->road);
   float vt = vRoad;
@@ -501,7 +543,8 @@ static void driveStep(Traffic *t, const ColWorld *w, TrCar *c, const Obs *obs, i
   // перекрёсток: стоп передним бампером у края (behaviour 1), занятый — ждать
   float stopS = 1e9f;
   if (c->elem == 0 && c->next != 0) {
-    float sl = stopLine(t, c), toStop = sl - c->s;
+    float sl = brakeLine(t, c); if (c->s > sl + .05f) sl = stopLine(t, c);   // №875: проехал линию у зебры — стоп у прежней
+    float toStop = sl - c->s;
     int jn = c->next > 0 ? c->junc : r->endJ, beh1 = t->junc[jn].behaviour == 1, busy = c->next > 0 && juncBusy(t, c, jn);
     int mayGo = c->next > 0 && (!busy || (TRAFFIC_JUNC_OLD && c->waitT > JAM_WAIT)) && (!beh1 || c->waitT >= STOP_WAIT);
     if (!mayGo && toStop > -.05f) {
@@ -1518,6 +1561,53 @@ static void mul4(const float a[16], const float b[16], float o[16]) {   // ст�
 #define TRF_HUSK804_OLD 0
 #endif
 int trHideDriver;
+// №866 (Роб 23.10, не первый раз: «издалека колёса должны быть чёрные — у жёлтых такси и школьных автобусов колёса цвета кузова»): дальняя версия
+// трафика и машин миссий (> 30 м, tools/traffic_export.py LOD <= 400 треуг.) — суп в позе покоя, упрощение съедает маленькие колёса, в арках цвет
+// кузова. Поверх дальней версии — четыре тёмных колеса модели (восьмигранник, 28 треуг. на колесо) одной сеткой и одним вызовом; центры и радиус —
+// из TrModel (wheel[4], wheelRad), скрытые колёса оригинала (carwheels.h) не рисуются. Сетка строится раз на модель. TRF_FARWHEEL866_OLD=1 — как было
+#ifndef TRF_FARWHEEL866_OLD
+#define TRF_FARWHEEL866_OLD 0
+#endif
+#define FW_SC 4.f
+#define FW_N 8
+typedef struct { const TrModel *M; unsigned hide; char name[16]; float key[13]; TrPiece p; unsigned char *v; } FarWheels;   // name/key — модель миссии могла лечь по тому же адресу
+static FarWheels fwTab[96]; static int fwN;
+// №877 (ночная долгая игра TEST49: куча после каждой смены уровня −16…21 КБ, LT696 ra trFarWheels): модели следующего уровня ложатся по новым
+// адресам, записи копились до 96 (≈0,5 МБ). Смена уровня (trafficFree) отпускает все; TRF_FWFREE877_OLD=1 — как было
+#ifndef TRF_FWFREE877_OLD
+#define TRF_FWFREE877_OLD 0
+#endif
+static void trFarWheelsFree(void) { if (TRF_FWFREE877_OLD) return; for (int i = 0; i < fwN; i++) free(fwTab[i].v); memset(fwTab, 0, sizeof fwTab); fwN = 0; }
+static const FarWheels *trFarWheels(const TrModel *M, unsigned hide) {
+  float key[13]; key[0] = M->wheelRad; memcpy(key + 1, M->wheel, sizeof M->wheel);
+  for (int i = 0; i < fwN; i++) if (fwTab[i].M == M && fwTab[i].hide == hide && !memcmp(fwTab[i].name, M->name, 16) && !memcmp(fwTab[i].key, key, sizeof key)) return fwTab[i].v ? &fwTab[i] : 0;
+  for (int i = 0; i < fwN; i++) if (fwTab[i].M == M && fwTab[i].hide == hide) { FarWheels *f = &fwTab[i]; free(f->v); f->v = 0; f->M = 0; }   // устаревшая запись адреса
+  FarWheels *f = fwN < 96 ? &fwTab[fwN++] : &fwTab[(unsigned)((uintptr_t)M >> 4) % 96u];
+  if (f->v) free(f->v);
+  memset(f, 0, sizeof *f); f->M = M; f->hide = hide; memcpy(f->name, M->name, 16); memcpy(f->key, key, sizeof key);
+  float R = M->wheelRad; if (!(R > .1f && R < 1.5f)) return 0;
+  float W = R * .6f; int nw = 0; for (int w = 0; w < 4; w++) if (!(hide >> w & 1) && (M->wheel[w][0] != 0.f || M->wheel[w][2] != 0.f)) nw++;
+  if (!nw) return 0;
+  int per = (2 * (FW_N - 2) + 2 * FW_N) * 3, nv = nw * per;
+  unsigned char *v = (unsigned char *)memalign(16, (size_t)nv * 16); if (!v) return 0;
+  int o = 0; float lo[3] = {1e9f, 1e9f, 1e9f}, hi[3] = {-1e9f, -1e9f, -1e9f};
+  for (int w = 0; w < 4; w++) { if ((hide >> w & 1) || (M->wheel[w][0] == 0.f && M->wheel[w][2] == 0.f)) continue;
+    const float *c = M->wheel[w]; float ring[2][FW_N][3];
+    for (int s_ = 0; s_ < 2; s_++) for (int j = 0; j < FW_N; j++) { float a = 6.2831853f * (float)j / FW_N;
+      ring[s_][j][0] = c[0] + (s_ ? W : -W) * .5f; ring[s_][j][1] = c[1] + R * cosf(a); ring[s_][j][2] = c[2] + R * sinf(a); }
+    #define FW_PUT(P) do { unsigned char *q_ = v + (size_t)o * 16; memset(q_, 0, 16); *(unsigned *)(q_ + 4) = 0xFF1C1C1Cu; \
+        for (int e_ = 0; e_ < 3; e_++) { float x_ = (P)[e_] / FW_SC * 32767.f; ((short *)(q_ + 8))[e_] = (short)(x_ < -32767.f ? -32767 : x_ > 32767.f ? 32767 : x_); \
+          if ((P)[e_] < lo[e_]) lo[e_] = (P)[e_]; if ((P)[e_] > hi[e_]) hi[e_] = (P)[e_]; } o++; } while (0)
+    for (int s_ = 0; s_ < 2; s_++) for (int j = 1; j + 1 < FW_N; j++) { FW_PUT(ring[s_][0]); FW_PUT(ring[s_][s_ ? j + 1 : j]); FW_PUT(ring[s_][s_ ? j : j + 1]); }   // боковины веером
+    for (int j = 0; j < FW_N; j++) { int j2 = (j + 1) % FW_N;   // протектор
+      FW_PUT(ring[0][j]); FW_PUT(ring[1][j]); FW_PUT(ring[1][j2]); FW_PUT(ring[0][j]); FW_PUT(ring[1][j2]); FW_PUT(ring[0][j2]); }
+    #undef FW_PUT
+  }
+  sceKernelDcacheWritebackRange(v, (unsigned)(nv * 16));   // GE читает вершины из памяти (урок №863)
+  for (int e = 0; e < 3; e++) { f->p.bb[e] = lo[e]; f->p.bb[3 + e] = hi[e]; }
+  f->p.tex = -1; f->p.flags = 16 | 8; f->p.nv = (int)nv; f->p.ni = (int)nv; f->p.owner = 1; f->p.sc = FW_SC; f->v = v;   // 16 без индексов, 8 — двусторонний
+  return f;
+}
 void trafficDrawModel(const TrModel *M, const TrPiece *piece, const unsigned char *vert, const Car *k, float wheelAng, int lod,
                       TrDrawFn fn, void *user, int *tris) {
   float B[16]; carPieceMatrix(k, carShowHusk(k)?M->lift:carModelLift(k,M->lift), 0.f, 0.f, 0.f, 1.f, B);
@@ -1541,6 +1631,14 @@ void trafficDrawModel(const TrModel *M, const TrPiece *piece, const unsigned cha
       float L[16] = {sc, 0, 0, 0,  0, c * sc, s * sc, 0,  0, -s * sc, c * sc, 0,
                      wc[0] + p->ox, wc[1] + dy + c * p->oy - s * p->oz, wc[2] + s * p->oy + c * p->oz, 1};
       mul4(B, L, m);
+      // №867: боковины (картинка диска с нарисованным светом) — без качения, протектор — с качением (wheelcap.h)
+      int vs_ = (p->flags & 32) ? 12 : 16, cap_ = (p->flags & 16) && carWheelCapStill(nm) ? wheelCapN((void *)(vert + p->off), (int)p->ni, vs_) : 0;   // №878: только диски с переливом
+      if (cap_ > 0 && p->owner != 3 && !(p->owner == 4 && trHideDriver)) {
+        float L0[16] = {sc, 0, 0, 0,  0, sc, 0, 0,  0, 0, sc, 0,  wc[0] + p->ox, wc[1] + dy + p->oy, wc[2] + p->oz, 1}, m0[16]; mul4(B, L0, m0);
+        TrPiece q = *p; q.ni = (uint32_t)cap_; fn(user, &q, vert + p->off, m0);
+        q.ni = p->ni - (uint32_t)cap_; fn(user, &q, vert + p->off + (size_t)cap_ * vs_, m); if (tris) *tris += p->ni / 3;
+        continue;
+      }
     }
     // №804 (Роб 19.10, TEST38: «NPC-машины после взрыва без каркаса — одни колёса»): у остова huskA кузов — один кусок с текстурой водителей
     // (char_swatches, tools/traffic_export.py метит его owner 4 — «запечённый водитель»); у машин миссий и у машины игрока водитель рисуется
@@ -1555,6 +1653,10 @@ void trafficDrawModel(const TrModel *M, const TrPiece *piece, const unsigned cha
       continue;
     }
     fn(user, p, vert + p->off, m); if (tris) *tris += p->ni / 3;
+  }
+  if (lod && !TRF_FARWHEEL866_OLD && !carShowHusk(k) && !k->destroyed) {   // №866: тёмные колёса поверх дальней версии
+    const FarWheels *fw = trFarWheels(M, hide);
+    if (fw) { float m[16]; float L[16] = {FW_SC, 0, 0, 0, 0, FW_SC, 0, 0, 0, 0, FW_SC, 0, 0, 0, 0, 1}; mul4(B, L, m); fn(user, &fw->p, fw->v, m); if (tris) *tris += fw->p.ni / 3; }
   }
 }
 static void drawCar(Traffic *t, const Car *k, int model, float wheelAng, float d, TrDrawFn fn, void *user) {

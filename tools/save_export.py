@@ -112,8 +112,12 @@ def bible_hash(h):
     raise SystemExit('нет строки библии с хешем %d' % h)
 
 
+TEXT_FALLBACK = {'MSG_DELETING_(PS2)': 'Deleting...'}
+
+
 def text(key):
     v = bible_hash(key[1]) if isinstance(key, tuple) else U._BIBLE(key)
+    if v is None and key in TEXT_FALLBACK: v = TEXT_FALLBACK[key]   # №880: в библии NTSC нет MSG_DELETING_(PS2)
     if v is None:
         raise SystemExit('нет строки библии %s' % (key,))
     return psp_text(v)

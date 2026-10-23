@@ -143,33 +143,33 @@ static void bsqCheck(BuiPut put, void *u, int row, const char *key, const char *
 static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   // 31234 -> 31.2k
   if (v >= 10000) snprintf(b, n, "%s%d.%dk%s", pre, v / 1000, v % 1000 / 100, post); else snprintf(b, n, "%s%d%s", pre, v, post);
 }
-// Роб 17.10 вечер: «зачем там PSP 2000? нужна информация, сколько часов на тесты, сколько конвертнули, что пропатчили, свет, прорисовка
+// Роб 17.10 вечер: «нахуя там PSP 2000? нужна информация, сколько часов на тесты, сколько конвертнули, что пропатчили, свет, прорисовка
 // дальности — как будто реально загружаются вещи, с которыми мы работали». Верхний блок — наша работа, числа настоящие (пересчитаны 20.10 по просьбе Роба
 // «чтобы на загрузочном экране счётчик был актуален»; 17.10: 2077 прогонов, 24 ч, 741 правка, сборка 31):
 //   DISC  18754 — файлов распакованного PS2-диска Роба (hit-and-run-web/source/game), из них собраны пакеты PSP
-//   TESTS 2523 — прогонов: 1004 в каталоге близнецов (knowledge/twins_library/КАТАЛОГ_ПРОГОНОВ.tsv) + 1170 с журналом в build/smoke
-//         всех 76 рабочих копий + 301 в build/emu_runs + 48 туров на PSP (build/psp-tour); 130 записей PS2 (ЗАПИСИ_PS2) — эталоны
-//   HOURS 38 — игровых часов в журналах прогонов, что ещё лежат на диске (последнее время t= журнала: smoke 26,5 ч, эмулятор 5,9 ч, туры PSP 6,1 ч;
+//   TESTS 2575 — прогонов: 1004 в каталоге близнецов (knowledge/twins_library/КАТАЛОГ_ПРОГОНОВ.tsv) + 1170 с журналом в build/smoke
+//         всех 76 рабочих копий + 349 в build/emu_runs + 52 туров на PSP (build/psp-tour); 130 записей PS2 (ЗАПИСИ_PS2) — эталоны (пересчёт 22.10 вечер)
+//   HOURS 38 — игровых часов в журналах прогонов, что ещё лежат на диске (последнее время t= журнала: smoke 26,5 ч, эмулятор 6,1 ч, туры PSP 5,9 ч;
 //         нижняя граница: старые прогоны удалены)
-//   FIXES 856 — правок Роба (docs/handoff/ПРАВКИ_РОБА.md, номер последней), за 45 тестовых сборок (TEST1–TEST45, номер сборки — в нижней строке)
+//   FIXES 862 — правок Роба (docs/handoff/ПРАВКИ_РОБА.md, номер последней), за 46 тестовых сборок (TEST1–TEST46, номер сборки — в нижней строке)
 //   LIGHT / DRAW — закон света (конус к камере, пятно на полу, тени 20 %) и даль (дальние LOD, HLOD, горизонт)
 // Строки железа (CPU, MEMORY…) и «PSP-2000» — BOOT_WORK_OLD=1
 #ifndef BOOT_WORK_OLD
 #define BOOT_WORK_OLD 0
 #endif
 #define BOOT_W_DISC 18754
-#define BOOT_W_RUNS 2523
+#define BOOT_W_RUNS 2579
 #define BOOT_W_PS2REC 130
 #define BOOT_W_HOURS 38
-#define BOOT_W_FIXES 856
-#define BOOT_W_BUILDS 45
+#define BOOT_W_FIXES 879
+#define BOOT_W_BUILDS 51
 static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   char b[80], c[40];
   if (n <= 0) {   // первый кадр: производитель и копирайт слева вверху, подсказка и идентификатор внизу — как у BIOS сразу при включении
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/20/26-GONEMAKERS-SHAR-PORT-45");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/23/26-GONEMAKERS-SHAR-PORT-51");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;

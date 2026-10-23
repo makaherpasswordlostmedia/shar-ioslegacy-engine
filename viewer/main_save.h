@@ -526,6 +526,67 @@ static void creditsLog(const char *what, float scroll, const UiCredits *ci) {
                         ci ? ci->blocks : 0, ci ? ci->lines : 0, ci ? ci->first : -1, ci ? ci->top : 0, ci ? ci->bottom : 0,
                         ci ? ci->x0 : 0, ci ? ci->x1 : 0, ci ? ci->end : 0.f, smkT); smkWrite(s);
 }
+// №862 (Роб 22.10: «в главном меню, гостиной Симпсонов, при пройденной игре должен быть доступен скрапбук, в котором карточки»):
+// SCRAP BOOK — экран VIEW CARDS паузы (PauseViewCards.scr из pextra.shr уровня) над гостиной; L / R — уровень 1..7, ◄ ► ▲ ▼ X — как в
+// паузе (vcInput), △ / ○ на сетке — назад в меню. Карточки: загруженная на этом экране запись, иначе игра этой сессии, иначе самая
+// свежая запись (как трассы бонус-игры, правка 421); DEV SAVE — все. На время альбома gameLevel = уровень страницы (levelFile, cardqr)
+#ifndef SCRAP862_OLD
+#define SCRAP862_OLD 0
+#endif
+#define SCRAP_LB_X 24    // подпись уровня альбома: левый край и верх строки (строка подсказок ACCEPT / BACK — низ экрана)
+#define SCRAP_LB_Y 248
+static int scrapAllTest;   // служебно «flag scrapon 1» (гейт альбома без записи): все карточки собраны
+static void scrapCards(unsigned char *c, const SaveGame *loaded) {
+  memset(c, 0, SV_LEVELS); SaveGame g;
+  if (scrapAllTest) { memset(c, 0x7f, SV_LEVELS); c[0] = 0; return; }
+  const SaveGame *src = loaded ? loaded : (bonusSession && haveColl) ? NULL : (svmLatest(&g) ? &g : NULL);
+  if (!loaded && bonusSession && haveColl) { for (int L = 1; L < SV_LEVELS && L < COLL_LEVELS; L++) c[L] = (unsigned char)collectCards(&coll, L); return; }
+  if (src) { memcpy(c, src->cards, SV_LEVELS); if (svmIsDev(src) && !devCollOld) bonusDevCards(c); }
+}
+static int scrapPage(int L, const unsigned char *c) {
+  char fn[256]; SceIoStat st; gameLevel = L; levelFile(fn, "pextra.shr");
+  if (sceIoGetstat(fn, &st) < 0 || uiScrOpen(fn)) return 0;
+  unsigned got = c[L]; for (int k = 0; k < 7; k++) uiHudSet(UI_F_VC0 + k, (int)(got >> k & 1u));
+  vcOpen = 1; vcSel = 0; vcZoom = 0; vcShow(); vcQrLoad();
+  if (smkOn) { char s[80]; snprintf(s, sizeof s, "SCRAPBOOK page=%d got=%02x t=%.1f\n", L, got, smkT); smkWrite(s); }
+  return 1;
+}
+static void scrapRun(int mainSel, void **fbp, const unsigned char *c) {
+  int keep = gameLevel, L = 0;
+  for (int n = 1; n <= 7 && !L; n++) if (scrapPage(n, c)) L = n;
+  if (!L) { gameLevel = keep; return; }
+  int font = uiFontFind("boulder_16");
+  SceCtrlData pad; sceCtrlPeekBufferPositive(&pad, 1);
+  unsigned prev = pad.Buttons | smokePad(), last = sceKernelGetSystemTimeLow();
+  for (;;) {
+    unsigned t = sceKernelGetSystemTimeLow(); float dt = (t - last) * 1e-6f; last = t; if (dt > .05f) dt = .05f;
+    sceCtrlPeekBufferPositive(&pad, 1); pad.Buttons |= smokePad();
+    unsigned hit = pad.Buttons & ~prev; prev = pad.Buttons;
+    hit = uiPadRepeat(pad.Buttons, hit);
+    SmokeCmd sc; while (smokeNext(dt, &sc)) {}
+    if ((hit & (PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER)) && !vcZoom) {   // другой уровень: пакет его карточек
+      int d = (hit & PSP_CTRL_RTRIGGER) ? 1 : -1, n = L; SCR_CLOSE(); vcOpen = 0;
+      for (int k = 0; k < 7; k++) { n = (n + d + 6) % 7 + 1; if (scrapPage(n, c)) { L = n; break; } }
+      if (!vcOpen) break;
+      uiPopHookFire(UI_EV_SCROLL); hit &= ~(PSP_CTRL_LTRIGGER | PSP_CTRL_RTRIGGER);
+    }
+    if (hit) vcInput(hit);
+    if (!vcOpen) break;   // △ / ○ на сетке: vcInput закрыл пакет
+    unsigned budgetT0 = sceKernelGetSystemTimeLow(), budgetIo0 = smkIoUs;
+    sceGuStart(GU_DIRECT, list); resetState();
+    sceGuScissor(0, 0, SCR_W, SCR_H); sceGuClearColor(0xff000000); sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+    feDraw(mainSel); resetState();
+    uiScrDrawMenu(UI_PX_VIEWCARDS, vcSel, 0.f); if (vcZoom) vcQrDraw(vcSel);
+    if (!vcZoom) {   // уровень страницы — слева внизу, в строке подсказок ACCEPT / BACK (верх занят заголовком VIEW CARDS)
+      char lb[16]; snprintf(lb, sizeof lb, "LEVEL %d", L);
+      int x = SCRAP_LB_X + uiText(font, SCRAP_LB_X, SCRAP_LB_Y, 0xffffffffu, lb); uiText(font, x + 12, SCRAP_LB_Y, 0xffa8a8a8u, "L / R"); }
+    resetState(); sceGuClutMode(GU_PSM_8888, 0, 0xff, 0);
+    sceGuFinish(); sceGuSync(0, 0); menuBudget(budgetT0, budgetIo0, "scrapbook");
+    sceDisplayWaitVblankStart(); *fbp = swapBuf();
+  }
+  if (vcOpen) { SCR_CLOSE(); vcOpen = 0; }
+  gameLevel = keep;
+}
 static void optionsRun(int mainSel, void **fbp) {
   char fn[256]; sibling(fn, "menu.shr");
   if (uiScrOpen(fn)) return;
@@ -587,4 +648,34 @@ static void optionsRun(int mainSel, void **fbp) {
     sceDisplayWaitVblankStart(); *fbp = swapBuf();
   }
   SCR_CLOSE();
+}
+// №860: титры конца игры — тем же путём, что VIEW CREDITS в OPTIONS (menu.shr, экран OPT_CREDITS, музыка «Credits»), в menuRun до музыки
+// меню. Экран ending.shr (CreditsPostFMV, Канг и Кодос) в эмуляторе вставал на 8–10 кадре: главный поток больше не получал процессор
+// (и поверх уровня, и в меню); VIEW CREDITS тем же эмулятором идёт до конца. ENDING_SAVE860_OLD=1 — прежнее: ending.shr прямо из игры
+static void creditsRun(void **fbp) {
+  char fn[256]; sibling(fn, "menu.shr");
+  if (uiScrOpen(fn)) return;
+  if (uiScrScreens() <= OPT_MOVIES) { SCR_CLOSE(); return; }   // пакет без экрана титров (до 29.09)
+  int prevMode = sndModeCur(); sndMode(SND_MODE_CREDITS);
+  int id = audioTrack("credits"); if (id >= 0) audioMusic(id, .5f);
+  if (smkOn) { char s[96]; snprintf(s, sizeof s, "CREDITS on music=%s src=gameend t=%.1f\n", id >= 0 ? "credits" : "-", smkT); smkWrite(s); }
+  SceCtrlData pad; sceCtrlPeekBufferPositive(&pad, 1);
+  unsigned prev = pad.Buttons | smokePad(), last = sceKernelGetSystemTimeLow();
+  float credT = 0.f; UiCredits ci; memset(&ci, 0, sizeof ci);
+  for (;;) {
+    unsigned t = sceKernelGetSystemTimeLow(); float dt = (t - last) * 1e-6f; last = t; if (dt > .05f) dt = .05f;
+    sceCtrlPeekBufferPositive(&pad, 1); pad.Buttons |= smokePad();
+    unsigned hit = pad.Buttons & ~prev; prev = pad.Buttons;
+    SmokeCmd sc; while (smokeNext(dt, &sc)) {}
+    int done = ci.blocks && ci.end <= 0.f;   // низ последней строки ушёл за верх экрана
+    if (!smkShot[0]) credT += dt;
+    if (uiScrBackInput(hit) || done) { creditsLog(done ? "end" : "back", credT * CREDITS_SPEED, &ci); break; }
+    sceGuStart(GU_DIRECT, list); resetState();
+    sceGuScissor(0, 0, SCR_W, SCR_H); sceGuClearColor(0xff000000); sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+    { int was = ci.blocks; uiScrDrawCredits(OPT_CREDITS, credT * CREDITS_SPEED, &ci); if (!was) creditsLog("start", 0.f, &ci); }
+    resetState(); sceGuClutMode(GU_PSM_8888, 0, 0xff, 0);
+    sceGuFinish(); sceGuSync(0, 0);
+    sceDisplayWaitVblankStart(); *fbp = swapBuf();
+  }
+  sndMode(prevMode); SCR_CLOSE();
 }

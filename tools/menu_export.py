@@ -400,10 +400,12 @@ def part_gap(k):
 def credits(its):
     """VIEW CREDITS: метки для viewer/ui.c uiScrDrawCredits — фон ALWAYS, блоки титров SKIP по номеру (Credits0..31: в данных
     они идут с конца), рамка и Back — STREETRACE (рисуются поверх титров)"""
-    cr = sorted((it for it in its if it['page'] == 'ViewCredits.pag'), key=lambda it: int(it['name'][len('Credits'):]))
+    import re
+    # №880: NTSC ViewCredits.pag — 31 блок (Credits0..30) и лишние Top/Bottom: берутся только Credits<номер>, 31 или 32 (движок читает число из данных)
+    cr = sorted((it for it in its if it['page'] == 'ViewCredits.pag' and re.fullmatch(r'Credits\d+', it['name'])), key=lambda it: int(it['name'][len('Credits'):]))
     for it in cr:
         it['tag'] = 'SKIP'
-    assert [it['name'] for it in cr] == ['Credits%d' % i for i in range(len(cr))] and len(cr) == 32, [it['name'] for it in cr]
+    assert [it['name'] for it in cr] == ['Credits%d' % i for i in range(len(cr))] and len(cr) in (31, 32), [it['name'] for it in cr]
     if os.environ.get('CREDITS_PORT_OLD') != '1' and cr:
         cr = cr + port_credits(cr[-1])
     out, done = [], False

@@ -5,9 +5,22 @@ card-count predicate, persistent bit names and Character Sheet serialization.
 """
 from pathlib import Path
 import hashlib,json,struct
+import disc_exe as DE
 ROOT=Path(__file__).resolve().parents[1]
-DISC=ROOT/'hit-and-run-web/source/disc/SLES_518.97'
+DISC=DE.disc_exe()   # №880: из SYSTEM.CNF
+def facts_any():
+ # №880 (NTSC SLUS_206.24: те же инструкции по другим адресам): только проверки без адресов — имена битов и таблица View Movies (2,3,8,4,5,6,7)
+ b=DISC.read_bytes()
+ for name in ('GagCheckCollCards','GagCheckMovie','is_cbg_first','is_ticket'):assert b'\0'+name.encode()+b'\0' in b,f'нет строки {name}'
+ assert struct.pack('<7I',2,3,8,4,5,6,7) in b,'нет таблицы View Movies (2,3,8,4,5,6,7)'
+ return dict(source=str(DISC.relative_to(ROOT)),sha256=hashlib.sha256(b).hexdigest(),words={},
+             eligibility='seven complete level sets; each original count equals7 (49 total)',global_bits={'intro':0,'ticket':1},
+             saved_movie_unlock={'zero_based_level':2,'stride':620,'offset':556,'view_movie':8},
+             serialization={'object_start':4,'bytes':7140,'covers_ticket_bit_offset':7140},
+             dialogue={'success':'third argument/dc','first_failure':'fourth argument/e4','repeat_failure':'fifth argument/e0'},
+             movie='CBG success sets global ticket plus saved L3 FMV unlock before viewing; movie check tests saved L3 byte')
 def facts():
+ if not DE.pal():return facts_any()
  b=DISC.read_bytes();po=struct.unpack_from('<I',b,28)[0];ps,n=struct.unpack_from('<HH',b,42);segs=[]
  for i in range(n):
   typ,off,va,_,size,*_=struct.unpack_from('<8I',b,po+i*ps)
@@ -46,4 +59,6 @@ def facts():
              serialization={'object_start':4,'bytes':7140,'covers_ticket_bit_offset':7140},
              dialogue={'success':'third argument/dc','first_failure':'fourth argument/e4','repeat_failure':'fifth argument/e0'},
              movie='CBG success sets global ticket plus saved L3 FMV unlock before viewing; movie check tests saved L3 byte')
-if __name__=='__main__':print(json.dumps(facts(),indent=2))
+if __name__=='__main__':
+ import sys
+ print(json.dumps(facts_any() if '--any' in sys.argv else facts(),indent=2))

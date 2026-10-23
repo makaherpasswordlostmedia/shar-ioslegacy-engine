@@ -1485,6 +1485,17 @@ static void carNearEyeSplit(float *own, float *other) {   // B2: машина и
   if (m) for (int i = 0; i < m->n; i++) if (m->c[i].on) { d = hypotf(m->c[i].car.x - eyeX, m->c[i].car.z - eyeZ) - m->c[i].car.p.halfL; if (d < t) t = d; }
   *own = o; *other = t;
 }
+// №861 (Роб 22.10: «убери обрезание асфальта, обрезание пола — ломает текстуру; прохождение в пол запретить, даже при ударе»): ближняя плоскость
+// по полу — если нижний край кадра на её дистанции ниже опоры коллизии + FN_CLEAR (под краем, по трём точкам), плоскость ближе ровно настолько,
+// чтобы край был над полом; не ближе FN_MIN (16-бит глубина). Для всех камер города, в том числе пролётов из данных (их путь не двигаем; у PS2
+// ближняя плоскость мала, у порта 1,5 м — низкий авторский путь срезал асфальт у низа кадра). Считается раз в кадр (floorNearFrame). FLOOR_NEAR861_OLD=1 — как было
+#ifndef FLOOR_NEAR861_OLD
+#define FLOOR_NEAR861_OLD 0
+#endif
+#define FN_CLEAR .40f
+#define FN_MIN .30f
+static float nearForceV;   // №863 служебно: flag nearforce X (0 — выкл)
+static float floorNearV = 1e9f, floorNearMin = 1e9f; static unsigned floorNearN, floorEyeN; static int floorNearOld = FLOOR_NEAR861_OLD;   // floorNearN — кадров с правилом; floorNearOld — служебно flag floornearold 1
 static float frameNearEx(int inR, int fly, int useCar) {
   frameNearWhy = 0;
   if (inR) return (!roomCamOn && homer.camNear > 0.f) ? fminf(ROOM_NEAR, homer.camNear) : ROOM_NEAR;   // комната: камера пешком у стены — ближе
@@ -1494,10 +1505,42 @@ static float frameNearEx(int inR, int fly, int useCar) {
   if (zoneCamOn && onFoot() && !fly && zoneNear < n) { n = zoneNear; frameNearWhy = 3; }   // камера зоны (рельс) бывает в 0.5 м от Гомера
   if (!fly && camSafeNearV < n) { n = camSafeNearV; frameNearWhy = 4; }   // правка 331: не дальше свободного места перед глазом (camSafeFrame)
   if (talkCamOn && !fly && talkNear < n) { n = talkNear; frameNearWhy = 5; }   // правка 40: крупный план разговора — голова слушающего в 1.3 м, затылок не срезать
+  if (!floorNearOld && floorNearV < n) { n = floorNearV; frameNearWhy = 6; }   // №861: пол у нижнего края кадра
+  if (nearForceV > 0.f) { n = nearForceV; frameNearWhy = 4; }   // №863 служебно (flag nearforce X): ближняя плоскость числом — проверка среза пола на всех значениях
   return n;
 }
 static float frameNear(int inR, int fly) {   // ближняя плоскость кадра: город NEAR_Z; комната ROOM_NEAR; у стены — ближе; разговор — не режет собеседников
   return frameNearEx(inR, fly, 1);
+}
+// №861: сверка с камерами PS2-диска (954 камеры в art/*.p3d, чанк Camera): ближняя плоскость оригинала 0,1 м (776 камер), у камер миссий, гонок и
+// будки 0,01 м; у порта город 1,5 м (16-бит глубина). Низкий глаз (облёт, камера из данных, подъём защиты №837 упёрся) срезал асфальт у низа кадра.
+// Раз в кадр: нижний край кадра (центр и углы) на NEAR_Z над опорой коллизии меньше FN_CLEAR — ближняя плоскость floorNearV, ровно чтобы край был над полом
+static void floorNearFrame(int inR, int flyb, float ex, float ey, float ez, float fx, float fy, float fz, float fovY) {
+  floorNearV = 1e9f;
+  if (smkOn) { static float lt_; if (smkT - lt_ >= 1.f || smkT < lt_) { lt_ = smkT; if (floorNearN || floorEyeN) { char l_[140]; snprintf(l_, sizeof l_, "FLOORNEAR t=%.1f sc=%s frames=%u near_min=%.2f eye_fix=%u old=%d\n", smkT, smkScene, floorNearN, floorNearMin < 1e8f ? floorNearMin : 0.f, floorEyeN, floorNearOld); smkWrite(l_); }
+      floorNearN = floorEyeN = 0; floorNearMin = 1e9f; } }
+  if (floorNearOld || inR || flyb || !haveCol) return;
+  float f[3] = {fx, fy, fz}, fl = sqrtf(fx * fx + fy * fy + fz * fz); if (fl < 1e-4f) return;
+  for (int k = 0; k < 3; k++) f[k] /= fl;
+  float r[3], u[3]; csBasis(f, r, u);
+  float tv = tanf(fovY * (GU_PI / 360.f)), th = tv * ASPECT, dy = f[1] - tv * u[1];   // нижний край кадра идёт по f − tv·u, его вертикаль dy
+  if (dy >= -1e-3f) return;   // край не опускается — пол не срезается
+  const ColWorld *w = onFoot() && G.pHomerWorld ? G.pHomerWorld : &world;
+  float e[3] = {ex, ey, ez}, gmax = -1e30f;
+  for (int i = 0; i < 3; i++) { float sx = (float)(i - 1) * th, p[3], g;
+    for (int k = 0; k < 3; k++) p[k] = e[k] + NEAR_Z * (f[k] - tv * u[k] + sx * r[k]);
+    if (colGround(w, p[0], p[2], ey + .1f, p[1] - 4.f, &g, 0) && g > gmax) gmax = g; }
+  if (gmax < -1e29f || ey + NEAR_Z * dy >= gmax + FN_CLEAR) return;
+  float z = (ey - gmax - FN_CLEAR) / -dy;
+  floorNearV = z < FN_MIN ? FN_MIN : z; floorNearN++; if (floorNearV < floorNearMin) floorNearMin = floorNearV;
+}
+// №861: глаз камеры над полом после тряски удара (collShake идёт после защиты №837): опора коллизии под глазом + FN_EYE_CLEAR
+#define FN_EYE_CLEAR .35f
+static void floorEyeClamp(float *ey, float ex, float ez, float ey0) {   // ey0 — глаз до тряски: опора не выше него (мост над камерой — не пол), подъём не выше него
+  const ColWorld *w = onFoot() && G.pHomerWorld ? G.pHomerWorld : &world; float g;
+  if (!colGround(w, ex, ez, ey0 + .05f, *ey - 8.f, &g, 0)) return;
+  float lim = g + FN_EYE_CLEAR; if (lim > ey0) lim = ey0;
+  if (*ey < lim) { *ey = lim; floorEyeN++; }
 }
 // Правка 331: глаз камеры игры (за машиной, пешком, переходы) — никогда не внутри (viewer/camsafe.h). Глаз годен, если от опоры
 // камеры (над крышей своей машины / голова Гомера) до него нет мира (кузова — правило 284 у камеры машины; от людей и машин между
@@ -1544,7 +1587,7 @@ static float csPrev[3], csPrevRel[3], csPrevP[3]; static int csPrevOn, csPrevCar
 static void csHeldEye(const float P[3],const float previous[3],const float relative[3],int sameSubject,float hold[3]) {
   for(int k=0;k<3;k++)hold[k]=(CAMERA_SUBJECT_HANDOFF_OLD || sameSubject)?P[k]+relative[k]:previous[k];
 }
-static int csWhyPick, csWhyGlide; static float csWhyEd[3];   // служебное (строка CAMJUMP): откуда глаз этого кадра
+static int csWhyPick, csWhyGlide, csDesiredOk = 1, csDesiredN; static float csWhyEd[3];   // csDesiredOk — №872: желаемый глаз этого кадра свободен; csDesiredN — номер кадра проверки   // служебное (строка CAMJUMP): откуда глаз этого кадра
 static int csSoftOk(const float q[3], const float P[3], const float lk[3], float tanV, float tanH) {   // промежуточный глаз перелёта
   float gy, f[3] = {lk[0] - q[0], lk[1] - q[1], lk[2] - q[2]}, l = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
   if (l < 1e-3f || csInBody(&csScene, q, .15f) || (csFloorY(q, P, &gy) && q[1] < gy + CS_FLOOR - .01f) || csRayFrac(&csScene, P, q, CS_PE) < .999f) return 0;
@@ -1587,7 +1630,7 @@ static void camSafeEye(float cp[3], const float lk[3], float fovy, float dt) {
   float e[3] = {ed[0], ed[1], ed[2]}, hold[3];   // hold — прошлый глаз, сдвинутый вместе с опорой
   csWhyPick = -2; csWhyGlide = 0; memcpy(csWhyEd, ed, 12);
   if (csPrevOn) csHeldEye(P,csPrev,csPrevRel,csPrevCar==camPivotCar,hold);
-  CPT0; int ok0_ = csEyeOk(e, P, lk, tanV, tanH); CPT(2);
+  CPT0; int ok0_ = csEyeOk(e, P, lk, tanV, tanH); CPT(2); csDesiredOk = ok0_; csDesiredN++;
   if (!ok0_) {
     enum { NC = CAMERA_SUBJECT_HANDOFF_OLD ? 17 : 37 }; float c[NC][3], cost[NC]; int n = 0;
     float pl[3] = {ed[0], ed[1], ed[2]}; csPull(pl, P);

@@ -12,6 +12,10 @@ from p3d import read, walk, string, Chunk
 from frontend3d_export import anchor_place, col
 
 
+import os
+RIGID_OLD = os.environ.get('GAG_RIGID869_OLD') == '1'
+
+
 def export(path):
     root = read(path)
     meshes = {string(c.data)[0]: c for c in root.children if c.id in (0x10000, 0x10001)}
@@ -29,7 +33,7 @@ def export(path):
     if not os.environ.get('GAG_NOTEX_OLD'):
         white = (16, 8, np.array([[255, 255, 255, 255]] * 256, np.uint8), np.zeros(128, np.uint8))
         for props in shaders.values():
-            if props.get('TEX', '') not in images:
+            if (not props.get('TEX') and not os.environ.get('GAG_NOTEX869_OLD')) or props.get('TEX', '') not in images:   # №869: пустое имя — без текстуры (в наборе бывает безымянная картинка — пурпур)
                 images['__white'] = white; props['TEX'] = '__white'
     # Disc rule (same orientation as psp_export.py, correction 226): P3DI
     # rows run bottom-up, PNG rows top-down. CHR1 flips V, so normalise P3DI.
@@ -46,9 +50,29 @@ def export(path):
         animations = [c for c in root.children if c.id == 0x121000 and string(c.data, 4)[0] == 'PTRN_' + skeleton]
         clips = ce.load_clips(Chunk(0, b'', animations), joints)
         if not clips: raise ValueError(f'{path}: no PTRN for {skeleton}')
-        groups = []
+        groups = []; rigid = []
+        has_pvis = any(c.id == 0x121000 and string(c.data, 4)[0].startswith('PVIS') for c in root.children)   # видимость деталей по кадрам — детали остаются в SPR1
         for d in walk(comp):
-            if d.id != 0x4515: continue  # rigid props/billboards remain in SPR1
+            if d.id == 0x4516 and not RIGID_OLD and not has_pvis:
+                # №869 (Роб 23.10: «очки деда отстают, парят в воздухе; розовые»): жёсткие детали на суставах той же сцены (глаза, очки
+                # деда gag_s2..s5: gpa_high_eye_L/R, gpa_high_glassesShape) рисовались путём SPR1 своим расчётом скелета и отрывались от
+                # головы кожи. Теперь — в той же модели CHR1: вершины из осей сустава в модель (W сустава), вес 1 на этот сустав; из SPR1
+                # гэга эти слоты убираются (collect_export.py gag_type hide). GAG_RIGID869_OLD=1 — как было (детали в SPR1)
+                mn, q = string(d.data); _, ji = struct.unpack_from('<II', d.data, q)
+                m = meshes.get(mn)
+                if m is None or m.id != 0x10000 or ji >= len(joints): continue
+                W = joints[ji]['W']
+                try: rg_ = ce.load_strips(Chunk(0, b'', [Chunk(0x10001, m.data, m.children)]))
+                except (KeyError, ValueError): continue   # без нормалей (запечённый цвет) — деталь остаётся в SPR1, как была
+                for shader, strips in rg_:
+                    for st in strips:
+                        n = len(st['pos'])
+                        st['pos'] = (W @ np.c_[st['pos'], np.ones(n)].T).T[:, :3]
+                        st['nrm'] = (W[:3, :3] @ st['nrm'].T).T; st['nrm'] /= np.maximum(np.linalg.norm(st['nrm'], axis=1, keepdims=True), 1e-9)
+                        st['bones'] = np.full((n, 4), ji, np.int64); st['w'] = np.zeros((n, 4)); st['w'][:, 0] = 1.
+                    groups.append((shader, strips))
+                rigid.append(mn); continue
+            if d.id != 0x4515: continue  # billboards remain in SPR1
             mn, _ = string(d.data)
             groups.extend(ce.load_strips(Chunk(0, b'', [meshes[mn]])))
         # One skin group can contain two characters. Split at the native strip
@@ -85,6 +109,6 @@ def export(path):
             # A gag's root translation belongs to its animation, unlike locomotion.
             struct.pack_into('<I', blob, 52, 0xffffffff)
             result.append(dict(blob=bytes(blob), place=place[:3, :4], length=max((c['frames']-1)/c['fps'] for c in cc),
-                               joints=len(jj), source=path.name, skeleton=skeleton, drawables=len(parts)))
+                               joints=len(jj), source=path.name, skeleton=skeleton, drawables=len(parts), rigid=list(rigid)))
     if not result: raise ValueError(f'{path}: empty gag composite')
     return result

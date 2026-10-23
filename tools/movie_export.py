@@ -15,7 +15,7 @@
 картинки с исходного кадра — без потери чёткости. SMV_LAYOUT=tv — раскладка правки 32 (окно рамки-телевизора, картинка
 «капельку» шире; рамку рисовал движок), SMV_LAYOUT=bars — 362x272 с чёрными полями: отрицательные контроли гейтов.
 JPEG baseline 4:2:0, стандартные таблицы (аппаратный sceJpeg PSP).
-Звук: дорожка языка 0 (на диске PAL все 4 дорожки побайтно одинаковы), 48 кГц -> 44,1 кГц (частота каналов sceAudio);
+Звук: дорожка языка 0 (№880: на PAL дорожки разной длины, размеры с 92), 48 кГц -> 44,1 кГц (частота каналов sceAudio);
 тихий хвост за концом видео (пик ниже -60 дБFS: у vuglogo +0,18 с, у gracie +0,56 с нулей) отрезается; после этого
 звук обязан совпасть с видео ±1 кадр, иначе ошибка. Длина выравнивается ровно в кадры*1764 (44100/25).
 
@@ -25,14 +25,19 @@ SMV1 (little-endian): заголовок 64 Б -> индекс (кадры+1) u3
   44 u32 кадров в RMV | 48 u32 флаги (1 = звук) | 52 u32 размер файла | 56 u32 crc32 индекса | 60 u32 crc32 байт 0..59
   кусок: u32 байт JPEG, u32 сэмплов PCM, JPEG (добивка до 4), PCM s16 стерео
 """
-import argparse, io, os, struct, subprocess, sys, tempfile, zlib
+import argparse, io, os, shutil, struct, subprocess, sys, tempfile, zlib
 from pathlib import Path
 import numpy as np
 from PIL import Image, ImageFilter
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / 'hit-and-run-web/source/game/movies'
-FF = '/opt/homebrew/bin/ffmpeg'
+# №880 (отчёт сборки с чистого клона, NTSC): ffmpeg из $FFMPEG, иначе прежний путь Homebrew, иначе из PATH (нужен декодер IPU;
+# статический ffmpeg пакета imageio-ffmpeg подходит)
+FF = os.environ.get('FFMPEG') or ('/opt/homebrew/bin/ffmpeg' if os.path.exists('/opt/homebrew/bin/ffmpeg') else shutil.which('ffmpeg') or 'ffmpeg')
+# №880: NTSC (SLUS_206.24) — RMV 640x448, 29,97 к/с (PAL 640x512, 25); движок играет 25 к/с: кадр NTSC берётся по времени
+# (каждый шестой выпадает), длина ролика сохраняется. RMV_SIZES_OLD=1 — размеры дорожек со смещения 96 (как было)
+NTSC_FPS = 30000 / 1001
 INTRO = ['vuglogo', 'foxlogo', 'gracie', 'radlogo', 'intro']   # порядок запуска оригинала: SLES_518.97 (см. viewer/movie.h)
 W, H, FPS, RATE, SPF = 480, 272, 25, 44100, 44100 // 25
 LAYOUT = os.environ.get('SMV_LAYOUT', 'menu')   # menu (правка 89) | ambient (правка 49) | tv (правка 32) | bars (4:3 с чёрными полями)
@@ -89,6 +94,7 @@ def picture():
 IMG_W = 362; IMG_X = (W - IMG_W) // 2                           # прежняя раскладка (для справки): 4:3 при высоте 272 с полями
 QUALITY = 85
 SILENT_DB = -60.0
+SHORT_PAD = 4   # №880: кадров тишины, которыми можно добить короткий звук
 
 
 class RmvError(ValueError): pass
@@ -99,14 +105,26 @@ def rmv_parse(data, name='rmv'):
     if len(data) < 128 or data[:8] != b'rmvps212': raise RmvError(f'{name}: не RMV (нет rmvps212)')
     w, h, frames, size, start, langs = struct.unpack_from('<HHIIII', data, 8)
     if size != len(data): raise RmvError(f'{name}: размер в заголовке {size} != файлу {len(data)}')
-    if not 0 < langs <= 16 or not 0 < frames < 1 << 20 or (w, h) != (640, 512): raise RmvError(f'{name}: заголовок испорчен')
-    offs = struct.unpack_from(f'<{langs}I', data, 28); sizes = struct.unpack_from(f'<{langs}I', data, 96)
+    if not 0 < langs <= 16 or not 0 < frames < 1 << 20 or (w, h) not in ((640, 512), (640, 448)): raise RmvError(f'{name}: заголовок испорчен')
+    # №880: за смещением 28 — 16 смещений дорожек (до 92), сразу за ними 16 размеров (с 92). Было 96 = размер дорожки 1: на PAL дорожки
+    # разной длины (demo: дорожка 0 короче на 51 КБ — к английскому звуку приклеивался хвост французского; fmv1a–fmv8 — хвост обрезан
+    # на сотни байт), на NTSC одна дорожка и на 96 ноль
+    offs = struct.unpack_from(f'<{langs}I', data, 28); sizes = struct.unpack_from(f'<{langs}I', data, 96 if os.environ.get('RMV_SIZES_OLD') == '1' else 92)
     if not 128 <= start < min(offs) or offs[0] + sizes[0] > len(data) or not sizes[0]: raise RmvError(f'{name}: дорожки испорчены')
     video = data[start:min(offs)]; end = video.rfind(b'\0\0\1\xb0')
     if end < 0: raise RmvError(f'{name}: нет кадров IPU')
     video = video[:end + 4]; n = video.count(b'\0\0\1\xb0')
     if n != frames: raise RmvError(f'{name}: кадров IPU {n} != заголовку {frames}')
-    return dict(w=w, h=h, frames=frames, video=video, audio=data[offs[0]:offs[0] + sizes[0]])
+    fps = NTSC_FPS if h == 448 else float(FPS)
+    out_frames = frames if h != 448 else max(1, int(round(frames / fps * FPS)))   # кадров у движка (25 к/с)
+    return dict(w=w, h=h, frames=frames, fps=fps, out_frames=out_frames, video=video, audio=data[offs[0]:offs[0] + sizes[0]])
+
+
+def resample_frames(frames, rmv):
+    """№880: кадры исходника -> 25 к/с по времени (NTSC 29,97 -> 25: кадр k = исходный floor(k·29,97/25)); PAL — как есть"""
+    if rmv['h'] != 448: return frames
+    idx = np.minimum((np.arange(rmv['out_frames']) * rmv['fps'] / FPS).astype(int), len(frames) - 1)
+    return frames[idx]
 
 
 def run(cmd, inp=None):
@@ -207,12 +225,17 @@ def digital_gap(pcm, want):
     return best
 
 
-def fit_audio(pcm, frames, name):
+def fit_audio(pcm, frames, name, ntsc=False):
     """Тихий хвост за концом видео отрезать; звук = видео ±1 кадр, иначе ошибка; длина ровно frames*SPF.
     Громкий хвост за концом видео, отделённый от звука ролика полной цифровой тишиной (нули) у конца видео, — посторонний
     хвост дорожки (demo.rmv: после тишины за 0,12 с до конца видео начинается новый звук и идёт ещё 0,88 с): звук режется
     с начала этой тишины, до конца видео — тишина (правило порта, в данных нет; эталона PS2 нет)."""
     want = frames * SPF; raw = len(pcm)
+    if ntsc:   # №880: NTSC — громкий хвост за концом видео остаётся (кадр держится, export), короткий звук добивается тишиной (gracie −0,12 с)
+        tail = np.abs(pcm[want:].astype(np.int32)).max(initial=0) if raw > want else 0
+        if raw > want + SPF and 20 * np.log10(tail / 32768 + 1e-12) > SILENT_DB: want = -(-raw // SPF) * SPF
+        out = np.zeros((want, 2), np.int16); n = min(want, raw); out[:n] = pcm[:n]
+        return out, raw
     if raw > want + SPF:
         tail = np.abs(pcm[want:].astype(np.int32)).max(initial=0)
         db = 20 * np.log10(tail / 32768 + 1e-12)
@@ -221,7 +244,9 @@ def fit_audio(pcm, frames, name):
             if gap is None: raise RmvError(f'{name}: звук длиннее видео на {(raw - want) / RATE:.2f} с и хвост не тихий ({db:.0f} дБFS)')
             pcm = np.concatenate([pcm[:gap], np.zeros((want - gap, 2), pcm.dtype)])
         pcm = pcm[:want]
-    if abs(len(pcm) - want) > SPF: raise RmvError(f'{name}: звук {len(pcm) / RATE:.3f} с != видео {frames / FPS:.3f} с ±1 кадр')
+    # №880: короче видео до SHORT_PAD кадров — конец добивается тишиной (PAL intro: дорожка 0 короче на 49 мс; прежнее чтение размера со смещения 96
+    # закрывало это 16 мс чужой дорожки; NTSC gracie −0,12 с). Длиннее — по-прежнему ±1 кадр
+    if len(pcm) - want > SPF or want - len(pcm) > SHORT_PAD * SPF: raise RmvError(f'{name}: звук {len(pcm) / RATE:.3f} с != видео {frames / FPS:.3f} с (+1/−{SHORT_PAD} кадра)')
     out = np.zeros((want, 2), np.int16); n = min(want, len(pcm)); out[:n] = pcm[:n]
     return out, raw
 
@@ -274,11 +299,14 @@ def export(clip, out, rmv_path=None):
     with tempfile.TemporaryDirectory(prefix='shar-movie-') as tmp:
         frames = decode_video(rmv, tmp)
         if len(frames) != rmv['frames']: raise RmvError(f'{rp.name}: ffmpeg дал {len(frames)} кадров, в заголовке {rmv["frames"]}')
-        pcm, raw = fit_audio(decode_audio(rmv, tmp), rmv['frames'], rp.name)
+        frames = resample_frames(frames, rmv)
+        pcm, raw = fit_audio(decode_audio(rmv, tmp), len(frames), rp.name, ntsc=rmv['h'] == 448)
+        if len(pcm) > len(frames) * SPF:   # №880 NTSC: звук длиннее видео (intro +0,83 с) — последний кадр держится до конца музыки
+            frames = np.concatenate([frames, np.repeat(frames[-1:], len(pcm) // SPF - len(frames), axis=0)])
     jpgs = [jpeg(f) for f in frames]
     Path(out).parent.mkdir(parents=True, exist_ok=True); write_smv(out, jpgs, pcm, rmv['frames'])
-    size = Path(out).stat().st_size; sec = rmv['frames'] / FPS
-    print(f'{rp.stem}: {rmv["frames"]} кадров {sec:.2f} с, звук {raw / RATE:.3f} с -> {len(pcm) / RATE:.3f} с, '
+    size = Path(out).stat().st_size; sec = len(jpgs) / FPS
+    print(f'{rp.stem}: {len(jpgs)} кадров {sec:.2f} с, звук {raw / RATE:.3f} с -> {len(pcm) / RATE:.3f} с, '
           f'{size / 1e6:.2f} МБ, {size / sec / 1024:.0f} КБ/с, JPEG ср. {sum(map(len, jpgs)) / len(jpgs) / 1024:.1f} КБ, макс кусок {max(map(len, jpgs)) // 1024 + 8} КБ -> {out}')
     return size
 
@@ -288,16 +316,17 @@ def verify(path, rmv_path=None):
     hdr, ch = smv_read(path)
     clip = Path(path).stem; rp = Path(rmv_path) if rmv_path else SRC / f'{clip}.rmv'
     rmv = rmv_parse(rp.read_bytes(), rp.name); bad = []
-    if hdr['frames'] != rmv['frames'] or len(ch) != rmv['frames']: bad.append(f'кадров {len(ch)} != RMV {rmv["frames"]}')
     with tempfile.TemporaryDirectory(prefix='shar-movie-') as tmp: pcm = decode_audio(rmv, tmp)
-    try: fit_audio(pcm, rmv['frames'], rp.name)
-    except RmvError as e: bad.append(str(e))
+    try: pcm2, _ = fit_audio(pcm, rmv['out_frames'], rp.name, ntsc=rmv['h'] == 448)
+    except RmvError as e: bad.append(str(e)); pcm2 = np.zeros((rmv['out_frames'] * SPF, 2))
+    want_n = max(rmv['out_frames'], len(pcm2) // SPF)   # NTSC: кадр держится до конца музыки
+    if hdr['frames'] != want_n or len(ch) != want_n: bad.append(f'кадров {len(ch)} != RMV {want_n}')
     got = sum(len(p) for _, p in ch)
-    if abs(got - rmv['frames'] * SPF) > SPF: bad.append(f'звук в SMV {got / RATE:.3f} с != видео {rmv["frames"] / FPS:.3f} с')
+    if abs(got - want_n * SPF) > SPF: bad.append(f'звук в SMV {got / RATE:.3f} с != видео {want_n / FPS:.3f} с')
     for i in (0, len(ch) // 2, len(ch) - 1):
         im = Image.open(io.BytesIO(ch[i][0]))
         if im.size != (W, H) or im.mode != 'RGB': bad.append(f'кадр {i}: {im.size} {im.mode}')
-    line = f'{clip}: кадров {len(ch)}/{rmv["frames"]}, звук {got / RATE:.3f} с / видео {rmv["frames"] / FPS:.3f} с'
+    line = f'{clip}: кадров {len(ch)}/{want_n}, звук {got / RATE:.3f} с / видео {want_n / FPS:.3f} с'
     print(('FAIL ' if bad else 'OK ') + line + ('; ' + '; '.join(bad) if bad else ''))
     return not bad
 

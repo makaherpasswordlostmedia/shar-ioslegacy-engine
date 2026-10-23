@@ -126,6 +126,11 @@ unsigned gagSkinDraw(const Collect *c, int room, float ex, float ez, float dista
     if (!models[i].base) continue;
     skinInit(player, models + i); player->clip = 0; player->loop = g->cycle == COLL_CYCLE;
     player->t = c->st.gagT[r->gag];
+#ifndef GAG_LOOP873_OLD
+    // №873 (Роб 23.10: «дед стоит, ничего не делает»; №869: «ударяется один раз, стоит, а очки продолжают»): время гэга растёт без конца, а заворот
+    // по длине клипа делает только skinTick (гэги его не зовут) — гэг «по кругу» застывал в последнем кадре после первого прохода. Теперь — по кругу.
+    { float len_ = models[i].c[0].length; if (player->loop && len_ > 0.f) { player->t = fmodf(player->t, len_); if (player->t < 0.f) player->t += len_; } }
+#endif
     if (c->st.gagSt[r->gag] == 2) player->t = models[i].c[0].length;
     skinPose(player);
     ScePspFMatrix4 world;

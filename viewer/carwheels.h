@@ -49,4 +49,20 @@ static inline float carWheelUp(const char *name, int k, float dflt) {
   const CarWheelCon *w = carWheelsFor(name); return w ? w->up[k] : dflt;
 }
 
+// №878 (Роб 23.10 после TEST50: «машина Гомера розовая — там диски хромированные, перелив есть; если это единственная машина, где диски
+// не должны крутиться, — значит единственная; проверь все остальные на градиент света и тени внутри самой накладки диска»): с №867 боковины
+// (картинка диска) не крутились у всех. Бот tools/wheelspin878.py + вид накладки tools/wheelcap_view878.py по всем 89 машинам диска:
+// однобокий свет/тень внутри накладки (гармоники 1–2 по кругу) — famil_v (хром, 0,163) и smith_v (золото с секторами блика, 0,137); дальше
+// плавный ряд ≤ 0,118 — свечение ровно в центре и рисунок спиц/болтов, при вращении свет не «крутится». honor_v и hbike_v — не диски
+// (заглушки и полосы), как были. Остальные машины: колесо крутится целиком, как до №867. WHEELSPIN878_OLD=1 — неподвижные у всех (№867)
+#ifndef WHEELSPIN878_OLD
+#define WHEELSPIN878_OLD 0
+#endif
+static inline int carWheelCapStill(const char *name) {
+  static const char *const still[] = {"famil_v", "smith_v", "honor_v", "hbike_v"};
+  if (WHEELSPIN878_OLD) return 1;
+  for (unsigned i = 0; i < sizeof still / sizeof still[0]; i++) if (carWheelNameEq(still[i], name)) return 1;
+  return 0;
+}
+
 #endif

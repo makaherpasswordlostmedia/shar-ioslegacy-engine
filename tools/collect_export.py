@@ -238,7 +238,7 @@ class Builder:
         T['actor'] = dict(rest_state=st, rest_frame=rest)
         return T
 
-    def gag_type(self, stem, pos, cycle, source=None):
+    def gag_type(self, stem, pos, cycle, source=None, hide=()):   # hide — №869: слоты, нарисованные моделью CHR1 гэга (не в SPR1)
         from p3d import read
         f = source or GAME / 'art/nis/gags' / (stem + '.p3d')
         root = read(f)
@@ -250,6 +250,7 @@ class Builder:
         length = n / fps if n else 0.0
         pn = max(T['nfr'] - 1, 0)   # кадры позы (суставы/PVIS); 0 — поза стоит
         vis = self.all_vis(T); allv = (1 << len(T['slots'])) - 1
+        hm_ = sum(1 << T['slots'].index(n) for n in hide if n in T['slots']); vis &= ~hm_; allv &= ~hm_   # №869
         wait = dict(vis=vis, auto=0xFF, autoTime=0.0, pose=(0, 0, 0, 1.0, 0), events=[], calls=[], fx=[])
         play = dict(vis=allv, auto=(0xFF if cycle == 1 else (2 if cycle == 0 else 0)), autoTime=length,
                     pose=((2 if cycle == 1 else 1) if pn else 0, 0, pn, 1.0, 0), events=[], calls=[], fx=self.efx(T, 0, max(n, 1)))
@@ -498,7 +499,8 @@ def main():
             models = gag_skin_export.export(f)
             g['skin0'] = len(skins); g['nskin'] = len(models)
             skins.extend(dict(m, gag=gi) for m in models)
-        T = B.gag_type(Path(g['file']).stem, g['pos'], g['cycle'])
+        hide_ = {n for m in (models if g['skinned'] and os.environ.get('GAG_SKIN_OLD') != '1' else []) for n in m.get('rigid', [])}   # №869: детали, ушедшие в CHR1
+        T = B.gag_type(Path(g['file']).stem, g['pos'], g['cycle'], hide=hide_)
         g['inst'] = inst; g['length'] = T['length']; inst += 1
     # летающие актёры — экземпляры SPR1 после гэгов, без записей CLT1: collect.c их не ведёт, движок рисует и шагает все
     # экземпляры пакета (main.c collDraw, spUpdate) — корабль стоит на локаторе, луч в своём состоянии покоя

@@ -358,7 +358,7 @@ static float slCarKX = 1.45f, slCarKZ = 1.35f, slCarA = SL_SH_DENS;   // пол�
 #define CS_ODD_HI 1.28f
 #define CS_ODD_LO .72f
 #define CS_ODD_N 4
-static float csSil[2 * CS_N]; static int csState, csLevel = -1;   // csState: 0 — не считан, 1 — необычная (тень по силуэту), -1 — обычная
+static float csSil[2 * CS_N]; static int csilState, csLevel = -1;   // №877: было csState — то же имя у ленты монет (coinspr.h) в одном main.c = ОДНА переменная: смена уровня перечитывала монеты (160 КБ утечки за раз), тень брала силуэт прошлой машины. csilState: 0 — не считан, 1 — необычная (тень по силуэту), -1 — обычная
 static void csCompute(const Car *k, const CarBox *cb) {
   if (!haveCarVis || k->destroyed || ncarP <= 0) return;
   char b_[200];
@@ -383,17 +383,17 @@ static void csCompute(const Car *k, const CarBox *cb) {
     float rb = fminf(fabsf(sx) > 1e-3f ? cb->hw / fabsf(sx) : 1e9f, fabsf(cz) > 1e-3f ? cb->hl / fabsf(cz) : 1e9f), q_ = R[j] / rb;
     if (q_ > CS_ODD_HI || q_ < CS_ODD_LO) odd++; if (q_ < qmin) qmin = q_; if (q_ > qmax) qmax = q_;
     csSil[2 * j] = R[j] * sx / cb->hw; csSil[2 * j + 1] = R[j] * cz / cb->hl; }
-  csState = odd >= CS_ODD_N ? 1 : -1;
-  if (smkOn) { snprintf(b_, sizeof b_, "CARSIL level=%d car=%s odd=%d sectors=%d q=%.2f..%.2f pieces=%d verts=%d hw=%.2f hl=%.2f t=%.1f\n", gameLevel, k->p.name, csState > 0, odd, qmin, qmax, npc_, nv_, cb->hw, cb->hl, smkT); smkWrite(b_); }
+  csilState = odd >= CS_ODD_N ? 1 : -1;
+  if (smkOn) { snprintf(b_, sizeof b_, "CARSIL level=%d car=%s odd=%d sectors=%d q=%.2f..%.2f pieces=%d verts=%d hw=%.2f hl=%.2f t=%.1f\n", gameLevel, k->p.name, csilState > 0, odd, qmin, qmax, npc_, nv_, cb->hw, cb->hl, smkT); smkWrite(b_); }
 }
 static void slShCar(const ColWorld *w, const Car *k, float ex, float ez) {
   if (k != &car && hypotf(k->x - ex, k->z - ez) >= SL_SH_R) return;
   CarBox cb; memset(&cb, 0, sizeof cb); carBox(k, &cb); float n[3], gy;
   if (!slGround(w, cb.x, cb.z, cb.y, &gy, n)) return;
   float fade = 1.f - fminf(1.f, fmaxf(0.f, (cb.y + cb.lo - gy) / 6.f)), jk = slPplOld ? 1.f : svJumpK(cb.y - gy - .1f);   // №749: пол колёс выше земли — тень меньше (на земле как была)
-  if (!CAR_SIL_OLD && k == &car) { if (csLevel != gameLevel) { csLevel = gameLevel; csState = 0; }
-    if (!csState && fabsf(cb.y + cb.lo - gy) < .3f) csCompute(k, &cb);   // на земле
-    if (csState > 0) slShSilNext = csSil; }
+  if (!CAR_SIL_OLD && k == &car) { if (csLevel != gameLevel) { csLevel = gameLevel; csilState = 0; }
+    if (!csilState && fabsf(cb.y + cb.lo - gy) < .3f) csCompute(k, &cb);   // на земле
+    if (csilState > 0) slShSilNext = csSil; }
   slShAdd(cb.x, gy, cb.z, n, cb.fx, cb.fz, cb.hw * slCarKX / SL_DISK * jk, cb.hl * slCarKZ / SL_DISK * jk, slCarA * fade, 1);
   slShSilNext = 0;
 }

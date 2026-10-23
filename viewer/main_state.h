@@ -711,7 +711,7 @@ static char levelShr[256];   // level.shr уровня gameLevel (у уровн�
 #ifndef BONUS_OLD
 #define BONUS_OLD 0
 #endif
-static int bonusTrack, mainMini = -1;
+static int bonusTrack, mainMini = -1, mainScrap = -1, endingPending;   // endingPending — №860: титры игры ждут главного меню (menuRun)   // mainScrap — №862: SCRAP BOOK главного меню (альбом карточек)
 static const MsnCars *bonusCarsPtr; static const char *bonusPlayerModel;   // машины гонки (рисование моделей пакета msncars)
 // правка 421: открытые трассы игры в памяти (бит N-1 — трасса N, viewer/bonus_unlock.h). До первой игры — по самому свежему
 // сохранению (как автозагрузка оригинала: RESUME GAME), в игре — по карточкам Collect (сбор последней карточки уровня, загрузка, DEV)

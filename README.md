@@ -24,6 +24,16 @@ Game data: unpack your own disc with [hit-and-run-web](https://github.com/Vheiss
 `hit-and-run-web/source/`, run `tools/build_level.sh` / `tools/ship.sh`, copy the result next to the EBOOT
 in `PSP/GAME/SHARVIEW`. Tested on a PSP-2000 with custom firmware.
 
+- Discs: PAL `SLES_518.97` and US NTSC `SLUS_206.24` (the executable is read from `SYSTEM.CNF`; NTSC movies are 640x448 at 29.97 fps
+  and are resampled to the engine's 25 fps).
+- `setup.sh` also creates `.venv` (Python 3.11+), installs the extra packages, the Homebrew libraries the macOS toolchain needs
+  (`gmp libmpc mpfr zstd libusb`), ffmpeg (with the IPU decoder) and clones `donut` next to the engine.
+- `tools/ship.sh` builds level 1 by default; all levels: `SHIP_LEVELS="2 3 4 5 6 7" caffeinate -i tools/ship.sh`.
+- Sprites (coin, phone above the booth, wrench and its glow) are baked by the build from your own disc
+  (`tools/sprites_bake.py`); the coin needs Blender (`BLENDER=/path/to/blender`), without it coins are drawn as 3D models.
+
+Thanks to the first outside builder for the NTSC report and the build notes.
+
 ## Reporting bugs
 
 The pause screen shows a map code in the bottom-left corner (like `L1 K9-7`). Put it in your issue,

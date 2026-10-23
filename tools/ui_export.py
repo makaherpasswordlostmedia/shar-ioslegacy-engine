@@ -2846,9 +2846,10 @@ def num_glyphs(it, scale, assets):
     if it['name'] == 'NumCoins':
         # the original draws a spinning 3D coin by code; stand-in = the disc's 2D coin (coins.png)
         gh = next(g[2] for g in glyphs.values() if g[0])
-        iw, ih = assets.images['coins.png'].size
+        coin_ = 'coins.png' if 'coins.png' in assets.images else 'money.png'   # №880: NTSC ingame.p3d — без coins.png, у счётчика знак $ (money.png)
+        iw, ih = assets.images[coin_].size
         ch_ = max(1, min(ih, int(round(gh * COIN_ICON_K))))   # Роб 28.09: крупнее (было 0.62), но не выше родных 19 px — растянутая «битая»
-        prefix = assets.scaled('coins.png', max(1, int(round(iw * ch_ / ih))), ch_)
+        prefix = assets.scaled(coin_, max(1, int(round(iw * ch_ / ih))), ch_)
     return glyphs, prefix
 
 

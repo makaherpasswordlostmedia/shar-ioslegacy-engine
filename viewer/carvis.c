@@ -112,7 +112,7 @@ int carVisInit(CarVis *v, const void *sec, unsigned size) {
 void carVisSetCar(CarVis *v, const char *name) {
   // [PS2 код SLES 0x27a140] у frink_v, honor_v, hbike_v, witchcar, ship, mono_v (rocke_v — w2, w3) куски на суставах "w%d" не
   // рисуются: колёса вылеплены в кузове, на суставах — заглушки. Ход вверх — не больше запаса модели (tools/wheel_clear.py)
-  unsigned hide = carWheelHide(name); v->hideJ = 0;
+  unsigned hide = carWheelHide(name); v->hideJ = 0; v->capStill = carWheelCapStill(name);   // №878
   for (int k = 0; k < 4; k++) {
     char nm[3] = {'w', (char)('0' + k), 0}; int j = findJoint(v, nm); if (j < 0 || j >= 32) continue;
     if (hide >> k & 1) v->hideJ |= 1u << j;
@@ -216,7 +216,7 @@ int carVisTex(const CarVis *v, int tex) {
 }
 
 // поворот сустава в осях модели (3x3 по строкам) и смещение
-static void jointXf(const CarVis *v, const Car *c, int j, float R[9], float t[3]) {
+static void jointXf(const CarVis *v, const Car *c, int j, float R[9], float t[3], int noSpin) {   // noSpin — №867: боковины колеса без качения
   R[0] = 1; R[1] = 0; R[2] = 0; R[3] = 0; R[4] = 1; R[5] = 0; R[6] = 0; R[7] = 0; R[8] = 1;
   if (j < 0 || j >= v->njoint) { t[0] = t[1] = t[2] = 0; return; }
   t[0] = v->joint[j].x; t[1] = v->joint[j].y; t[2] = v->joint[j].z;
@@ -225,7 +225,7 @@ static void jointXf(const CarVis *v, const Car *c, int j, float R[9], float t[3]
     if(c->p.bodyMass>0.f)dy=clampf(c->comp[i]+c->p.suspensionYOffset,c->p.suspensionYOffset,
                                 fminf(c->lim+c->p.suspensionYOffset,v->wheelUp[i]));
     t[1] += dy;
-    float ph = i < 2 ? -c->steer * v->maxSteer : 0.f, sp = -v->spin[i];
+    float ph = i < 2 ? -c->steer * v->maxSteer : 0.f, sp = noSpin ? 0.f : -v->spin[i];
     float cp = cosf(ph), sph = sinf(ph), cs = cosf(sp), ss = sinf(sp);
     // Ry(ph) * Rx(sp)
     R[0] = cp; R[1] = sph * ss; R[2] = sph * cs;
@@ -242,10 +242,18 @@ static void jointXf(const CarVis *v, const Car *c, int j, float R[9], float t[3]
 }
 
 void carVisPieceMatrix(const CarVis *v, const Car *c, int joint, int variant, float ox, float oy, float oz, float sc, float m[16]) {
+  carVisPieceMatrixEx(v, c, joint, variant, ox, oy, oz, sc, 0, m);
+}
+int carVisWheelJoint(const CarVis *v, int joint) {   // №867: сустав — колесо (качение)
+  if (!v || joint < 0) return 0;
+  for (int i = 0; i < 4; i++) if (v->wheelJ[i] == joint) return 1;
+  return 0;
+}
+void carVisPieceMatrixEx(const CarVis *v, const Car *c, int joint, int variant, float ox, float oy, float oz, float sc, int noSpin, float m[16]) {
   float B[16]; carPieceMatrix(c, variant == 1 ? v->huskLift : carModelLift(c,v->lift), 0, 0, 0, 1, B);
   float R[9], t[3];
   if (variant == 1) { memset(R, 0, sizeof R); R[0] = R[4] = R[8] = 1; t[0] = t[1] = t[2] = 0; }
-  else jointXf(v, c, joint, R, t);
+  else jointXf(v, c, joint, R, t, noSpin);
   float p[3] = {t[0] + R[0] * ox + R[1] * oy + R[2] * oz, t[1] + R[3] * ox + R[4] * oy + R[5] * oz, t[2] + R[6] * ox + R[7] * oy + R[8] * oz};
   for (int col = 0; col < 3; col++) {                          // столбец col матрицы = B * (столбец col of R) * sc
     float rx = R[col], ry = R[3 + col], rz = R[6 + col];

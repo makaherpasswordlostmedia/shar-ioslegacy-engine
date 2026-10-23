@@ -394,7 +394,7 @@ static float rfSpRadius(unsigned t) {
 // кусок без индексов с матрицей модели m (absM: перенос в m мировой — вычесть глаз; иначе уже от глаза, город в осях камеры)
 // «Быстрый расчёт» (L7 пешком: срез у камеры gg_ms 2,5 мс, ct_risky 3,4): вершины среза писались в список GE (sceGuGetMemory) — список пишется
 // мимо кэша, слово ≈ 1 мкс (PHDRAW kw), а полигон среза — 5 слов на вершину. Кольцо вершин кадра в обычной (кэшируемой) памяти: пишем быстро,
-// в конце куска один сброс кэша в память (GE читает после sceGuFinish конца кадра); не влезло — как раньше (sceGuGetMemory). Кольцо
+// сброс кэша в память перед каждой командой рисования (№863: GE читает сразу, не после sceGuFinish); не влезло — как раньше (sceGuGetMemory). Кольцо
 // обнуляется в начале кадра. -DGG_VB_OLD=1 — прежнее
 #ifndef GG_VB_OLD
 #define GG_VB_OLD 0
@@ -405,10 +405,30 @@ static void *ggVbAlloc(unsigned bytes) {
   if (GG_VB_OLD || ggVbUsed + bytes > GGVB_BYTES) return sceGuGetMemory((int)bytes);
   void *p = ggVb + ggVbUsed; ggVbUsed += (bytes + 3u) & ~3u; return p;
 }
+// №863 (Роб 22.10, TEST46: «крутил камеру L/R — у стены или машины пол всё равно ломается: квадрат, в нём треугольник просвечивается пустотой»):
+// sceGuDrawArray в режиме GU_DIRECT сразу сдвигает адрес остановки списка (pspsdk: sceGeListUpdateStallAddr) — GE, который ждёт процессор
+// (ожидание GE 0,1 мс), читает вершины веера СРАЗУ, а сброс кэша кольца стоял в конце куска (c98788b0, 10.10). GE брал из памяти вершины
+// прошлого кадра с того же места кольца: камера стоит — совпадают, камера крутится — веер среза пола пропадает или рисуется мусором.
+// Эмулятор кэша не имеет — там всё чисто (поэтому №791/№848/№861 «чинились» в эмуляторе). Правило: перед КАЖДОЙ командой рисования
+// несброшенные строки кольца уходят в память (ggVbSync, через макрос ниже — для всех мест кольца сразу, и будущих тоже). VB_SYNC863_OLD=1 — как было
+#ifndef VB_SYNC863_OLD
+#define VB_SYNC863_OLD 0
+#endif
+static unsigned ggVbClean, ggVbSyncN;   // ggVbClean — до этого места кольцо уже в памяти; ggVbSyncN — сбросов за секунду (строка GGSTAT)
+static inline void ggVbSync(void) {
+  if (VB_SYNC863_OLD || GG_VB_OLD) return;
+  if (ggVbUsed < ggVbClean) ggVbClean = 0;   // кольцо обнулили (начало кадра)
+  if (ggVbUsed > ggVbClean) { unsigned a = ggVbClean & ~63u; sceKernelDcacheWritebackRange(ggVb + a, ggVbUsed - a); ggVbClean = ggVbUsed; ggVbSyncN++; }
+}
 static void ggVbWriteback(unsigned from) {   // сброс кэша строк кольца, записанных с позиции from
   if (GG_VB_OLD || ggVbUsed <= from) return;
   unsigned a = from & ~63u; sceKernelDcacheWritebackRange(ggVb + a, ggVbUsed - a);
+  if (a <= ggVbClean) ggVbClean = ggVbUsed;
 }
+#if !VB_SYNC863_OLD
+#define sceGuDrawArray(p, vt, c, ix, v) (ggVbSync(), sceGuDrawArray(p, vt, c, ix, v))
+#define sceGuDrawArrayN(p, vt, c, n, ix, v) (ggVbSync(), sceGuDrawArrayN(p, vt, c, n, ix, v))
+#endif
 // Кадр после взрыва (10.10, №500, отчёт 9D: L7 взрыв x_city 2 -> 7,5-8,7 мс, ct_risky 3-4 мс, gg_ms 2,7 мс, 13 кусков стабильно 12 с): взрыв не делает куски
 // «рискованными» сам — он оставляет Гомера пешком у остова: ближняя плоскость падает до FOOT_CAR_NEAR (машина у глаза, frameNear), ниже NEAR_Z начинается срез
 // города на процессоре (ggOn), и куски, чей бокс содержит глаз или выходит за полосу GE, режутся ВСЕ треугольники каждый кадр, хотя камера стоит. Стоящая камера:
@@ -556,6 +576,12 @@ static void drawGeoG(const Piece *d, int far, int cnt, const ScePspFMatrix4 *m, 
     }
     ggRec.nent = ggRec.vused = 0; ggRec.ov = 0; grec_ = 1;
   }
+#define GG_FAN_PEND 48
+#define GG_FAN_EMIT(w_, n_) do { sceGuDrawArray(GU_TRIANGLE_FAN, GG_VT, (n_), 0, (w_)); \
+    if (grec_) { unsigned nb_ = (unsigned)(n_) * (unsigned)sizeof(GgVert); \
+      if (ggRec.nent < 160 && ggRec.vused + nb_ <= sizeof ggRec.vb) { memcpy(ggRec.vb + ggRec.vused, (w_), nb_); ggRec.ent[ggRec.nent++] = (GgEnt){1, ggRec.vused, (unsigned)(n_)}; ggRec.vused += (nb_ + 15u) & ~15u; } else ggRec.ov = 1; } } while (0)
+#define GG_FAN_FLUSH() do { for (int f_ = 0; f_ < fanN; f_++) GG_FAN_EMIT(fanW[f_], fanC[f_]); fanN = 0; } while (0)
+  const GgVert *fanW[GG_FAN_PEND]; int fanC[GG_FAN_PEND], fanN = 0;   // №863: веера среза до одного сброса кэша (ggVbSync в первом sceGuDrawArray)
   const GgBatch *batch=(!ggBatchOld&&d->ggBatch)?d->ggBatch+(far?ggBatchStorage(d->r.ni):0):0;
   const GgBatch *leaf=batch?batch+ggBatchSupers(cnt):0;
   int run = 0;
@@ -596,10 +622,9 @@ static void drawGeoG(const Piece *d, int far, int cnt, const ScePspFMatrix4 *m, 
       w[i].u = (unsigned short)(u < 0.f ? 0 : u > 65535.f ? 65535 : (int)u); w[i].v = (unsigned short)(v < 0.f ? 0 : v > 65535.f ? 65535 : (int)v);
       w[i].c = ch[0] | ch[1] << 8 | ch[2] << 16 | ch[3] << 24; w[i].x = o[i].l[0]; w[i].y = o[i].l[1]; w[i].z = o[i].l[2];
     }
-    sceGuDrawArray(GU_TRIANGLE_FAN, GG_VT, n, 0, w);
-    if (grec_) { unsigned nb_ = (unsigned)n * (unsigned)sizeof(GgVert);
-      if (ggRec.nent < 160 && ggRec.vused + nb_ <= sizeof ggRec.vb) { memcpy(ggRec.vb + ggRec.vused, w, nb_); ggRec.ent[ggRec.nent++] = (GgEnt){1, ggRec.vused, (unsigned)n}; ggRec.vused += (nb_ + 15u) & ~15u; } else ggRec.ov = 1; }
+    if (VB_SYNC863_OLD) { GG_FAN_EMIT(w, n); } else { fanW[fanN] = w; fanC[fanN] = n; if (++fanN == GG_FAN_PEND) GG_FAN_FLUSH(); }   // №863: веера куска — одним сбросом кэша
   }
+  GG_FAN_FLUSH();
   if (cnt > run) { sceGuDrawArray(GU_TRIANGLES, vt, cnt - run, 0, vb + run * vs); if (grec_) { if (ggRec.nent < 160) ggRec.ent[ggRec.nent++] = (GgEnt){0, (unsigned)run, (unsigned)(cnt - run)}; else ggRec.ov = 1; } }
   if (grec_) ggcStore(d, d->v, far, cnt, absM, gsum_);
   ggVbWriteback(vb0_);
@@ -663,6 +688,7 @@ static inline int toonWorldOk(const Piece *d) {
   float dx = (d->r.bb[0] + d->r.bb[3]) * .5f - eyeX, dy = (d->r.bb[1] + d->r.bb[4]) * .5f - eyeY, dz = (d->r.bb[2] + d->r.bb[5]) * .5f - eyeZ;
   return dx * dx + dy * dy + dz * dz < TOON_WORLD_R * TOON_WORLD_R;
 }
+static unsigned char *opqFar; static unsigned opqFarUse, opqFarNear;   // №863: объявлено здесь, заполняет main_levels.h opq863Apply
 static int skyDebug_;   // №701: служебный флаг сценария skydebug 1 (глубина после неба пурпуром), 2 — журнал дальних кусков кадра
 static void drawPiece(Piece *d, int far, float tx, float ty, float tz, float c, float s) {
   RBC(rbcDraw);
@@ -671,7 +697,8 @@ static void drawPiece(Piece *d, int far, float tx, float ty, float tz, float c, 
     float dx_ = cx_ + ggE[0], dz_ = cz_ + ggE[2]; float dd_ = sqrtf(dx_ * dx_ + dz_ * dz_);
     if (dd_ > 90.f && nlog_ < 60) { nlog_++; char l_[200]; snprintf(l_, sizeof l_, "FARPIECE d=%.0f eye=%.0f,%.0f,%.0f c=%.0f,%.0f,%.0f ext=%.0f,%.0f,%.0f tex=%d fl=%x far=%d n=%d\n", dd_, ggE[0], ggE[1], ggE[2], cx_, cy_, cz_, d->r.bb[3] - d->r.bb[0], d->r.bb[4] - d->r.bb[1], d->r.bb[5] - d->r.bb[2], (int)d->r.tex, (unsigned)d->r.flags, far, far ? (int)d->r.nf : (int)d->r.ni); smkWrite(l_); }
   }
-  if ((d->r.flags & F_NEAR) && !(far && farPlainD > 0.f && (d->r.flags & F_FARP))) far = 0;   // правка 508: F_FARP — дальняя версия без нарезки по far_plain
+  if (opqFar && d >= pc && d < pc + npc && opqFar[d - pc] && tx == 0.f && ty == 0.f && tz == 0.f) { far = !ggBoxRiskW(d->r.bb); if (far) opqFarUse++; else opqFarNear++; }   // №863: море — крупной версией везде, где GE нарисует её целиком (main_levels.h opq863Apply)
+  if ((d->r.flags & F_NEAR) && !(far && (farPlainD > 0.f || (opqFar && d >= pc && d < pc + npc && opqFar[d - pc])) && (d->r.flags & F_FARP))) far = 0;   // правка 508: F_FARP — дальняя версия без нарезки по far_plain
   int cnt = far ? (int)d->r.nf : d->r.ni;
   if (cnt <= 0 || geOver(GE_HARD) || !pieceOk(d, far) || NEON_SKIP(d) || TREESH_SKIP(d)) return;   // правка 103: список GE почти полон / битый адрес
   if (d->r.flags & F_ADDITIVE) { dbgAddN++; dbgAddTri += (unsigned)cnt / 3; if (cnt > 600) dbgAddBig++; }
@@ -1557,6 +1584,17 @@ static void mcDrawPiece(void *u, const TrPiece *p, const void *verts, const floa
   d.r.tex = p->tex >= 0 ? *(const int *)u + p->tex : -1; d.v = (Vert *)verts;
   npcCarToon(&d, m);   // №779: машины миссий
   carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m);
+}
+// №867: кусок колеса своей машины (CAR1) — боковины с картинкой диска без качения, протектор с качением (wheelcap.h). 1 — нарисовано по частям;
+// 0 — не колесо / делить нечего / полупрозрачное (очередь tq хранит указатель куска — копию на стеке туда не отдаём): рисует вызывающий, как было
+#include "wheelcap.h"
+static int carCapSplitDraw(const CarVis *v, const Car *c, Piece *d, int joint, int variant, const float m[16], int toon) {
+  if (variant || (d->r.flags & (2 | F_STRIP)) || !(d->r.flags & F_NOIDX) || !carVisWheelJoint(v, joint) || !v->capStill) return 0;   // №878: диск без перелива крутится с колесом
+  int vs = (d->r.flags & F_V12) ? 12 : 16, cap = wheelCapN((void *)d->v, d->r.ni, vs); if (cap <= 0) return 0;
+  float m0[16]; carVisPieceMatrixEx(v, c, joint, variant, d->r.ox, d->r.oy, d->r.oz, d->r.sc, 1, m0);
+  Piece t = *d; t.r.ni = cap; if (toon) carToonHull(&t, m0); drawPieceM(&t, (const ScePspFMatrix4 *)m0);
+  t.v = (Vert *)((char *)d->v + (size_t)cap * vs); t.r.ni = d->r.ni - cap; if (toon) carToonHull(&t, m); drawPieceM(&t, (const ScePspFMatrix4 *)m);
+  return 1;
 }
 static int mcrDrawn, mcrTris;
 // Правка Роба 268 (04.10: «у ракетной машины стоит машина, которую не видно — въехал в пустоту и разбил»): машина миссии в кадре

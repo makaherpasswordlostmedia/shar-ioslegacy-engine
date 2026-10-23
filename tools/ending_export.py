@@ -10,7 +10,9 @@ import menu_export as M
 
 SCREEN = 'ending'
 PAGES = U.project('ingame.p3d').screens['CreditsPostFMV.scr']
-assert PAGES == ['CreditsBgd.pag', 'ViewCredits.pag', 'CreditsKK.pag'], PAGES
+# №880: на NTSC порядок страниц Bgd, KK, ViewCredits — сверяем набором, порядок PAL (титры под фигурами Кэнга и Кодоса)
+assert set(PAGES) == {'CreditsBgd.pag', 'ViewCredits.pag', 'CreditsKK.pag'}, PAGES
+PAGES = ['CreditsBgd.pag', 'ViewCredits.pag', 'CreditsKK.pag']
 
 
 def build(sc, assets, fonts):
@@ -42,7 +44,7 @@ def build(sc, assets, fonts):
         provenance.append(dict(name=it['name'], source=str(src.relative_to(U.ROOT)), texture=key,
                                texture_size=list(image.size), source_centre=[e['x'], e['y']],
                                source_box=[e['w'], e['h']], fitted_rect=it['rect']))
-    at = next(i for i,t in enumerate(its) if t['page']=='CreditsKK.pag')
+    at = next((i for i,t in enumerate(its) if t['page']=='CreditsKK.pag'), len(its))   # №880: на NTSC в CreditsKK.pag только спрайты — фигуры в конец
     its[at:at] = figures  # authored Foreground precedes BlackBars
     dl, _ = U.adapt(M.credits(its), {}, 'psp', assets, fonts)
     for q in provenance:

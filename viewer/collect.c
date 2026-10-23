@@ -474,6 +474,7 @@ static void gagStart(Collect *c, unsigned g) {
     if (got == tot && tot) push(c, CE_GAGS_DONE, (int)g, G->x, G->y, G->z);
   }
 }
+void collectGagPlay(Collect *c, unsigned g) { if (c && g < c->ngag) gagStart(c, g); }   // №869 служебно: сценарий «gagplay N»
 
 static void gagsStep(Collect *c, const CollPlayer *p, Coins *coins, const ColWorld *world, float dt) {
   CollState *s = &c->st;
