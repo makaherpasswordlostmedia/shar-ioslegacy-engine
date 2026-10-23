@@ -161,15 +161,15 @@ static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   /
 #define BOOT_W_RUNS 2579
 #define BOOT_W_PS2REC 130
 #define BOOT_W_HOURS 38
-#define BOOT_W_FIXES 879
-#define BOOT_W_BUILDS 51
+#define BOOT_W_FIXES 885
+#define BOOT_W_BUILDS 52
 static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   char b[80], c[40];
   if (n <= 0) {   // первый кадр: производитель и копирайт слева вверху, подсказка и идентификатор внизу — как у BIOS сразу при включении
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/23/26-GONEMAKERS-SHAR-PORT-51");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/23/26-GONEMAKERS-SHAR-PORT-52");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;

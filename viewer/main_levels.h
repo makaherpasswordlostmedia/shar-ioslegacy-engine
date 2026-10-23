@@ -115,13 +115,14 @@ static TlCell *tlC; static int16_t *tlV; static unsigned tlNC, tlN; static int t
 #define ROADLINES_OLD 0
 #endif
 static int rlDepth = 12; static float rlLift;   // №824: сдвиг глубины линий дороги (как у линий мира, tlDepth) и добавочная высота над данными, м — служебные флаги roaddepth / roadlift (подбор); в данных линия уже поднята на 10 см
-static TlCell *rlC; static int16_t *rlV; static unsigned rlNC, rlN, tlUsW, tlUsR, tlFr;   // tlUs*, tlFr — цена подачи линий мира и дороги на CPU за окно smoke.txt (только при smkOn)
+static TlCell *rlC; static int16_t *rlV; static unsigned rlNC, rlN, tlUsW, tlUsR, tlFr;
+static int16_t *tlY, *rlY;   // №774: нижняя высота линий клетки-полосы, см (полосы по 2 м после tlBandSplit)   // tlUs*, tlFr — цена подачи линий мира и дороги на CPU за окно smoke.txt (только при smkOn)
 // №719 (видео IMG_7280 3:18–3:51, Роб: «контур темнее, просил 70 — нужно 77–80, может чуть больше»): 80 % чёрного. TOONLINE_DARK_OLD=1 — прежние 70 %
 #ifndef TOONLINE_DARK_OLD
 #define TOONLINE_DARK_OLD 0
 #endif
 #define TL_RGBA (TOONLINE_DARK_OLD ? 0xFF4D4D4Du : TOON_INK_OLD ? 0xFF333333u : TOON_LINE_ABGR)   // №796: перо линий (skin.h)   // №754: тушь вместо 80 % чёрного
-static void toonLinesFree(void) { if (tlC) free(tlC); if (tlV) free(tlV); tlC = 0; tlV = 0; tlNC = tlN = 0; if (rlC) free(rlC); if (rlV) free(rlV); rlC = 0; rlV = 0; rlNC = rlN = 0; }
+static void toonLinesFree(void) { if (tlC) free(tlC); if (tlV) free(tlV); tlC = 0; tlV = 0; tlNC = tlN = 0; if (rlC) free(rlC); if (rlV) free(rlV); rlC = 0; rlV = 0; rlNC = rlN = 0; free(tlY); free(rlY); tlY = rlY = 0; }
 static int tlReadSet(const char *name, TlCell **pc, int16_t **pv, unsigned *pnc, unsigned *pn) {   // №824: файл TLN2 уровня -> клетки и вершины (прежнее чтение toonlines.shr, одно на два файла)
   char fn[256]; levelFile(fn, name); SceUID f = sceIoOpen(fn, PSP_O_RDONLY, 0); if (f < 0) return 0;
   uint32_t h[3]; if (sceIoRead(f, h, 12) != 12 || h[0] != 0x324E4C54u || h[1] > 20000u || h[2] > 400000u) { sceIoClose(f); return 0; }   // 'TLN2'
@@ -130,10 +131,35 @@ static int tlReadSet(const char *name, TlCell **pc, int16_t **pv, unsigned *pnc,
   sceIoClose(f); if (!ok) { if (c) free(c); if (v) free(v); return 0; }
   *pc = c; *pv = v; *pnc = h[1]; *pn = h[2]; return 1;
 }
+// №774 (Роб 18.10: «L1: серая ломаная полоса в воздухе — от коридора D8-9 через фиолетовый зал, сквозь ступеньки и колонны, до капель D6-1»): линии края
+// асфальта и мира рисовались по расстоянию в плане, без высоты; в подземном зале под улицей линии дороги над головой видны сквозь потолок (изнутри
+// его нет). Клетки делятся на полосы по высоте (2 м, порядок линий внутри клетки меняется, сами линии — те же); полоса, вся выше глаза больше чем на
+// TL_ABOVE + TL_ABOVE_K × расстояние в плане до клетки, не рисуется (над головой — не видна; дорога в гору вдали — видна). TL_BAND774_OLD=1 — как было
+#ifndef TL_BAND774_OLD
+#define TL_BAND774_OLD 0
+#endif
+#define TL_ABOVE 3.f
+#define TL_ABOVE_K .25f
+static int tlLineCmp(const void *a, const void *b) { const int16_t *x = (const int16_t *)a, *y = (const int16_t *)b; int ya = x[1] < x[4] ? x[1] : x[4], yb = y[1] < y[4] ? y[1] : y[4]; return (ya / 200 - (ya < 0)) - (yb / 200 - (yb < 0)); }
+static void tlBandSplit(TlCell **pc, int16_t *V, unsigned *pnc, int16_t **py) {
+  if (TL_BAND774_OLD || !*pc || !*pnc) return;
+  unsigned nb = 0; TlCell *C = *pc;
+  for (unsigned c = 0; c < *pnc; c++) {   // сортировка линий клетки по полосе высоты, счёт полос
+    int16_t *L = V + (size_t)C[c].first * 6; qsort(L, C[c].count, 12, tlLineCmp);
+    int last = 0x7fffffff; for (unsigned i = 0; i < C[c].count; i++) { int y = L[i * 6 + 1] < L[i * 6 + 4] ? L[i * 6 + 1] : L[i * 6 + 4], b = y / 200 - (y < 0); if (b != last) { nb++; last = b; } } }
+  TlCell *N = (TlCell *)malloc((size_t)nb * sizeof(TlCell)); int16_t *Y = (int16_t *)malloc((size_t)nb * sizeof(int16_t)); if (!N || !Y) { free(N); free(Y); return; }
+  unsigned k = 0;
+  for (unsigned c = 0; c < *pnc; c++) { const int16_t *L = V + (size_t)C[c].first * 6; int last = 0x7fffffff;
+    for (unsigned i = 0; i < C[c].count; i++) { int y = L[i * 6 + 1] < L[i * 6 + 4] ? L[i * 6 + 1] : L[i * 6 + 4], b = y / 200 - (y < 0);
+      if (b != last) { N[k].cx = C[c].cx; N[k].cz = C[c].cz; N[k].first = C[c].first + i; N[k].count = 0; Y[k] = (int16_t)y; k++; last = b; }
+      N[k - 1].count++; if (y < Y[k - 1]) Y[k - 1] = (int16_t)y; } }
+  free(C); *pc = N; *pnc = nb; *py = Y;
+}
 static void toonLinesLoad(void) {
   toonLinesFree(); if (TOONLINES_OLD || !(levelToonLoaded || (!LEVEL_TOON_FILE_OLD && skinToonEnabled()))) return;   // линии — с режимом Cartoon (№754: и без level_toon.shr, сразу при переключении)
   if (tlReadSet("toonlines.shr", &tlC, &tlV, &tlNC, &tlN) && smkOn) { char l_[96]; snprintf(l_, sizeof l_, "TOONLINES level=%d lines=%u cells=%u\n", gameLevel, tlN, tlNC); smkWrite(l_); }
   if (!ROADLINES_OLD && tlReadSet("roadlines.shr", &rlC, &rlV, &rlNC, &rlN) && smkOn) { char l_[96]; snprintf(l_, sizeof l_, "ROADLINES level=%d lines=%u cells=%u\n", gameLevel, rlN, rlNC); smkWrite(l_); }   // №824
+  tlBandSplit(&tlC, tlV, &tlNC, &tlY); tlBandSplit(&rlC, rlV, &rlNC, &rlY);   // №774
   if (tlNC || rlNC) sceKernelDcacheWritebackAll();
 }
 // №779: линии мира от того же ползунка толщины, что контур героев (skinToonLineParams): 0 — без линий, 1–6 — 1 px, 7–10 — 2 px (второй проход на пиксель правее,
@@ -143,11 +169,13 @@ static void toonLinesLoad(void) {
 #ifndef TOONLINE_W779_OLD
 #define TOONLINE_W779_OLD 0
 #endif
-static unsigned tlDrawSet(const TlCell *C, const int16_t *V, unsigned NC, int pass, float ex, float ez, float oy) {   // №824: один набор линий (мир или дорога) за один проход; число линий (только pass 0)
+static unsigned tlDrawSet(const TlCell *C, const int16_t *V, const int16_t *Y, unsigned NC, int pass, float ex, float ey, float ez, float oy) {   // №824: один набор линий (мир или дорога) за один проход; число линий (только pass 0)
   unsigned n = 0;
   for (unsigned c = 0; c < NC; c++) {
     float ox = C[c].cx * TL_CELL, oz = C[c].cz * TL_CELL;
     if (ex < ox - TL_RANGE || ex > ox + TL_CELL + TL_RANGE || ez < oz - TL_RANGE || ez > oz + TL_CELL + TL_RANGE) continue;
+    if (Y) { float nx_ = ex < ox ? ox : ex > ox + TL_CELL ? ox + TL_CELL : ex, nz_ = ez < oz ? oz : ez > oz + TL_CELL ? oz + TL_CELL : ez;   // №774: полоса над головой
+      if (Y[c] * .01f + oy - ey > TL_ABOVE + TL_ABOVE_K * sqrtf((nx_ - ex) * (nx_ - ex) + (nz_ - ez) * (nz_ - ez))) continue; }
     if (pass && !TOONLINE_W779_OLD) { float nx_ = ex < ox ? ox : ex > ox + TL_CELL ? ox + TL_CELL : ex, nz_ = ez < oz ? oz : ez > oz + TL_CELL ? oz + TL_CELL : ez;   // №779: 2 px — только вблизи
       if ((nx_ - ex) * (nx_ - ex) + (nz_ - ez) * (nz_ - ez) > TL_THICK_NEAR * TL_THICK_NEAR) continue; }
     ScePspFMatrix4 m = {{327.68f, 0, 0, 0}, {0, 327.68f, 0, 0}, {0, 0, 327.68f, 0}, {ox, oy, oz, 1}};   // int16 в GE нормированы на 32768: сантиметры -> метры = 32768 / 100
@@ -158,7 +186,7 @@ static unsigned tlDrawSet(const TlCell *C, const int16_t *V, unsigned NC, int pa
   return n;
 }
 static unsigned toonLinesDraw(float ex, float ey, float ez) {
-  if ((!tlNC && !rlNC) || !tlOn) return 0; (void)ey;
+  if ((!tlNC && !rlNC) || !tlOn) return 0;
   if (!TOONLINE_W779_OLD && skinToonLineW <= 0) return 0;
   int thick_ = TOONLINE_W779_OLD ? tlThick : (tlThick || skinToonLineW >= 7);
   unsigned n = 0, nr = 0;
@@ -168,10 +196,10 @@ static unsigned toonLinesDraw(float ex, float ey, float ez) {
   for (int pass = 0; pass <= thick_; pass++) {
     if (pass) sceGuOffset(2048 - SCR_W / 2 + 1, 2048 - SCR_H / 2);   // вторая линия на пиксель правее: толщина 2 px
     unsigned t0_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
-    unsigned c0_ = tlDrawSet(tlC, tlV, tlNC, pass, ex, ez, 0.f);
+    unsigned c0_ = tlDrawSet(tlC, tlV, tlY, tlNC, pass, ex, ey, ez, 0.f);
     unsigned t1_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
     sceGuDepthOffset(rlDepth);
-    unsigned c1_ = tlDrawSet(rlC, rlV, rlNC, pass, ex, ez, rlLift);   // №824: край асфальта — тем же проходом, пером, туманом и толщиной
+    unsigned c1_ = tlDrawSet(rlC, rlV, rlY, rlNC, pass, ex, ey, ez, rlLift);   // №824: край асфальта — тем же проходом, пером, туманом и толщиной
     sceGuDepthOffset(tlDepth);
     if (smkOn) { tlUsW += t1_ - t0_; tlUsR += sceKernelGetSystemTimeLow() - t1_; }   // цена подачи линий на CPU (мкс), в smoke.txt раз в 1,5 с на кадр
     if (!pass) { n = c0_; nr = c1_; tlFr++; }
@@ -247,7 +275,7 @@ static void levelUnload(void) {   // всё, что держит набор ур
   if (!lvLeak) { free(pvsEnt); free(pv2Mem); }
   pv2Mem = 0; memset(&pv2, 0, sizeof pv2); pv2Cur = pv2CurCell = -1;
   lspReset();   // аудит Сборки: таблица света не переживает смену уровня
-  dalFree();    // №877
+  dalFree(); dripFree();   // №877, №770
   pvsEnt = 0; pvsPool = 0; pvsW = pvsH = 0; pvsRange = PVS_RANGE;
   free(regMask); regMask = 0; regW = regH = 0; regEye = 0xFFFFu;   // правка 95: маска регионов уровня
   free(zg); free(zp); zg = 0; zp = 0; nzg = nzp = zgOn = zgInit = zgStart = 0; regRes = 0xFFFFu;   // правка 181
@@ -311,7 +339,6 @@ static void levelService(const char *f, float a) {
   else if (!strcmp(f, "lvfuseslow")) fuseProbeArm(a > 0.f ? (unsigned)(a * 1000.f) : 0);
   else if (!strcmp(f, "lvshot")) { loadShot = 1; loadShotAt = a; }   // снимок «loading» со следующего экрана загрузки (газета уровня)
   else if (!strcmp(f, "lvleak")) { lvLeak = 1; smkWrite("LVLEAK on\n"); }
-  else if (!strcmp(f, "dal")) { dalOn = a != 0.f; dalCur = 1e9f; }   // №877: таблица дали вкл/выкл (замер A/B)
   else if (!strcmp(f, "lvleak696old")) { lvLeak696Old = (int)a; smkWrite("LVLEAK696OLD on\n"); }
   else if (!strcmp(f, "lvnosave")) { lvNoSave = 1; smkWrite("LVNOSAVE on\n"); }
   else if (!strcmp(f, "lvtwice")) { loadOneOld = 1; smkWrite("LVTWICE on\n"); }   // правка 356: красный — прежние газета, ирис, газета
@@ -763,7 +790,7 @@ static void levelLoad(void **fbp) {
     if (pc[i].r.owner == 1) carP[ncarP++] = i;
     if (pc[i].r.owner == 2) skyP[nskyP++] = i;
   }
-  opq863Apply(data + tableOff); dalLoad(data + tableOff, npc);   // №877: таблица дали бота-репортёра (viewer/dal877.h); №863: море L3/L6 и прочее «полупрозрачное без прозрачности» — непрозрачным (список с Мака, tools/opq863.py)
+  opq863Apply(data + tableOff); dalLoad(data + tableOff, npc); dripLoad();   // №877, №770: таблица дали бота-репортёра (viewer/dal877.h); №863: море L3/L6 и прочее «полупрозрачное без прозрачности» — непрозрачным (список с Мака, tools/opq863.py)
   if (!CULL_HOT_OLD && npc) { cr = (CullRec *)memalign(32, sizeof(CullRec) * npc);   // отсечение: горячие записи (main_state.h CullRec)
     for (unsigned i = 0; cr && i < npc; i++) { const Piece *d = &pc[i]; CullRec *h = &cr[i]; memcpy(h->bb, d->r.bb, sizeof h->bb);
       int t = d->r.tex < 0 || d->r.tex > 510 ? 511 : d->r.tex;

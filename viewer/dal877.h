@@ -4,11 +4,11 @@
 // Файл dal877.bin в папке уровня (подпись таблицы кусков как у PVS2). Отсечение города (cullCity) берёт min(drawDist, нужная даль): худшее из 4 точек
 // вокруг глаза и из ближайшей стороны с двумя соседними (кадр шире стороны бота). Туман, лента горизонта, ориентиры, подгрузка клеток — от прежней
 // drawDist (картинка дальше не меняется, рисуется только видимое). Меньше двух точек бота рядом, глаз выше самой высокой точки бота на 4 м, полёт, комната — без ограничения.
-// Ограничение поднимается сразу, опускается плавно (DAL_DOWN м/с). DAL877_OLD=1 / «flag dal 0» — как было; строка DAL877 в смоуке раз в 2 с
+// Ограничение поднимается сразу, опускается ступенькой через DAL_HOLD с. DAL877_OLD=1 / «flag dal 0» — как было; строка DAL877 в смоуке раз в 2 с
 #ifndef DAL877_OLD
 #define DAL877_OLD 0
 #endif
-#define DAL_DOWN 40.f
+#define DAL_HOLD 1.f   // с
 static int dalOn = !DAL877_OLD;
 static struct { float x0, z0, st; unsigned w, h; unsigned short *pk; short *yt; } dal;
 static float dalCur = 1e9f; static unsigned dalN, dalCapN, dalSum, dalWhy[5];   // dalWhy: вне сетки, глаз выше, нет точки, 250 м, пропуск кадра   // dalCur — текущее ограничение, м; счётчики для строки DAL877
@@ -47,8 +47,9 @@ static float dalApply(float dt, int skip) {
   float keep = drawDist;
   if (!dalOn || skip || !dal.pk) { dalCur = 1e9f; if (dal.pk) dalWhy[4]++; return keep; }
   float nd = dalNeed(eyeX, eyeY, eyeZ, cfX, cfZ);
-  if (dalCur > keep) dalCur = keep;   // ограничение не выше текущей дали: спуск от неё, а не от «без ограничения»
-  if (nd >= dalCur) dalCur = nd; else { dalCur -= DAL_DOWN * dt; if (dalCur < nd) dalCur = nd; }
+  // ступенькой (150 / 200 / полная): вверх сразу, вниз — когда меньшая нужда держится DAL_HOLD с; ровная дальность — отсечение города переиспользуется
+  // (cullCity crv: плавный спуск по DAL_DOWN м/с менял дальность каждый кадр и сбрасывал переиспользование)
+  static float lowT; if (nd >= dalCur || nd >= keep) { dalCur = nd; lowT = 0.f; } else if ((lowT += dt) >= DAL_HOLD) { dalCur = nd; lowT = 0.f; }
   dalN++; if (dalCur < drawDist) { drawDist = dalCur; dalCapN++; } dalSum += (unsigned)drawDist;
   if (smkOn) { static unsigned t0_; unsigned t_ = sceKernelGetSystemTimeLow(); if (!t0_) t0_ = t_;
     if (t_ - t0_ > 2000000u && dalN) { char s_[180]; snprintf(s_, sizeof s_, "DAL877 frames=%u capped=%u avg_dd=%u full_dd=%.0f out=%u high=%u nodata=%u far=%u skip=%u ey=%.1f t=%.1f\n", dalN, dalCapN, dalSum / dalN, keep, dalWhy[0], dalWhy[1], dalWhy[2], dalWhy[3], dalWhy[4], eyeY, smkT); smkWrite(s_); dalN = dalCapN = dalSum = 0; memset(dalWhy, 0, sizeof dalWhy); t0_ = t_; } }

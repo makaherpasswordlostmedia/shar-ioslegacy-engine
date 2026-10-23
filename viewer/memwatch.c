@@ -50,6 +50,9 @@ void lt696Dump(void (*w)(const char *), const char *tag) {
     if (k < nr) { ltCur[k].bytes += lt[i].n; ltCur[k].cnt++; } }
   static unsigned np; char s[120];
   for (unsigned k = 0; k < nr; k++) { unsigned pb = 0, pc = 0; for (unsigned j = 0; j < np; j++) if (ltPrev[j].ra == ltCur[k].ra) { pb = ltPrev[j].bytes; pc = ltPrev[j].cnt; break; }
+#ifdef LT_ABS
+    pb = 0; pc = 0;   // №877: служебно — все группы целиком (не только прирост)
+#endif
     if (ltCur[k].bytes > pb + 4096u) { snprintf(s, sizeof s, "LT696 %s ra=%08x bytes=%u (+%u) cnt=%u (+%u)\n", tag, ltCur[k].ra, ltCur[k].bytes, ltCur[k].bytes - pb, ltCur[k].cnt, ltCur[k].cnt - pc); w(s); } }
   { unsigned bk = 0; for (unsigned k = 0; k < nr; k++) if (ltCur[k].bytes > ltCur[bk].bytes + 0) { /* крупнейшая группа */ if (ltCur[k].ra >= 0x08900000u && ltCur[k].ra < 0x08920000u) bk = k; }
     for (unsigned i = 0; i < LT_N; i++) if (lt[i].p && lt[i].p != (void *)1 && lt[i].ra == ltCur[bk].ra) { snprintf(s, sizeof s, "LT696p %s %p %u q=%d\n", tag, lt[i].p, lt[i].n, lt696Pending(lt[i].p)); w(s); } }

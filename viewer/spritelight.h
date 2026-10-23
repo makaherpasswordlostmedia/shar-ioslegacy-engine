@@ -972,16 +972,32 @@ static void glowGlintFlush(float ex, float ey, float ez) {
 #define AO_GLINT_OLD 0
 #endif
 #define AO_GLINT_K 1.3f   // альфа блика выключателя — доля альфы дорожки (у Duff 0,13↔0,47 -> 0,17↔0,61)
+// №770/№885 (Роб 23.10: «звёздочка на причале над аркой с надписью, неоновые вывески на въезде в АЭС и на арке у парковки — убрать, пусть будет арка без
+// неонового свечения; сильно ломает FPS; подобное — аккуратно на вектор»): блик №834 задумывался для выключателей (кнопки, звонки, подъёмник Duff), а под
+// «тип только из квадов» попали и вывески без действия (АЭС: 4 мигалки 1,1 м и вывеска 2,9 м; L3: вывеска 4,1 м) и струи капель (10,5 × 17 м). Теперь блик —
+// у объекта с действием или у мелкого огонька (≤ AO_GLINT_SMALL м, лампы пульта АЭС); остальные квады-свечения объектов без действия не рисуются вовсе
+// (сама вывеска — куски города). AO_NEON885_OLD=1 — как было (блик у всех)
+#ifndef AO_NEON885_OLD
+#define AO_NEON885_OLD 0
+#endif
+#define AO_GLINT_SMALL .8f
+#define NEON885_MAX 2.f   // м: свечение пропа со сложением крупнее — вывеска, не рисуется (огни заграждений PVIS и мелкие огни — бликом №839)
+static unsigned char *aoActM;   // бит экземпляра — объект с действием (ANM1 action > 0)
 static unsigned char *aoBillM; static unsigned aoBillN; static const void *aoBillKey, *aoBillKey2;
 static int aoBillInst(unsigned i) {   // экземпляр i — квады выключателя объекта с действием (тип без кусков)
   if (AO_GLINT_OLD || !haveAo || !haveSP) return 0;
   if (aoBillKey != (const void *)ao.obj || aoBillKey2 != (const void *)sprops.inst || aoBillN != sprops.ninst) {   // новый уровень — маска заново
-    free(aoBillM); aoBillN = sprops.ninst; aoBillKey = ao.obj; aoBillKey2 = sprops.inst; aoBillM = (unsigned char *)calloc((aoBillN + 7) / 8 + 1, 1);
-    if (aoBillM) for (unsigned k = 0; k < ao.nobj; k++) for (unsigned j = 0; j < ao.obj[k].nInst; j++) {
-      unsigned x = (unsigned)ao.obj[k].firstInst + j; if (x < aoBillN) aoBillM[x >> 3] |= (unsigned char)(1u << (x & 7)); }
+    free(aoBillM); free(aoActM); aoBillN = sprops.ninst; aoBillKey = ao.obj; aoBillKey2 = sprops.inst; aoBillM = (unsigned char *)calloc((aoBillN + 7) / 8 + 1, 1); aoActM = (unsigned char *)calloc((aoBillN + 7) / 8 + 1, 1);
+    if (aoBillM && aoActM) for (unsigned k = 0; k < ao.nobj; k++) for (unsigned j = 0; j < ao.obj[k].nInst; j++) {
+      unsigned x = (unsigned)ao.obj[k].firstInst + j; if (x < aoBillN) { aoBillM[x >> 3] |= (unsigned char)(1u << (x & 7)); if (ao.obj[k].action) aoActM[x >> 3] |= (unsigned char)(1u << (x & 7)); } }
   }
   if (!aoBillM || i >= aoBillN || !(aoBillM[i >> 3] & (1u << (i & 7)))) return 0;
   const SpType *T = &sprops.type[sprops.inst[i].type]; return T->nBill && !T->nPiece;
+}
+static int aoBillNeon(unsigned i, const float *v) {   // №885: квад-свечение объекта без действия крупнее огонька — не рисуется
+  if (AO_NEON885_OLD || !aoActM || i >= aoBillN || (aoActM[i >> 3] & (1u << (i & 7)))) return 0;
+  float w = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2])), h = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]));
+  return (w > h ? w : h) > AO_GLINT_SMALL;
 }
 static void aoBillGlint(unsigned i, const float *v, uint32_t col, float ex, float ey, float ez) {   // квад выключателя (4 угла v) -> блик в его центре
   gsAo++;

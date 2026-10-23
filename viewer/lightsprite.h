@@ -269,6 +269,7 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
     uint32_t col = lspFadeCol(e->abgr, f); if (e->mode == 2 && lspConeA != 1.f) { unsigned a_ = (unsigned)((float)(col >> 24) * lspConeA + .5f); col = (col & 0x00FFFFFFu) | ((a_ > 255u ? 255u : a_) << 24); } if (!(col >> 24)) continue;
     if (geOver(GE_SOFT)) break;
     lspA[k] = f;
+    if (dripPtN) { float dv_[12]; lspQuad(e, ex, ey, ez, dv_); if (dripSkipBill(dv_, 0)) continue; }   // №770: струя из трубы — столбом (drip770.h)
     if (vecLight && (e->mode == 2 || e->mode == 3)) { if (nh_ < VL_MAX) { hk_[nh_] = (uint16_t)k; hf_[nh_] = f; nh_++; } continue; }   // №715/736: чёткий конус (и луч L7) — ниже одним вызовом
     if (e->tex != curTex) {   // смена текстуры: сбросить пачку, привязать новую
       if (nq) { sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nq * 6, 0, q); lspDrawN++; nq = 0; }

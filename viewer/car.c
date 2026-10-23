@@ -2017,6 +2017,29 @@ static int perchGlide(Car *c, const ColWorld *w, float dt) {
   memset(c->vel, 0, sizeof c->vel); memset(c->w, 0, sizeof c->w); c->t += dt; c->acc = 0.f; c->ry = c->y; c->rvy = 0.f;
   return 1;
 }
+// №738 (Роб 17.10, видео IMG_7280 12:19–12:54: «застрял в ящике и у стены дома — из таких мест, как с покрышек, переносить на дорогу рядом, как после
+// полиции»): машина стоит ровно (без крена — правило перча молчит), колёса на земле, а газ и задний ход оба пробовали, и за WEDGE_T с она не вышла из круга
+// WEDGE_MOVE — зажата. Выход тем же поиском, что у перча (кольца рядом, на том же уровне, плавным сдвигом). Одно направление (упёрся в стену газом,
+// назад не пробовал) — не трогаем: так можно толкать. WEDGE738_OLD=1 — как было
+#ifndef WEDGE738_OLD
+#define WEDGE738_OLD 0
+#endif
+#define WEDGE_T 3.f
+#define WEDGE_TURN 0.35f  // рад (20°): разворот в тесноте меняет курс, зажатая машина — нет
+#define WEDGE_MOVE 1.5f   // м: в тесноте машина качается туда-сюда, но из круга не выходит
+static void wedgeEscape(Car *c, const ColWorld *w, const CarInput *in, float dt) {
+  int fwd = in->throttle > .3f, back = in->brake > .3f;
+  if (!(fwd || back)) return;
+  if (!c->grounded || c->destroyed) { c->wedgeT = 0.f; c->wedgeTried = 0; return; }
+  if (c->wedgeT <= 0.f) { c->wedgeX = c->x; c->wedgeZ = c->z; c->wedgeH = c->h; c->wedgeTried = 0; }
+  float dh_ = fabsf(remainderf(c->h - c->wedgeH, 6.2831853f));
+  if (hypotf(c->x - c->wedgeX, c->z - c->wedgeZ) > WEDGE_MOVE || dh_ > WEDGE_TURN) { c->wedgeT = 0.f; c->wedgeTried = 0; return; }   // ушла из круга или разворачивается (в три приёма в переулке) — свободна
+  c->wedgeT += dt; c->wedgeTried |= (fwd ? 1 : 0) | (back ? 2 : 0);
+  if (c->wedgeTried != 3 || c->wedgeT < WEDGE_T) return;
+  if ((int)(c->wedgeT * 4.f) == (int)((c->wedgeT - dt) * 4.f)) return;   // неудачный поиск — повтор раз в 0,25 с
+  float t3[3]; int rMin = c->wedgeEsc >= 2 ? 2 : 0;
+  if (escapeOutEx(c, w, 1, 5, rMin, t3) || escapeOutEx(c, w, 0, 9, 0, t3)) { c->wedgeEsc++; c->wedgeT = 0.f; c->wedgeTried = 0; perchGo(c, w, t3); }
+}
 static void perchEscape(Car *c, const ColWorld *w, const CarInput *in, float dt) {
   // №377 (L7 jumpzone9: после прыжка машина садится днищем на верх тонкой стены (ящик 234, 0,58 м) колёсами 0 и ползёт/стоит до сброса сторожем застревания, который телепортирует её на
   // трамплин за 36 м): «на днище, колёс на земле нет» — тоже зависание, срабатывает раньше сторожа (PERCH_T_BELLY) и сдвигает на землю рядом
@@ -2026,7 +2049,8 @@ static void perchEscape(Car *c, const ColWorld *w, const CarInput *in, float dt)
     const float *q = c->q; float ux = 2 * (q[1] * q[2] - q[0] * q[3]), uy = 1 - 2 * (q[1] * q[1] + q[3] * q[3]), uz = 2 * (q[2] * q[3] + q[0] * q[1]), g, n[3];
     if (colGround(w, c->x, c->z, c->y + 1.5f, c->y - 3.f, &g, n)) { float d = ux * n[0] + uy * n[1] + uz * n[2]; if (d > cosf(PERCH_TILT)) want = 0; }
   }
-  if (!want) { c->perchT = 0.f; return; }
+  if (!want) { c->perchT = 0.f; if (!WEDGE738_OLD) wedgeEscape(c, w, in, dt); return; }
+  c->wedgeT = 0.f; c->wedgeTried = 0;
   if (c->perchT <= 0.f) { c->perchX = c->x; c->perchZ = c->z; }
   if (hypotf(c->x - c->perchX, c->z - c->perchZ) > PERCH_MOVE) { c->perchT = dt; c->perchX = c->x; c->perchZ = c->z; return; }
   c->perchT += dt;

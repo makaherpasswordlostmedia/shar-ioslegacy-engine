@@ -841,6 +841,11 @@ void mvServiceWin(void) {   // служебное (flag lvwin): все сюже�
   memset(&e, 0, sizeof e); e.type = MSN_EV_LEVEL_COMPLETE; e.index = last && (last->flags & MSN_MF_GAMEOVER) ? 1 : 0;
   M.rt.host.event(M.rt.host.user, &e);
 }
+// №860: игра пройдена (SetGameOver последней миссии L7) — все сюжетные миссии уровня пройдены, без событий (запись после финала, при любом пути к финалу)
+void mvMarkStoryDone(void) {
+  if (!active) return;
+  for (unsigned i = 0; i < M.f.nmissions; i++) { const MsnMission *ms = &M.f.missions[i]; if (!(ms->flags & (MSN_MF_BONUS | MSN_MF_NOSCRIPT))) M.rt.completed |= 1u << i; }
+}
 void mvServiceFail(void) {   // служебное (flag msnfail): провал миссии с экраном повтора (№572)
   H.failed = 1; H.failSel = 0;
   uiSetMissionOver("Timed out.", "Hint : Speed is essential! Drive a fast vehicle.");

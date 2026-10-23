@@ -496,7 +496,7 @@ int main(int argc, char **argv) {
       tutTick(dt);   // отложенные и очередные подсказки (игровое время: пауза и подсказка его не двигают)
     }
 #ifndef ENDING_SAVE860_OLD
-#define ENDING_SAVE860_OLD 1   // 22.10: ВЫКЛЮЧЕНО до разбора — после SetGameOver (финал L7) эмулятор встаёт и в диалоге записи (s862g), и в титрах
+#define ENDING_SAVE860_OLD 0   // 23.10 ВКЛЮЧЕНО: финал L7 в эмуляторе идёт до конца (титры, меню), зависание 22.10 ушло с правками кадра; 1 — как было (после SetGameOver эмулятор вставал и в диалоге записи s862g, и в титрах
                                // ending.shr (et_*, s862c). 0 — запись после финала + титры путём VIEW CREDITS в menuRun (creditsRun). См. ПЕРЕДАЧА 22.10
 #endif
     { int ld = mvLevelDone();   // уровень пройден: следующий уровень; SetGameOver — финальные титры, затем главное меню
@@ -512,7 +512,7 @@ int main(int argc, char **argv) {
         // (главный поток не получал процессор с 8-го кадра). Теперь: сначала диалог записи с пройденным уровнем (как QUIT GAME), потом
         // главное меню, и титры — в menuRun, когда уровня в памяти уже нет. ENDING_SAVE860_OLD=1 — как было
         if (!ENDING_SAVE860_OLD && mainNew >= 0) {
-          endingPending = 1;
+          endingPending = 1; mvMarkStoryDone();   // №860: в записи L7 пройден целиком
           if (svmOn() && uiReady) { uiPause(1); uiPauseMenuHide(1);
             if (savePauseOpen(1) == 0) endSaveAsk = 1; else { uiPauseMenuHide(0); uiPause(0); toMenu = 1; } }
           else toMenu = 1;
@@ -1241,6 +1241,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "msnmainat")) { float v_ = sc.a != 0.f || isnan(sc.d) ? sc.a : sc.d; mvServiceMainAt((int)v_); chase.init = 0; smkSettle(); }   // отрицательный код (фаза 0, прогулка) — сырым sc.d: smoke.h режет a до 0 (помощник 302)   // правка 302: миссия с этапа (M*100+S)
         else if (!strcmp(sc.name, "msnfar")) { mvServiceGo(sc.a > 0.f ? sc.a : 30.f); chase.init = 0; smkSettle(); }   // мимо цели (отрицательный контроль)
         else if (!strcmp(sc.name, "view60")) longView = 0;
+        else if (!strcmp(sc.name, "dal")) { dalOn = sc.a != 0.f; dalCur = 1e9f; }   // №877: таблица дали вкл/выкл (замер A/B; до 23.10 15:20 флаг не доходил — стоял в levelService «lv*»)
+        else if (!strcmp(sc.name, "drip")) dripOn = sc.a != 0.f;   // №770: столбы света вместо капель вкл/выкл
         else if (!strcmp(sc.name, "endingtest")) {
 #ifndef C3_ENDING_OLD
           char ef[256]; sibling(ef, "ending.shr");
@@ -2216,9 +2218,13 @@ rf_repeat_draw:
           float v[12]; uint32_t col, bfl; int bt;
           if (lspOwnsBill(i, b)) continue;   // №599: этот свет рисует таблица (lspDraw ниже)
           if (!spBillQuad(&sprops, i, b, ex, ey, ez, v, &col, &bt, &bfl) || !(col >> 24)) continue;
-          if (aoBillInst(i)) { if (!aoGl_++) glintBegin(16); aoBillGlint(i, v, col, ex, ey, ez); continue; }   // №834: свечение выключателя — векторным бликом
+          if (dripSkipBill(v, bfl)) continue;   // №770: капля из трубы — векторным столбом (dripDraw)
+          if (aoBillInst(i)) { if (aoBillNeon(i, v)) continue; if (!aoGl_++) glintBegin(16); aoBillGlint(i, v, col, ex, ey, ez); continue; }   // №834: свечение выключателя — векторным бликом; №885: вывески без действия — без свечения
           if (!neonGlowOn && ((bfl >> 8) & 0xFF) == 2 && !(bfl & SP_BILL_PVIS)) continue;   // 15.10: ореолы фонарей, неон, лучи со сложением не рисуем (NEON_GLOW_ON=1 — как раньше); огни барьеров (PVIS) остаются
           lspOldShown(i, b);
+          if (!AO_NEON885_OLD && ((bfl >> 8) & 0xFF) == 2 && !(bfl & SP_BILL_PVIS)) {   // №885: крупное неоновое свечение пропа (вывеска на арке въезда АЭС 6,3 м) — без свечения
+            float w_ = (v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]), h_ = (v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]);
+            if ((w_ > h_ ? w_ : h_) > NEON885_MAX * NEON885_MAX) continue; }
           if (!GLOW_GLINT_OLD && ((bfl >> 8) & 0xFF) == 2) { glowQuadQ(v, col, (float)i * .41f + (float)b); continue; }   // №839: огни заграждений и свечения пропов — бликом
           if (!nb++) {
             ScePspFMatrix4 I; memset(&I, 0, sizeof I); I.x.x = I.y.y = I.z.z = I.w.w = 1.f;
@@ -2246,6 +2252,7 @@ rf_repeat_draw:
       wrGlowDraw(ex, ey, ez, inR);   // №690: блеск под ключом (одна пачка); №829: до ключа — мягкий край спрайта смешивается с бликом за ним
       wrSprFlush(ex, ey, ez);   // №803: ключи спрайтом (кадры 3D-модели)
       garageLiftDraw(ex, ey, ez);   // №660: свет зала с лампами (flag garagelift N)
+      dripDraw(ex, ey, ez, inR);   // №770: столбы света на месте капель
       lspDraw(ex, ey, ez, inR);   // №599: постоянный свет — одной пачкой на текстуру, дальность со сглаживанием
       slLightDraw(ex, ey, ez, inR);   // №658: авторские световые куски (конусы, пятна, неон) спрайтами из таблицы клеток (flag lightspr 1)
     }

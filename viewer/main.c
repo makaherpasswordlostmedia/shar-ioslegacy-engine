@@ -18,6 +18,7 @@
 #include "main_frontend.h"
 #include "main_save.h"
 #include "dal877.h"   // №877: таблица дали бота-репортёра
+#include "drip770.h"   // №770: капли из труб — векторным столбом света
 #include "main_levels.h"
 #include "halftone.h"     // полутон теней и света (слово Роба 17.10)
 #include "lightsprite.h"   // №599: постоянный свет таблицей спрайтов (LIGHT_SPRITE_OLD=1 — прежний путь)

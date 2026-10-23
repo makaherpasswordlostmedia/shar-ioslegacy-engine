@@ -417,6 +417,15 @@ void collectHomerHit(Collect *c, const HomerEvent *e) {
 }
 
 // ---------------------------------------------------------------- гэги
+// №873 (Роб 23.10: «подхожу прямо к проходу с калиткой — дед стоит»): гэг деда gag_s5 (L1, дом Симпсонов) — «touch» со сферой 6 м, а вход в дом
+// внутри неё. Правило порта «стоял в триггере при входе — не срабатывает, пока не выйдет» держало его до выхода из сферы, а к деду идёшь, не выходя.
+// Теперь вход внутри сферы — отметка 2: сработает, как только Гомер отойдёт от места входа на GAG_ENTRY_MOVE (сам вход, загрузка — не запуск).
+// GAG_ENTRY873_OLD=1 — как было
+#ifndef GAG_ENTRY873_OLD
+#define GAG_ENTRY873_OLD 0
+#endif
+#define GAG_ENTRY_MOVE 1.f
+static float gagEntX, gagEntZ;
 static int gagHere(const Collect *c, unsigned g, const CollPlayer *p) {
   const CollGag *G = &c->gag[g];
   if (G->room != p->room) return 0;
@@ -490,7 +499,8 @@ static void gagsStep(Collect *c, const CollPlayer *p, Coins *coins, const ColWor
       s->gagSt[g] = 0; s->gagT[g] = 0.f;
       if (G->inst >= 0) spEnter(&c->sp, (unsigned)G->inst, 0);
     }
-    for (unsigned g = 0; g < c->ngag; g++) s->gagIn[g] = c->gag[g].room == p->room && gagInside(&c->gag[g], p->x, p->y, p->z);   // стоял в триггере при входе — не срабатывает, пока не выйдет
+    for (unsigned g = 0; g < c->ngag; g++) s->gagIn[g] = c->gag[g].room == p->room && gagInside(&c->gag[g], p->x, p->y, p->z) ? (GAG_ENTRY873_OLD ? 1 : 2) : 0;   // стоял в триггере при входе — не срабатывает сразу (2 — до шага, №873)
+    gagEntX = p->x; gagEntZ = p->z;
     s->lastRoom = p->room;
   }
   int act = p->action ? actionGag(c, p) : -1;
@@ -507,9 +517,12 @@ static void gagsStep(Collect *c, const CollPlayer *p, Coins *coins, const ColWor
     }
     if (!gagHere(c, g, p)) { s->gagIn[g] = 0; continue; }
     int in = gagInside(G, p->x, p->y, p->z);
-    if (G->trig == COLL_TOUCH) { if (in && !s->gagIn[g] && gagFree(c, g)) gagStart(c, g); }
-    else if ((int)g == act) gagStart(c, g);
-    s->gagIn[g] = (uint8_t)in;
+    if (G->trig == COLL_TOUCH) {
+      int fresh = in && !s->gagIn[g];
+      if (in && s->gagIn[g] == 2 && hypotf(p->x - gagEntX, p->z - gagEntZ) > GAG_ENTRY_MOVE) fresh = 1;   // №873: вошёл в комнату уже в сфере — сработает с первого шага
+      if (fresh && gagFree(c, g)) gagStart(c, g);
+      s->gagIn[g] = (uint8_t)(in ? (s->gagIn[g] == 2 && !fresh ? 2 : 1) : 0);
+    } else { if ((int)g == act) gagStart(c, g); s->gagIn[g] = (uint8_t)in; }
   }
 }
 

@@ -63,6 +63,7 @@ void mvServiceUnlock(const char *name);        // служебное: как н�
 void mvBusted(void);
 void mvMusicResume(void);   // правка 235: музыка миссии снова (её событие _start), например после магазина                         // правка 121: арест Hit & Run — идущая миссия провалена («Hit & Run: You got busted!»)
 void mvServiceWin(void);
+void mvMarkStoryDone(void);   // №860: финал — все сюжетные миссии уровня пройдены (без событий)
 void mvServiceFail(void);                       // служебное (flag msnfail): экран провала миссии (№572)
 const char *mvDynaRoom(void);                // интерьер последнего SetDynaLoadData («…@», "SimpsonsHouse"); "" — город                     // служебное (flag lvwin): все сюжетные миссии пройдены -> конец уровня
 int  mvActive(void);

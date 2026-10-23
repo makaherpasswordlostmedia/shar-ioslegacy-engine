@@ -130,7 +130,8 @@ typedef struct {
   uint32_t hkeep[COL_HUMP_KEEP]; int nhkeep;   // правка 200: капсулы-горбы, над которыми кузов был на прошлом подшаге (col.h colHumpKeep)
   uint32_t bkeep[COL_BACK_KEEP]; int nbkeep;   // сверка PS2 09.10: заборы, пропущенные с изнанки на прошлом подшаге (col.h colBackKeep)
   float glideT, gx0, gy0, gz0, gx1, gy1, gz1;   // плавный выход с кромки: оставшиеся секунды, откуда, куда
-  float perchT, perchX, perchZ; int perchEsc;   // зависание на кромке (PERCH_ESCAPE): секунд без хода под вводом при крене/клевке, где началось, сколько раз вывело
+  float perchT, perchX, perchZ; int perchEsc;
+  float wedgeT, wedgeX, wedgeZ, wedgeH; int wedgeTried, wedgeEsc;   // №738: зажата ровно (ящик, стена дома): секунд без хода, где, пробовали вперёд (1) и назад (2), сколько раз вывело   // зависание на кромке (PERCH_ESCAPE): секунд без хода под вводом при крене/клевке, где началось, сколько раз вывело
   int stuck32, escapes32;   // №тупик why 32: подряд отменённых подшагов «земля выше» и сколько раз машину выдавило наружу (DEADEND32_OLD)
   int deadendLifts;         // ДОБИВКА 18 (car.c DEADEND_OLD): сколько раз машину из-под поверхности (тупик В87) поставили на неё
   int huskDrive;            // правка 355: машина игрока — её остов после взрыва едет (carHuskDrives); у трафика и миссий 0
