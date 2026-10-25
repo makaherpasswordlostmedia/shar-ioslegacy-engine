@@ -165,6 +165,8 @@ typedef struct {
   uint32_t tagsOn, tagsSent;
   int raceOffRoad;   // presentation only, preserves actual race ranking/VO
   int racePlace, raceRacers; float raceDp;   // правка 326: место игрока в гонке этого кадра (gameMsnTick -> raceTrack), до его точки, м
+  // №967: тарелка «Planet Express Ship» L7 (AddFlyingActorByLocator leveli.mfk, место — локатор l7_spaceship) и её луч; заряд — секунды, что машина простояла в луче
+  float ufoPos[3], ufoCharge; int ufoOn, ufoSent, ufoKey;
 } GameMsn;
 
 // Звук миссий (msn_audio.h): поставить ДО gameMsnOpen; NULL — без звука (разговоры кончаются сами, как раньше)
@@ -256,5 +258,15 @@ extern int gameMsnResetAlways;           // правка 61: отрицател�
 extern int gamePoliceDmgOld;   // правка 280: 1 — полицейская получает полный урон машин миссий (прежнее)
 extern int gameTalkCarOld;   // правка 305: 1 — машина переносится на место разговора из данных (прежнее, красный)
 extern int gameShopFirstOld;   // правка 306: 1 — лавка перехватывает △ у собеседника этапа (прежнее, красный контроль)
+// №967 (отчёт ФИНАЛ_БОСС_L7): цель «destroyboss» (m3, m5, m6, m7 L7: «въехать на машине в луч тарелки и выйти») ждала MSN_IN_BOSS_HIT, а слать его было некому — этап кончался «Timed out».
+// Теперь тарелка и луч стоят в точке локатора AddFlyingActorByLocator (l7_spaceship), а тик gameMsnTick шлёт событие, когда машина простояла в луче BOSS967_CHARGE секунд и игрок вышел.
+// Числа (радиус луча 11 м, заряд 3 с) — «правило порта, не PS2»: ориентир hit-and-run-web/src/campaign/runtime.ts (MIT), записей PS2 по L7 нет. Провала за долгое сидение в машине нет:
+// в данных миссии его нет (условия damage, keepbarrel, timeout). BOSS967_OLD=1 / «flag boss967old 1» / файл boss967old рядом с EBOOT — как было (тарелки нет, событие не шлётся)
+#ifndef BOSS967_OLD
+#define BOSS967_OLD 0
+#endif
+#define BOSS967_R 11.f
+#define BOSS967_CHARGE 3.f
+extern int gameBoss967Old;
 extern int gameSellerAtLoc;   // правка 288: 1 — место разговора продавца на его локаторе (прежнее, красный контроль)
 #endif

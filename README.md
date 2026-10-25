@@ -19,10 +19,11 @@ No game files are included, and none will be.
 - [Tests](tests/README.md): how every fix is checked
 - [All documents](docs/index.md)
 
-## What's new in build 64
+## What's new in build 65
 
 October 25, 2026. Since the first release on October 22:
 
+- Level 7 can be finished: the UFO and its tractor beam are in the world, so the "drive into the beam and get out" stages complete
 - Cartoon mode is now the base look. Flat-color textures became vector fills; the original asphalt and road markings stay. The ink outline has variants in Settings
 - Lights and sparkles are vector shapes: windows, neon, street lamps, and interaction sparkles shaped like a card diamond
 - Colors follow the show's palette, cars included
@@ -66,7 +67,7 @@ Comments in the code are mostly in Russian.
 
 ## How it was made
 
-About four weeks, 64 test builds and 25 full tours on a real PSP. 965 playtest notes, logged and worked through one by one.
+About four weeks, 65 test builds and 25 full tours on a real PSP. 967 playtest notes, logged and worked through one by one.
 Over 3,000 automated runs, with 130 recordings of the PS2 original as the reference. Fixes sit behind switches
 that restore the old behavior, and a check counts only after it fails on the old code.
 

@@ -79,6 +79,7 @@ int mvDriversDrawn(void);                    // аудит 09.10 п. 20: вод�
 void mvServiceSellers(void);                  // служебное (flag sellerlog): места разговора продавцов и сами продавцы (правка 288)
 void mvServiceMain(int mission);
 void mvMarkerShadowOld(int on);                // 04.10: 1 — маркер цели без пятна <рисунок>_shadow (флаг mkshadowold, красный контроль)
+void mvServiceUfo(void);                       // №967: строка MSNUFO (тарелка L7, заряд луча)
 void mvServiceMainAt(int code);                // служебное (flag msnmainat M*100+S): миссия M с этапа S основной части             // служебное: основная часть миссии с её чекпоинта (flag msnmain N)
 int mvDriverShown(int i);                   // №666: у машины миссии i рисуется водитель-персонаж (запечённого в кузов не рисовать)
 const char *mvForcedCar(void);               // SetForcedCar: игрок на машине миссии (модель пакета msncars); NULL — машина уровня
@@ -101,6 +102,7 @@ void mvSetGov(int on);   // L3 причал: кадр в перегрузке (f
 void mvSetVis(int (*f)(const float bb[6]));   // правка 500: отсечение персонажей по кадру (trVis из main); без вызова — рисуются все
 void mvDraw3D(float ex, float ey, float ez, float dt);   // персонажи миссий (скиннинг GE); после — resetState() в main.c
 int mvNpcFeet(float (*out)[4], int max, float ex, float ey, float ez, float r);   // №748: персонажи миссий, которые рисуются (ближе r м к глазу, своя комната): x, y (ноги), z, рост модели — векторные тени (spritelight.h)
+extern float mvViewDir[3];                     // №967: взгляд камеры (единичный), ставит main перед mvDrawMarkers
 void mvDrawMarkers(float ex, float ey, float ez, float t);
 void mvStatePropSync(StateProps *sp);   // №314: бочки L7 — включить экземпляр SPR1 на цели «подобрать предмет», спрятать после
 int mvStatePropWanted(const float p[3]);   // маркер цели (billboard-ы/меши msnart.shr)

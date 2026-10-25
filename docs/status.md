@@ -1,6 +1,6 @@
 # Status
 
-Where the port stands against the original PS2 game, as of October 25, 2026. Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
+Where the port stands against the original PS2 game, as of October 25, 2026 (build 65). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
 
 - **Hardware:** PSP-2000 with custom firmware, PAL disc. Nothing else has been tested.
 - **Latest hardware tour:** a scripted run of 33 scenes across all 7 levels (build "TEST62", second run). The final build ("TEST64") is on the PSP but has not been measured yet, so the numbers below belong to the previous build.
@@ -19,7 +19,7 @@ Where the port stands against the original PS2 game, as of October 25, 2026. Eve
 | Music on every level | plays on all 7 in the tour log; listened to on level 1 only | hardware (log), ear on L1 |
 | Story missions, level 1 | works when played by hand; bots finish 7 of 13 runs, the rest hit their time limit | hardware (by hand), bots |
 | Story missions, levels 2 to 7 | partial: starts verified, full playthrough not proven | emulator, bots |
-| Level 7 UFO tractor beam (`destroyboss` objective) | **missing: the UFO and its beam are not placed in the world, so the last stage of missions 3, 5, 6 and 7 times out and the level 7 story stops at mission 3; fix in progress** | emulator, code |
+| Level 7 UFO tractor beam (`destroyboss` objective) | works since build 65: the UFO and its beam are in the world, missions 3, 5, 6 and 7 complete; not yet played on hardware | emulator |
 | Street races | partial: start verified on L2 to L7, rival pace differs from PS2 | emulator |
 | Bonus missions | partial | emulator, bots |
 | Wager race | partial: start verified, win not proven | emulator |
@@ -56,7 +56,6 @@ Where the port stands against the original PS2 game, as of October 25, 2026. Eve
 
 ## Known problems
 
-- The level 7 story cannot be finished yet: the UFO tractor beam is missing, so missions 3, 5, 6 and 7 fail on their last stage. Found on October 25, fix in progress.
 - Driving in the city on levels 3 to 7 does not hold 30 fps and dips under 20 fps in places.
 - Far-distance flicker is not solved. The fix for it hid the horizon on one level, so it is switched off in the final build.
 - A "go home" icon can stay on screen after a level change; six reproduction paths did not trigger it, so the build logs extra state for the next report.

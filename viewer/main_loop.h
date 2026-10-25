@@ -170,6 +170,7 @@ int main(int argc, char **argv) {
     sibling(fn, "flatrebuildold"); if (sceIoGetstat(fn, &st_) >= 0) flatRebuildOld = 1; }   /* А без исправления: пересборки заливки после смены уровня нет */   /* дамп FDIAG/FLATX/FLATT — только по файлу или «flag flatdump 1» */   // №912: файл-флаг рядом с EBOOT — мир с текстурами, как до заливки
   { char fn[256]; SceIoStat st_; sibling(fn, "neonarch957old"); if (sceIoGetstat(fn, &st_) >= 0) neonArch957 = 0; }   // №957б
   { char fn[256]; SceIoStat st_; sibling(fn, "lvamem962old"); if (sceIoGetstat(fn, &st_) >= 0) lvaMem962Old = 1; }   // №962: куски уровня в запас участка lva (main_stream.h)
+  { char fn[256]; SceIoStat st_; sibling(fn, "boss967old"); if (sceIoGetstat(fn, &st_) >= 0) gameBoss967Old = 1; }   // №967: тарелка L7 и луч, цель destroyboss (game_msn.c)
   { char fn[256]; SceIoStat st_; sibling(fn, "lvatail962bold"); if (sceIoGetstat(fn, &st_) >= 0) lvaTail962bOld = 1; }   // №962б: резерв под COL1/PRP2 по готовности чтения, как было
   { char fn[256]; SceIoStat st_; sibling(fn, "sky954old"); if (sceIoGetstat(fn, &st_) >= 0) sky954Old = 1; sibling(fn, "sky954starsold"); if (sceIoGetstat(fn, &st_) >= 0) sky954StarsOld = 1; }   // №954: файл-флаг рядом с EBOOT — небо как в TEST59 / без звёзд-точек
   { char fn[256]; SceIoStat st_; sibling(fn, "mecityoff"); if (sceIoGetstat(fn, &st_) >= 0) ccFileOff = 1; }   // №653: файл-флаг рядом с EBOOT — отсечение города целиком на главном
@@ -1248,6 +1249,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "burnold")) huskBurnOld = sc.a != 0.f;   // №697: остов горит постоянно (красный)
         else if (!strcmp(sc.name, "sellerlog")) mvServiceSellers();   // правка 288: продавцы
         else if (!strcmp(sc.name, "selleratloc")) gameSellerAtLoc = sc.a != 0.f;
+        else if (!strcmp(sc.name, "boss967old")) gameBoss967Old = sc.a != 0.f;   // №967: 1 — тарелки и луча нет, событие не шлётся (как было)
         else if (!strcmp(sc.name, "shopfirstold")) gameShopFirstOld = sc.a != 0.f;
         else if (!strcmp(sc.name, "talkcarold")) gameTalkCarOld = sc.a != 0.f;
         else if (!strcmp(sc.name, "susloopold")) sndSusLoopOld = sc.a != 0.f;
@@ -1436,6 +1438,7 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "lvdeferold")) lvDeferOld = (int)sc.a;   // №943: прежнее — стартовая цель уровня ставится перед выбранной строкой
         else if (!strcmp(sc.name, "tallfall946old")) propsTallFallOld = sc.a != 0.f;   // №946: 1 — высокий предмет падает медленно, как было
         else if (!strcmp(sc.name, "propstat") && haveProps) { unsigned i_ = (unsigned)sc.a; if (i_ < props.ninst) { const PropState *p_ = &props.st[i_]; char l_[200]; snprintf(l_, sizeof l_, "PROPSTAT i=%u type=%u asleep=%d hidden=%d moved=%.2f up=%.2f prop=%.1f,%.1f car=%.1f,%.1f v=%.1f foot=%d t=%.2f\n", i_, props.def[i_].type, p_->asleep, p_->hidden, fabsf(p_->x - p_->home[0]) + fabsf(p_->z - p_->home[2]), 1.f - 2.f * (p_->q[1] * p_->q[1] + p_->q[3] * p_->q[3]), p_->home[0], p_->home[2], car.x, car.z, car.v, onFoot(), smkT); smkWrite(l_); } }   // №946: состояние предмета PRP1 № (гейт tests/poles946)
+        else if (!strcmp(sc.name, "msnufo")) mvServiceUfo();   // №967
         else if (!strcmp(sc.name, "msnhud")) mvServiceHud();   // №943: строка MSNHUD — что сейчас считает целью миссия, HUD и маркер (гейт tests/msnhome)
         else if (!strcmp(sc.name, "resetrowold")) uiMenuHide(UI_MENU_PAUSE, UI_P_RESET_CAR, 0);   // отрицательный контроль правки 137: строка RESET CAR у игрока (прежний код)
         else if (!strcmp(sc.name, "pauseold")) pauseOld = 1;   // отрицательный контроль: в миссии пауза свободной езды (прежний код)
@@ -2646,7 +2649,7 @@ rf_repeat_draw:
       static unsigned mkUs_[4], mkF_, mkT0_; unsigned m0_ = smkOn ? sceKernelGetSystemTimeLow() : 0;   // №849 служебно: части «маркеров» (строка MARKSUB)
       tsSite = 2; aoDrawRings(ex, ey, ez, mT); resetState();   // правка 462: красное кольцо выключателей (Duff, АЭС) — видно издалека, всегда пульсирует
       unsigned m1_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
-      if (haveSP) mvStatePropSync(&sprops); unsigned m2_ = smkOn ? sceKernelGetSystemTimeLow() : 0; if (TOONLINES_ORDER_OLD) { unsigned tln_ = toonLinesDraw(ex, ey, ez); if (tln_) resetState(); } tsSite = 1; mvDrawMarkers(ex, ey, ez, mT); tsSite = 4; resetState();
+      if (haveSP) mvStatePropSync(&sprops); unsigned m2_ = smkOn ? sceKernelGetSystemTimeLow() : 0; if (TOONLINES_ORDER_OLD) { unsigned tln_ = toonLinesDraw(ex, ey, ez); if (tln_) resetState(); } tsSite = 1; mvViewDir[0] = cfx; mvViewDir[1] = cfy; mvViewDir[2] = cfz; mvDrawMarkers(ex, ey, ez, mT); tsSite = 4; resetState();
       unsigned m3_ = smkOn ? sceKernelGetSystemTimeLow() : 0; if (smkOn) { mkUs_[0] += m1_ - m0_; mkUs_[1] += m2_ - m1_; mkUs_[2] += m3_ - m2_; }   // пункт 8: маркер цели (msnart.shr)
       // правка Роба 118 («не видно вешалку с чем-то»): над местом выбора костюма (ActionEvent PurchaseSkin) — значок оригинала
       // «рубашка и доллар» (составной объект shirtdollar из art/missions/generic/missgen.p3d, рядом с «!» и «$» заданий)

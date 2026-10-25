@@ -715,6 +715,7 @@ static int npcWalkTo(GameNpc *n, const Game *g, MsnVec3 t, float dt, float stop)
 }
 int gameTalkCarOld;   // правка 305: служебное — машина на место разговора из данных (прежнее)
 int gameShopFirstOld;   // правка 306: служебное — лавка перехватывает △ у собеседника этапа (прежнее)
+int gameBoss967Old = BOSS967_OLD;
 int gameSellerAtLoc;   // правка 288: служебное — место разговора продавца на локаторе, как было
 static void npcStep(GameNpc *n, const Game *g, float dt, float stop) {   // шаг к следующей точке маршрута (stop — В85, только маршрут)
   if (n->knock) return;   // правка 240: сбит — летит, лежит, встаёт (npcKnock)
@@ -945,6 +946,9 @@ int gameMsnInSafeZone(const GameMsn *m, float x, float z) {
   return 0;
 }
 static void feat(void *u, int feature, const MsnCall *c) {   // команды без своего модуля: разговор — здесь, остальное — виду
+  if (!gameBoss967Old && c && c->cmd && c->cmd->op == MSN_OP_ADDFLYINGACTORBYLOCATOR) {   // №967: тарелка L7 (имя и модель — аргументы 0 и 1, место — локатор)
+    const MsnLoc *l = msn_arg_loc(c->f, c->cmd, 2);
+    if (l) { GM->ufoPos[0] = l->pos[0]; GM->ufoPos[1] = l->pos[1]; GM->ufoPos[2] = l->pos[2]; GM->ufoOn = 1; GM->ufoCharge = 0.f; GM->ufoSent = 0; } }
   if (c && c->cmd && c->cmd->op == MSN_OP_DISABLEHITANDRUN) hnrOff = 1;
   if (c && c->cmd && c->cmd->op == MSN_OP_ADDSAFEZONE) safeAdd(GM, c);
   if (c && c->cmd && c->cmd->op == MSN_OP_USEPEDGROUP) trafficPedGroup(roadsT, msn_arg_i(c->f,c->cmd,0));
@@ -1351,6 +1355,14 @@ void gameMsnTick(GameMsn *m, const GamePad *p, float dt) {
     if (n) n->h = atan2f(H->x - n->pos.x, H->z - n->pos.z);
   }
   MsnWorld w; gameMsnWorld(m, &w);
+  if (!gameBoss967Old && m->ufoOn) {   // №967: машина игрока (стоящая, если он вышел) в луче тарелки BOSS967_CHARGE с, игрок пешком -> цель destroyboss (MSN_IN_BOSS_HIT)
+    int key_ = m->rt.cur * 256 + m->rt.stage + 1; if (m->rt.obj != MSN_OBJ_DESTROYBOSS || key_ != m->ufoKey) { m->ufoCharge = 0.f; m->ufoSent = 0; m->ufoKey = m->rt.obj == MSN_OBJ_DESTROYBOSS ? key_ : 0; }   // новый этап — заряд с нуля
+    if (m->rt.status == MSN_RUNNING && m->rt.obj == MSN_OBJ_DESTROYBOSS && !m->ufoSent && *m->g->pHaveCol) {
+      float dx = m->g->pCar->x - m->ufoPos[0], dz = m->g->pCar->z - m->ufoPos[2];
+      if (dx * dx + dz * dz < BOSS967_R * BOSS967_R) m->ufoCharge += dt; else m->ufoCharge = 0.f;
+      if (m->ufoCharge >= BOSS967_CHARGE && w.on_foot) { m->ufoSent = 1; msn_notify(&m->rt, MSN_IN_BOSS_HIT, NULL, 0); }
+    }
+  }
   npcCtx = m;
   for (int i = 0; i < m->nnpc; i++) npcStep(&m->npc[i], m->g, dt, npcTalkStop(m, &m->npc[i]));
   npcCtx = 0;   // В85: stop — только записанные случаи

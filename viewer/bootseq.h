@@ -158,18 +158,18 @@ static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   /
 #define BOOT_WORK_OLD 0
 #endif
 #define BOOT_W_DISC 18754
-#define BOOT_W_RUNS 3012   // TEST64: 2956 (TEST63) + 56 журналов smoke.txt с 25.10 11:36 (деревья t64-*, тур TEST63 в эмуляторе); счёт — нижняя граница
+#define BOOT_W_RUNS 3187   // TEST65: 3012 (TEST64) + 175 журналов smoke.txt с 25.10 12:50 (регрессия финала, тур TEST64, проверка L7); счёт — нижняя граница
 #define BOOT_W_PS2REC 130
 #define BOOT_W_HOURS 38
-#define BOOT_W_FIXES 965   // TEST64: номер последней строки ПРАВКИ_РОБА.md
-#define BOOT_W_BUILDS 64
+#define BOOT_W_FIXES 967   // TEST65: номер последней строки ПРАВКИ_РОБА.md
+#define BOOT_W_BUILDS 65
 static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   char b[80], c[40];
   if (n <= 0) {   // первый кадр: производитель и копирайт слева вверху, подсказка и идентификатор внизу — как у BIOS сразу при включении
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/25/26-GONEMAKERS-SHAR-PORT-64");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/25/26-GONEMAKERS-SHAR-PORT-65");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;

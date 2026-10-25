@@ -1238,6 +1238,8 @@ static void drawRouteArrow(float ex, float ey, float ez, float t) {
 #endif
 #define MV_ITEM_FAR 120.f
 static int itemsDrawnLast = -1;
+static unsigned ufoDrawn;   // №967 служебно: сколько раз нарисована тарелка
+float mvViewDir[3];   // №967: взгляд камеры этого кадра (ставит main перед mvDrawMarkers): тарелку рисуем, только если она в стороне взгляда
 static void drawItems(float ex, float ey, float ez, float t) {
   int n = 0;
   if (!MV_ITEMS_OLD && M.rt.status == MSN_RUNNING && (M.rt.obj == MSN_OBJ_DELIVERY || M.rt.obj == MSN_OBJ_DUMP))
@@ -1262,6 +1264,10 @@ void mvDrawMarkers(float ex, float ey, float ez, float t) {
   drawRouteArrow(ex, ey, ez, t);
   unsigned k1_ = sceKernelGetSystemTimeLow(); mvMkUs[0] += k1_ - k0_;
   drawItems(ex, ey, ez, t);   // перепись 04.10: предметы целей delivery / dump
+  if (!gameBoss967Old && M.ufoOn && !M.interior) {   // №967: тарелка и луч L7 в точке локатора (рисование как в галерее artgal 7, main_loop.h)
+    float dx = M.ufoPos[0] - ex, dz = M.ufoPos[2] - ez;
+    float dy = M.ufoPos[1] - ey, d2 = dx * dx + dy * dy + dz * dz, dot = dx * mvViewDir[0] + dy * mvViewDir[1] + dz * mvViewDir[2];
+    if (d2 < 300.f * 300.f && (d2 < 50.f * 50.f || dot > 0.35f * sqrtf(d2))) { ufoDrawn++; msnartDraw("spaceship", M.ufoPos, ex, ey, ez, t); msnartDraw("UfoBeam", M.ufoPos, ex, ey, ez, t); } }
   unsigned k2_ = sceKernelGetSystemTimeLow(); mvMkUs[1] += k2_ - k1_;
   if (raceProps[0] && !M.interior) msnartDrawCull(raceProps, NULL, ex, ey, ez, t, 70.f);   // правка 122: шины и отбойники трассы гонки
   if (H.markerOn && H.marker.drawable && *H.marker.drawable) {
@@ -1731,6 +1737,7 @@ void mvServiceMainAt(int code) {   // служебное (правка 302): о�
   M.rt.cp_phase = ph0 ? 0 : 1; M.rt.cp_stage = st; msn_start_mission(&M.rt, mi, 1);
   if (ph0) M.rt.story = mi;   // прогулка — у сюжетной миссии (как в игре; правка 330: SAVE GAME проверяет story)
 }
+void mvServiceUfo(void) { logf_("MSNUFO on=%d pos=%.1f,%.1f,%.1f charge=%.1f sent=%d old=%d ship=%d beam=%d drawn=%u t=%.1f\n", active ? M.ufoOn : 0, M.ufoPos[0], M.ufoPos[1], M.ufoPos[2], M.ufoCharge, M.ufoSent, gameBoss967Old, msnartHas("spaceship"), msnartHas("UfoBeam"), ufoDrawn, clock_); }   // №967: состояние тарелки для гейта tests/missions/boss_l7.sh
 void mvServiceHud(void) {   // №943: что миссия считает целью сейчас (stage — этап рантайма), что держит HUD (obj — текст цели) и маркер; строки сверяет tests/msnhome/check.py
   { int ic, px; const char *t, *l; uiObjDebug(&ic, &px, &t, &l); logf_("MSNICON want=\"%s\" field=%d pix=%d msg=\"%.30s\" last=\"%.30s\" active=%d t=%.1f\n", msnartWantIcon(), ic, px, t, l, active, clock_); }   // №958б
   if (!active) { logf_("MSNHUD active=0\n"); return; }
