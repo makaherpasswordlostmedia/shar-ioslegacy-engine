@@ -44,6 +44,7 @@ typedef struct {
 } SpType;
 typedef struct { int16_t parent, track; uint32_t pad; float q[4], t[3], s[3]; uint32_t pad2; } SpJoint;   // q = w,x,y,z
 typedef struct { uint8_t slot, mode, cycles, preset; uint16_t min, max; float speed; } SpFx;   // mode 1 раз, 2 цикл
+extern int spPoleFallOld, spPoleWallOld, spPoleBaseOld;   // №975: 1 — прежнее (флаги сценария polefall975old / polewall975old)
 typedef struct {
   uint32_t vis;                    // бит = слот рисунка (prop или effect) включён; слоты 32.. — слова visX (spSlotOn)
   uint8_t autoTo, nEvent, nCall, poseMode;   // autoTo 0xFF нет; poseMode 0 стоп, 1 раз, 2 цикл
@@ -80,6 +81,7 @@ typedef struct {
   float *jm;                       // мировые (в осях объекта) матрицы суставов: 9 (R по столбцам) + 3 (t) на сустав
   float *jm0;                      // №923: матрицы суставов в кадре 0 обломка (rest) и поворот сдвига кусков (dirC, dirS) — осколки летят по ходу машины; NULL — как в клипе
   float dirC, dirS;
+  uint8_t fall; float fallTh, fallW, fallD[2], fallR0[9];   // №975: 1 — столб валится на шарнире у основания (угол, скорость, направление, исходный поворот), 2 — лежит
   float hv[2];                     // №923: горизонтальная скорость машины (до стен кадра) при её ударе по этому предмету; обломок по вызову с задержкой берёт её отсюда
 } SpRun;
 

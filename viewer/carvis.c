@@ -435,6 +435,10 @@ void carVisDrawShadow(CarVis *v, const Car *c, const ColWorld *w) {
   sceGuDepthMask(GU_FALSE); sceGuDisable(GU_BLEND);
 }
 
+// №970 (Роб 25.10: «блики у фар нравятся, можно чуть крупнее»): блик огня машины (стоп-сигнал, задний ход) крупнее в CAR_GLINT970_K раз; GLINT970_OLD=1 / flag glint970old 1 — как было
+#ifndef CAR_GLINT970_K
+#define CAR_GLINT970_K 1.3f
+#endif
 void carFlareOne(const float P[3], const float U[3], int mode, float w, float h, float dist, unsigned abgr, int tex, float ex, float ey, float ez, void (*bind)(int tex)) {
   float tx = ex - P[0], ty = ey - P[1], tz = ez - P[2], d = sqrtf(tx * tx + ty * ty + tz * tz);
   if (d < .3f || d > FLARE_DIST) return;
@@ -446,7 +450,7 @@ void carFlareOne(const float P[3], const float U[3], int mode, float w, float h,
   float hw = w * .5f / rl, hh = h * .5f;
   rx *= hw; ry *= hw; rz *= hw;
   float cx = P[0] + tx * dist, cy = P[1] + ty * dist, cz = P[2] + tz * dist;
-  if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(cx, cy, cz, fmaxf(w, h) * .7f, abgr, (float)(abgr >> 24) / 255.f, P[0] * .37f); return; }   // №839: огонь машины — бликом
+  if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(cx, cy, cz, fmaxf(w, h) * .7f * (fxGlint970Old ? 1.f : CAR_GLINT970_K), abgr, (float)(abgr >> 24) / 255.f, P[0] * .37f); return; }   // №839: огонь машины — бликом
   ScePspFMatrix4 I; memset(&I, 0, sizeof I); I.x.x = I.y.y = I.z.z = I.w.w = 1.f;
   sceGuSetMatrix(GU_MODEL, &I);
   sceGuDisable(GU_FOG); sceGuDisable(GU_ALPHA_TEST);
@@ -497,7 +501,7 @@ void carVisDrawFlares(const CarVis *v, const Car *c, float ex, float ey, float e
     float hw = fl->w * .5f / rl, hh = fl->h * .5f;
     rx *= hw; ry *= hw; rz *= hw;
     float cx = P[0] + tx * fl->dist, cy = P[1] + ty * fl->dist, cz = P[2] + tz * fl->dist;
-    if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(cx, cy, cz, fmaxf(fl->w, fl->h) * .7f, fl->abgr, (float)(fl->abgr >> 24) / 255.f, (float)i * .37f); continue; }   // №839: стоп-сигнал — бликом
+    if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(cx, cy, cz, fmaxf(fl->w, fl->h) * .7f * (fxGlint970Old ? 1.f : CAR_GLINT970_K), fl->abgr, (float)(fl->abgr >> 24) / 255.f, (float)i * .37f); continue; }   // №839: стоп-сигнал — бликом
     FV *q = (FV *)geVbAlloc(6 * sizeof(FV), GEVB_FLARE_OLD);
     unsigned col = fl->abgr;
     FV a = {0, 0, col, cx - rx + ux * hh, cy - ry + uy * hh, cz - rz + uz * hh};

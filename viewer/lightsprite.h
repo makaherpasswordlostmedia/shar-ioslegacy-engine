@@ -232,6 +232,7 @@ static int vecBeamHook(const float p[3], const float X[3], const float Y[3], uns
 #endif
 #define VG_N852 18     // №852: сторон круга
 #define VG_LOD_D 25.f  // №852: дальше — только внутренний диск
+#include "glintmotion976.h"   // №976: SPHERE976_N
 static unsigned vecGlowN;   // пятен за всё время (служебная строка смоука)
 static unsigned vgStatN, vgStatUs, vgStatV;   // №849 служебно: пятна на кадр (строка GLINTSTAT)
 static int vecGlowHook(const char *name, const float *p, float ex, float ey, float ez) {
@@ -241,9 +242,10 @@ static int vecGlowHook(const char *name, const float *p, float ex, float ey, flo
   if (geOver(GE_SOFT)) return 1;
   // №852 (тур TEST41 на PSP, L3 в езде: значки бонусных персонажей 0,4–0,9 мс кадра — пятно на полу до 420 вершин на процессоре): пятно вне кадра
   // не считается; круг — VG_N852 сторон; дальше VG_LOD_D — только внутренний диск. VG_COST852_OLD=1 — как было
-  int vgN_ = VG_COST852_OLD ? VG_N : VG_N852, far_ = 0;
+  int vgN_ = VG_COST852_OLD ? VG_N : VG_N852, far_ = 0, sph_ = !fxGlint976Old && !VG_COST852_OLD && strstr(name, "sphere");   // №976
   if (!VG_COST852_OLD) { float e3_[3] = {ex, ey, ez}; if (rfSphereOut(pl, e3_, p, f.rad * f.out1 + .5f)) return 1;
-    float dx_ = p[0] - ex, dz_ = p[2] - ez; far_ = dx_ * dx_ + dz_ * dz_ > VG_LOD_D * VG_LOD_D; }
+    float dx_ = p[0] - ex, dz_ = p[2] - ez; far_ = dx_ * dx_ + dz_ * dz_ > VG_LOD_D * VG_LOD_D; if (sph_ && !far_) vgN_ = SPHERE976_N; }
+  if (smkOn && strstr(name, "sphere")) { static int ln_ = -1; if (ln_ != vgN_ * 2 + far_) { ln_ = vgN_ * 2 + far_; char l_[96]; snprintf(l_, sizeof l_, "SPHERE976 name=%s sides=%d far=%d old=%d\n", name, vgN_, far_, fxGlint976Old); smkWrite(l_); } }   // №976 служебно
   typedef struct { unsigned c; float x, y, z; } GV;
   unsigned b0 = ggVbUsed, nv = 0; GV *q = (GV *)ggVbAlloc(3 * vgN_ * 6 * sizeof(GV)); if (!q) return 1;
   float dxp = ex - p[0], dyp = ey - p[1], dzp = ez - p[2], dd = sqrtf(dxp * dxp + dyp * dyp + dzp * dzp), kk = dd > .3f ? VL_PULL / dd : .5f; if (kk > .5f) kk = .5f;
@@ -254,9 +256,11 @@ static int vecGlowHook(const char *name, const float *p, float ex, float ey, flo
     for (int j = 0; j < vgN_; j++) {
       float c0, s0, c1, s1;
       if (!VG_COST852_OLD) {   // №852: углы круга — таблица (sinf/cosf на PSP медленные: было 4 на отрезок, до 216 на пятно)
-        static float vgC_[VG_N852 + 1], vgS_[VG_N852 + 1]; static int vgOk_;
-        if (!vgOk_) { for (int i_ = 0; i_ <= VG_N852; i_++) { vgC_[i_] = cosf(6.2831853f * i_ / VG_N852); vgS_[i_] = sinf(6.2831853f * i_ / VG_N852); } vgOk_ = 1; }
-        c0 = vgC_[j]; s0 = vgS_[j]; c1 = vgC_[j + 1]; s1 = vgS_[j + 1]; }
+        static float vgC_[VG_N852 + 1], vgS_[VG_N852 + 1], vgC6_[SPHERE976_N + 1], vgS6_[SPHERE976_N + 1]; static int vgOk_;
+        if (!vgOk_) { for (int i_ = 0; i_ <= VG_N852; i_++) { vgC_[i_] = cosf(6.2831853f * i_ / VG_N852); vgS_[i_] = sinf(6.2831853f * i_ / VG_N852); }
+          for (int i_ = 0; i_ <= SPHERE976_N; i_++) { vgC6_[i_] = cosf(6.2831853f * i_ / SPHERE976_N); vgS6_[i_] = sinf(6.2831853f * i_ / SPHERE976_N); } vgOk_ = 1; }
+        if (vgN_ == SPHERE976_N) { c0 = vgC6_[j]; s0 = vgS6_[j]; c1 = vgC6_[j + 1]; s1 = vgS6_[j + 1]; }
+        else { c0 = vgC_[j]; s0 = vgS_[j]; c1 = vgC_[j + 1]; s1 = vgS_[j + 1]; } }
       else { float a0 = 6.2831853f * j / vgN_, a1 = 6.2831853f * (j + 1) / vgN_; c0 = cosf(a0); s0 = sinf(a0); c1 = cosf(a1); s1 = sinf(a1); }
       float P[4][3] = {{p[0] + r0 * c0, p[1], p[2] + r0 * s0}, {p[0] + r1 * c0, p[1], p[2] + r1 * s0}, {p[0] + r0 * c1, p[1], p[2] + r0 * s1}, {p[0] + r1 * c1, p[1], p[2] + r1 * s1}};
       static const unsigned char ring[6] = {0, 1, 2, 2, 1, 3}, disc[3] = {0, 1, 3};

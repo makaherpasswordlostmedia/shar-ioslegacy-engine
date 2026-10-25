@@ -1,0 +1,63 @@
+# №969/№974/№978/№979 умолчания TEST67: было (все четыре флага выключены) / стало (умолчания). Одна камера на место, Гомер стоит. L1
+scene G
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 4
+foot 220 172 0
+wait 3
+scene P_was
+flag ground969 0
+flag curb974 0
+flag ink978 0
+flag asphlight 0
+wait 12
+cam 205 3.5 188 0 -0.3 -1
+wait 3.5
+shot B_lawn_was
+cam 205 12 190 0 -0.45 -1
+wait 3.5
+shot E_lawnfar_was
+cam 212 8 176 0 -0.5 -1
+wait 3.5
+shot C_walk_was
+cam 212 4 168 0 -0.7 -1
+wait 3.5
+shot F_walkclose_was
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3.5
+shot H_street_was
+cam 228 4 158 -0.1 -0.25 -1
+wait 3.5
+shot K_corner_was
+cam 200 2.6 170 0.6 -0.12 -1
+wait 3.5
+shot M_road_was
+scene P_new
+flag ground969 1
+flag curb974 1
+flag ink978 1
+flag asphlight 1
+wait 12
+cam 205 3.5 188 0 -0.3 -1
+wait 3.5
+shot B_lawn_new
+cam 205 12 190 0 -0.45 -1
+wait 3.5
+shot E_lawnfar_new
+cam 212 8 176 0 -0.5 -1
+wait 3.5
+shot C_walk_new
+cam 212 4 168 0 -0.7 -1
+wait 3.5
+shot F_walkclose_new
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3.5
+shot H_street_new
+cam 228 4 158 -0.1 -0.25 -1
+wait 3.5
+shot K_corner_new
+cam 200 2.6 170 0.6 -0.12 -1
+wait 3.5
+shot M_road_new

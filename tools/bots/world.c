@@ -288,6 +288,11 @@ static int seenCone(void *u, float x, float y, float z, float r) {
   if (d > far) return 0; if (d < r + 1.f) return 1;
   return (dx * camFx + dz * camFz) / d > cosf(50.f * 3.14159265f / 180.f) - r / d;
 }
+#include <time.h>
+// №984 стенд city984: время по фазам кадра bwStep (мкс, только при bwProf = 1; профиль не влияет на состояние мира). 0 шаг машины, 1 мир после машины (Гомер, пропы, стейтпропы), 2 респавн, комнаты, миссия, 3 трафик, 4 Hit & Run, смерть
+unsigned long long bwPhaseNs[8]; int bwProf;
+static inline unsigned long long bwNowNs(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); return (unsigned long long)ts.tv_sec * 1000000000ull + (unsigned long long)ts.tv_nsec; }
+#define BWP(i, ...) do { if (bwProf) { unsigned long long t0_ = bwNowNs(); __VA_ARGS__; bwPhaseNs[i] += bwNowNs() - t0_; } else { __VA_ARGS__; } } while (0)
 void bwStep(BotWorld *w, unsigned buttons, float ax, float ay) {
   Game *G = &w->G; bwTotalFrames++; bwLastDeathZone = -1;
   GamePad p = {buttons, buttons & ~w->prevButtons, ax, ay}, p0 = p; w->prevButtons = buttons;
@@ -302,9 +307,9 @@ void bwStep(BotWorld *w, unsigned buttons, float ax, float ay) {
   G->collRoom = w->room >= 0 ? collectRoomId(rooms.room[w->room].name) + 1 : 0;   // гэги комнат — только в своей комнате
   if ((p.hit & GP_START) && w->haveCol) { gameReset(G); w->props.havePreviousCar = 0; w->st.resets++; }   // RESET CAR
   if (w->haveCol) {
-    CarInput in; gameCarInput(G, &p, &in); gameCarLimits(G, &in); gameExitAssist(G, &in); if (w->haveMsn) gameMsnFreezeCar(&w->msn, &in); gameCarStep(G, &in, BW_DT);
+    CarInput in; gameCarInput(G, &p, &in); gameCarLimits(G, &in); gameExitAssist(G, &in); if (w->haveMsn) gameMsnFreezeCar(&w->msn, &in); BWP(0, gameCarStep(G, &in, BW_DT));
     if (w->car.wallV > w->st.maxWallV) w->st.maxWallV = w->car.wallV;
-    gameAfterCar(G, &p, BW_DT);
+    BWP(1, gameAfterCar(G, &p, BW_DT));
 #ifdef BW_HAVE_AO
     if (w->haveAo) {   // объекты уровня: действие, кадр клипа, живые объёмы COL1 (после spUpdate — поза этого кадра), как main.c
       int ft = gameOnFoot(G);
@@ -315,7 +320,7 @@ void bwStep(BotWorld *w, unsigned buttons, float ax, float ay) {
   if (gameOnFoot(G)) { px = w->homer.x; pz = w->homer.z; fx = sinf(w->homer.camYaw); fz = cosf(w->homer.camYaw); }
   camX = px - fx * 7.5f; camZ = pz - fz * 7.5f; camFx = fx; camFz = fz;
   static int noRespawn = -1; if (noRespawn < 0) noRespawn = getenv("BW_NO_RESPAWN") != 0;   // отрицательный контроль гейта длинного мира
-  if (!noRespawn) gameRespawn(G, camX, camZ, BW_DT, seenCone, 0);
+  if (!noRespawn) BWP(2, gameRespawn(G, camX, camZ, BW_DT, seenCone, 0));
   { RoomState rs = {w->room, w->lastDoor, w->doorArmed, w->exitArmed};   // комнаты: дверь -> старт комнаты; выход -> к двери (viewer/rooms.c)
     if (roomsStep(&rooms, &rs, G, NULL, NULL) == ROOM_EV_ENTER) w->st.rooms++;
     w->room = rs.room; w->lastDoor = rs.lastDoor; w->doorArmed = rs.doorArmed; w->exitArmed = rs.exitArmed; }
@@ -323,7 +328,7 @@ void bwStep(BotWorld *w, unsigned buttons, float ax, float ay) {
   if (w->haveTraffic && w->room < 0) {   // Т1.2, как main.c: после машины и Гомера, в комнате город стоит; камера — конус за игроком
     int drv = !w->haveHomer || homerDriving(&w->homer);
     float pp[3] = {drv ? w->car.x : w->homer.x, drv ? w->car.y : w->homer.y, drv ? w->car.z : w->homer.z}, e3[3] = {camX, pp[1] + 3.2f, camZ}, f3[3] = {camFx, 0.f, camFz};
-    trafficUpdate(&tr, &col, &w->car, drv, pp, e3, f3, BW_DT);
+    BWP(3, trafficUpdate(&tr, &col, &w->car, drv, pp, e3, f3, BW_DT));
     TrEvent te; while (trafficPopEvent(&tr, &te)) {   // Hit & Run: те же правила, что в EBOOT (game.c gameHnrOffense)
       gameHnrOffense(G, te.type == TR_EV_CAR_WRECK ? HNR_CAR_WRECK : te.type == TR_EV_PED_HIT ? HNR_PED_HIT : te.type == TR_EV_PED_KICK ? HNR_PED_KICK : HNR_CAR_HIT);
       w->st.trEvents++; }
@@ -337,7 +342,7 @@ void bwStep(BotWorld *w, unsigned buttons, float ax, float ay) {
     if (!noDeath) bwLastDeathZone = gameDeath(G);   // Observe the same unmodified call and its real returned zone.
 #endif
   }
-  gameHnr(G, BW_DT);
+  BWP(4, gameHnr(G, BW_DT));
   w->st.frames++;
 }
 

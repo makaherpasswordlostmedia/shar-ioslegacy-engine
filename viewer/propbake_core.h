@@ -11,12 +11,12 @@
 typedef struct { int tex, flags, ni; const void *v; const unsigned short *idx; float m[16]; } PbPiece;
 typedef struct { unsigned id; float c[3], r; unsigned char hide, hasTr, nbig; float big[1][4], bb[1][6]; } PbMem;   // big: до двух крупных кусков (центр xyz, размер), BIG_CUT: клетка рисуется прежним путём, пока глаз ближе размера   // hasTr: у экземпляра есть прозрачные/аддитивные куски — они остаются за прежним путём
 typedef int (*PbOkFn)(const PbPiece *);
-typedef struct { float v[8]; unsigned char b[2]; } PbSig;
+typedef struct { float v[8]; unsigned char b[3]; } PbSig;   // b[2] — №975: угол падения столба стейтпропа (шарнир меняет поворот вокруг горизонтальной оси)
 static inline void pbSigProp(const PropState *st, PbSig *g) {
   memset(g, 0, sizeof *g); g->v[0] = st->x; g->v[1] = st->y; g->v[2] = st->z; g->v[3] = st->q[0]; g->v[4] = st->q[1]; g->v[5] = st->q[2]; g->v[6] = st->q[3]; g->b[0] = (unsigned char)st->asleep; g->b[1] = (unsigned char)st->hidden;
 }
 static inline void pbSigSp(const SpRun *r, PbSig *g) {
-  memset(g, 0, sizeof *g); g->v[0] = r->x; g->v[1] = r->y; g->v[2] = r->z; g->v[3] = r->poseF; g->v[4] = r->R[0]; g->v[5] = r->R[2]; g->v[6] = r->R[6]; g->v[7] = r->R[8]; g->b[0] = r->state; g->b[1] = r->alive;
+  memset(g, 0, sizeof *g); g->v[0] = r->x; g->v[1] = r->y; g->v[2] = r->z; g->v[3] = r->poseF; g->v[4] = r->R[0]; g->v[5] = r->R[2]; g->v[6] = r->R[6]; g->v[7] = r->R[8]; g->b[0] = r->state; g->b[1] = r->alive; g->b[2] = (unsigned char)(r->fall ? 1 + (int)(r->fallTh * 40.f) : 0);
 }
 // n >= 0: НЕПРОЗРАЧНЫХ кусков для листа (0 — рисовать нечего), -1 — не запекать. Прозрачные и аддитивные куски в out не попадают (mm->hasTr = 1: их рисует прежний путь).
 // mm: центр, радиус, «прячется у самого глаза» (правило №502: проп r<=1.5, стейтпроп r<=2.5)

@@ -455,8 +455,9 @@ static void humpFlags(ColWorld *w) {   // см. humpHere: один раз пос
 }
 
 static void pocketInit(ColWorld *w);
+static void zcReset(void);
 int colInit(ColWorld *w, const void *section, unsigned size) {
-  memset(w, 0, sizeof *w);
+  memset(w, 0, sizeof *w); zcReset();
   if (!section || size < sizeof(ColHdr)) return -1;
   if ((uintptr_t)section & 3) return -2;
   const ColHdr *h = (const ColHdr *)section;
@@ -658,6 +659,7 @@ int colBouncePadAt(const ColWorld *w, float x, float y, float z, float grow) {
 }
 
 void colFree(ColWorld *w) {
+  zcReset();
   if (w->scr) {
     free(w->scr->segNb); free(w->scr->humpAt); free(w->scr->hump); free(w->scr->fol); free(w->scr->folBox); free(w->scr->folSeg);
 #if !COLPROBE_FAST_OLD
@@ -1124,8 +1126,125 @@ static int fenceBand(const Q *q, const ColSeg *G) {
 // широкая фаза + срезы: собрать фигуры всего, что может задеть кузов
 static const ColSeg *xSeg; static uint32_t nxSeg;   // заборы трассы гонки (colExtraFences)
 void colExtraFences(const ColSeg *segs, unsigned n) { xSeg = segs; nxSeg = segs ? n : 0; }
+// №984 (наряд ГОРОД L3–L7, столкновение кузова в подшаге): широкая фаза на свободной дороге каждый вызов (4 подшага × толчок и проба) обходит ячейки сетки и зря проверяет коробки ничего не нашедших.
+// Кэш «пусто»: если в области запроса (x/z/y) НИ ОДИН примитив не пересекает её по габариту (тот же проход, что в gather до нарезки фигур — побочных эффектов у него нет:
+// горбы, память заборов, листва считаются только у прошедших габарит), то для любой вложенной области результат тот же — 0 фигур, побитно. Область расширяется при втором «пусто» подряд
+// на ZC_PADXZ / ZC_PADY (ещё один проход без нарезки), чтобы покрыть остальные подшаги кадра; нашёлся кандидат — расширять не пробуем ZC_SKIP вызовов. Мир после colInit не меняется,
+// кроме colExtraFences (в ключе). COL_GATHERCACHE984_OLD=1 — как было; COL_ZC_VERIFY=1 — при попадании всё равно собрать и сверить (отладка).
+#ifdef COL_ZC_VERIFY
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+#ifndef COL_GATHERCACHE984_OLD
+#define COL_GATHERCACHE984_OLD 0
+#endif
+int colGatherCacheOld = COL_GATHERCACHE984_OLD;
+#ifndef ZC_PADXZ
+#define ZC_PADXZ 1.2f
+#endif
+#ifndef ZC_PADY
+#define ZC_PADY .5f
+#endif
+#define ZC_SKIP 8
+#ifdef COL_ZC_COUNT
+unsigned long colCnt[4];   // 0 ячеек, 1 ссылок пройдено, 2 вызовов gather, 3 ячеек и ссылок в расширяющем проходе
+#define ZCNT(i, n) (colCnt[i] += (n))
+#else
+#define ZCNT(i, n) ((void)0)
+#endif
+static struct { const ColScratch *s; const ColSeg *xs; uint32_t nx; float x0, x1, z0, z1, ylo, yhi; int ok, streak, skip; unsigned long hit, miss, scan; } zc;
+unsigned long colZcHits(void) { return zc.hit; }
+unsigned long colZcCalls(void) { return zc.hit + zc.miss; }
+static void zcReset(void) { memset(&zc, 0, sizeof zc); }
+// есть ли хоть один примитив, чей габарит пересекает область (тот же отсев, что в gather до нарезки); 0 — пусто
+static int zcAnyCand(const ColWorld *w, float x0, float x1, float z0, float z1, float ylo, float yhi) {
+  ColScratch *S = w->scr;
+#ifdef COL_ZC_BREAK
+  return 0;   // красный контроль гейта: «пусто» без проверки
+#endif
+  int gx0 = (int)floorf((x0 - w->ox) * w->inv), gx1 = (int)floorf((x1 - w->ox) * w->inv);
+  int gz0 = (int)floorf((z0 - w->oz) * w->inv), gz1 = (int)floorf((z1 - w->oz) * w->inv);
+  if (gx0 < 0) gx0 = 0;
+  if (gz0 < 0) gz0 = 0;
+  if (gx1 >= w->W) gx1 = w->W - 1;
+  if (gz1 >= w->H) gz1 = w->H - 1;
+  for (uint32_t k = 0; k < nxSeg; k++) {   // заборы трассы гонки: габарит по плану (без полосы — запас)
+    const ColSeg *G = &xSeg[k];
+    float mnx = fminf_(G->a[0], G->b[0]), mxx = fmaxf_(G->a[0], G->b[0]), mnz = fminf_(G->a[1], G->b[1]), mxz = fmaxf_(G->a[1], G->b[1]);
+    if (!(mxx < x0 || mnx > x1 || mxz < z0 || mnz > z1)) return 1;
+  }
+  if (gx0 > gx1 || gz0 > gz1) return 0;
+  for (int gz = gz0; gz <= gz1; gz++)
+    for (int gx = gx0; gx <= gx1; gx++) {
+      uint32_t c = (uint32_t)gz * (uint32_t)w->W + (uint32_t)gx; ZCNT(3, 1);
+      uint32_t kstart = w->cellStart[c];
+      if (S->cellWall) kstart += S->cellWall[c];
+      for (uint32_t k = kstart; k < w->cellStart[c + 1]; k++) { ZCNT(3, 1);
+        uint32_t t = w->refs[k] >> 29, i = w->refs[k] & 0x1fffffffu;
+        if (t == COL_TRI) {
+          if (!(S->steep[i >> 3] & (1u << (i & 7)))) continue;
+          const ColTri *T = &w->tri[i];
+          float mnx = fminf_(T->a[0], fminf_(T->b[0], T->c[0])), mxx = fmaxf_(T->a[0], fmaxf_(T->b[0], T->c[0]));
+          float mnz = fminf_(T->a[2], fminf_(T->b[2], T->c[2])), mxz = fmaxf_(T->a[2], fmaxf_(T->b[2], T->c[2]));
+          float mny = fminf_(T->a[1], fminf_(T->b[1], T->c[1])), mxy = fmaxf_(T->a[1], fmaxf_(T->b[1], T->c[1]));
+          if (mxx < x0 || mnx > x1 || mxz < z0 || mnz > z1 || mxy < ylo || mny > yhi) continue;
+          return 1;
+        } else if (t == COL_BOX) {
+          const ColBox *B = &w->box[i];
+          float hx = fabsf(B->ax[0]) * B->h[0] + fabsf(B->ay[0]) * B->h[1] + fabsf(B->az[0]) * B->h[2];
+          float hy = fabsf(B->ax[1]) * B->h[0] + fabsf(B->ay[1]) * B->h[1] + fabsf(B->az[1]) * B->h[2];
+          float hz = fabsf(B->ax[2]) * B->h[0] + fabsf(B->ay[2]) * B->h[1] + fabsf(B->az[2]) * B->h[2];
+          if (B->c[0] + hx < x0 || B->c[0] - hx > x1 || B->c[2] + hz < z0 || B->c[2] - hz > z1 || B->c[1] + hy < ylo || B->c[1] - hy > yhi) continue;
+          return 1;
+        } else if (t == COL_CYL) {
+          const ColCyl *C = &w->cyl[i];
+          float hx = fabsf(C->axis[0]) * C->halfLen + C->r, hy = fabsf(C->axis[1]) * C->halfLen + C->r, hz = fabsf(C->axis[2]) * C->halfLen + C->r;
+          if (C->c[0] + hx < x0 || C->c[0] - hx > x1 || C->c[2] + hz < z0 || C->c[2] - hz > z1 || C->c[1] + hy < ylo || C->c[1] - hy > yhi) continue;
+          return 1;
+        } else {
+          const ColSeg *G = &w->seg[i];
+          float mnx = fminf_(G->a[0], G->b[0]), mxx = fmaxf_(G->a[0], G->b[0]), mnz = fminf_(G->a[1], G->b[1]), mxz = fmaxf_(G->a[1], G->b[1]);
+          if (mxx < x0 || mnx > x1 || mxz < z0 || mnz > z1) continue;
+          return 1;
+        }
+      }
+    }
+  return 0;
+}
+static int gatherFull(const ColWorld *w, const CarBox *b, Q *q);
 static int gather(const ColWorld *w, const CarBox *b, Q *q) {
   ColScratch *S = w->scr; STAT(0);
+#if !COLPROBE_FAST_OLD
+  if (!colGatherCacheOld) {
+    float fx = b->fx, fz = b->fz, rx = -fz, rz = fx;
+    float ex = fabsf(fx) * b->hl + fabsf(rx) * b->hw + GATHER_MARGIN, ez = fabsf(fz) * b->hl + fabsf(rz) * b->hw + GATHER_MARGIN;
+    float sl = fabsf(b->gx) * ex + fabsf(b->gz) * ez;
+    float x0 = b->x - ex, x1 = b->x + ex, z0 = b->z - ez, z1 = b->z + ez, ylo = b->y + b->lo - sl, yhi = b->y + b->hi + sl;
+    if (zc.ok && zc.s == S && zc.xs == xSeg && zc.nx == nxSeg && x0 >= zc.x0 && x1 <= zc.x1 && z0 >= zc.z0 && z1 <= zc.z1 && ylo >= zc.ylo && yhi <= zc.yhi) {
+      zc.hit++;
+#ifdef COL_ZC_VERIFY
+      { int nn = gatherFull(w, b, q); if (nn != 0) { fprintf(stderr, "COL_ZC_VERIFY: кэш «пусто», а gather нашёл %d фигур\n", nn); abort(); } }
+#endif
+      q->cx = b->x; q->cz = b->z; q->y = b->y; q->gx = b->gx; q->gz = b->gz; q->lo = b->lo; q->hi = b->hi; q->fx = b->fx; q->fz = b->fz; q->hl = b->hl; q->hw = b->hw;
+      q->fsupOn = b->fsupOn && !colFenceSupOff; q->fsup = b->fsup; q->x0 = x0; q->x1 = x1; q->z0 = z0; q->z1 = z1; q->ylo = ylo; q->yhi = yhi;
+      S->nshape = 0; return 0;
+    }
+    zc.miss++;
+    int n = gatherFull(w, b, q);
+    if (n == 0 && zc.skip <= 0) {   // фигур нет — проверить, пусто ли и по габаритам (нарезка могла отбросить кандидата), и расширить область
+      {
+        float ax0 = x0 - ZC_PADXZ, ax1 = x1 + ZC_PADXZ, az0 = z0 - ZC_PADXZ, az1 = z1 + ZC_PADXZ, aylo = ylo - ZC_PADY, ayhi = yhi + ZC_PADY; zc.scan++;
+        if (!zcAnyCand(w, ax0, ax1, az0, az1, aylo, ayhi)) { zc.s = S; zc.xs = xSeg; zc.nx = nxSeg; zc.x0 = ax0; zc.x1 = ax1; zc.z0 = az0; zc.z1 = az1; zc.ylo = aylo; zc.yhi = ayhi; zc.ok = 1; zc.streak++; }
+        else { zc.ok = 0; zc.streak = 0; zc.skip = ZC_SKIP; }
+      }
+    } else { if (n) zc.streak = 0; if (zc.skip > 0) zc.skip--; zc.ok = 0; }
+    return n;
+  }
+#endif
+  return gatherFull(w, b, q);
+}
+static int gatherFull(const ColWorld *w, const CarBox *b, Q *q) {
+  ColScratch *S = w->scr; ZCNT(2, 1);
   float fx = b->fx, fz = b->fz, rx = -fz, rz = fx;
   float ex = fabsf(fx) * b->hl + fabsf(rx) * b->hw + GATHER_MARGIN, ez = fabsf(fz) * b->hl + fabsf(rz) * b->hw + GATHER_MARGIN;
   q->cx = b->x; q->cz = b->z; q->y = b->y; q->gx = b->gx; q->gz = b->gz; q->lo = b->lo; q->hi = b->hi; q->fx = b->fx; q->fz = b->fz; q->hl = b->hl; q->hw = b->hw;
@@ -1145,11 +1264,11 @@ static int gather(const ColWorld *w, const CarBox *b, Q *q) {
   uint16_t st = nextStamp(S, nprim);
   for (int gz = gz0; gz <= gz1; gz++)
     for (int gx = gx0; gx <= gx1; gx++) {
-      uint32_t c = (uint32_t)gz * (uint32_t)w->W + (uint32_t)gx;
+      uint32_t c = (uint32_t)gz * (uint32_t)w->W + (uint32_t)gx; ZCNT(0, 1);
 #if !COLPROBE_FAST_OLD
       uint32_t kstart = w->cellStart[c];
       if (S->cellWall) kstart += S->cellWall[c];
-      for (uint32_t k = kstart; k < w->cellStart[c + 1]; k++) {
+      for (uint32_t k = kstart; k < w->cellStart[c + 1]; k++) { ZCNT(1, 1);
 #else
       for (uint32_t k = w->cellStart[c]; k < w->cellStart[c + 1]; k++) {
 #endif

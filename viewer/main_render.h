@@ -80,6 +80,7 @@ static Tex *rgTex; static unsigned rgNtex;
 static Tex *cxTex; static unsigned cxNtex;   // В5: текстуры пакета collect-l1.shr (номер COLL_CTEX0 + k, viewer/collect.h)
 static Tex *texAt(int t) {
   if (t == NOISE_TEX_ID) return noiseReady ? &noiseTex : 0;   // №912: процедурный шум земли
+  if (t > NOISE_TEX_ID && t <= NOISE_TEX_ID + GD_NCLS) return gdReady[t - NOISE_TEX_ID] ? &gdTex[t - NOISE_TEX_ID] : 0;   // №969: рисунок земли по классам
   if (t >= COLL_CTEX0) { t -= COLL_CTEX0; return t < (int)cxNtex ? &cxTex[t] : 0; }
   if (t >= RTEX0) { t -= RTEX0; return t < (int)rgNtex ? &rgTex[t] : 0; }
   return t >= 0 && t < (int)ntex ? &tex[t] : 0;
@@ -220,24 +221,28 @@ static void flatLightOn(unsigned amb) {
   if (!flatAmbOk || amb != flatAmb) { sceGuAmbient(amb); flatAmb = amb; flatAmbOk = 1; }
 }
 // №949: масштаб текстуры шума куска (toonflat.h nz*): тайл шума noisePitch метров. Код куска nzPend ставит NZP(d) перед привязкой; действует на одну привязку
-static inline void nzApply(void) {
-  unsigned w = nzPend; nzPend = 0; if (!nzOn) return; if ((int)w == nzCur) return;
+static unsigned nzHash;   // хэш начала куска (NZP): вариант отображения земли №977
+static inline void nzApply(int gc) {   // gc — класс земли №969 (0 — шум №912): у него свой тайл в метрах (gdPitch); у фрагмента асфальта (gdAsp) — свой вариант на кусок
+  unsigned w = nzPend & 0xffffu; nzPend = 0; if (!nzOn) return; unsigned v = (gc && gdAsp[gc]) ? ((nzHash ^ (nzHash >> 15)) & 0x1ffu) : 0u; int key = (int)w | gc << 16 | (int)(v << 20); if (key == nzCur) return;
   if (!w) { nzReset(); return; }
-  float ip = 128.f / noisePitch, su = nzLut[w & 255] * ip, sv = nzLut[(w >> 8) & 255] * ip;
+  float ip = 128.f / (gc ? gdPitch[gc] : noisePitch), su = nzLut[w & 255] * ip, sv = nzLut[(w >> 8) & 255] * ip;
   if (!(w & 255)) su = 128.f; if (!((w >> 8) & 255)) sv = 128.f;
-  sceGuTexScale(su, sv); nzCur = (int)w; nzBinds++;
+  if (v) { static const float zm[3] = { 1.f, .8f, .625f }; float z = zm[(v >> 2) % 3]; su *= z * ((v & 1) ? -1.f : 1.f); sv *= z * ((v & 2) ? -1.f : 1.f); sceGuTexOffset((float)((v >> 4) & 31) / 32.f, (float)((v * 7u + 3u) & 31) / 32.f); nzOffOn = 1; }
+  else if (nzOffOn) { sceGuTexOffset(0.f, 0.f); nzOffOn = 0; }
+  sceGuTexScale(su, sv); nzCur = key; nzBinds++;
 }
-#define NZP(d) (nzPend = (d)->nz)
+#define NZP(d) (nzPend = (d)->nz, nzHash = ((unsigned)(int)((d)->r.ox * 8.f) * 73856093u) ^ ((unsigned)(int)((d)->r.oz * 8.f) * 19349663u) ^ ((unsigned)(d)->r.tex * 83492791u))
 static void bindTexLean(int t) {
   int fk = (!flatOn || !(opt & O_TEX)) ? 0 : flatKind(t);
   if (!fk) { nzPend = 0; if (flatLit != 0 && flatTouched) flatOff(); else flatLit = 0; if (nzCur) nzReset(); bindTexLean0(t); return; }
-  if (fk == 2) nzApply(); else nzPend = 0;
-  int eff = (int)(flatExact[t] | (unsigned)fk);   // ключ состояния заливки: точный тон (24 бита) и вид; бит 30 — признак
+  int gc = fk == 3 ? flatGd[t] : 0;   // №969: вид 3 — рисунок земли, gc — класс (газон, тротуар)
+  if (fk >= 2) nzApply(gc); else nzPend = 0;
+  int eff = (int)(flatExact[t] | (unsigned)fk | (unsigned)gc << 26);   // ключ состояния заливки: точный тон (24 бита), вид и класс рисунка; бит 30 — признак
   if (eff == bound && phAllow == phBoundAllow && flatLit == 1) { if (smkOn) tsSame++; return; }
-  if (fk == 2) { if (!(bound >= 0x40000000 && (bound & 3) == 2)) { bound = -2; bindTexLean0(NOISE_TEX_ID); }
-    if (TOON_NOISE_WORLD) { if (flatMap != 1) { sceGuTexMapMode(GU_TEXTURE_MATRIX, 0, 0); sceGuTexProjMapMode(GU_POSITION); flatMap = 1; } if (!flatInList && flatMdlGen != flatTexGen) flatTexEmit(); }
+  if (fk >= 2) { if (!(bound >= 0x40000000 && (bound & 3) == fk && ((bound >> 26) & 15) == gc)) { bound = -2; bindTexLean0(NOISE_TEX_ID + gc); }
+    if (TOON_NOISE_WORLD && fk == 2) { if (flatMap != 1) { sceGuTexMapMode(GU_TEXTURE_MATRIX, 0, 0); sceGuTexProjMapMode(GU_POSITION); flatMap = 1; } if (!flatInList && flatMdlGen != flatTexGen) flatTexEmit(); }
     flatNoiseN++; } else { texEnable(0); rbId = -9; }
-  if (fk == 2 && noiseNoLight) { if (flatLit == 1) { sceGuDisable(GU_LIGHTING); sceGuColorMaterial(0); flatLit = 0; flatAmbOk = 0; } } else flatLightOn(flatTint[t]);
+  if (fk >= 2 && noiseNoLight) { if (flatLit == 1) { sceGuDisable(GU_LIGHTING); sceGuColorMaterial(0); flatLit = 0; flatAmbOk = 0; } } else flatLightOn(flatTint[t]);
   bound = eff; phBoundAllow = phAllow; flatBinds++;
 }
 static int curCull;
@@ -1057,10 +1062,24 @@ static const BigInfo *bigInfo(const void *v, int ni, int flags) {
     float dx = (p[0] - q[0]) * (1.f / 32768.f), dy = (p[1] - q[1]) * (1.f / 32768.f), dz = (p[2] - q[2]) * (1.f / 32768.f), l2 = dx * dx + dy * dy + dz * dz; if (l2 > e2) e2 = l2; }
   b->edge = sqrtf(e2); b->v = v; b->ni = ni; b->vs = vs; b->used = 1; memcpy(b->lo, lo, sizeof lo); memcpy(b->hi, hi, sizeof hi); return b;
 }
+// №984 (наряд «город в езде L3–L7»): проверки риска выброса GE на кусок — сначала дешёвый отсев без корней (по квадратам), точный расчёт только если отсев не отбросил. Отсев консервативен (запас 0,01 %):
+// отбрасывает только то, что прежний расчёт тоже отбросил, поэтому результат тот же. TRFGEO984_OLD=1 / «flag trfgeo984 0» / файл trfgeo984old — прежний расчёт; «flag trfgeocheck 1» — каждую проверку
+// считать обоими путями и считать расхождения (служебно, гейт tests/trfgeo984); -DTRFGEO984_BREAK=1 — красный контроль (отсев грубее, расхождения должны появиться)
+#ifndef TRFGEO984_OLD
+#define TRFGEO984_OLD 0
+#endif
+#ifdef TRFGEO984_BREAK
+#define TRG_K 50.f
+#else
+#define TRG_K .9999f
+#endif
+static int trfGeoOld = TRFGEO984_OLD, trgCheck; static unsigned trgMis, trgChk;
+static int trgIn; static unsigned trgN, trgBnUs, trgCnUs, trgFastN, trgDrawUs, trgPieces;
 // крупный кусок без индексов с матрицей m: размер (м) и центр в мире; 0 — не крупный
 static float bigSize(const void *v, int ni, int flags, const float m[16], float c[3]) {
   if (bigCutOld || !(flags & F_NOIDX) || ni < 3 || ni > 65535) return 0.f;
   const BigInfo *b = bigInfo(v, ni, flags); float mx = 0.f, ce[3];
+  if (!trfGeoOld) { int small_ = 1; for (int a = 0; a < 3; a++) { const float *col = m + 4 * a; float e = b->hi[a] - b->lo[a]; if (e * e * (col[0] * col[0] + col[1] * col[1] + col[2] * col[2]) >= BIG_EXT_MIN * BIG_EXT_MIN * TRG_K) { small_ = 0; break; } } if (small_) return 0.f; }   // №984: ни одна сторона бокса не дотягивает до BIG_EXT_MIN — прежний расчёт (mx < BIG_EXT_MIN) тоже вернул бы 0, без шести корней
   for (int a = 0; a < 3; a++) { const float *col = m + 4 * a; float sc = sqrtf(col[0] * col[0] + col[1] * col[1] + col[2] * col[2]); float e = (b->hi[a] - b->lo[a]) * sc; if (e > mx) mx = e; ce[a] = (b->lo[a] + b->hi[a]) * .5f; }
   if (mx < BIG_EXT_MIN || mx >= BIG_EXT_MAX) return 0.f;
   { float s0 = 0.f; for (int a = 0; a < 3; a++) { const float *col = m + 4 * a; float sc = sqrtf(col[0] * col[0] + col[1] * col[1] + col[2] * col[2]); if (sc > s0) s0 = sc; } if (b->edge * s0 < BIG_EDGE_MIN) return 0.f; }
@@ -1073,12 +1092,18 @@ static void bigWorldBox(const void *v, int ni, int flags, const float *mm, float
   for (int k = 0; k < 8; k++) { float l0 = b->lo[0] + (b->hi[0] - b->lo[0]) * (k & 1), l1 = b->lo[1] + (b->hi[1] - b->lo[1]) * ((k >> 1) & 1), l2 = b->lo[2] + (b->hi[2] - b->lo[2]) * ((k >> 2) & 1);
     for (int r = 0; r < 3; r++) { float w = mm[r] * l0 + mm[4 + r] * l1 + mm[8 + r] * l2 + mm[12 + r]; if (w < bb[r]) bb[r] = w; if (w > bb[3 + r]) bb[3 + r] = w; } }
 }
-static int bigNear(const Piece *d, const ScePspFMatrix4 *m) {
+// №984 служебно (трафик, проверки риска выброса GE на кусок машины NPC): trgIn — идёт отрисовка куска трафика (trDrawPiece); мкс и число проверок за секунду — строка TRFGEO984
+
+static int bigNear1(const Piece *d, const ScePspFMatrix4 *m) {
   if (bigCutBlock) return 0;   // бонусные уровни: оси камеры ggR/ggU/ggF/ggK там не заданы
   float c[3], sz = bigSize(d->v, d->r.ni, d->r.flags, (const float *)m, c); if (sz <= 0.f) return 0;
   float dx = c[0] - ggE[0], dy = c[1] - ggE[1], dz = c[2] - ggE[2]; if (dx * dx + dy * dy + dz * dz >= sz * sz) return 0;
   float bb[6]; bigWorldBox(d->v, d->r.ni, d->r.flags, (const float *)m, bb);
   return ggBoxRiskW(bb);
+}
+static int bigNear(const Piece *d, const ScePspFMatrix4 *m) {   // №984: то же для bigNear
+  if (!trgCheck) return bigNear1(d, m);
+  int sv = trfGeoOld; trfGeoOld = 1; int a = bigNear1(d, m); trfGeoOld = 0; int b = bigNear1(d, m); trfGeoOld = sv; trgChk++; if (a != b) trgMis++; return sv ? a : b;
 }
 // №853: кусок машины у камеры. Когда GE вообще может выбросить треугольник (модель ggDropExact, запас GG_SAFE: Gx = GG_SAFE/240, Gy = GG_SAFE/136):
 // вершина q многоугольника после среза по near (z ≥ zn) лежит за полосой, |x| > Gx·tvx·z или |y| > Gy·tvy·z, а треугольник виден (точка p внутри кадра).
@@ -1307,14 +1332,17 @@ static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m) {
   if (carPatchFans != f0_ && carFanN < 8 && !carFanHas(d->v)) carFanV[carFanN++] = d->v;   // №922: у этого куска в кадре были веера — обводка проверяется
   if (smkOn) carPatchUs += sceKernelGetSystemTimeLow() - us0;
 }
-static int carNear853(const Piece *d, const ScePspFMatrix4 *m) {
+static int carNear8531(const Piece *d, const ScePspFMatrix4 *m) {
   if (GG_CAR853_OLD || bigCutBlock || ggK.tvy <= 0.f || (d->r.owner == 0 && !dropFix921) || !(d->r.flags & F_NOIDX) || d->r.ni < 3 || d->r.ni > 65535) return 0;   // №921: owner 0 — проп/свет (сюда город не попадает)
   if (smkOn) { static float cpT_; if (smkT - cpT_ >= 1.f || smkT < cpT_) { char l_[220];   // служебно: заплатка машин за секунду
       snprintf(l_, sizeof l_, "CARPATCH t=%.1f sc=%s tests=%u box=%u tri=%u fans=%u near_us=%u patch_us=%u bigmiss=%u clt=%d/%u/%u bld=%u bld_us=%u fail=%u defer=%u badhit=%u compact=%u quiet=%u cbad=%u\n", smkT, smkScene, carNearN, carNearCut, carPatchTri, carPatchFans, carNearUs, carPatchUs, bigInfoMiss853, carLTn, cltUsed, (unsigned)CLT_POOL, cltBuilds, cltBuildUs, cltFailN, cltDeferN, cltBadHit, cltCompactN, cltQuietN, cltCompactBad); smkWrite(l_);
       carNearN = carNearCut = carPatchTri = carPatchFans = carNearUs = carPatchUs = bigInfoMiss853 = cltBuilds = cltBuildUs = cltFailN = cltDeferN = cltBadHit = cltCompactN = cltQuietN = 0; cpT_ = smkT; } }
   if (d->r.owner == 0) { float dx_ = m->w.x - ggE[0], dy_ = m->w.y - ggE[1], dz_ = m->w.z - ggE[2]; if (dx_ * dx_ + dy_ * dy_ + dz_ * dz_ > 3600.f) return 0; }   // №923: проп/свет дальше 60 м от глаза (куски до 23 м, крупнее — bigNear) выброса у глаза не даёт: без поиска в таблице кусков (+0,02–0,03 мс Мака на кадр от №921)
   carNearN++; int k = 0;
-  CarDropK q = carDropK(); const BigInfo *b = bigInfo(d->v, d->r.ni, d->r.flags); const float *mm = (const float *)m; float sc = matScale(mm), e = b->edge * sc;
+  CarDropK q = carDropK(); const BigInfo *b = bigInfo(d->v, d->r.ni, d->r.flags); const float *mm = (const float *)m;
+  if (!trfGeoOld) { float s0q = 0.f; for (int a = 0; a < 3; a++) { const float *col = mm + 4 * a; float qq = col[0] * col[0] + col[1] * col[1] + col[2] * col[2]; if (qq > s0q) s0q = qq; }
+    float lim_ = q.K * ggK.zn; if (b->edge * b->edge * s0q <= lim_ * lim_ * TRG_K) return 0; }   // №984: правило (1) e > K·zn не выполнено (сравнение по квадратам, запас 0,01 %) — k = 0, как и в прежнем расчёте
+  float sc = matScale(mm), e = b->edge * sc;
   if (e > q.K * ggK.zn) {   // (1)
     float lc[3] = {(b->lo[0] + b->hi[0]) * .5f, (b->lo[1] + b->hi[1]) * .5f, (b->lo[2] + b->hi[2]) * .5f}, h0 = b->hi[0] - lc[0], h1 = b->hi[1] - lc[1], h2 = b->hi[2] - lc[2];
     float rr = sqrtf(h0 * h0 + h1 * h1 + h2 * h2) * sc, c[3];
@@ -1326,6 +1354,10 @@ static int carNear853(const Piece *d, const ScePspFMatrix4 *m) {
     }
   }
   carNearCut += (unsigned)k; return k;
+}
+static int carNear853(const Piece *d, const ScePspFMatrix4 *m) {   // №984: в служебном режиме trfgeocheck — оба пути, расхождения в счётчик
+  if (!trgCheck) return carNear8531(d, m);
+  int sv = trfGeoOld; trfGeoOld = 1; int a = carNear8531(d, m); trfGeoOld = 0; int b = carNear8531(d, m); trfGeoOld = sv; trgChk++; if (a != b) trgMis++; return sv ? a : b;
 }
 static unsigned dbgPM, dbgPMgeo;
 // №913 (оптимизация предметов, срез у глаза: на L5 в езде режется ОДИН кусок пропа (текстура 63, 1884 вершины, подвижный, 16–28 м от глаза), каждый кадр целиком по треугольникам —
@@ -1379,7 +1411,7 @@ static void drawPieceM(Piece *d, const ScePspFMatrix4 *m) {   // кусок с �
 #ifdef GATE_BREAK_PM
   return;   // отрицательный контроль гейта «КАДР ИГРОКА»: воспроизводит баг 44c9a048 (кусок посчитан, не нарисован)
 #endif
-  unsigned bn0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; int bn_ = bigNear(d, m); if (smkOn) { smkBigNearUs += sceKernelGetSystemTimeLow() - bn0_; smkBigNearN++; } XQ(55);   // №913: цена bigNear на кусок
+  unsigned bn0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; int bn_ = bigNear(d, m); if (smkOn) { unsigned bn1_ = sceKernelGetSystemTimeLow(); smkBigNearUs += bn1_ - bn0_; smkBigNearN++; if (trgIn) { trgBnUs += bn1_ - bn0_; trgN++; } } XQ(55);   // №913: цена bigNear на кусок
   if (bn_) { unsigned bc0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; Piece pb_; const Piece *dg_ = d;
     if (ggPropBatchOn && !d->ggBatch && d->r.owner == 0 && !ggBatchOld) { GgBatch *gb_ = propBatchGet(d); if (gb_) { pb_ = *d; pb_.ggBatch = gb_; dg_ = &pb_; } }   // №913
     unsigned gt0_ = ggTrisF; ggForce = 1; drawGeoG(dg_, 0, d->r.ni, m, 1); ggForce = 0; bigPiecesF++; dbgPMgeo++;
@@ -1387,7 +1419,7 @@ static void drawPieceM(Piece *d, const ScePspFMatrix4 *m) {   // кусок с �
       int hit_ = -1; for (int q_ = 0; q_ < 12; q_++) if (ggfTab[q_].n && ggfTab[q_].tex == d->r.tex && ggfTab[q_].ni == d->r.ni && ggfTab[q_].ph == bbPhase) { hit_ = q_; break; }
       if (hit_ < 0) for (int q_ = 0; q_ < 12; q_++) if (!ggfTab[q_].n) { hit_ = q_; ggfTab[q_].tex = d->r.tex; ggfTab[q_].ni = d->r.ni; ggfTab[q_].ph = bbPhase; ggfTab[q_].us = 0; memcpy(ggfTab[q_].p, &m->w, sizeof ggfTab[q_].p); ggfTab[q_].dist = sqrtf((m->w.x - ggE[0]) * (m->w.x - ggE[0]) + (m->w.y - ggE[1]) * (m->w.y - ggE[1]) + (m->w.z - ggE[2]) * (m->w.z - ggE[2])); break; }
       if (hit_ >= 0) { ggfTab[hit_].n++; ggfTab[hit_].us += dt_; ggfTab[hit_].fl = d->r.flags; ggfTab[hit_].cuts += ggTrisF - gt0_; } } }
-  else { int cn_ = carNear853(d, m); XQ(56); if (cn_) { drawGeoPatch853(d, m); dbgPMgeo++; }   // №853: кусок машины у камеры — целиком и веера на месте выброшенных
+  else { unsigned cn0_ = (smkOn && trgIn) ? sceKernelGetSystemTimeLow() : 0; int cn_ = carNear853(d, m); if (smkOn && trgIn) trgCnUs += sceKernelGetSystemTimeLow() - cn0_; XQ(56); if (cn_) { drawGeoPatch853(d, m); dbgPMgeo++; }   // №853: кусок машины у камеры — целиком и веера на месте выброшенных
 #ifndef GATE_DROP_DRAW
     else { diagAbsM = 1; drawGeo(d, 0, d->r.ni); dbgPMgeo++; dpmPlain = 1; }
 #endif
@@ -1757,7 +1789,8 @@ static void carFillDraw(Piece *d, const ScePspFMatrix4 *m, int kf) {
   if (k3 >= ni0) { d->r.tex = -1; carGlass(d); drawPieceM(d, m); d->r.tex = tex0; return; }
   if (!CARFILL930B_OLD && !(d->r.flags & (2 | 4 | F_ADDITIVE)) && !geOver(GE_HARD) && !NEON_SKIP(d) && !TREESH_SKIP(d) && !bigCutBlock) {
     float dx = m->w.x - ggE[0], dy = m->w.y - ggE[1], dz = m->w.z - ggE[2];
-    if ((dx * dx + dy * dy + dz * dz > CF_FAST_R * CF_FAST_R || (!bigNear(d, m) && !carNear853(d, m))) && pieceOk(d, 0)) {   // ближе CF_FAST_R: проверки риска выброса GE — один раз по целому куску (подмножество не рискованнее целого), иначе два вызова
+    unsigned fg0_ = (smkOn && trgIn && !(dx * dx + dy * dy + dz * dz > CF_FAST_R * CF_FAST_R)) ? sceKernelGetSystemTimeLow() : 0; int fgn_ = dx * dx + dy * dy + dz * dz > CF_FAST_R * CF_FAST_R || (!bigNear(d, m) && !carNear853(d, m)); if (fg0_) { trgFastN++; trgBnUs += sceKernelGetSystemTimeLow() - fg0_; }
+    if (fgn_ && pieceOk(d, 0)) {   // ближе CF_FAST_R: проверки риска выброса GE — один раз по целому куску (подмножество не рискованнее целого), иначе два вызова
       RBC(rbcDrawM);
       d->r.ni = k3; d->r.tex = -1; carGlass(d); drawnTris += k3 / 3; draws++; dbgPM++;
       NZP(d); bindTexLean(-1); setFlags(d->r.flags); sceGuSetMatrix(GU_MODEL, m);
@@ -1782,8 +1815,10 @@ static void trDrawPiece(void *u, const TrPiece *p, const void *verts, const floa
   npcCarToon(&d, m);   // №779
   unsigned tw1_ = smkOn ? (unsigned)sceGuCheckList() : 0, tt1_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
   if (smkOn) cfUsH += tt1_ - tt0_;
+  unsigned trg0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; trgIn = 1;
   { unsigned cfq_ = cfCostOn ? sceKernelGetSystemTimeLow() : 0; if (kf_ > 0) carFillDraw(&d, (const ScePspFMatrix4 *)m, kf_); else { carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m); }
     if (cfCostOn) { cfUsD[kf_ > 0] += sceKernelGetSystemTimeLow() - cfq_; cfND[kf_ > 0]++; } }   // служебно (№930б): мкс и число отрисовок куска машины NPC — целиком / двумя заливками
+  trgIn = 0; if (smkOn) { trgDrawUs += sceKernelGetSystemTimeLow() - trg0_; trgPieces++; }
   if (smkOn) { smkTrfPc[0] += 1.0; smkTrfPc[1] += (tw1_ - tw0_) / 4u; smkTrfPc[2] += ((unsigned)sceGuCheckList() - tw1_) / 4u; smkTrfPc[3] += (tt1_ - tt0_) / 1000.0; smkTrfPc[4] += (sceKernelGetSystemTimeLow() - tt1_) / 1000.0; }   // №914: кусков, слов оболочки / куска, мс оболочки / куска
 }
 // Машины миссий с ИИ (29.09, viewer/msncar.h — логика общая с ботами): рисунок — модели пакета msncars-l<N>.shr уровня
@@ -2533,7 +2568,7 @@ static int ccCompareKeep(int fly) {
 #define DL_BUILD_MAX 32       // листов за кадр: остальные клетки этого кадра — прежним путём (без рывка на въезде)
 static unsigned farCellPieces;   // правка 508: кусков дальних клеток за кадр (дальняя версия без нарезки), в строку RFAST не входит — для отладки
 static int dlOff, dlNoList, dlNoDepth;   // dlnodepth — красный контроль гейта tests/dl/run.py (лист без границ глубины: дома пропадают)
-static void dlLost(void) { if (nzOn) nzCur = -1; flatLit = 2; flatAmbOk = 0; bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curLvlMode = -1; curSlope = -1.f; curCull = -1; curBias = 0x7fffffff; }
+static void dlLost(void) { if (nzOn) { nzCur = -1; nzOffOn = 1; } flatLit = 2; flatAmbOk = 0; bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curLvlMode = -1; curSlope = -1.f; curCull = -1; curBias = 0x7fffffff; }
 // part = 0: полный лист клетки; part = 1 (правка «плавность»): лист без кусков из маски skip (бит — номер куска в клетке), в L->p*
 // №912: разметка дорог — отдельный лист клетки (треугольники без текстуры, сдвиг глубины слоя, цвет вершин = тон разметки × свет), вызывается после основного листа клетки,
 // если клетка ближе MARK_RANGE (м) к глазу; матрица модели та же (оси кусков клетки). Строится по первому вызову, уходит вместе с листами клетки (dlFree)

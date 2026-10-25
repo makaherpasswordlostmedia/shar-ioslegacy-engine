@@ -133,7 +133,7 @@ int spInitResident(StateProps *sp, const void *section, unsigned size, int detac
   for (unsigned i = 0; i < ninst; i++) {
     SpRun *r = &sp->run[i]; const SpInst *I = &sp->inst[i];
     r->jm = jm; jm += sp->type[I->type].nJoint * 12;
-    r->x = I->x; r->y = I->y; r->z = I->z; quatR(I->q, r->R);
+    r->x = I->x; r->y = I->y; r->z = I->z; quatR(I->q, r->R); r->fall = 0;
     r->alive = 1; r->colOn = r->col2On = 1; r->state = 0; r->t = 0; r->callDone = 0; r->burst = 1;
     const SpState *S = &sp->state[sp->type[I->type].firstState];
     r->poseF = S->poseMin;
@@ -234,7 +234,7 @@ void spRespawnStep(StateProps *sp, float ex, float ez, float dt,
     if (dx * dx + dz * dz < 60.f * 60.f || seen(user, c[0], c[1], c[2], radius) ||
         seen(user, home[0], home[1], home[2], radius)) { r->away = 0.f; continue; }
     if ((r->away += fminf(dt, .05f)) < 5.f) continue;
-    r->x = I->x; r->y = I->y; r->z = I->z; quatR(I->q, r->R);
+    r->x = I->x; r->y = I->y; r->z = I->z; quatR(I->q, r->R); r->fall = 0;
     r->alive = r->colOn = r->col2On = 1; r->cool = r->away = 0.f;
     enter(sp, i, 0);
   }
@@ -438,10 +438,53 @@ static float ctrlFrame(float t, float fps, uint8_t mode, float mn, float mx, flo
   return mn + fmodf(f, len);
 }
 
+// №975 (Роб 25.10, L5 F3-2: «красные фонари не сбиваются»): фонарь стейтпроп (cls 10: streetlamp, streetlampbanner, streetlampsquare, parkinglight…) по данным диска при ударе только гасит
+// свет (состояние 1: без луча и пятна, кадры клипа 0..0): падение у оригинала — физика тела AnimDynaPhys, в порте у стейтпропов её не было, столб стоял с погасшим светом (PRP1-фонари L1
+// падали по №968). Теперь высокий предмет cls 10 после удара валится на шарнире у основания по тому же закону, что №968 (замер PS2: θ'' = 0,5·sin θ, ω0 = 0,2 + 0,07·max(0, v − 12) рад/с).
+// Только если у состояния после удара клип не двигается (иначе падение рисует сам клип). SP_POLEFALL975_OLD=1 — как было
+#ifndef SP_POLEFALL975_OLD
+#define SP_POLEFALL975_OLD 0
+#endif
+int spPoleFallOld = SP_POLEFALL975_OLD;   // flag polefall975old 1 — как было
+// №975б (список сомнений: L4 тип 1, L4 тип 9, L6 тип 5, L7 тип 7…): у высокого фонаря cls 10 вертикальный цилиндр ствола (объём «второго» набора) начинается на 1,8–2 м над основанием
+// (L4 тип 1: 2,05…6,57 м), основания в стене мира (COL1) тут нет — машина проезжает сквозь основание как призрак (в переписи 13 из 16 заездов «не дошли», в игре v не падает). На PS2 у PRP1-фонаря
+// (L1) тело стоит от земли (замер №968), так что ствол тянем вниз до земли. SP_POLEBASE975_OLD=1 / flag polebase975old 1 — как было
+#ifndef SP_POLEBASE975_OLD
+#define SP_POLEBASE975_OLD 0
+#endif
+int spPoleBaseOld = SP_POLEBASE975_OLD;
+#ifndef SP_POLEWALL975_OLD
+#define SP_POLEWALL975_OLD 0
+#endif
+int spPoleWallOld = SP_POLEWALL975_OLD;   // flag polewall975old 1 — как было
+#define SPF_A 0.5f
+#define SPF_W0 0.2f
+#define SPF_WK 0.07f
+#define SPF_V0 12.f
+static void poleFallStart(StateProps *sp, unsigned i, const Car *car, const float bn[2]) {
+  SpRun *r = &sp->run[i]; const SpType *T = TY(sp, i);
+  if (spPoleFallOld || r->fall || T->cls != 10 || T->h[1] < 2.f || !r->alive) return;
+  const SpState *S = ST(sp, i); if (S->poseMode != 0 && S->poseMax > S->poseMin) return;
+  float vx = car->velPre[0], vz = car->velPre[2], v = sqrtf(vx * vx + vz * vz);
+  if (v < 0.5f) { vx = -bn[0]; vz = -bn[1]; v = sqrtf(vx * vx + vz * vz); if (v < 1e-3f) return; v = 2.f; }
+  float dx = vx / sqrtf(vx * vx + vz * vz), dz = vz / sqrtf(vx * vx + vz * vz);
+  r->fall = 1; r->fallTh = 0.0174533f; r->fallW = SPF_W0 + SPF_WK * fmaxf(0.f, v - SPF_V0); r->fallD[0] = dx; r->fallD[1] = dz; memcpy(r->fallR0, r->R, sizeof r->fallR0);
+}
+static void poleFallStep(SpRun *r, float dt) {
+  float th = r->fallTh, w = r->fallW, h = dt / 4.f; int done = 0;
+  for (int k = 0; k < 4 && !done; k++) { w += SPF_A * sinf(th) * h; th += w * h; if (th >= 1.5707963f) { th = 1.5707963f; done = 1; } }
+  r->fallTh = th; r->fallW = done ? 0.f : w; if (done) r->fall = 2;
+  float ax = r->fallD[1], az = -r->fallD[0], c = cosf(th), s = sinf(th), t = 1.f - c;   // ось = вверх × направление = (dz, 0, −dx); Родриг, R по столбцам
+  float Rr[9] = { c + ax * ax * t, az * s, ax * az * t,        // столбец 0
+                  -az * s,           c,      ax * s,            // столбец 1
+                  ax * az * t,      -ax * s, c + az * az * t };  // столбец 2
+  mulRR(Rr, r->fallR0, r->R);
+}
 static void stepInst(StateProps *sp, unsigned i, float dt, const ColWorld *world, Coins *coins) {
   SpRun *r = &sp->run[i];
   if (!r->alive) return;
   r->t += dt;
+  if (r->fall == 1) poleFallStep(r, dt);
   if (r->cool > 0.f) r->cool -= dt;
 #ifndef SP_SCAN_OLD
 #define SP_SCAN_OLD 0
@@ -498,6 +541,8 @@ static void lastEntry(float ov, float a, float *bestT, float *impact) {
   if (a <= 1e-3f) return;
   float t = ov / a; if (t < *bestT) { *bestT = t; *impact = a; }
 }
+static int spVRelax;   // №975: 1 — объём считается от земли (без проверки «над кузовом»): столб с базой в стене мира (см. carContact)
+static int spBaseExt;   // №975: 1 — вертикальный цилиндр (ствол) высокого предмета cls 10 тянется вниз до земли (см. carContact)
 static int hitVolume(const SpRun *r, const SpCol *C, const CarBox *cb, const float vel[3], float *nx, float *nz, float *depth, float *impact) {
   float c[3], a[3][3];
   mulRv(r->R, C->c, c); c[0] += r->x; c[1] += r->y; c[2] += r->z;
@@ -506,7 +551,8 @@ static int hitVolume(const SpRun *r, const SpCol *C, const CarBox *cb, const flo
   int circle = C->kind == 1 || (C->kind == 2 && fabsf(a[1][1]) > 0.9f);
   if (C->kind == 1) ey = C->h[0];
   else for (int k = 0; k < 3; k++) ey += C->h[k] * fabsf(a[k][1]);
-  if (c[1] - ey > cb->y + cb->hi || c[1] + ey < cb->y + cb->lo) return 0;
+  if (!spVRelax && !(spBaseExt && C->kind == 2 && fabsf(a[1][1]) > 0.9f) && c[1] - ey > cb->y + cb->hi) return 0;
+  if (c[1] + ey < cb->y + cb->lo) return 0;
   // вертикаль (правка 297): перекрытие слоя кузова и пропа по высоте, сближение — скорость кузова к пропу по y
   float bestT = 3e38f, imp = 0.f;
   { float ylo = cb->y + cb->lo, yhi = cb->y + cb->hi, ov = fminf(yhi, c[1] + ey) - fmaxf(ylo, c[1] - ey);
@@ -566,6 +612,7 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
   float dx = c[0] - cb->x, dz = c[2] - cb->z, rr = rad + cb->hl + cb->hw;
   if (dx * dx + dz * dz > rr * rr) return;
   int touched = 0; float bn[2] = {0, 0}, bd = 0.f, bimp = 0.f;
+  spBaseExt = !spPoleBaseOld && T->cls == 10 && T->h[1] >= 2.f;
   for (unsigned k = 0; k < T->nCol; k++) {
     const SpCol *C = &sp->col[T->firstCol + k];
     if (C->second && !r->col2On) continue;
@@ -575,6 +622,7 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
       if (d > bd) { bd = d; bn[0] = nx; bn[1] = nz; touched = 1; }
     }
   }
+  spBaseExt = 0;
   // №902 (Роб 23.10: «разбивание стекла иногда отстаёт от удара — то вовремя, то поздно; с деревьями так же; всегда в тот же кадр, что удар»):
   // стекло витрины, будка, забор часто стоят в стене мира (COL1): заезд, где стена касается раньше объёма предмета, гасит машину о стену —
   // предмет бился позже (дожим, 2–40 кадров) или никогда (L1: 188 и 32 из 251 таких заездов, tests/smash902). Удар машины о твёрдое в этом
@@ -593,6 +641,23 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
       float nx, nz, d, imp = 0.f;
       if (hitVolume(r, C, &big, car->vel, &nx, &nz, &d, &imp)) { bn[0] = nx; bn[1] = nz; bd = 0.f; bimp = car->hardV; touched = viaWall = 1; }
     }
+  }
+  // №975 (Роб 25.10, L5 F3-2: «на перекрёстке красные фонари не сбиваются, ни один»): у высокого предмета (столб, фонарь, светофор: cls 10) объёмы по данным лежат на 1,8–3 м выше земли
+  // (нижний цилиндр 1,8…6,5 м над основанием), а основание стоит стеной мира (COL1): машина упирается в стену и ни один объём не достаёт до кузова по высоте, №902 не засчитывает
+  // удар — столб стоит с машиной у основания. Удар о твёрдое в этом кадре (hardV ≥ SP_HIT_SPEED) засчитывается и высокому предмету, если его объём по плану в SP_WALL_PAD от
+  // кузова (высота не проверяется: основание под ним и есть стена). Реакция — состояние из данных диска, падение — шарнир (poleFallStart). SP_POLEWALL975_OLD=1 / flag polewall975old 1 — как было
+#ifndef SP_POLEWALL975_OLD
+#define SP_POLEWALL975_OLD 0
+#endif
+  if (!touched && !spPoleWallOld && !SP_WALL902_OLD && car->hardV >= SP_HIT_SPEED && T->cls == 10 && T->h[1] >= 2.f) {
+    CarBox big = *cb; big.hl += SP_WALL_PAD; big.hw += SP_WALL_PAD; spVRelax = 1;
+    for (unsigned k = 0; k < T->nCol && !touched; k++) {
+      const SpCol *C = &sp->col[T->firstCol + k];
+      if (C->second && !r->col2On) continue;
+      float nx, nz, d, imp = 0.f;
+      if (hitVolume(r, C, &big, car->vel, &nx, &nz, &d, &imp)) { bn[0] = nx; bn[1] = nz; bd = 0.f; bimp = car->hardV; touched = viaWall = 1; }
+    }
+    spVRelax = 0;
   }
   if (!touched) return;
   float vn = car->vel[0] * bn[0] + car->vel[2] * bn[1];   // < 0 — едем в проп
@@ -622,6 +687,7 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
     if (spEvent(sp, i, SP_EV_VEHICLE_HIT) || spEvent(sp, i, SP_EV_HIT) || spEvent(sp, i, SP_EV_DESTROYED)) {
       sp->hits++;
       runCalls(sp, i, world, coins);   // вызовы с временем 0 — сразу (коллизия уходит в этом же кадре)
+      poleFallStart(sp, i, car, bn);   // №975
       int broken = !r->alive || !r->colOn;
       if (PROP_BREAK_PASS_OLD || !broken) {
         float k = SP_SMASH_LOSS * T->mass / (car->p.mass + T->mass);

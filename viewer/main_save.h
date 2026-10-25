@@ -40,7 +40,7 @@ static void toneApplyAllSync(void) {
       if (!T[i].pal) continue;
       if (toneToon() && !T[i].tstatOk) { unsigned char o_[1024]; if (toneReadOrig((const unsigned char *)T[i].pal, o_, toneRead, &rd) == 0) texToonStat(&T[i], o_); }   // проверка 18.10
       toneSetStat(T[i].tstatOk ? T[i].tstat : 0); int r = toneRedo((unsigned char *)T[i].pal, toneRead, &rd); toneSetStat(0);
-      if (r == 0) { ok++; sceKernelDcacheWritebackRange(T[i].pal, 1024); } else if (r == -1) miss++; else err++;
+      if (r == 0) { ok++; if (!pass) curbPal(&T[i], (unsigned char *)T[i].pal); sceKernelDcacheWritebackRange(T[i].pal, 1024); } else if (r == -1) miss++; else err++;
     }
   }
   toneRdClose(&rd);
@@ -98,6 +98,7 @@ static void toneJobStep(void) {
       texToonStat(tx_, dst); toneSetStat(tx_->tstat); tonePal(dst); toneSetStat(0); }
     else { toneSetStat(tx_ && tx_->tstatOk ? tx_->tstat : 0); rr_ = toneRedoTo(toneJob.pal[toneJob.done], dst, toneRead, &toneJob.rd); toneSetStat(0); }
     if (rr_ != 0) memcpy(dst, toneJob.pal[toneJob.done], 1024);   // не прочиталась: остаётся как есть
+    else curbPal(tx_, dst);   // №974: угловая деталь бордюра — в тон бордюра
     toneJob.done++; did++; now = sceKernelGetSystemTimeLow();
   }
   toneJob.workUs += now - t0; toneJob.steps++;
@@ -131,7 +132,11 @@ __attribute__((weak)) void skinToonLineParams(int width, int eyes) { (void)width
 static void flatPoll(void) {
   int want = toneToon() && !flatOld && !flatTexUser && !toneJob.active && ntex > 0;
   { static int hl_ = -1; if (smkOn && flatDump && !toneJob.active && ntex > 0 && hl_ != gameLevel) { hl_ = gameLevel; toneHashLog("lvl"); } }   /* хэш палитр после загрузки уровня: сверка с итогом прежнего задания тона (TONEHASH job) */
-  if (want) { flatNoiseBuild(); flatTintBuild(); }
+  if (want) { flatNoiseBuild(); gdBuild(); flatTintBuild(); }
+  { static unsigned palHookGen_ = ~0u; static int palHookToon_ = -1;   // №974/№979: палитры тонируются при загрузке таблицы текстур, раньше чем читается flat912.bin (там класс угловой детали и асфальта) — один раз на уровень и режим добавляем их тон здесь; задание тона дальше ведёт их само (curbPal в шаге)
+    int tn_ = toneToon(); if (flatFromFile && !toneJob.active && ntex > 0 && (palHookGen_ != flatLevelGen || palHookToon_ != tn_)) { palHookGen_ = flatLevelGen; palHookToon_ = tn_;
+      unsigned nh_ = 0; if (tn_) for (unsigned i_ = 0; i_ < ntex; i_++) if (tex[i_].pal && (tex[i_].asph || tex[i_].curb == 2)) { curbPal(&tex[i_], (unsigned char *)tex[i_].pal); sceKernelDcacheWritebackRange(tex[i_].pal, 1024); nh_++; }
+      if (nh_) { bound = -2; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "CURBPALLOAD level=%d hooked=%u t=%.1f\n", gameLevel, nh_, smkT); smkWrite(l_); } } } }
   { static const void *rescanFor_; static unsigned rescanGen_; int base_ = toneToon() && !flatOld && ntex > 0 && !toneJob.active;   // текстуры загружены, пока заливка была выключена: статистика не считалась — задание тона пересчитает (без перезагрузки уровня)
     if (base_ && (rescanFor_ != (const void *)tex || rescanGen_ != flatLevelGen)) { int miss_ = 0; for (unsigned q_ = 0, qn_ = !flatRescanOld && flatLevelN && flatLevelN < ntex ? flatLevelN : ntex; q_ < qn_; q_++) if (!tex[q_].flatDone && tex[q_].pal) { miss_++; tex[q_].tstatOk = 0; }
       rescanFor_ = tex; rescanGen_ = flatLevelGen; if (miss_) { toneApplyAll(); return; }

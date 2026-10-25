@@ -4,6 +4,7 @@
 #ifndef BUSY808_OLD
 #define BUSY808_OLD 0
 #endif
+static int carLights970;   // №970 служебно (flag carlights970 N): 1 — стоп-сигналы горят, 2 — задний ход, 3 — оба (для кадров блика огней без езды)
 // №912 (оптимизация, x_props: «билборд = своё состояние смешивания + привязка + отдельный DrawArray на 4 вершины»): квады стейтпропов кадра (тень ящика, свет автомата, дым будки, дуги щитка)
 // идут по одному в порядке кандидатов; подряд идущие квады с одной текстурой и одним режимом смешивания (BLMD) собираются в один буфер и рисуются одним вызовом (треугольники, 6 вершин на квад),
 // состояние смешивания/тумана и привязка текстуры — один раз на группу. Порядок рисования не меняется (склеиваются только соседи), картинка та же. BB_BATCH_OLD=1 / «flag bbbatch 0|1» /
@@ -253,6 +254,7 @@ int main(int argc, char **argv) {
     old_ = LIGHTSPR_DEFAULT_OLD; sibling(fn, "lightsprold"); if (sceIoGetstat(fn, &st) >= 0) old_ = 1;
     if (!old_) { slLightOn = 1; lspOld = 0; }
     sibling(fn, "shadowvecold"); if (sceIoGetstat(fn, &st) >= 0) slShVec = 0;   // файл-выключатель векторной тени
+    sibling(fn, "shadow973old"); if (sceIoGetstat(fn, &st) >= 0) sh973 = 0;   // №973: тень машины плоскостью по центру, как было
     sibling(fn, "shadowpplold"); if (sceIoGetstat(fn, &st) >= 0) slPplOld = 1;
     sibling(fn, "cityopqold"); if (sceIoGetstat(fn, &st) >= 0) cityOpqOn = 0;   // №907-город: куски города с пустым смешиванием остаются полупрозрачными, как было
     sibling(fn, "bbbatchold"); if (sceIoGetstat(fn, &st) >= 0) bbBatchOn = 0;   // №912: квады билбордов по вызову на квад, как было
@@ -306,6 +308,14 @@ int main(int argc, char **argv) {
   { char fn[256]; SceIoStat st;   // файлы-выключатели пути загрузки «как в TEST26» (набор tools/test26load_set.sh): ящик синхронный, REGPRE без гистерезиса, стингер газеты как раньше
     sibling(fn, "bbsyncold"); if (sceIoGetstat(fn, &st) >= 0) bbSyncOld = 1;
     sibling(fn, "noise949old"); if (sceIoGetstat(fn, &st) >= 0) nzOn = 0;   // №949: шум по родным UV, как было
+    sibling(fn, "ground969old"); if (sceIoGetstat(fn, &st) >= 0) gdStyle = 0;
+    sibling(fn, "curb974old"); if (sceIoGetstat(fn, &st) >= 0) curbOn = 0;
+    sibling(fn, "ink978old"); if (sceIoGetstat(fn, &st) >= 0) ink978On = 0;
+    sibling(fn, "trfgeo984old"); if (sceIoGetstat(fn, &st) >= 0) trfGeoOld = 1;   // №984: прежний расчёт проверок риска GE
+    sibling(fn, "walkcold985old"); if (sceIoGetstat(fn, &st) >= 0) curbAll = 0;   // №985: тротуар тёплый, как в TEST67
+    sibling(fn, "edge983old"); if (sceIoGetstat(fn, &st) >= 0) edgeOn = 0;   // №983: без кромки
+    sibling(fn, "path983old"); if (sceIoGetstat(fn, &st) >= 0) pathOn = 0;   // №983: контур тропинок как был
+    sibling(fn, "asphlightold"); if (sceIoGetstat(fn, &st) >= 0) asphOn = 0;   // №979: асфальт как был   // №978: контур бордюра как был   // №974: бордюр как был   // №969: прежний шум земли
     sibling(fn, "loadwaitold"); if (sceIoGetstat(fn, &st) >= 0) loadFuseIoWaitOld(1);
     sibling(fn, "regprehystold"); if (sceIoGetstat(fn, &st) >= 0) regPreHyst = 0;
     sibling(fn, "regprememold"); if (sceIoGetstat(fn, &st) >= 0) regPreMemOld = 1;
@@ -900,6 +910,11 @@ int main(int argc, char **argv) {
             n += snprintf(s + n, sizeof s - n, " | %u a%d f=%.0f p=%d y=%.2f", k, o->action, ao.run[k].f, ao.run[k].playing, c[1]); }
           snprintf(s + n, sizeof s - n, "\n"); smkWrite(s); }
         else if (!strcmp(sc.name, "autostraight")) { autodrive = 2; adT = 0.f; adStop = sc.a; }
+        else if (!strcmp(sc.name, "lvreset980old")) lvReset980 = sc.a == 0.f;   // №980: 1 — смена уровня не закрывает будку, лавку, гардероб (красный контроль)
+        else if (!strcmp(sc.name, "msnnpc984old")) gameMsnNpc984Old = sc.a != 0.f;   // №984: 1 — поиск персонажа по имени перебором каждый раз (как было)
+        else if (!strcmp(sc.name, "msnnpctime")) gameMsnNpcTime = sc.a != 0.f;   // №984 служебно: мкс на поиск персонажа в строке MSNNPC984
+        else if (!strcmp(sc.name, "msnnpcchk")) gameMsnNpcChk = sc.a != 0.f;   // №984 служебно: сверка кэша с перебором
+        else if (!strcmp(sc.name, "msnnpcstat")) { char l_[160]; snprintf(l_, sizeof l_, "MSNNPC984 old=%d calls=%u miss=%u bad=%u lookup_us=%u t=%.1f\n", gameMsnNpc984Old, gameMsnNpcCalls, gameMsnNpcMiss, gameMsnNpcBad, gameMsnNpcUs, smkT); smkWrite(l_); gameMsnNpcCalls = gameMsnNpcMiss = gameMsnNpcBad = gameMsnNpcUs = 0; }
         else if (!strcmp(sc.name, "golevel") && sc.a >= 1.f && sc.a <= 7.f && levelAvailable((int)sc.a)) { autodrive = 0; toLevel = (int)sc.a; }   // тур всех уровней (08.10): тот же путь, что «уровень пройден» (levelAdvance)
         else if (!strcmp(sc.name, "autodrive")) { autodrive = 1; adT = 0.f; adStop = 0.f; }
         else if (!strcmp(sc.name, "wp")) { if (wpN < 32) { wpX[wpN] = sc.d; wpZ[wpN] = sc.b; wpN++; } }   // путевая точка (аудит 01.10)
@@ -1068,6 +1083,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "fxcut")) fxCutout = sc.a != 0.f;
         else if (!strcmp(sc.name, "smoke953")) fxSoftSmoke953 = sc.a != 0.f;   // №953: 1 — дым мягким смешиванием, 0 — вырезка (красный контроль)
         else if (!strcmp(sc.name, "swayfar")) spSwayFar = sc.a != 0.f;   // деревья и кусты дальше 25 м без качания (0 — как было)
+        else if (!strcmp(sc.name, "shdiag973")) s973DiagOn = sc.a != 0.f;   // №973 служебно: замер SHADOW973
+        else if (!strcmp(sc.name, "shadow973old")) sh973 = sc.a == 0.f;   // №973: 1 — тень машины плоскостью по центру (красный контроль)
         else if (!strcmp(sc.name, "shvec")) slShVec = sc.a != 0.f;   // векторная тень (0 — прежняя)
         else if (!strcmp(sc.name, "shherooff")) slHeroCenterOld = sc.a != 0.f;   // 1 — тень героя сдвинута от солнца (как было)
         else if (!strcmp(sc.name, "shpplold")) slPplOld = sc.a != 0.f;
@@ -1179,6 +1196,22 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "noiseg")) { if (sc.a > 0.f) { noiseUvG = sc.a; flatTexGen = flatMdlGen - 1; for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); resetState(); } }
         else if (!strcmp(sc.name, "noisechk")) { noiseChk = sc.a != 0.f; noiseReady = 0; flatNoiseBuild(); flatTintKey = ~0u; flatTintBuild(); for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); resetState(); }
         else if (!strcmp(sc.name, "noiselite")) { noiseNoLight = sc.a != 0.f; for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); resetState(); }
+        else if (!strcmp(sc.name, "ground969") || !strcmp(sc.name, "ground969all")) {   // №969: рисунок земли «как фон сериала»: 0 — прежний шум (красный контроль), 1/2/3 — вариант рисунка; ground969all 1 — на всех уровнях (по умолчанию только L1)
+          if (!strcmp(sc.name, "ground969")) { int n_ = (int)sc.a; gdStyle = n_ < 0 || n_ > 4 ? 0 : n_; } else gdAll = sc.a != 0.f;
+          if (gdStyle) gdBuild(); flatTintKey = ~0u; flatTintBuild(); if (nzCur) nzReset(); nzCur = -1; for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState();
+          if (smkOn) { unsigned n3_ = 0; for (unsigned q_ = 0; q_ < ntex && q_ < 1024; q_++) n3_ += flatGd[q_] != 0; char l_[160]; snprintf(l_, sizeof l_, "GROUND969SET t=%.1f style=%d all=%d level=%d tex_drawn=%u built=%d\n", smkT, gdStyle, gdAll, gameLevel, n3_, gdBuiltStyle); smkWrite(l_); } }
+        else if (!strcmp(sc.name, "asphlight")) { asphOn = sc.a != 0.f; toneApplyAll(); if (smkOn) { unsigned n_ = 0; for (unsigned q_ = 0; q_ < ntex; q_++) n_ += tex[q_].asph != 0; char l_[100]; snprintf(l_, sizeof l_, "ASPHLIGHT t=%.1f on=%d level=%d tex=%u\n", smkT, asphOn, gameLevel, n_); smkWrite(l_); } }   // №979: асфальт светлее на 8 % (палитра), задание тона пересчитает
+        else if (!strcmp(sc.name, "trfgeo984")) { trfGeoOld = sc.a == 0.f; }   // №984: 0 — прежний расчёт проверок риска выброса GE
+        else if (!strcmp(sc.name, "trfgeocheck")) { trgCheck = sc.a != 0.f; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "TRFGEOCHECK t=%.1f on=%d checks=%u mismatches=%u\n", smkT, trgCheck, trgChk, trgMis); smkWrite(l_); } }   // №984 служебно (гейт)
+        else if (!strcmp(sc.name, "trgdump")) { char l_[200]; snprintf(l_, sizeof l_, "TRFGEO984 t=%.1f pieces=%u draw_us=%u bignear_calls=%u fast_calls=%u check_us=%u carnear_us=%u old=%d\n", smkT, trgPieces, trgDrawUs, trgN, trgFastN, trgBnUs, trgCnUs, trfGeoOld); smkWrite(l_); trgPieces = trgDrawUs = trgN = trgFastN = trgBnUs = trgCnUs = 0; }   // №984 служебно
+        else if (!strcmp(sc.name, "walkcold985")) { curbAll = sc.a != 0.f; flatTintKey = ~0u; flatTintBuild(); for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState(); if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "WALKCOLD985 t=%.1f on=%d\n", smkT, curbAll); smkWrite(l_); } }   // №985: тротуар холодным серым, бордюр темнее
+        else if (!strcmp(sc.name, "edge983")) { edgeOn = sc.a != 0.f; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "EDGE983SET t=%.1f on=%d cells=%u verts=%u drawn=%u\n", smkT, edgeOn, egNC, egN, egDrawn); smkWrite(l_); } }   // №983: кромка тротуара слоем
+        else if (!strcmp(sc.name, "path983")) { pathOn = sc.a != 0.f; tlSelReset = 1; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "PATH983SET t=%.1f on=%d lines=%u\n", smkT, pathOn, plN); smkWrite(l_); } }   // №983: контур тропинок
+        else if (!strcmp(sc.name, "ink978")) { ink978On = sc.a != 0.f; tlSelReset = 1; if (smkOn) { char l_[120]; snprintf(l_, sizeof l_, "INK978SET t=%.1f on=%d pen=%08x\n", smkT, ink978On, ink978Pen()); smkWrite(l_); } }   // №978: контур бордюра — тёмный насыщенный тон бордюра, 1 px, ближе 28 м
+        else if (!strcmp(sc.name, "curbrgb")) { unsigned v_ = (unsigned)sc.a; curbR = (int)((v_ >> 16) & 255); curbG = (int)((v_ >> 8) & 255); curbB = (int)(v_ & 255); flatTintKey = ~0u; flatTintBuild(); for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState(); toneApplyAll(); }   // №974: подбор тона бордюра
+        else if (!strcmp(sc.name, "curb974")) {   // №974: 1 — бордюр серо-фиолетовый, угловая деталь в тон; 0 — как было (красный контроль). Палитры угловой детали пересчитывает задание тона
+          curbOn = sc.a != 0.f; curbAll = sc.a >= 2.f; flatTintKey = ~0u; flatTintBuild(); for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState(); toneApplyAll();
+          if (smkOn) { unsigned n1_ = 0, n2_ = 0; for (unsigned q_ = 0; q_ < ntex; q_++) { n1_ += tex[q_].curb == 1; n2_ += tex[q_].curb == 2; } unsigned g_[4] = {0, 0, 0, 0}; for (unsigned q_ = 0; q_ < ntex && q_ < 1024; q_++) g_[flatGd[q_] & 3]++; char l_[160]; snprintf(l_, sizeof l_, "CURB974SET t=%.1f on=%d all=%d level=%d fill=%u corner=%u cls=%u/%u/%u\n", smkT, curbOn, curbAll, gameLevel, n1_, n2_, g_[1], g_[2], g_[3]); smkWrite(l_); { char l2_[200]; snprintf(l2_, sizeof l2_, "CURB974TEX t104 gd=%d kind=%d tint=%08x | t110 gd=%d kind=%d tint=%08x | t116 gd=%d kind=%d tint=%08x\n", ntex > 116 ? flatGd[104] : -1, ntex > 116 ? flatKind(104) : -1, ntex > 116 ? flatTint[104] : 0, ntex > 116 ? flatGd[110] : -1, ntex > 116 ? flatKind(110) : -1, ntex > 116 ? flatTint[110] : 0, ntex > 116 ? flatGd[116] : -1, ntex > 116 ? flatKind(116) : -1, ntex > 116 ? flatTint[116] : 0); smkWrite(l2_); } } }
         else if (!strcmp(sc.name, "noiseamp")) { if (sc.a >= 0.f && sc.a <= .9f) { noiseAmp = sc.a; noiseReady = 0; flatNoiseBuild(); flatTintKey = ~0u; flatTintBuild(); if (smkOn) { char l_[120]; snprintf(l_, sizeof l_, "NOISEAMP amp=%.2f mean=%.3f tint107=%08x kind=%d key=%08x\n", noiseAmp, noiseMean, ntex > 107 ? flatTint[107] : 0, ntex > 107 ? flatKind(107) : -1, ntex > 107 ? flatExact[107] : 0); smkWrite(l_); } for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState(); } }   // №912: размах шума земли
         else if (!strcmp(sc.name, "flatnoise")) { flatVNoise = sc.a == 2.f; flatNoiseOn = sc.a != 0.f; flatTintKey = ~0u; flatTintBuild(); for (unsigned i_ = 0; cdl && i_ < ncell; i_++) dlFree(i_); ggcClear(); pbReset(); resetState(); }   // №912: 0 — земля заливкой без шума
         else if (!strcmp(sc.name, "toon")) { cfg.toon = sc.a != 0.f; cfgApply(); }   // правка 428: мультяшный режим (расширение порта): 1 вкл, 0 выкл
@@ -1300,6 +1333,8 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "caminlog")) camInLog = 1;   // правка 331: строка CAMINF на каждый кадр «камера внутри»
         else if (!strcmp(sc.name, "camnearsmoothold")) camNearSmoothOld = sc.a != 0.f;
         else if (!strcmp(sc.name, "camflooroverold")) camFloorOverOld = sc.a != 0.f;   // №898: прежнее (красный контроль)
+        else if (!strcmp(sc.name, "camnfstillold")) camNfStillOld = sc.a != 0.f;   // №984б: 1 — лучи ближней плоскости каждый кадр, даже когда камера стоит
+        else if (!strcmp(sc.name, "camrayboxold")) camRayBoxOld = sc.a != 0.f;   // №984: 1 — все тела на каждый луч ближней плоскости, как было
         else if (!strcmp(sc.name, "camnearcacheold")) camNearCacheOld = sc.a != 0.f;
         else if (!strcmp(sc.name, "camraysold")) camRaysOld = sc.a != 0.f;   // CAMPERF: 1 — лучи ближней плоскости по одному (как было)
         else if (!strcmp(sc.name, "camraysverify")) camRaysVerify = sc.a != 0.f;   // CAMPERF: считать лучи и пакетом, и по одному, расхождения — в CAMSUB mm=
@@ -1377,6 +1412,10 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "meprobe")) {   // правки 269/273/276, ступень 0: проба Media Engine — только тур на PSP (viewer/me/meprobe.c,
           int meProbeRun(const char *, const char *, int, char *, int);   // модуль ядра sharme.prx); в эмуляторе «ME skip emu», файл nome — «ME skip nome»;
           char md[256], mr[320]; sibling(md, ""); meProbeRun(md, "sharme.prx", sc.a > 1.5f ? 0 : smokeIsEmu(), mr, sizeof mr); svLog(mr); }   // «flag meprobe 2» — красный контроль (защита эмулятора снята)
+        else if (!strcmp(sc.name, "movie")) {   // №TEST69: ролик по номеру подряд (служебно, тур): 0..15 — foxlogo vuglogo radlogo intro fmv1a fmv2..fmv8 gracie loot tele demo; строка MSNFMV name= frames= shown= dropped=
+          static const char *const MV_[16] = {"foxlogo", "vuglogo", "radlogo", "intro", "fmv1a", "fmv2", "fmv3", "fmv4", "fmv5", "fmv6", "fmv7", "fmv8", "gracie", "loot", "tele", "demo"};
+          int k_ = (int)(sc.a + .5f); if (k_ >= 0 && k_ < 16) { unsigned t0_ = sceKernelGetSystemTimeLow(); char nm_[32]; snprintf(nm_, sizeof nm_, "%s.rmv", MV_[k_]); msnMovie(nm_, &fbp0);
+            char l_[96]; snprintf(l_, sizeof l_, "MOVIEWALL k=%d name=%s wall=%.2f t=%.1f\n", k_, MV_[k_], (sceKernelGetSystemTimeLow() - t0_) * 1e-6f, smkT); smkWrite(l_); } }
         else if (!strcmp(sc.name, "mefmv")) {   // TEST 10: после ступени, на которой ME замолчал, ролик не играть (задание прошивки повесило бы PSP)
           int meLadderStuck(void);
           if (meLadderStuck()) svLog("MSNFMV skip: ME stuck\n"); else msnMovie("gracie.rmv", &fbp0); }
@@ -1436,6 +1475,15 @@ int main(int argc, char **argv) {
         else if (!strcmp(sc.name, "msnsel")) { mvServiceSelect((int)sc.a); chase.init = 0; smkSettle(); }   // миссия N (MISSION SELECT)
         else if (!strcmp(sc.name, "msnswitchold") || !strcmp(sc.name, "mscursorold")) mvServiceSwitchOld(sc.name, (int)sc.a);   // №943: красный контроль гейта tests/msnhome (прежняя смена миссии / курсор)
         else if (!strcmp(sc.name, "lvdeferold")) lvDeferOld = (int)sc.a;   // №943: прежнее — стартовая цель уровня ставится перед выбранной строкой
+        else if (!strcmp(sc.name, "sphits") && haveSP) { int nf_ = 0, nl_ = 0; float thm_ = 0.f; for (unsigned i_ = 0; i_ < sprops.ninst; i_++) { if (sprops.run[i_].fall == 1) nf_++; if (sprops.run[i_].fall == 2) nl_++; if (sprops.run[i_].fall && sprops.run[i_].fallTh > thm_) thm_ = sprops.run[i_].fallTh; } char l_[200]; snprintf(l_, sizeof l_, "SPHITS hits=%d last=%.1f hardV=%.1f v=%.1f car=%.1f,%.1f falling=%d lying=%d maxdeg=%.0f t=%.2f\n", sprops.hits, sprops.lastImpact, car.hardV, car.v, car.x, car.z, nf_, nl_, thm_ * 57.2958f, smkT); smkWrite(l_); }
+        else if (!strcmp(sc.name, "polefall975old")) spPoleFallOld = sc.a != 0.f;
+        else if (!strcmp(sc.name, "colcache984old")) colGatherCacheOld = sc.a != 0.f;   // №984: 1 — широкая фаза столкновения кузова без кэша «пусто» (как было)
+        else if (!strcmp(sc.name, "camcar982old")) homerCamCarOld = sc.a != 0.f;   // №982: 1 — машина у спины Гомера как стена (перескок через героя, глаз в кузове)
+        else if (!strcmp(sc.name, "polewall975old")) spPoleWallOld = sc.a != 0.f;   // №975: диагностика удара о стейтпроп (флаг сценария)
+        else if (!strcmp(sc.name, "glint976old")) fxGlint976Old = sc.a != 0.f;   // №976: 1 — кольцо цели и звёздочки столба как в TEST66
+        else if (!strcmp(sc.name, "carlights970")) carLights970 = (int)sc.a;
+        else if (!strcmp(sc.name, "glint970old")) fxGlint970Old = sc.a != 0.f;   // №970: 1 — блики ключа, будки, монет и огней машин как в TEST66
+        else if (!strcmp(sc.name, "polebase975old")) spPoleBaseOld = sc.a != 0.f;   // №975: диагностика удара о стейтпроп (флаг сценария)
         else if (!strcmp(sc.name, "pole968old")) propsPole968Old = sc.a != 0.f;   // №968: 1 — столб падает физикой коробки, как до правки (PS2: шарнир у основания)
         else if (!strcmp(sc.name, "tallfall946old")) propsTallFallOld = sc.a != 0.f;   // №946: 1 — высокий предмет падает медленно, как было
         else if (!strcmp(sc.name, "propstat") && haveProps) { unsigned i_ = (unsigned)sc.a; if (i_ < props.ninst) { const PropState *p_ = &props.st[i_]; char l_[200]; snprintf(l_, sizeof l_, "PROPSTAT i=%u type=%u asleep=%d hidden=%d moved=%.2f up=%.2f prop=%.1f,%.1f car=%.1f,%.1f v=%.1f foot=%d t=%.2f\n", i_, props.def[i_].type, p_->asleep, p_->hidden, fabsf(p_->x - p_->home[0]) + fabsf(p_->z - p_->home[2]), 1.f - 2.f * (p_->q[1] * p_->q[1] + p_->q[3] * p_->q[3]), p_->home[0], p_->home[2], car.x, car.z, car.v, onFoot(), smkT); smkWrite(l_); } }   // №946: состояние предмета PRP1 № (гейт tests/poles946)
@@ -2322,6 +2370,7 @@ rf_repeat_draw:
       }
       if (lumaKey) fogBase(); }
     XS_CAR(0); XS_LAP(20, xt_, xw_);
+    if (carLights970) { cv.brake = carLights970 & 1; cv.reverse = (carLights970 >> 1) & 1; }
     if (haveCarVis && haveCol && !bpass && !inR && !forcedDrawn && !lumaKey) { resetState(); carVisDrawFlares(&cv, &car, ex, ey, ez, bindTexLean); resetState(); }   // CAR1: стоп-сигналы / задний ход
     XS_LAP(27, xt_, xw_);
     if (oldCarOn && haveCarVis && haveCol && !bpass && !inR) {   // правка 63: своя машина стоит, где её оставили
@@ -2634,7 +2683,7 @@ rf_repeat_draw:
     dashDust847();   // №847: пыль бега за ногами (dashShape)
     SMKF_START(); fxUpdate(dt); fxDrawBegin(ex, ey, ez, cfx, cfy, cfz); SMKF(0);
     unsigned p1_ = meProf ? sceKernelGetSystemTimeLow() : 0;
-    if (!TOONLINES_ORDER_OLD && haveCol && !bpass) { unsigned tln_ = toonLinesDraw(ex, ey, ez); if (tln_) resetState(); }   // №754 (план этап 1): линии мультика после непрозрачного, ДО стекла, листвы, дыма и частиц — сквозь них не видны
+    if (!TOONLINES_ORDER_OLD && haveCol && !bpass) { unsigned eg_ = edgeDraw(ex, ey, ez); if (eg_) resetState(); unsigned tln_ = toonLinesDraw(ex, ey, ez); if (tln_) resetState(); }   // №983: слой кромки тротуара до линий   // №754 (план этап 1): линии мультика после непрозрачного, ДО стекла, листвы, дыма и частиц — сквозь них не видны
     tqFlush(); resetState(); SMKF(1);   // отложенное полупрозрачное: от дальнего к ближнему, глубину не пишет
     unsigned p2_ = meProf ? sceKernelGetSystemTimeLow() : 0;
     fxDrawEnd(); resetState(); SMKF(2);

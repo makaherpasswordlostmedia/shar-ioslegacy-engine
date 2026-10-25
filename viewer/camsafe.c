@@ -79,6 +79,44 @@ static float csTriFracN(const CsScene *s, const float a[3], const float b[3], fl
   return best;
 }
 unsigned csRayCalls, csNfCalls, csRaysMismatch;
+// №984 (наряд «город в езде L3–L7», камера ph5 0,8–1,6 мс PSP: 21 луч ближней плоскости × до 112 кузовов/стейтпропов × 40 людей): все лучи csNearFree лежат в шаре радиуса R вокруг глаза
+// (самая дальняя точка — угол прямоугольника на глубине D); кузов, чья проекция на землю (круг радиусом = половина диагонали) и человек, чей круг не пересекает круг R, не могут задеть ни один луч.
+// Список ближних строится один раз на вызов, лучи ходят только по нему; ответ ТОТ ЖЕ побитно (min по тем же телам). CAM_RAYBOX_OLD=1 / flag camrayboxold 1 — все тела на каждый луч
+#ifndef CAM_RAYBOX_OLD
+#define CAM_RAYBOX_OLD 0
+#endif
+#ifndef CAM_RAYBOX_RK
+#define CAM_RAYBOX_RK 1.f   // красный контроль гейта: шар лучей меньше настоящего (-DCAM_RAYBOX_RK=0.35f) — тела у края отсеиваются зря
+#endif
+int camRayBoxOld = CAM_RAYBOX_OLD;
+static int csFiltOn, csFiltNB, csFiltNC; static uint8_t csFiltB[CS_MAXBOX], csFiltC[CS_MAXCYL]; unsigned csFiltBoxIn, csFiltBoxAll, csFiltCylIn, csFiltCylAll;
+// №984б (камера стоит — лучи считались заново каждый кадр: на маршрутах ботов L3–L7 62–69 % кадров с неподвижным глазом): те же глаз, взгляд, угол и глубина, что в прошлом вызове, и ни одного
+// кузова/человека/стейтпропа в шаре лучей — ответ определяют только мир (коллизия) и сетка видимой геометрии, они не движутся: берём прошлый ответ. Не дольше CS_NFREUSE_N кадров подряд
+// (сетка видимой геометрии достраивается по кадрам — раз в несколько кадров пересчёт). CAM_NFSTILL_OLD=1 / flag camnfstillold 1 — считать каждый кадр
+#ifndef CAM_NFSTILL_OLD
+#define CAM_NFSTILL_OLD 0
+#endif
+#ifndef CS_NFSTILL_K
+#define CS_NFSTILL_K 1.f   // красный контроль гейта: ответ из прошлого вызова умножается (-DCS_NFSTILL_K=0.5f) — ближняя плоскость в CAMF расходится
+#endif
+#ifndef CS_NFREUSE_N
+#define CS_NFREUSE_N 3
+#endif
+int camNfStillOld = CAM_NFSTILL_OLD; unsigned csNfStillHit;
+static struct { float e[3], f[3], tv, th, nmax, val; const ColWorld *w; int ok, age; uint64_t sig; } csNfC;   // sig — подпись тел в шаре лучей (FNV-1a по байтам кузовов и людей)
+static uint64_t csFiltSig;
+static void csFiltBuild(const CsScene *s, const float eye[3], float R) {
+  csFiltNB = csFiltNC = 0;
+  for (int i = 0; i < s->nbox; i++) { const CsBox *b = &s->box[i]; float dx = b->x - eye[0], dz = b->z - eye[2], rr = R + sqrtf(b->hl * b->hl + b->hw * b->hw) + .01f;
+    if (dx * dx + dz * dz <= rr * rr) csFiltB[csFiltNB++] = (uint8_t)i; }
+  for (int i = 0; i < s->ncyl; i++) { const CsCyl *c = &s->cyl[i]; float dx = c->x - eye[0], dz = c->z - eye[2], rr = R + c->r + .01f;
+    if (dx * dx + dz * dz <= rr * rr) csFiltC[csFiltNC++] = (uint8_t)i; }
+  csFiltBoxIn += csFiltNB; csFiltBoxAll += (unsigned)s->nbox; csFiltCylIn += csFiltNC; csFiltCylAll += (unsigned)s->ncyl; csFiltOn = 1;
+  csFiltSig = 1469598103934665603ull;   // неподвижные стейтпропы и стоящие машины дают ту же подпись, сдвинувшееся тело — другую
+  for (int k = 0; k < csFiltNB; k++) { const unsigned char *q = (const unsigned char *)&s->box[csFiltB[k]]; for (unsigned j = 0; j < sizeof(CsBox); j++) csFiltSig = (csFiltSig ^ q[j]) * 1099511628211ull; }
+  for (int k = 0; k < csFiltNC; k++) { const unsigned char *q = (const unsigned char *)&s->cyl[csFiltC[k]]; for (unsigned j = 0; j < sizeof(CsCyl); j++) csFiltSig = (csFiltSig ^ q[j]) * 1099511628211ull; }
+  csFiltSig ^= ((uint64_t)csFiltNB << 32) | (uint64_t)csFiltNC;
+}
 // CAMPERF (ускорение камеры, 23.10): лучи ближней плоскости — одним пакетом к коллизии (colRaysFrac), остальное (сетка, тела) по одному; ответ тот же. CAM_RAYS_OLD=1 / flag camraysold 1 — как было
 #ifndef CAM_RAYS_OLD
 #define CAM_RAYS_OLD 0
@@ -98,11 +136,11 @@ static float csRayFracC(const CsScene *s, const float a[3], const float b[3], in
     if (s->ntri && s->useTri) { float g = csTriFrac(s, a, b); if (g < f) f = g; }
     if (s->geomRay) { float g = s->geomRay(a, b, (bodies & 16) ? 0.f : CS_GEOM_SKIP); if (g < f) f = g; } }
   if (bodies & 38) {
-    for (int i = 0; i < s->nbox; i++) { int o = s->box[i].own;
+    for (int ii = 0, nb_ = csFiltOn ? csFiltNB : s->nbox; ii < nb_; ii++) { int i = csFiltOn ? csFiltB[ii] : ii, o = s->box[i].own;
       if (o == 2 ? !(bodies & 32) : !((bodies & 6) && ((bodies & 2) || !o))) continue;   // own 2 — стейтпроп (№727), только маска 32
       if (segBox(&s->box[i], a, b, 0.f, &t, &in) && !in && t < f) f = t; }
-    if ((bodies & 6) && !(bodies & 64)) for (int i = 0; i < s->ncyl; i++)   // 64 — №916в: луч промежуточного глаза не считает людей (идущий рядом с Гомером не обрывает перелёт рывком)
-       if (segCyl(&s->cyl[i], a, b, 0.f, &t, &in) && !in && t < f) f = t;
+    if ((bodies & 6) && !(bodies & 64)) for (int ii = 0, nc_ = csFiltOn ? csFiltNC : s->ncyl; ii < nc_; ii++) { int i = csFiltOn ? csFiltC[ii] : ii;   // 64 — №916в: луч промежуточного глаза не считает людей (идущий рядом с Гомером не обрывает перелёт рывком)
+       if (segCyl(&s->cyl[i], a, b, 0.f, &t, &in) && !in && t < f) f = t; }
   }
   return f;
 }
@@ -138,6 +176,14 @@ float csNearFree(const CsScene *s, const float eye[3], const float f[3], float t
   csNfCalls++;
   float r[3], u[3], D = nmax / CS_NEAR_K, free = D, p[3];   // лучи — на глубину nmax / CS_NEAR_K: свободно — ближняя плоскость прежняя
   csBasis(f, r, u);
+  if (!camRayBoxOld) csFiltBuild(s, eye, CAM_RAYBOX_RK * D * sqrtf(1.f + tanH * tanH + tanV * tanV));   // №984: тела за шаром лучей не считаем
+  if (!camNfStillOld && !camRayBoxOld) {   // №984б: стоим и рядом нет тел — прошлый ответ
+    int still = csNfC.ok && csNfC.w == s->w && csNfC.tv == tanV && csNfC.th == tanH && csNfC.nmax == nmax && csNfC.sig == csFiltSig &&
+                fabsf(csNfC.e[0] - eye[0]) + fabsf(csNfC.e[1] - eye[1]) + fabsf(csNfC.e[2] - eye[2]) < 1e-5f && fabsf(csNfC.f[0] - f[0]) + fabsf(csNfC.f[1] - f[1]) + fabsf(csNfC.f[2] - f[2]) < 1e-5f;
+    if (still && csNfC.age < CS_NFREUSE_N) { csNfC.age++; csNfStillHit++; csFiltOn = 0; return csNfC.val * CS_NFSTILL_K; }
+    csNfC.ok = 0; csNfC.age = 0; csNfC.w = s->w; memcpy(csNfC.e, eye, 12); memcpy(csNfC.f, f, 12); csNfC.tv = tanV; csNfC.th = tanH; csNfC.nmax = nmax;
+    csNfC.sig = csFiltSig; csNfC.ok = 1;   // ответ запоминается на выходах ниже
+  }
   // №727 (Роб 17.10: «ничего не должно обрезаться по краям кадра»): 3 × 3 луча пропускали предмет, входящий в кадр сбоку между ними (ящик внизу справа,
   // угол дома у края) — срез 1,5 м резал его раньше, чем он уходил из кадра. Теперь по 5 точек на каждой стороне (16 лучей по краю кадра) и центр.
   // CAM_NEAR_DENSE_OLD=1 / flag camneardenseold 1 — прежние 3 × 3
@@ -174,9 +220,9 @@ float csNearFree(const CsScene *s, const float eye[3], const float f[3], float t
         if (camRaysVerify) { int g = csRayFrac(s, A[i], B[i], CS_NEARMASK) < 1.f; if (g != bad) csRaysMismatch++; } }
     } else
     for (int i = 0; i < 4 && !bad; i++) bad = csRayFrac(s, c[i], c[(i + 1) & 3], CS_NEARMASK) < 1.f;
-    if (!bad) return n;
+    if (!bad) { csFiltOn = 0; csNfC.val = n; return n; }
     n *= .7f;
-    if (n < CS_NEAR_MIN) return 0.f;   // меньше CS_NEAR_MIN — места перед глазом нет (точнее не нужно)
+    if (n < CS_NEAR_MIN) { csFiltOn = 0; csNfC.val = 0.f; return 0.f; }   // меньше CS_NEAR_MIN — места перед глазом нет (точнее не нужно)
   }
 }
 

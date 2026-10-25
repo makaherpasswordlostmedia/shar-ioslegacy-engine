@@ -1202,6 +1202,13 @@ int homerCtrl916Old = CTRL916_OLD;   // №916; с №947б 1 по умолча�
 #ifndef HOMER_FLIPBUSY_OLD
 #define HOMER_FLIPBUSY_OLD 0
 #endif
+// №982 (находка регрессии финала, eyejump WK_L7: Гомер идёт по L7 между двумя машинами трафика, «разворот через героя» 10,23 м за кадр и 29 кадров «глаз в кузове»): луч камеры к глазу,
+// задержанный кузовом машины (homerCamRayExtra), считался упором в стену: при d < 1 м камера перескакивала на другую сторону Гомера (рывок через героя) или стояла в метре от него внутри кузова.
+// Перескок по записи PS2 — для стен мира, не для машин. Теперь перескок только от стены мира, а у машины камера остаётся в 1 м и поднимается над крышей (до +1,8 м). HOMER_CAMCAR982_OLD=1 / flag camcar982old 1 — как было
+#ifndef HOMER_CAMCAR982_OLD
+#define HOMER_CAMCAR982_OLD 0
+#endif
+int homerCamCarOld = HOMER_CAMCAR982_OLD; float homerCamCarTop = -1e9f;
 int homerFlipHold, homerFlipBusyOld = HOMER_FLIPBUSY_OLD;   // №947б: 1 — перескок камеры у стены не замораживает курс управления
 int homerExitYawOld = HOMER_EXITYAW_OLD; int homerCtrlFreezeOld = HOMER_CTRL_FREEZE_OLD; float homerCtrlYaw; int homerCtrlOn, homerCamBusy;
 int homerCamWallOff;   // служебное (красный контроль tests/camera): камера пешком без обхода стен
@@ -1282,12 +1289,13 @@ static void homerCameraAt(Homer *H, const ColWorld *w, float dt, float eye[3], f
     float T[3] = {H->x, H->camY + 1.5f, H->z}, rise = 0.f, got = 0.f; int hits = 0;
     for (int k = 0; k < 4; k++) {
       float up = k * .6f, E[3] = {H->x - fx * dist, ey + up, H->z - fz * dist}, fr = 1.f; int hk = 0;
-      float L = sqrtf((E[0] - T[0]) * (E[0] - T[0]) + (E[1] - T[1]) * (E[1] - T[1]) + (E[2] - T[2]) * (E[2] - T[2]));
+      float L = sqrtf((E[0] - T[0]) * (E[0] - T[0]) + (E[1] - T[1]) * (E[1] - T[1]) + (E[2] - T[2]) * (E[2] - T[2])), frW = 1.f, carTop = -1e9f;   // №982: frW — доля луча только по миру, carTop — верх кузова, задержавшего луч
       for (int r = 0; r < 5; r++) {   // центр и 4 края; правка Роба 160 (01.10): кадр 16:9 широкий — края ближней плоскости дальше,
         // у стены дома сбоку она просвечивала: вбок ±HOMER_CAM_SIDE, вверх/вниз ±HOMER_CAM_UPDN (было ±0.3 / ±0.2)
         float sx = r == 1 ? HOMER_CAM_SIDE : r == 2 ? -HOMER_CAM_SIDE : 0.f, sy = r == 3 ? HOMER_CAM_UPDN : r == 4 ? -HOMER_CAM_UPDN : 0.f;
         float Er[3] = {E[0] + fz * sx, E[1] + sy, E[2] - fx * sx}, f = colRayFrac(w, T, Er, 0);
-        if (homerCamRayExtra) { float g = homerCamRayExtra(T, Er); if (g < f) f = g; }   // правка 284: кузова машин рядом
+        if (f < frW) frW = f;
+        if (homerCamRayExtra) { homerCamCarTop = -1e9f; float g = homerCamRayExtra(T, Er); if (g < f) { f = g; if (homerCamCarTop > carTop) carTop = homerCamCarTop; } }   // правка 284: кузова машин рядом
         if (f < 1.f) hk++;
         if (f < fr) fr = f;
       }
@@ -1299,13 +1307,15 @@ static void homerCameraAt(Homer *H, const ColWorld *w, float dt, float eye[3], f
         // №678 (Роб: «выходишь, камера крутится, хочешь вперёд, а идёшь назад»): перескок на другую сторону Гомера по записи PS2 — когда Гомер ИДЁТ на стену; у стоящего
         // Гомера (только что вышел из машины у стены) камера разворачивалась на 180° сама, и «вперёд» стика уводил назад (tests/smoke_scenes/exitcar_delay.txt, EXW_1_0:
         // камера +14° -> +159° за 0,2 с). Перескок только при ходьбе (скорость > 0,5 м/с). HOMER_FLIP_STAND_OLD=1 / flag homerflipstandold 1 — как было
-        if (fr < 1.f && d < 1.0f && H->camFlipT > 2.f && (homerFlipStandOld || H->speed > .5f)) {   // упор: другая сторона свободна на 4 м — перескок (курс камеры +180°)
+        if ((homerCamCarOld ? fr : frW) < 1.f && d < 1.0f && H->camFlipT > 2.f && (homerFlipStandOld || H->speed > .5f)) {   // упор: другая сторона свободна на 4 м — перескок (курс камеры +180°)
           float Eo[3] = {H->x + fx * 4.f, ey + .9f, H->z + fz * 4.f}; float fo = colRayFrac(w, T, Eo, 0);
           if (fo >= 1.f) { H->camYaw = wrapPi(H->camYaw + 3.14159265f); H->camPullD = 4.f; H->camRise = .9f; H->camFlipT = 0.f; d = 4.f; fr = 1.f;
             homerCamFlipN++; if (!homerCamFlipOld) { fx = -fx; fz = -fz; } }   // №916в: перескок целиком в этом кадре (раньше глаз шёл по старому курсу ещё кадр: два рывка 3,5 и 5,3 м вместо одного)
         }
+        float riseCar = 0.f;
+        if (!homerCamCarOld && d < 1.0f && fr < frW && carTop > -1e8f) riseCar = fminf(1.8f, fmaxf(0.f, carTop + .3f - ey));   // №982: упор в кузов, не в стену мира — над крышей, не в кузове
         if (d < 1.0f) d = 1.0f;
-        hits = hk; rise = 0.f; got = d; break;
+        hits = hk; rise = riseCar; got = d; break;
       }
       if (d >= HOMER_CAM_MIN || fr >= 1.f) { rise = up; got = d; break; }
       if (d > got) { got = d; rise = up; }

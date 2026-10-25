@@ -1,0 +1,36 @@
+# №973 (Роб 25.10): тень машины Мардж (L4) прыгает сквозь пол. Езда автопилотом по дорогам L4 (flag drive), строки SHADOW973 раз в секунду, снимки по ходу
+scene F_L1
+flag cfgdefaults 1
+wait 4
+scene F_GO4
+flag golevel 4
+wait 45
+flag repair
+wait 4
+scene S_L4_drive
+flag warmhere
+wait 3
+flag drive 60
+camrel 0 9 0.4 0 -9 -0.4
+wait 4
+shot d01
+wait 5
+shot d02
+wait 5
+shot d03
+wait 5
+shot d04
+wait 5
+shot d05
+wait 5
+shot d06
+wait 5
+shot d07
+wait 5
+shot d08
+wait 5
+shot d09
+wait 5
+shot d10
+wait 5
+end

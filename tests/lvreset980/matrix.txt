@@ -1,0 +1,37 @@
+# №980 матрица смены уровня: будка L1 -> L2, будка L2 -> L3, пауза L3 -> L4, активная цель L4 -> L5; после каждой смены строка LVSTATE (phone/shop/ward/pause = 0, значок цели того уровня)
+scene BQ_load
+flag golevel 1
+wait 15
+flag player 1
+scene M_booth1
+foot 144.5 83.0 3.1416
+wait 2
+press triangle
+wait 3
+scene M_to2
+flag golevel 2
+wait 40
+scene M_booth2
+foot -8.0 3.6 3.1416
+wait 2.5
+press triangle
+wait 3
+shot m_booth2
+scene M_to3
+flag golevel 3
+wait 40
+scene M_pause3
+press start
+wait 3
+shot m_pause3
+scene M_to4
+flag golevel 4
+wait 40
+scene M_goal4
+flag msn
+wait 6
+scene M_to5
+flag golevel 5
+wait 40
+shot m_l5
+end

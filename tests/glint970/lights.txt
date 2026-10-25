@@ -1,0 +1,20 @@
+### №970 огни машины L1 J9: стоп-сигналы и задний ход зажжены служебно (flag carlights970), камера за машиной. @OLD@ = 1 — как TEST66
+scene F_LIGHTS
+flag repair
+flag glint970old @OLD@
+goto 113.0 158.1 1.5708
+wait 2
+flag carlights970 1
+wait 0.3
+shot l_a
+wait 0.3
+shot l_b
+flag carlights970 2
+wait 0.3
+shot l_c
+wait 0.3
+shot l_d
+flag carlights970 3
+wait 0.3
+shot l_e
+end

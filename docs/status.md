@@ -1,6 +1,6 @@
 # Status
 
-Where the port stands against the original PS2 game, as of October 25, 2026 (build 66). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
+Where the port stands against the original PS2 game, as of October 25, 2026 (build 69). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
 
 - **Hardware:** PSP-2000 with custom firmware, PAL disc. Nothing else has been tested.
 - **Latest hardware tour:** a scripted run of 33 scenes across all 7 levels (build "TEST62", second run). The final build ("TEST64") is on the PSP but has not been measured yet, so the numbers below belong to the previous build.
@@ -24,8 +24,8 @@ Where the port stands against the original PS2 game, as of October 25, 2026 (bui
 | Bonus missions | partial | emulator, bots |
 | Wager race | partial: start verified, win not proven | emulator |
 | Bonus game (7 tracks) | implemented, not tested on hardware | emulator |
-| Cutscenes (16 videos) | on the card; verified on hardware: intro, logos, one clip; the rest not | hardware (partial), code |
-| Ending, save after the last mission, credits | implemented; a hang in the ending scene was bypassed, cause not found; not tested to the credits on hardware | emulator |
+| Cutscenes (16 videos) | all 16 open and play in the emulator tour (build 69); on hardware: intro, logos and one clip so far | emulator, hardware (partial) |
+| Ending, save after the last mission, credits | the emulator tour reaches the credits and returns to the menu (build 69); not yet played to the credits on hardware | emulator |
 | Poles and lamp posts when hit | works: fall like the PS2 (whole, pivoting at the base), fall time within 0.3 s of PS2 recordings at four speeds on level 1; other levels and large trees not recorded on the PS2 | emulator vs PS2 recording |
 | Player-character cars, damage, smoke, wheels | partial: tuned against PS2 recordings for two vehicles only | hardware (level 1), emulator |
 | Police and Hit & Run | partial: verified on hardware in early builds, not in recent tours | emulator |
@@ -57,10 +57,9 @@ Where the port stands against the original PS2 game, as of October 25, 2026 (bui
 
 ## Known problems
 
-- Driving in the city on levels 3 to 7 does not hold 30 fps and dips under 20 fps in places.
+- Driving in the city on levels 3 to 7 does not hold 30 fps and dips under 20 fps in places. The cost is spread evenly over the whole frame; build 69 trims about 0.2 ms with bit-exact changes.
 - Far-distance flicker is not solved. The fix for it hid the horizon on one level, so it is switched off in the final build.
-- A "go home" icon can stay on screen after a level change; six reproduction paths did not trigger it, so the build logs extra state for the next report.
-- A menu left open can leak into the next level. Seen once in a scripted tour (booth background carried from level 7 to level 2).
+- A "go home" icon was reported once after a level change; it could not be reproduced. Since build 69 every level change closes open menus and clears the previous mission icon, and the game logs the icon state for the next report.
 - Long play sessions on hardware have not been tested for memory fragmentation. Early builds hung after many level changes; the known leaks are closed.
 
 ## Not verified

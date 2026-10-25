@@ -1,0 +1,27 @@
+# №973 L5 Апу: тень машины сверху на месте и в езде
+scene F_L1
+flag cfgdefaults 1
+wait 4
+scene F_GO5
+flag golevel 5
+wait 45
+flag repair
+wait 4
+scene S_L5_stand
+flag warmhere
+wait 3
+camrel 0 9 0.4 0 -9 -0.4
+wait 1
+shot a00
+flag drive 30
+wait 3
+shot a01
+wait 3
+shot a02
+wait 3
+shot a03
+wait 3
+shot a04
+wait 3
+shot a05
+end

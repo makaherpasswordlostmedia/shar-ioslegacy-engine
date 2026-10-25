@@ -34,6 +34,8 @@ typedef struct {
 } CsScene;
 
 // доля пути a -> b до первого препятствия: мир (bodies & 1), все тела (bodies & 2), чужие тела без своей машины за рулём (bodies & 4); тело, в котором начинается путь, не мешает
+extern int camNfStillOld; extern unsigned csNfStillHit;   // №984б: стоим — прошлый ответ csNearFree
+extern int camRayBoxOld; extern unsigned csFiltBoxIn, csFiltBoxAll, csFiltCylIn, csFiltCylAll;   // №984: отсев тел шаром лучей (побитно тот же ответ)
 extern int camRaysOld, camRaysVerify; extern unsigned csRaysMismatch;   // CAMPERF: пакетные лучи ближней плоскости (camsafe.c); verify — считает расхождения с лучами по одному
 extern unsigned csRayCalls, csNfCalls;   // служебное (строка CAMSUB): сколько лучей и вызовов csNearFree за секунду
 float csRayFrac(const CsScene *s, const float a[3], const float b[3], int bodies);

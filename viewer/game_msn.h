@@ -217,6 +217,7 @@ const char *gameMsnActionLabel(GameMsn *m, char *buf, int n);   // правка 
 int gameMsnWantsMissionAction(GameMsn *m);   // то же без продавца: △ нужен самой миссии (разговор, точка, бонус) — боты
 void gameMsnWorld(const GameMsn *m, MsnWorld *w);   // MsnWorld из игры (без кнопки)
 const GameNpc *gameMsnNpc(const GameMsn *m, const char *name);
+extern int gameMsnNpc984Old, gameMsnNpcChk, gameMsnNpcTime; extern unsigned gameMsnNpcCalls, gameMsnNpcMiss, gameMsnNpcBad, gameMsnNpcUs;   // №984: кэш поиска персонажа по имени (game_msn.c)
 // правка 140: кому из не миссионных (фоновые, продавцы) дать модель — индексы m->npc, ближние к (x, z) первыми; -> сколько
 int gameMsnAmbWant(const GameMsn *m, float x, float y, float z, int max, int *want);
 // №444: same world/nearest policy with a predictive loading radius; legacy callers retain 60 m

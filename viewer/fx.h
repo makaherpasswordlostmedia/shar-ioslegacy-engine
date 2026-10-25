@@ -69,6 +69,9 @@ void fxExplosionOld(int on);                // №391: отрицательны�
 
 // Блёстки/свечение (аддитивно, к камере, только на этот кадр). phase 0..1 — пульс и поворот.
 void fxSparkle(float x, float y, float z, float size, float phase);
+extern int fxGlint976Old;   // №976: 1 — кольцо цели и звёздочки столба как в TEST66; flag glint976old
+extern int fxGlintOne970;   // №970: следующий блик очереди — одна звезда (маленькие звёзды монет)
+extern int fxGlint970Old;   // №970: 1 — блики как в TEST66 (ключ, будка, монеты, огни машин); flag glint970old
 void fxSparkleCoin(float x, float y, float z, float size, float phase, float ex, float ey, float ez);   // №910: блёстки монет прозрачнее
 void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abgr);
 // №839 (Роб 19.10: «все блюрные свечения — нашим векторным бликом, везде по тому же принципу»): блик вместо размытой картинки — ставит main

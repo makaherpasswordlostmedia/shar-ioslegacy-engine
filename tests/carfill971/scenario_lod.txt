@@ -1,0 +1,31 @@
+# №972: дальняя версия минивэна L1 (trflod), вид сзади снизу: колёса и днище; зелёное/цвет кузова на них — до правки, почти чёрное — после
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+goto 113.0 158.1 1.5708
+wait 3
+press triangle
+wait 4
+flag toon 1
+wait 2
+flag flat912 1
+flag trflod 1
+wait 2
+scene W_foot
+wait 1
+scene W00
+flag trfwheel 0 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.8
+shot m00_s
+camrel 0 1.6 16 0 -0.1 -1
+wait 0.4
+shot m00_f
+camrel 5 0.4 -1.5 -1 0.1 -0.5
+wait 0.4
+shot m00_q
+camrel -5 0.4 -1.5 1 0.1 -0.5
+wait 0.4
+shot m00_r
+end

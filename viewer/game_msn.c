@@ -1,6 +1,10 @@
 // Миссии поверх логики кадра (см. game_msn.h).
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
+#ifdef __PSP__
+#include <pspkernel.h>
+#endif
 #include <strings.h>
 #include <math.h>
 #include "game_msn.h"
@@ -328,7 +332,33 @@ static GameNpc *npcFind(GameMsn *m, const char *name) {
   }
   return best;
 }
-const GameNpc *gameMsnNpc(const GameMsn *m, const char *name) { return npcFind((GameMsn *)m, name); }
+// №984 (боты езды L3–L7, цикл по персонажам: значки продавцов и собеседника mvDrawMarkers звали npcFind по имени КАЖДЫЙ КАДР на каждого продавца — перебор до 24 персонажей со сравнением строк,
+// 0,3–0,48 мс PSP на L3, L4, L6, L7). Теперь ответ npcFind запоминается по указателю имени (16 записей): запись годна, пока не менялся список персонажей (npcGen растёт при появлении, снятии,
+// очистке миссии, новой миссии), указатель, сама строка имени и GameMsn те же — результат побитно тот же (тот же GameNpc*). GAMEMSNNPC984_OLD=1 / flag msnnpc984old 1 — как было; flag msnnpcchk 1 — каждый ответ
+// сверяется с npcFind (служебно, строка MSNNPC984)
+#ifndef GAMEMSNNPC984_OLD
+#define GAMEMSNNPC984_OLD 0
+#endif
+int gameMsnNpc984Old = GAMEMSNNPC984_OLD, gameMsnNpcChk, gameMsnNpcTime; unsigned gameMsnNpcCalls, gameMsnNpcMiss, gameMsnNpcBad, gameMsnNpcUs;
+static unsigned npcGen = 1;
+typedef struct { const char *key; const GameMsn *m; unsigned gen; int idx; char name[48]; } NpcCache;
+static NpcCache npcCache[16];
+static const GameNpc *gameMsnNpcFast(const GameMsn *m, const char *name) {
+  if (gameMsnNpc984Old || !name || strlen(name) >= sizeof npcCache[0].name) return npcFind((GameMsn *)m, name);
+  NpcCache *c = &npcCache[((uintptr_t)name >> 3) & 15]; const GameNpc *r; gameMsnNpcCalls++;
+  if (c->key == name && c->m == m && c->gen == npcGen && !strcmp(c->name, name)) r = c->idx >= 0 ? &m->npc[c->idx] : 0;
+  else { GameNpc *f = npcFind((GameMsn *)m, name); c->key = name; c->m = m; c->gen = npcGen; c->idx = f ? (int)(f - m->npc) : -1; strcpy(c->name, name); r = f; gameMsnNpcMiss++; }
+  if (gameMsnNpcChk && r != npcFind((GameMsn *)m, name)) gameMsnNpcBad++;
+  return r;
+}
+const GameNpc *gameMsnNpc(const GameMsn *m, const char *name) {
+#ifndef __PSP__
+  return gameMsnNpcFast(m, name);
+#else
+  if (!gameMsnNpcTime) return gameMsnNpcFast(m, name);
+  unsigned t0 = sceKernelGetSystemTimeLow(); const GameNpc *r = gameMsnNpcFast(m, name); gameMsnNpcUs += sceKernelGetSystemTimeLow() - t0; return r;   // служебно (flag msnnpctime 1): мкс на поиск
+#endif
+}
 // кого заменяет новый: бонусный — себя же (та же миссия); персонаж миссии — бонусного только в его же миссии (вступление sr3:
 // AddNPC("ralph", "sr3_ralph_sd")), иначе не бонусного; фоновые и продавцы — не бонусного
 static GameNpc *npcSlot(GameMsn *m, const char *name, int kind, int bonus) {
@@ -341,6 +371,7 @@ static GameNpc *npcSlot(GameMsn *m, const char *name, int kind, int bonus) {
   return 0;
 }
 static void npcSpawnB(void *u, const char *name, const MsnPlace *at, int kind, float radius, const char *interior, int bonus) {
+  npcGen++;
   GameNpc *n = npcSlot(GM, name, kind, bonus);
   if (!n) { if (GM->nnpc >= GAME_NPC_MAX) return; n = &GM->npc[GM->nnpc++]; }
   memset(n, 0, sizeof *n);
@@ -390,6 +421,7 @@ static void npcWaypoint(void *u, const char *name, const MsnPlace *at) {   // Ad
   VIEW(npc, waypoint, name, at);
 }
 static void npcRemove(void *u, const char *name) {
+  npcGen++;
   GameNpc *n = npcFind(GM, name);
   if (n) { *n = GM->npc[--GM->nnpc]; }
   VIEW(npc, remove, name);
@@ -852,6 +884,7 @@ static int entity(void *u, const char *name, MsnEntity *out) {   // живые �
   return GM->view.entity ? GM->view.entity(u, name, out) : 0;
 }
 static void cleanup(void *u) {   // миссия закончилась / повтор: её персонажи уходят, фоновые остаются
+  npcGen++;
   for (int i = 0; i < GM->nnpc;) if (GM->npc[i].kind == MSN_NPC_MISSION) GM->npc[i] = GM->npc[--GM->nnpc]; else i++;
 #if !defined(GAME_PLACE_NPC) || GAME_PLACE_NPC
   // правка 140: продавец, которого миссия брала себе (m2i: AddNPC("barney", "m2_barney")), возвращается к лавке (правило порта)
@@ -1235,7 +1268,7 @@ int gameMsnOpenAt(GameMsn *m, Game *g, const void *pack, size_t size, const MsnG
     if (H->solid == gameMsnSolid) { const GameMsn *o = H->solidUser; ps = o->prevSolid; pu = o->prevSolidUser; }
     else { ps = H->solid; pu = H->solidUser; }
   }
-  memset(m, 0, sizeof *m); m->g = g; m->vehicle = "famil_v"; m->prevSolid = ps; m->prevSolidUser = pu;
+  npcGen++; memset(m, 0, sizeof *m); m->g = g; m->vehicle = "famil_v"; m->prevSolid = ps; m->prevSolidUser = pu;
   if (view) m->view = *view;
   if (msn_open(&m->f, pack, size, err, errlen) != 0) return -1;
   m->hnr=gameMsnHnrConfig(&m->f);

@@ -174,6 +174,40 @@ def road_tones(f, tex, res):
     return grp + [np.array(c, float) for c in ASPH_EXTRA]
 
 
+# №974: бордюр и угловая деталь с люком/стоком — по содержимому текстуры (одни и те же картинки на всех уровнях диска): 1 — заливка бордюра (серый бетон 64×64), 2 — рисунок углового люка.
+# Ключ — первые 12 знаков sha1 от индексов точек уровня 0 и размера; палитру не берём (тон мультика её меняет)
+CURB_REF = {'598b0da02c45': 1, '5a290a0bd875': 2, '2b1ad6fcdc09': 2, '9e7cd22a1990': 2}   # угловые детали: L1/L4 (5a29…), L2/L5 (2b1a…, фон бирюзовый), L7 (9e7c…)
+
+
+def curb_class(f, t):
+    import hashlib
+    px = indices(f, t)
+    return CURB_REF.get(hashlib.sha1(px.tobytes() + bytes([t['w'] % 256, t['h'] % 256])).hexdigest()[:12], 0)
+
+
+def asphalt_source(lvl, tex, res):
+    """№977: из текстур «асфальт родной» (причина 8) — с наибольшей площадью кусков уровня (чистый асфальт без разметки); None, если таких нет"""
+    c = [i for i, r in enumerate(res) if r[1] == 8 and tex[i]['w'] >= 64]
+    if not c: return None
+    import shr7read as S2
+    d = S2.load(lvl); P, T = d['P'], d['TEX']
+    area = np.linalg.norm(np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]), axis=1) * .5
+    return max(c, key=lambda i: (float(area[T == i].sum()), -i))
+
+
+def asphalt_set(f, tex, res):
+    """№979: текстуры земли с асфальтом (разметка и чистый): тон из группы тонов дорог уровня"""
+    out = set()
+    if ASPH929_OLD: return out
+    tones = road_tones(f, tex, [(r[0], r[1]) for r in res])
+    for i, t in enumerate(tex):
+        if not t['ground'] or res[i][1] not in (3, 7, 8): continue
+        c = cluster(t['pal'], np.bincount(indices(f, t).ravel(), minlength=256))
+        if c is None or .299 * c[1][0] + .587 * c[1][1] + .114 * c[1][2] > ASPH_LUM: continue
+        if tones and min(float(np.sqrt(((c[1] - tc) ** 2).sum())) for tc in tones) <= ASPH_R_GROUP: out.add(i)
+    return out
+
+
 def build(lvl, notoon=None):
     """-> (байты flat912.bin, строки (вид, причина) по текстурам)"""
     notoon = notoon or str(Path(lvl).with_name('notoon.txt'))
@@ -186,9 +220,14 @@ def build(lvl, notoon=None):
             c = cluster(t['pal'], np.bincount(indices(f, t).ravel(), minlength=256))
             if c is not None and tones and min(float(np.sqrt(((c[1] - tc) ** 2).sum())) for tc in tones) <= ASPH_R and .299 * c[1][0] + .587 * c[1][1] + .114 * c[1][2] <= ASPH_LUM:
                 res[i] = (0, 8, res[i][2], 0, res[i][4])
+    asph = asphalt_set(f, tex, res)   # №979: родной асфальт уровня — старшие 4 бита последнего байта строки: движок чуть осветляет палитру (flag asphlight)
     rows = []; body = bytearray()
-    for k, why, col, sh, ed in res:
-        body += struct.pack('<BBBBBBBB', k, why, col[0], col[1], col[2], sh, ed, 0); rows.append((k, why))
+    src = asphalt_source(lvl, tex, res)   # №977: чистый родной асфальт уровня — фрагмент для земли (класс 3)
+    for i, (k, why, col, sh, ed) in enumerate(res):
+        cb = 0 if os.environ.get('CURB974_OLD') == '1' else curb_class(f, tex[i])
+        if i == src and cb == 0: cb = 3
+        if i in asph: cb |= 0x10
+        body += struct.pack('<BBBBBBBB', k, why, col[0], col[1], col[2], sh, ed, cb); rows.append((k, why))
     return b'FLT1' + struct.pack('<II', len(tex), sig) + bytes(body), rows, sig
 
 

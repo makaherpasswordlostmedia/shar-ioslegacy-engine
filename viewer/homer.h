@@ -320,6 +320,8 @@ int camOverGround(const ColWorld *w, float x, float z, float y);   // правк
 extern int homerIrisCarOld;   // правка 333: 1 — прежнее (клипы двери и у машин с SetIrisTransition); красный контроль tests/homer/iris_car.py
 extern int homerCtrl916Old, homerExitYawOld, homerCtrlFreezeOld, homerCtrlOn, homerCamBusy; extern float homerCtrlYaw;   // homerCamBusy — №836: камера в переходе/вращается (ставит main_loop.h)   // №704: курс управления, замороженный на время облёта камеры
 extern int homerFlipStandOld;   // HOMER_FLIP_STAND_OLD=1 / flag homerflipstandold 1 — перескок камеры у стены и у стоящего Гомера (как было)
+extern int homerCamCarOld;   // №982: 1 — машина у спины Гомера, как стена: перескок камеры через героя и глаз в кузове (flag camcar982old)
+extern float homerCamCarTop;   // №982: верх кузова машины, задержавшей луч камеры в последнем вызове homerCamRayExtra (-1e9 — не было)
 extern int homerCamFlipOld, homerCamFlipN, homerFlipBusyOld, homerFlipHold;   // №916в: перескок камеры у стены одним кадром (CAM_FLIP1_OLD=1 / flag camflip1old 1 — как было); счётчик перескоков
 extern int homerCamPs2Old;   // CAM_WALL_PS2_OLD=1 / flag camwallps2old 1 — стена за камерой пешком как раньше (подъезд + подъём), не как у PS2
 extern int homerCamWallOff;   // 1 — камера пешком без обхода стен (служебное, красный контроль tests/camera)

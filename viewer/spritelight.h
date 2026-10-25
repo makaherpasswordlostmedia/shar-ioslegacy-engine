@@ -62,7 +62,7 @@ static void slAcctAdd(unsigned quads, unsigned shadows, unsigned us) {
 #endif
 static unsigned slShQuads, slShDraws, slShUs, slShFrames;
 typedef struct { float u, v; unsigned c; float x, y, z; } SlV;
-typedef struct { float x, y, z, n[3], fx, fz, hx, hz; unsigned a, tone; int box, rim; const float *sil; } SlSh;   // sil — №811: силуэт машины сверху (CS_N точек в долях габарита) вместо восьмиугольника   // tone — доля чёрного векторной тени (из 255), rim — обрезка по краю (slRim)
+typedef struct { float x, y, z, n[3], fx, fz, hx, hz; unsigned a, tone; int box, rim, own; const void *key; const float *sil; } SlSh;   // sil — №811: силуэт машины сверху (CS_N точек в долях габарита) вместо восьмиугольника   // tone — доля чёрного векторной тени (из 255), rim — обрезка по краю (slRim)
 static SlSh slSh[SL_SH_MAX]; static int slShN;
 // Текстура тени оригинала beeshadow.bmp (l0N_fx.p3d, 64×64, белый мягкий диск с альфой; рисуется затемнением, не сложением): радиальный профиль альфы по записи PS2
 // (кадры build/ps2ref/light_tex/l01_fx.p3d__beeshadow.png): плато 213 до r=12 текселей, спад к 0 на r=19 (диск ≈ 59 % половины квада). Файла в наших пакетах нет — снимается в код.
@@ -77,12 +77,13 @@ static void slTexInit(void) {
   }
   sceKernelDcacheWritebackRange(slTex, sizeof slTex); slTexReady = 1;
 }
+static int slShOwnNext; static const void *slShKeyNext; static const ColWorld *slShW;   // №973 служебно: тень своей машины для замера (SHADOW973)
 static const float *slShSilNext;   // №811: силуэт для следующей тени машины (slShCar)
 static int slShAddT(float x, float y, float z, const float n[3], float fx, float fz, float hx, float hz, float alpha, int box, unsigned tone) {
   if (slShN >= SL_SH_MAX || alpha < 2.f) return 0;
   SlSh *s = &slSh[slShN++]; s->x = x; s->y = y; s->z = z; memcpy(s->n, n, 12); s->fx = fx; s->fz = fz; s->hx = hx; s->hz = hz;
   alpha *= skinToonShadowK();   // №675: в мультике тени слабее
-  s->a = (unsigned)(alpha > 255.f ? 255.f : alpha); s->box = box; s->tone = tone; s->rim = 0; s->sil = slShSilNext; slShSilNext = 0;
+  s->a = (unsigned)(alpha > 255.f ? 255.f : alpha); s->box = box; s->tone = tone; s->rim = 0; s->own = slShOwnNext; slShOwnNext = 0; s->key = slShKeyNext; slShKeyNext = 0; s->sil = slShSilNext; slShSilNext = 0;
   return 1;
 }
 static void slShAdd(float x, float y, float z, const float n[3], float fx, float fz, float hx, float hz, float alpha, int box) { slShAddT(x, y, z, n, fx, fz, hx, hz, alpha, box, SV_A); }
@@ -233,6 +234,111 @@ static unsigned svCutTris(SvV *v, unsigned n) {   // треугольники п
   }
   return w;
 }
+// №973 (Роб 25.10: «тень машины Мардж на L4 сильно лагает, прыгает сквозь текстуру пола»; замер tests/shadow973, езда по холмам L4: до 9 кадров из 31 за секунду вершина тени на 0,2–0,5 м ниже опоры
+// коллизии, и тут же на 0,6 м выше). Причина: тень машины (до 5,3 м длиной) — одна плоскость по опоре под ЦЕНТРОМ (нормаль и высота одной точки), на изломе склона, бордюре и холме углы уходят под землю
+// или висят над ней, а высота центра скачет шагом (взлёт с трамплина, стык клеток). Теперь форма та же (восьмиугольник, у необычных машин силуэт), но высота — по опоре под 17 точками (центр, кольцо на
+// половине, кольцо по краю; для силуэта — по 8 направлениям с промежуточными), вершина = опора + подъём 6 см (+ по крутизне до 7 см), тень состоит из центра и двух колец (24 треугольника вместо 8) и ложится
+// на рельеф; рост высоты сразу, спад за 100 мс (как №522); точка без опоры (край, обрыв) гаснет по альфе, а не проваливается. Состояние — в кэше по машине (24 записи), ушёл дальше 4 м за кадр — с нуля.
+// SHADOW973_OLD=1 / файл shadow973old / «flag shadow973old 1» — прежняя плоскость по центру
+#ifndef SHADOW973_OLD
+#define SHADOW973_OLD 0
+#endif
+static int sh973 = !SHADOW973_OLD;
+static int s973DiagOn;   // flag shdiag973 1: замер SHADOW973 включён (без него в smoke-сборке тень считается как в выпуске: без таймеров и лишних запросов)
+#define S973_N 5            // слоты опоры: 0 — центр, 1..4 — углы (своя машина) или 1, 2 — нос и корма (чужие)
+#define S973_LIFT .06f
+#define S973_EDGE .9f   // опору ищем в полосе вокруг плоскости по центру (берём самую верхнюю — ту, что видна); дальше полосы опоры нет: край тени гаснет
+#define S973_SNAP .15f   // спад опоры глубже этого — тень сразу на землю, без 100 мс парения
+#define S973_K .95f      // углы опоры — доля габарита контура
+typedef struct { const void *key; unsigned frame, us; float x, z, fx, fz, nx, nz, H[S973_N], L[S973_N]; unsigned char ok[S973_N], have, flat, wv; int wnp, wown; float whw, whl, ww[32][4], wp[32]; } S973E;   // ww, wp — веса вершин контура (кэш: контур машины не меняется)
+static S973E s973E[24]; static unsigned s973Frame, s973Samples, s973Meshes, s973Us;
+static S973E *s973Get(const void *key) {
+  S973E *w = &s973E[0]; for (int i = 0; i < 24; i++) { if (s973E[i].key == key) return &s973E[i]; if (s973E[i].frame < w->frame) w = &s973E[i]; }
+  memset(w, 0, sizeof *w); w->key = key; return w;
+}
+// Тень = веер из центра по контуру (8 сторон или силуэт). Высота вершины — по опоре в 4 углах (своя машина; билинейно, центр поправкой «пирамидой») или в носу и корме (чужие; по длине плюс поперечный наклон
+// нормали центра); запросов к коллизии: 4 у своей, 2 у чужой, у стоящей — ни одного. Точка без опоры гасит свою долю веера по альфе.
+static unsigned slShMesh973(const SlSh *s, const float *px, const float *pz, int np, unsigned col, float kk, SvV *o) {
+  const ColWorld *w = slShW; unsigned t0 = s973DiagOn ? sceKernelGetSystemTimeLow() : 0;
+  float fl = sqrtf(s->fx * s->fx + s->fz * s->fz); if (fl < 1e-4f || !w) return 0;
+  float fx = s->fx / fl, fz = s->fz / fl, rx = fz, rz = -fx;   // R = n × U для n = (0,1,0), как у плоской тени
+  float hwS = 0.f, hlS = 0.f; for (int j = 0; j < np; j++) { hwS = fmaxf(hwS, fabsf(px[j])); hlS = fmaxf(hlS, fabsf(pz[j])); }
+  if (hwS < .1f || hlS < .1f) return 0;
+  int own = s->own, ns = own ? 4 : 2;
+  S973E *e = s973Get(s->key); unsigned now = sceKernelGetSystemTimeLow();
+  float dt = e->have ? (now - e->us) * 1e-6f : 0.f; if (dt < .001f) dt = .001f; if (dt > .1f) dt = .1f;
+  float a = dt / (.1f + dt);
+  if (e->have && (s973Frame - e->frame > 6 || fabsf(s->x - e->x) + fabsf(s->z - e->z) > 4.f)) e->have = 0;   // отстало или телепорт — без сглаживания
+  float H[S973_N], L[S973_N]; unsigned char ok[S973_N]; float n1 = fmaxf(s->n[1], .5f);
+  int still = e->have && fabsf(s->x - e->x) + fabsf(s->z - e->z) < .02f && fabsf(s->y - e->H[0]) < .01f && fabsf(fx - e->fx) + fabsf(fz - e->fz) < .01f;   // стоит: опора та же, запросов нет
+  // ровное место: прошлый замер показал, что опора под всеми точками лежит в плоскости по центру (до 1,5 см) — следующие кадры (у своей один, у чужой до трёх) берут плоскость без запросов; нормаль ушла — замер
+  int plane = !still && e->have && e->flat > 0 && fabsf(s->n[0] - e->nx) + fabsf(s->n[2] - e->nz) < .02f;
+  if (still) { memcpy(H, e->H, sizeof H); memcpy(L, e->L, sizeof L); memcpy(ok, e->ok, sizeof ok); }
+  else if (plane) { e->flat--;
+    for (int i = 0; i < S973_N; i++) { float lx = own ? (i == 0 ? 0.f : ((i - 1) & 1 ? 1.f : -1.f) * S973_K * hwS) : 0.f, lz = own ? (i == 0 ? 0.f : ((i - 1) & 2 ? 1.f : -1.f) * S973_K * hlS) : (i == 0 ? 0.f : i == 1 ? 1.f : -1.f) * S973_K * hlS;
+      H[i] = s->y + (-s->n[0] * (rx * lx + fx * lz) - s->n[2] * (rz * lx + fz * lz)) / n1; L[i] = e->L[i]; ok[i] = e->ok[i]; } }
+  else {
+    H[0] = s->y; L[0] = S973_LIFT; ok[0] = 1; if (e->have && e->ok[0] && s->y < e->H[0] && e->H[0] - s->y < S973_SNAP) H[0] = e->H[0] + a * (s->y - e->H[0]);
+    for (int i = 1; i < S973_N; i++) {
+      if (i > ns) { H[i] = H[0]; L[i] = S973_LIFT; ok[i] = 0; continue; }
+      float lx = own ? ((i - 1) & 1 ? 1.f : -1.f) * S973_K * hwS : 0.f, lz = own ? ((i - 1) & 2 ? 1.f : -1.f) * S973_K * hlS : (i == 1 ? 1.f : -1.f) * S973_K * hlS;
+      float X = s->x + rx * lx + fx * lz, Z = s->z + rz * lx + fz * lz, yp = s->y + (-s->n[0] * (X - s->x) - s->n[2] * (Z - s->z)) / n1, yv, nn[3];
+      if (colGround(w, X, Z, yp + S973_EDGE, yp - S973_EDGE, &yv, nn)) {   // полоса вокруг плоскости по центру: ниже — обрыв, выше — стена, там тень гаснет
+        float sl = sqrtf(fmaxf(0.f, 1.f - nn[1] * nn[1])) / fmaxf(nn[1], .5f); L[i] = S973_LIFT + fminf(.07f, .25f * sl); ok[i] = 1;
+        H[i] = (e->have && e->ok[i] && yv < e->H[i] && e->H[i] - yv < S973_SNAP) ? e->H[i] + a * (yv - e->H[i]) : yv;   // мелкий спад сглаживаем, уступ глубже 15 см — сразу на землю
+      } else { H[i] = yp; L[i] = S973_LIFT; ok[i] = 0; } }
+    if (s973DiagOn) s973Samples += (unsigned)ns;
+    { float dm = 0.f; int allok = 1; for (int i = 1; i <= ns; i++) { float lx = own ? ((i - 1) & 1 ? 1.f : -1.f) * S973_K * hwS : 0.f, lz = own ? ((i - 1) & 2 ? 1.f : -1.f) * S973_K * hlS : (i == 1 ? 1.f : -1.f) * S973_K * hlS;
+        float yp = s->y + (-s->n[0] * (rx * lx + fx * lz) - s->n[2] * (rz * lx + fz * lz)) / n1; dm = fmaxf(dm, fabsf(H[i] - yp)); allok &= ok[i]; }
+      e->flat = (allok && dm < .015f) ? (own ? 1 : 3) : 0; e->nx = s->n[0]; e->nz = s->n[2]; }
+  }
+  memcpy(e->H, H, sizeof H); memcpy(e->L, L, sizeof L); memcpy(e->ok, ok, sizeof ok); e->have = 1; e->frame = s973Frame; e->us = now; e->x = s->x; e->z = s->z; e->fx = fx; e->fz = fz;
+  float Lm = 0.f; for (int i = 0; i <= ns; i++) Lm += L[i]; Lm /= (float)(ns + 1);
+  float cross = (-s->n[0] * rx - s->n[2] * rz) / n1;
+  SvV V[1 + 32]; if (np > 32) np = 32;
+  V[0].c = col; { float P[3] = {s->x, H[0] + Lm, s->z}; V[0].x = P[0] + (eyeX - P[0]) * kk; V[0].y = P[1] + (eyeY - P[1]) * kk; V[0].z = P[2] + (eyeZ - P[2]) * kk; }
+  if (!e->wv || e->wnp != np || e->wown != own || fabsf(e->whw - hwS) > .002f || fabsf(e->whl - hlS) > .002f) {   // веса вершин: от контура, один раз на машину
+    for (int j = 0; j < np; j++) { float lx = px[j], lz = pz[j], t = lz / (S973_K * hlS);
+      e->wp[j] = fmaxf(0.f, 1.f - fabsf(lx) / hwS) * fmaxf(0.f, 1.f - fabsf(lz) / hlS);
+      if (own) { float u = lx / (S973_K * hwS); for (int k = 0; k < 4; k++) e->ww[j][k] = (((k & 1) ? 1.f + u : 1.f - u) * .5f) * (((k & 2) ? 1.f + t : 1.f - t) * .5f); }
+      else { e->ww[j][0] = (1.f + t) * .5f; e->ww[j][1] = (1.f - t) * .5f; e->ww[j][2] = t > 0.f ? fminf(1.f, t) : 0.f; e->ww[j][3] = t < 0.f ? fminf(1.f, -t) : 0.f; } }
+    e->wv = 1; e->wnp = np; e->wown = own; e->whw = hwS; e->whl = hlS; }
+  int allok = 1; for (int i = 1; i <= ns; i++) allok &= ok[i];
+  float mean = own ? (H[1] + H[2] + H[3] + H[4]) * .25f : (H[1] + H[2]) * .5f;
+  for (int j = 0; j < np; j++) {
+    const float *ww = e->ww[j]; float lx = px[j], lz = pz[j], h, f = 1.f;
+    if (own) { h = ww[0] * H[1] + ww[1] * H[2] + ww[2] * H[3] + ww[3] * H[4]; if (!allok) for (int k = 0; k < 4; k++) if (!ok[1 + k]) f -= fmaxf(0.f, ww[k]); }
+    else { h = ww[0] * H[1] + ww[1] * H[2] + cross * lx; if (!allok) f -= (ok[1] ? 0.f : ww[2]) + (ok[2] ? 0.f : ww[3]); }
+    h += (H[0] - mean) * e->wp[j];
+    if (f < 1.f) f = fmaxf(0.f, f);
+    float P[3] = {s->x + rx * lx + fx * lz, h + Lm, s->z + rz * lx + fz * lz};
+    SvV *v = &V[1 + j]; v->c = f < 1.f ? (col & 0xffffffu) | ((unsigned)((col >> 24) * f) << 24) : col;
+    v->x = P[0] + (eyeX - P[0]) * kk; v->y = P[1] + (eyeY - P[1]) * kk; v->z = P[2] + (eyeZ - P[2]) * kk; }
+  unsigned m = 0;
+  for (int j = 0; j < np; j++) { int j2 = (j + 1) % np; o[m++] = V[0]; o[m++] = V[1 + j]; o[m++] = V[1 + j2]; }
+  if (s973DiagOn) { s973Meshes++; s973Us += sceKernelGetSystemTimeLow() - t0; }
+  return m;
+}
+// служебно (smoke): тень своей машины против опоры коллизии. Раз в секунду строка SHADOW973: кадров n, кадров с видимой вершиной тени ниже опоры + 5 см (sunk5) и ниже опоры (sunk0), худший зазор
+// вершин minclr и наибольший maxclr (м; опора — colGround под вершиной: до 0,6 м выше и 1,2 м ниже, считаются вершины с альфой), средняя высота вершин тени: переключений знака шага больше 3 см (flip), наибольший шаг dcmax,
+// us — мкс на сетку (кадр), samples — опорных запросов на кадр
+static float s973Asym;   // несимметрия контура тени своей машины: для вершины — расстояние до ближайшей зеркальной (м), худшее
+static unsigned s973N, s973Sunk5, s973Sunk0, s973Flip; static float s973Min = 9.f, s973Max = -9.f, s973Dc, s973Prev, s973PrevD; static int s973Have; static float s973T0 = -1.f;
+static void sh973Diag(const SvV *v, unsigned n, float cy) {
+  if (!slShW) return;
+  int s5 = 0, s0 = 0; float ys = 0.f; int ny = 0; (void)cy;
+  for (unsigned j = 0; j < n; j++) { if (!(v[j].c >> 24)) continue; ys += v[j].y; ny++;
+    float g, nn[3]; if (!colGround(slShW, v[j].x, v[j].z, v[j].y + .6f, v[j].y - 1.2f, &g, nn)) continue;
+    float c = v[j].y - g; if (c < s973Min) s973Min = c; if (c > s973Max) s973Max = c; if (c < .05f) s5 = 1; if (c < 0.f) s0 = 1; }
+  s973N++; s973Sunk5 += s5; s973Sunk0 += s0;
+  cy = ny ? ys / ny : cy;
+  if (s973Have) { float d = cy - s973Prev; if (fabsf(d) > s973Dc) s973Dc = fabsf(d); if (fabsf(d) > .03f) { if (s973PrevD * d < 0.f) s973Flip++; s973PrevD = d; } }
+  s973Prev = cy; s973Have = 1;
+  if (s973T0 < 0.f) s973T0 = smkT;
+  if (smkT - s973T0 >= 1.f) { char l_[260]; unsigned mm = s973Meshes ? s973Meshes : 1;
+    snprintf(l_, sizeof l_, "SHADOW973 t=%.1f sc=%s n=%u sunk5=%u sunk0=%u minclr=%.3f maxclr=%.3f flip=%u dcmax=%.3f meshes=%u samples=%u us=%u asym=%.3f\n", smkT, smkScene, s973N, s973Sunk5, s973Sunk0, s973Min, s973Max, s973Flip, s973Dc, s973Meshes, s973Samples, s973Us / mm, s973Asym); smkWrite(l_);
+    s973N = s973Sunk5 = s973Sunk0 = s973Flip = 0; s973Min = 9.f; s973Max = -9.f; s973Dc = 0.f; s973T0 = smkT; s973Meshes = s973Samples = s973Us = 0; }
+}
 static void slShFlushVec(void) {
   unsigned nv_ = 0; for (int i = 0; i < slShN; i++) nv_ += slSh[i].sil ? (unsigned)CS_N * 3u : slSh[i].box ? 8u * 3u : (unsigned)SV_N * 3u;   // машина 8 сторон (силуэт №811 — CS_N), эллипс SV_N
   unsigned by_ = nv_ * (unsigned)sizeof(SvV); if (ggVbUsed + by_ > GGVB_BYTES && !geRoomHard(by_)) { slShN = 0; return; }   // проверка 17.10: кольцо полно — из списка GE только при месте
@@ -259,9 +365,13 @@ static void slShFlushVec(void) {
       if (!svCsOn) { for (int j = 0; j < SV_N; j++) { float th = 6.2831853f * j / SV_N; svCs[j][0] = cosf(th); svCs[j][1] = sinf(th); } svCsOn = 1; }
       for (int j = 0; j < SV_N; j++) { float k_ = s->rim ? slRim[j] : 1.f; px[j] = r * svCs[j][0] * k_; pz[j] = rz * svCs[j][1] * k_; } np = SV_N;
     }
+    if (sh973 && s->box && s->key) { k += slShMesh973(s, px, pz, np, c, kk, &q[k]); }   // №973: форма по опоре под 17 точками
+    else
     for (int j = 0; j < np; j++) { int j2 = (j + 1) % np; float lx[3] = {0.f, px[j], px[j2]}, lz[3] = {0.f, pz[j], pz[j2]};
       for (int m = 0; m < 3; m++) { float P[3] = {C[0] + R[0] * lx[m] + U[0] * lz[m], C[1] + R[1] * lx[m] + U[1] * lz[m], C[2] + R[2] * lx[m] + U[2] * lz[m]};
         SvV *o = &q[k++]; o->c = c; o->x = P[0] + (eyeX - P[0]) * kk; o->y = P[1] + (eyeY - P[1]) * kk; o->z = P[2] + (eyeZ - P[2]) * kk; } }
+    if (s973DiagOn && s->own && s->box) { sh973Diag(&q[k0_], k - k0_, s->y);
+      float w_ = 0.f; for (int j = 0; j < np; j++) { float m_ = 1e9f; for (int i2 = 0; i2 < np; i2++) { float dx_ = px[j] + px[i2], dz_ = pz[j] - pz[i2], d_ = sqrtf(dx_ * dx_ + dz_ * dz_); if (d_ < m_) m_ = d_; } if (m_ > w_) w_ = m_; } s973Asym = w_; }
     if (!SV_CUT853_OLD && !bigCutBlock && ggK.tvy > 0.f && k > k0_) { unsigned u0_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
       if (svNearRisk(&q[k0_], k - k0_)) k = k0_ + svCutTris(&q[k0_], k - k0_);   // №853: у камеры — срез на процессоре
       if (smkOn) svCutUs += sceKernelGetSystemTimeLow() - u0_; }
@@ -358,7 +468,10 @@ static float slCarKX = 1.45f, slCarKZ = 1.35f, slCarA = SL_SH_DENS;   // пол�
 #define CS_ODD_HI 1.28f
 #define CS_ODD_LO .72f
 #define CS_ODD_N 4
-static float csSil[2 * CS_N]; static int csilState, csLevel = -1;   // №877: было csState — то же имя у ленты монет (coinspr.h) в одном main.c = ОДНА переменная: смена уровня перечитывала монеты (160 КБ утечки за раз), тень брала силуэт прошлой машины. csilState: 0 — не считан, 1 — необычная (тень по силуэту), -1 — обычная
+#ifndef SIL973_FLOOR
+#define SIL973_FLOOR .6f   // №973: радиус силуэта не меньше этой доли радиуса габарита по тому же лучу
+#endif
+static float csSil[2 * CS_N], csSilRaw[2 * CS_N]; static int csilState, csLevel = -1;   // №877: было csState — то же имя у ленты монет (coinspr.h) в одном main.c = ОДНА переменная: смена уровня перечитывала монеты (160 КБ утечки за раз), тень брала силуэт прошлой машины. csilState: 0 — не считан, 1 — необычная (тень по силуэту), -1 — обычная
 static void csCompute(const Car *k, const CarBox *cb) {
   if (!haveCarVis || k->destroyed || ncarP <= 0) return;
   char b_[200];
@@ -382,7 +495,10 @@ static void csCompute(const Car *k, const CarBox *cb) {
   for (int j = 0; j < CS_N; j++) { float th = ((j + .5f) * (6.2831853f / CS_N)) - 3.14159265f, sx = sinf(th), cz = cosf(th);
     float rb = fminf(fabsf(sx) > 1e-3f ? cb->hw / fabsf(sx) : 1e9f, fabsf(cz) > 1e-3f ? cb->hl / fabsf(cz) : 1e9f), q_ = R[j] / rb;
     if (q_ > CS_ODD_HI || q_ < CS_ODD_LO) odd++; if (q_ < qmin) qmin = q_; if (q_ > qmax) qmax = q_;
-    csSil[2 * j] = R[j] * sx / cb->hw; csSil[2 * j + 1] = R[j] * cz / cb->hl; }
+    csSilRaw[2 * j] = R[j] * sx / cb->hw; csSilRaw[2 * j + 1] = R[j] * cz / cb->hl;
+    // №973: симметрия по продольной оси (максимум из зеркальных секторов) и нижний порог радиуса от габарита: убирает «огрызок» (машина Апу: сектор с радиусом 0,05 габарита), контур шаттла Барта остаётся
+    float m_ = R[CS_N - 1 - j], r_ = fmaxf(R[j], m_), fl_ = SIL973_FLOOR * rb; if (r_ < fl_) r_ = fl_;
+    csSil[2 * j] = r_ * sx / cb->hw; csSil[2 * j + 1] = r_ * cz / cb->hl; }
   csilState = odd >= CS_ODD_N ? 1 : -1;
   if (smkOn) { snprintf(b_, sizeof b_, "CARSIL level=%d car=%s odd=%d sectors=%d q=%.2f..%.2f pieces=%d verts=%d hw=%.2f hl=%.2f t=%.1f\n", gameLevel, k->p.name, csilState > 0, odd, qmin, qmax, npc_, nv_, cb->hw, cb->hl, smkT); smkWrite(b_); }
 }
@@ -393,9 +509,10 @@ static void slShCar(const ColWorld *w, const Car *k, float ex, float ez) {
   float fade = 1.f - fminf(1.f, fmaxf(0.f, (cb.y + cb.lo - gy) / 6.f)), jk = slPplOld ? 1.f : svJumpK(cb.y - gy - .1f);   // №749: пол колёс выше земли — тень меньше (на земле как была)
   if (!CAR_SIL_OLD && k == &car) { if (csLevel != gameLevel) { csLevel = gameLevel; csilState = 0; }
     if (!csilState && fabsf(cb.y + cb.lo - gy) < .3f) csCompute(k, &cb);   // на земле
-    if (csilState > 0) slShSilNext = csSil; }
+    if (csilState > 0) slShSilNext = sh973 ? csSil : csSilRaw; }
+  slShOwnNext = k == &car; slShKeyNext = k; slShW = w;
   slShAdd(cb.x, gy, cb.z, n, cb.fx, cb.fz, cb.hw * slCarKX / SL_DISK * jk, cb.hl * slCarKZ / SL_DISK * jk, slCarA * fade, 1);
-  slShSilNext = 0;
+  slShSilNext = 0; slShOwnNext = 0; slShKeyNext = 0;
 }
 // №680: тень машин (flag carshspr 1 / -DCAR_SH_SPR=1): мягкий овал по размерам кузова (CarBox) вместо прямоугольной сетки по SetShadowAdjustments; у PS2 тень машины — мягкое тёмное пятно, чуть шире кузова (кадры lv2_seat, honor_v). Рисуется и у трафика, машин миссий, оставленных.
 #ifndef CAR_SH_SPR
@@ -467,7 +584,7 @@ static void svPeople(const ColWorld *w, float ex, float ez) {
 static void slShadowFrame(const ColWorld *w, float ex, float ez) {
   if ((!slShadowOn && !slOnlyHomer && !slOnlyCars) || !w) return;
   unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; SL_AC_T0;
-  slShN = 0; float n[3], gy;
+  slShN = 0; float n[3], gy; s973Frame++;
   if (haveHomer && onFoot() && !slOnlyCars) {   // Гомер: круг 0,6 м
     static float gys; static int gysOn;
     if (slGround(w, homer.x, homer.z, homer.y, &gy, n)) { float gyRaw_ = gy;   // проверка 17.10: край сравнивать с настоящей землёй, не со сглаженной (на спуске сглаженная выше — ложный край)
@@ -936,9 +1053,10 @@ static float gvTpl[2][GV_STAR_MAX][2]; static unsigned char gvTk[2][GV_STAR_MAX]
 static void gvEmitTpl(void *u, float x, float y, int k) {
   int s = *(const int *)u; if (gvTplN >= GV_STAR_MAX) return; gvTpl[s][gvTplN][0] = x; gvTpl[s][gvTplN][1] = y; gvTk[s][gvTplN] = (unsigned char)k; gvTplN++;
 }
+static float gvCoreK970 = 1.f;   // №970: доля светлой сердцевины звезды (0 у блика будки: два слоя — звезда A и звезда B, без третьего светлого ромба внутри)
 static GvV *gvStar(GvV *o, const float *c, const float *R, const float *U, float rad, int s, unsigned rgb, unsigned core, float a) {   // s: 0 — звезда A, 1 — B (+30°)
   unsigned col[5] = {gvCol(rgb, a), gvCol(rgb, a * .45f), gvCol(rgb, 0.f), gvCol(core, a * .75f), gvCol(core, 0.f)};   // ядро — тоже прозрачное: сквозь просвет трубки не белое пятно
-  if (!GLINT_SNOW900_OLD) { col[0] = col[1] = col[2] = gvCol(rgb, a); col[3] = col[4] = gvCol(core, a * .8f); }   // №900: ровная мультяшная заливка лучей и ядра
+  if (!GLINT_SNOW900_OLD) { col[0] = col[1] = col[2] = gvCol(rgb, a); col[3] = col[4] = gvCol(core, a * .8f * gvCoreK970); }   // №900: ровная мультяшная заливка лучей и ядра
   if (!GLINT_SHAPE941_OLD) col[0] = col[1] = col[2] = gvCol(rgb, a);   // №941: рабочие цвета те же, шейп общий
   if (GV_PRE_OLD) { GvEmit e = {o, c, R, U, rad, col}; if (!GLINT_SHAPE941_OLD) gvShape941(s, gvEmitWorld, &e); else gvShape(s ? .5235988f : 0.f, gvEmitWorld, &e); return e.o; }
   if (!gvTplOk) { for (int k = 0; k < 2; k++) { gvTplN = 0; if (!GLINT_SHAPE941_OLD) gvShape941(k, gvEmitTpl, &k); else gvShape(k ? .5235988f : 0.f, gvEmitTpl, &k); } gvTplOk = 1; }
@@ -984,6 +1102,14 @@ static void glintStatTick(void) {
     g944DoorOld = g944DoorNew = 0; memset(g944Cnt, 0, sizeof g944Cnt); }
   gsAdd = gsAo = gsQ = gsFl = gsUs = gsFlUs = 0; vgStatN = vgStatUs = vgStatV = 0; gsT0 = n; gsF0 = smkFrameAbs;
 }
+// №970 (Роб 25.10, ключ: «меньше и прозрачнее все слои; пульсировать случайнее, но ближе к центру; крайние хороши, а наложенные друг на друга — с задержкой по фазе и мягким easing к центру»):
+// ход двух слоёв ключа задан СКОРОСТЬЮ и фазой, не позицией. Размеры слоёв — три несоизмеримые частоты (37, 21 и 11 циклов за 60 с: «случайнее», шов при переходе часов в 60 с пропал —
+// все частоты целые за 60 с); вторая звезда отстаёт по фазе на 0,28 с; её сдвиг — угол как интеграл скорости, радиус дышит между 25 % и 100 % от GM970_RMAX (0,035 размера, было 0,06)
+// по smoothstep (ease-in-out) — к центру подходит и уходит плавно. Только ключ (gvMode970 ставит wrGlowDraw); остальные блики не тронуты. GLINT970_OLD=1 / flag glint970old 1 — как было
+static float gm970Sin(float turns) { return gvSinT(turns); }
+#define GM970_SIN gm970Sin
+#include "glintmotion970.h"
+static int gvMode970, gvOne970;   // gvOne970 — одна звезда (звёзды монет)
 static void gvAdd(const float c[3], float ex, float ey, float ez, float scale, unsigned rgb1, unsigned rgb2, float alpha, float phase) {
   if (gvNB >= 32) return;
   if (smkOn) { static int n944_, lv944_ = -1; static int16_t k944_[96][3]; if (lv944_ != gameLevel) { lv944_ = gameLevel; n944_ = 0; } if (n944_ < 96) { int16_t q_[3] = {(int16_t)lroundf(c[0]), (int16_t)lroundf(c[1]), (int16_t)lroundf(c[2])}; int j_ = 0; for (; j_ < n944_; j_++) if (!memcmp(k944_[j_], q_, sizeof q_)) break;   // №957б служебно: где в мире стоят блики (первое появление на 1 м сетке)
@@ -993,7 +1119,7 @@ static void gvAdd(const float c[3], float ex, float ey, float ez, float scale, u
   // №845 (тур TEST38 на PSP: блики — 1,5–3 мс кадра L2/L3, на блик 144 вершины считает процессор): блик вне кадра не считается; дальше GV_LOD_D —
   // одна звезда (большая); пульс — по таблице синуса (sinf на PSP медленный). GV_COST845_OLD=1 — как было
   if (!GV_COST845_OLD) { float e3_[3] = {ex, ey, ez}; if (!bonusTrack && rfSphereOut(pl, e3_, c, .6f * scale + .3f)) { if (smkOn) gsUs += sceKernelGetSystemTimeLow() - gs0_; return; } }
-  int two_ = GV_COST845_OLD || dl < GV_LOD_D;
+  int two_ = (GV_COST845_OLD || dl < GV_LOD_D) && !gvOne970;
   GvV *v = (GvV *)ggVbAlloc((gvNs(0) + (two_ ? gvNs(1) : 0u)) * sizeof(GvV));
   const float R[3] = {-dz / l, 0.f, dx / l}, U[3] = {-dy / dl * dx / l, l / dl, -dy / dl * dz / l};
   float tm = (float)(sceKernelGetSystemTimeLow() % 60000000u) * 1e-6f + phase;
@@ -1001,7 +1127,14 @@ static void gvAdd(const float c[3], float ex, float ey, float ez, float scale, u
   if (GV_COST845_OLD) { kA = 1.f + .14f * sinf(6.2831853f * tm / 1.3f); kB = 1.f + .3f * sinf(6.2831853f * tm / .85f + 2.1f); }   // пульс двух звёзд не в фазе
   else { kA = 1.f + .14f * gvSinT(tm / 1.3f); kB = 1.f + .3f * gvSinT(tm / .85f + .3342254f); }   // 2,1 рад = 0,334 оборота
   if (!GV_COST845_OLD && !GLINT_SNOW900_OLD) { kA = 1.f + .06f * gvSinT(tm / 1.3f); kB = 1.f + .12f * gvSinT(tm / .85f + .3342254f); }   // №900: пульс мягче — «блинк-блинк» сдвигом
+  float wx_ = 0.f, wy_ = 0.f;   // №970: ключ — свой ход слоёв (glintmotion970.h)
+  if (gvMode970 && !fxGlint970Old) { gm970(tm, &kA, &kB, &wx_, &wy_); wx_ *= scale; wy_ *= scale; }
   GvV *o = gvStar(v, c, R, U, .5f * scale * kA, 0, rgb1, 0xFFF0E0u, alpha);
+  if (two_ && gvMode970 && !fxGlint970Old) {
+    float cB[3] = {c[0] + R[0] * wx_ + U[0] * wy_, c[1] + R[1] * wx_ + U[1] * wy_, c[2] + R[2] * wx_ + U[2] * wy_};
+    unsigned l2 = ((((rgb2 >> 16) & 255u) + 255u) / 2u) << 16 | ((((rgb2 >> 8) & 255u) + 255u) / 2u) << 8 | (((rgb2 & 255u) + 255u) / 2u);
+    gvStar(o, cB, R, U, .5f * scale * .62f * kB, 1, l2, 0xFFF0E0u, alpha * .9f);
+  } else
   if (two_ && !GLINT_SNOW900_OLD) {   // №900: вторая звезда плавает по кругу на 6 % размера относительно первой, светлее (цвет к белому)
     float ox = .06f * scale * gvSinT(tm / 1.1f), oy = .05f * scale * gvSinT(tm / 1.1f + .25f), cB[3] = {c[0] + R[0] * ox + U[0] * oy, c[1] + R[1] * ox + U[1] * oy, c[2] + R[2] * ox + U[2] * oy};
     unsigned l2 = ((((rgb2 >> 16) & 255u) + 255u) / 2u) << 16 | ((((rgb2 >> 8) & 255u) + 255u) / 2u) << 8 | (((rgb2 & 255u) + 255u) / 2u);
@@ -1105,14 +1238,14 @@ static int glowGlintHook(const char *name, const float p[3], float w, unsigned c
 // №839: очередь бликов кадра — свечения вне прохода значков (искры fx.c, столб и звёзды подбора collectfx.c, огни машин carvis.c, квады сложением
 // карточек/ос/приколов main_collect.h, бонус-игры bonus_play.h, огни заграждений у пропов main_loop.h); сброс — после своего цикла и после частиц кадра
 #define GGQ_MAX 96
-typedef struct { float p[3], sc, a, ph; unsigned c; } GgQ;
+typedef struct { float p[3], sc, a, ph; unsigned c; int one; } GgQ;   // one — №970: одна звезда (маленькие звёзды монет)
 static GgQ ggQ[GGQ_MAX]; static unsigned ggQn, ggQdrop;
 static void glowGlintQ_(float x, float y, float z, float sc, unsigned abgr, float a, float ph) {
   if (sc < .02f || a < .004f) return; if (ggQn >= GGQ_MAX) { ggQdrop++; return; }
   gsQ++;
   if (smkOn) { static int n_, lv_ = -1; static int16_t k_[200][3]; if (lv_ != gameLevel) { lv_ = gameLevel; n_ = 0; } if (n_ < 200) { int16_t g_[3] = {(int16_t)lroundf(x), (int16_t)lroundf(y), (int16_t)lroundf(z)}; int j_ = 0; for (; j_ < n_; j_++) if (!memcmp(k_[j_], g_, sizeof g_)) break;
       if (j_ == n_) { memcpy(k_[n_++], g_, sizeof g_); char l_[160]; snprintf(l_, sizeof l_, "GQ944 lv=%d site=%s p=%.1f,%.1f,%.1f sc=%.2f abgr=%06x a=%.2f\n", gameLevel, gq944Site ? gq944Site : "?", x, y, z, sc, abgr & 0xffffffu, a); smkWrite(l_); } } }   // №957б служебно: квады свечения пропов, ставшие бликом
-  GgQ *q = &ggQ[ggQn++]; q->p[0] = x; q->p[1] = y; q->p[2] = z; q->sc = sc > GG_MAX ? GG_MAX : sc; q->a = a > 1.f ? 1.f : a; q->ph = ph; q->c = abgr & 0xFFFFFFu;
+  GgQ *q = &ggQ[ggQn++]; q->p[0] = x; q->p[1] = y; q->p[2] = z; q->sc = sc > GG_MAX ? GG_MAX : sc; q->a = a > 1.f ? 1.f : a; q->ph = ph; q->c = abgr & 0xFFFFFFu; q->one = fxGlintOne970;
 }
 static const char *gq944Site;   // служебно: кто поставил квад в очередь бликов
 static void glowQuadQ(const float *v, unsigned abgr, float ph) {   // квад (4 угла v[12]) -> блик в его центре, размер — бо́льшая сторона × GG_K
@@ -1123,7 +1256,7 @@ static void glowQuadQ(const float *v, unsigned abgr, float ph) {   // квад (
 static void glowGlintFlush(float ex, float ey, float ez) {
   for (unsigned s = 0; s < ggQn; s += 32) { unsigned n = ggQn - s > 32 ? 32 : ggQn - s; glintBegin(n);
     for (unsigned k = s; k < s + n; k++) { if (!GV_COST845_OLD) { float dx_ = ggQ[k].p[0] - ex, dy_ = ggQ[k].p[1] - ey, dz_ = ggQ[k].p[2] - ez; if (dx_ * dx_ + dy_ * dy_ + dz_ * dz_ > GV_Q_D * GV_Q_D) continue; }   // №845
-      glintAdd(ggQ[k].p, ex, ey, ez, ggQ[k].sc, ggQ[k].c, ggQ[k].c, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * ggQ[k].a, ggQ[k].ph); }
+      gvOne970 = ggQ[k].one; glintAdd(ggQ[k].p, ex, ey, ez, ggQ[k].sc, ggQ[k].c, ggQ[k].c, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * ggQ[k].a, ggQ[k].ph); gvOne970 = 0; }
     glintFlush(); }
   ggQn = 0;
 }
@@ -1172,6 +1305,18 @@ static void aoBillGlint(unsigned i, const float *v, uint32_t col, float ex, floa
   float h = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]));
   glintAdd(c, ex, ey, ez, w > h ? w : h, col & 0xFFFFFFu, col & 0xFFFFFFu, (float)(col >> 24) / 255.f * AO_GLINT_K, (float)i * .41f);
 }
+#ifndef WRENCH970_S
+#define WRENCH970_S .7f   // №970: размер блика ключа от TEST66
+#endif
+#ifndef WRENCH970_A
+#define WRENCH970_A .6f   // №970: прозрачность блика ключа (доля от TEST66)
+#endif
+#ifndef PHONE970_CORE
+#define PHONE970_CORE 0.f // №970: сердцевина блика будки (0 — нет: два слоя вместо трёх)
+#endif
+#ifndef PHONE970_A
+#define PHONE970_A .5f    // №970: блик будки «слишком яркий» — вдвое прозрачнее
+#endif
 static void wrGlowDraw(float ex, float ey, float ez, int inR) {
   if (!wrGlowOn || inR || !haveCol || !world.nwrench || !haveSP) return;
   if (smkOn) { static const void *wl_; if (wl_ != (const void *)world.wrench) { wl_ = world.wrench; char l_[200]; int o_ = snprintf(l_, sizeof l_, "WRENCHAT n=%u", world.nwrench);
@@ -1189,7 +1334,9 @@ static void wrGlowDraw(float ex, float ey, float ez, int inR) {
       float c3[3] = {W->p[0], W->p[1] + WRGLOW_CY, W->p[2]};
       if (rfSphereOut(pl, e3, c3, 3.f)) continue;
       float l = sqrtf(dx * dx + dz * dz); if (l < 1e-3f) l = 1e-3f; c3[0] += dx / l * .9f; c3[2] += dz / l * .9f;   // DIST -0.9 диска: за ключом от камеры
-      glintAdd(c3, ex, ey, ez, 5.22f, 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * f, (float)k * .37f); n0++;   // цвета оригинала: (133,38,255) и (64,70,255) / (72,91,255)
+      gvMode970 = 1;   // №970: меньше (WRENCH970_S) и прозрачнее (WRENCH970_A) во всех слоях, свой ход слоёв
+      glintAdd(c3, ex, ey, ez, 5.22f * (fxGlint970Old ? 1.f : WRENCH970_S), 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * f * (fxGlint970Old ? 1.f : WRENCH970_A), (float)k * .37f); n0++;
+      gvMode970 = 0;   // цвета оригинала: (133,38,255) и (64,70,255) / (72,91,255)
     }
     if (smkOn) { wrGlowQuads += n0 * 2; wrGlowFrames++; }
     glintFlush();
@@ -1387,7 +1534,7 @@ static int iconSprHook(const char *name, const float *c, const float *cr, const 
       if (a == WS_EXCL && !GLINT_VEC_OLD) { p[0] = cr[0]; p[2] = cr[2]; }   // «!» стоит в позе покоя — блик под ним, не у свечения клипа
       dx = p[0] - ex; dz = p[2] - ez; l = sqrtf(dx * dx + dz * dz);
       if (l > 1e-3f) { p[0] += dx / l * gd; p[2] += dz / l * gd; }
-      glintBegin(1); glintAdd(p, ex, ey, ez, gs, 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * MARK_GLINT_K, (float)a * .53f);   /* №908 */ glintFlush(); sceGuDisable(GU_FOG); } }
+      glintBegin(1); gvCoreK970 = (a == WS_PHONE && !fxGlint970Old) ? PHONE970_CORE : 1.f; glintAdd(p, ex, ey, ez, gs, 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * MARK_GLINT_K * (a == WS_PHONE && !fxGlint970Old ? PHONE970_A : 1.f), (float)a * .53f);   /* №908, №970: будка */ gvCoreK970 = 1.f; glintFlush(); sceGuDisable(GU_FOG); } }
   static unsigned logged_; if (smkOn && !(logged_ & (1u << a))) { logged_ |= 1u << a; char l_[160]; snprintf(l_, sizeof l_, "ICONSPR %s c=%.2f,%.2f,%.2f tilt=%.2f g=%.2f,%.2f,%.2f gw=%.2f gd=%.2f\n", name, c[0], c[1], c[2], tilt, g[0], g[1], g[2], gs, gd); smkWrite(l_); }
   if (a == WS_EXCL && !EXCL_PIVOT_OLD) { float p3[3] = {br[0], bt[1], br[2]};
     if (!EXCL_EASE_OLD) wsAddPivOff(a, p3, EXCL_TILT_K * (16.95f * 3.1415927f / 180.f) * cosf(6.2831853f * cf / 30.f), pv[0], pv[1], EXCL_NUDGE_X, EXCL_NUDGE_Y);

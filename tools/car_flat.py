@@ -7,7 +7,7 @@
 
 По каждой текстуре пакета — решение тем же разбором, что у стен города (tools/flat_list.py classify): заливка (тон; перелив — цвет вершин, запечённая светотень) или текстура
 (рисунок: фары, решётки, надписи, колёса, прозрачность). Кусок с флагом полупрозрачности, сложения, неба и кусок на текстуре, которую делят с таким куском, заливкой не идёт."""
-import struct, sys
+import os, struct, sys
 from pathlib import Path
 import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -37,7 +37,7 @@ def load_trf(path):
     pieces = []
     for i in range(nPiece):
         r = struct.unpack_from('<6fiiiii4f5I', f, offPiece + 80 * i)
-        pieces.append(dict(tex=r[6], flags=r[7], nv=r[8], ni=r[9], owner=r[10], off=r[15], abs=vertOff + r[15], wheel=r[18], lod=r[19]))
+        pieces.append(dict(tex=r[6], flags=r[7], nv=r[8], ni=r[9], owner=r[10], off=r[15], abs=vertOff + r[15], wheel=r[18], lod=r[19], geo=r[11:15]))
     return f, tex, models, pieces, (vertOff, vertBytes)
 
 
@@ -90,7 +90,7 @@ def tri_texels(t, px, uv3):
     return r if r.size else px[[int(tri[:, 1].mean()) % h], [int(tri[:, 0].mean()) % w]]
 
 
-ERR_MAX, SPLIT_MIN, TAIL_MIN, TAIL_PCT = 14.0, 0.40, 4, 0.04   # ступень 2: треугольник идёт заливкой, если цвета его трёх вершин (взятые с текстуры в точках вершин) с переливом по треугольнику (Гуро) отличаются от текстуры по всей области в среднем не больше 14 (RGB); кусок идёт, если заливкой ≥ 40 % его треугольников; хвост с рисунком не больше 4 треугольников или 4 % куска заливается вместе (второй вызов дороже)
+ERR_MAX, SPLIT_MIN, TAIL_MIN, TAIL_PCT = float(os.environ.get('CARFLAT_ERR', 30.0)), 0.40, 4, 0.04   # №971: 30 (было 14, CARFLAT_ERR=14 — как в TEST66): рисунок в хвосте куска 12 % -> 7 %   # ступень 2: треугольник идёт заливкой, если цвета его трёх вершин (взятые с текстуры в точках вершин) с переливом по треугольнику (Гуро) отличаются от текстуры по всей области в среднем не больше 14 (RGB); кусок идёт, если заливкой ≥ 40 % его треугольников; хвост с рисунком не больше 4 треугольников или 4 % куска заливается вместе (второй вызов дороже)
 PIECE_EXCL = 1 | 2 | 4 | (1 << 24) | (1 << 26)
 import os
 ONLY = {int(x) for x in os.environ['CARFLAT_ONLY'].split(',')} if os.environ.get('CARFLAT_ONLY') else None   # служебно: только эти куски (разбор «что даёт грани»)
@@ -159,6 +159,47 @@ def piece_split(f, t, p):
     return len(flat), flat + det, cl
 
 
+
+# №972 (Роб 25.10: «у машин NPC колёса и днище просвечивают цветом кузова, а не чёрным, издалека очень заметно»): причина — recolor956 поджимал яркость треугольника снизу (k >= 0,6), и тёмные части куска кузова
+# (арки колёс, днище, шины в дальней версии, где колёса слиты с кузовом) получали тон кузова на 60 %. Теперь треугольник заливки, который в оригинале тёмный (серое < DARK_T и темнее 0,85 среднего куска) или смотрит вниз
+# (днище, внутренность арки, нижняя кромка бампера), красится нейтральным почти чёрным: оригинальный цвет × DARK_MUL, не выше DARK_CAP. У колёсных кусков (wheel != 0) темнеет только шина (серое < DARK_T); остов huskA и полицейские, скорая и т. п. по списку KEEP956 перекраске не подлежат, но тёмный низ у них тот же. CARFLAT_DARK972_OLD=1 — как до правки
+DARK_T, DARK_REL, DARK_MUL, DARK_CAP, DOWN_NY, DOWN_H = 0.28, 0.85, 0.35, 36, -0.35, 0.5
+DARK972 = os.environ.get('CARFLAT_DARK972_OLD') != '1'
+
+
+def tri_positions(f, p):
+    """-> (ntri, 3, 3) координаты вершин куска (модель), как в движке: o + sc / 32768 * int16"""
+    vs = 12 if p['flags'] & 32 else 16; xo = 6 if vs == 12 else 8; n = p['ni'] // 3 * 3
+    raw = np.frombuffer(f, np.uint8, n * vs, p['abs']).reshape(n, vs)
+    xyz = np.stack([np.frombuffer(raw[:, xo + 2 * k: xo + 2 * k + 2].tobytes(), '<i2') for k in range(3)], 1).astype(float)
+    ox, oy, oz, sc = p['geo']
+    return (np.array([ox, oy, oz]) + sc / 32768. * xyz).reshape(-1, 3, 3)
+
+
+def down_faces(f, p):
+    """-> bool на каждый треугольник куска: смотрит вниз (знак нормали сверяется по самым верхним горизонтальным граням куска; обход вершин у данных зеркальный, поэтому знак берётся по куску)"""
+    P = tri_positions(f, p); N = np.cross(P[:, 1] - P[:, 0], P[:, 2] - P[:, 0]); L = np.linalg.norm(N, axis=1); N = N / np.maximum(L[:, None], 1e-9)
+    y = P[:, :, 1].mean(1); top = (y >= np.percentile(y, 90)) & (np.abs(N[:, 1]) > .8) & (L > 1e-9)
+    s = float(np.sign(np.median(N[top, 1]))) if top.any() else 1.
+    return ((N[:, 1] * (s or 1.)) < DOWN_NY) & (y < y.min() + DOWN_H * (y.max() - y.min()))   # только нижняя часть куска: козырёк и стойки у крыши тоже смотрят вниз, но это не днище
+
+
+def darken972(f, p, perm, K, src, cols):
+    """src — цвета вершин заливки до №956, cols — после; -> cols, где тёмные и нижние треугольники заливки нейтрально почти чёрные"""
+    if not DARK972 or p.get('geo') is None: return cols
+    a = np.array(src, float).reshape(-1, 3, 3) / 255.; g = a.mean((1, 2)); mean = float(g.mean())
+    if p['wheel']: dark = g < DARK_T   # колесо: шина (тёмная) — почти чёрная, ступица остаётся
+    else:
+        ay = tri_positions(f, p)[:, :, 1].mean(1); low = (ay < ay.min() + DOWN_H * (ay.max() - ay.min()))[np.array(perm[:K])]   # нижняя часть куска: у крыши и капота тёмные полосы (рамка стекла, козырёк) — не днище
+        dark = (((g < DARK_T) & (g < DARK_REL * mean)) & low) | down_faces(f, p)[np.array(perm[:K])]
+    if not dark.any(): return cols
+    out = np.array(cols, float).reshape(-1, 3, 3)
+    d = np.minimum(np.array(src, float).reshape(-1, 3, 3) * DARK_MUL, DARK_CAP)
+    out[dark] = d[dark]
+    return [tuple(int(round(x)) for x in c) for c in out.reshape(-1, 3)]
+
+
+
 def split_records(f, tex, pieces, names=None):
     import struct as S
     body = bytearray(); cnt = 0
@@ -167,7 +208,8 @@ def split_records(f, tex, pieces, names=None):
         r = piece_split(f, tex[p['tex']], p)
         if r is None: continue
         K, perm, cols = r; ntri = p['ni'] // 3
-        cols = recolor956(names[j] if names else None, p['wheel'], cols)   # №956
+        src = cols; cols = recolor956(names[j] if names else None, p['wheel'], cols)   # №956
+        cols = darken972(f, p, perm, K, src, cols)   # №972
         rec = S.pack('<III', j, ntri, K) + b''.join(bytes(c) for c in cols)
         if K < ntri: rec += S.pack('<%dH' % ntri, *perm)
         rec += b'\0' * (-len(rec) % 4); body += rec; cnt += 1   # запись кратна 4 Б: движок читает слова без невыровненного доступа
@@ -257,7 +299,7 @@ def load_mcr(path):
         pieces = []
         for i in range(npc_):
             r = struct.unpack_from('<6fiiiii4f5I', f, blk + 80 * i)
-            pieces.append(dict(tex=r[6], flags=r[7], nv=r[8], ni=r[9], owner=r[10], off=r[15], abs=blk + vOff + r[15], wheel=r[18], lod=r[19]))
+            pieces.append(dict(tex=r[6], flags=r[7], nv=r[8], ni=r[9], owner=r[10], off=r[15], abs=blk + vOff + r[15], wheel=r[18], lod=r[19], geo=r[11:15]))
         out.append((name, f, tex, pieces))
     return out
 

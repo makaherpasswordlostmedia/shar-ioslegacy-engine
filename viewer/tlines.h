@@ -48,10 +48,12 @@ static unsigned tlDc[2], tlWords;   // №912 диагностика: подач
 #endif
 #define TL_SEL_MAX 400
 typedef struct { const TlCell *C; int pass, n, age; float e[3], oy; unsigned lines; unsigned short idx[TL_SEL_MAX]; } TlSel;
-static TlSel tlSel[4]; static unsigned tlSelHit, tlSelMiss, tlSelOver;   // tlSelOver: отборов, где кусков больше TL_SEL_MAX (хвост молча не рисовался — Надзор 24.10)
+static TlSel tlSel[8]; static unsigned tlSelHit, tlSelMiss, tlSelOver;   // tlSelOver: отборов, где кусков больше TL_SEL_MAX (хвост молча не рисовался — Надзор 24.10)
+static float tlRangeOv;   // №978: >0 — своя дальность отбора клеток (линии края дороги), м
 static int tlKeep(const TlCell *C, const int16_t *Y, unsigned c, int pass, float ex, float ey, float ez, float oy) {   // запись в отборе кадра: дальность, полоса над головой, толстая линия только вблизи
   float ox = C[c].cx * TL_CELL, oz = C[c].cz * TL_CELL;
-  if (ex < ox - TL_RANGE || ex > ox + TL_CELL + TL_RANGE || ez < oz - TL_RANGE || ez > oz + TL_CELL + TL_RANGE) return 0;
+  float rg_ = tlRangeOv > 0.f ? tlRangeOv : (float)TL_RANGE;   // №978: у линий края дороги дальность короче
+  if (ex < ox - rg_ || ex > ox + TL_CELL + rg_ || ez < oz - rg_ || ez > oz + TL_CELL + rg_) return 0;
   if (Y) { float nx_ = ex < ox ? ox : ex > ox + TL_CELL ? ox + TL_CELL : ex, nz_ = ez < oz ? oz : ez > oz + TL_CELL ? oz + TL_CELL : ez;   // №774: полоса над головой
     if (Y[c] * .01f + oy - ey > TL_ABOVE + TL_ABOVE_K * sqrtf((nx_ - ex) * (nx_ - ex) + (nz_ - ez) * (nz_ - ez))) return 0; }
   if (pass && !TOONLINE_W779_OLD) { float nx_ = ex < ox ? ox : ex > ox + TL_CELL ? ox + TL_CELL : ex, nz_ = ez < oz ? oz : ez > oz + TL_CELL ? oz + TL_CELL : ez;   // №779: 2 px — только вблизи
@@ -73,8 +75,8 @@ static unsigned tlDrawSet(const TlCell *C, const int16_t *V, const int16_t *Y, u
     return n;
   }
   if (tlSelReset) { memset(tlSel, 0, sizeof tlSel); tlSelReset = 0; }
-  TlSel *s = 0; for (int k = 0; k < 4; k++) if (tlSel[k].C == C && tlSel[k].pass == pass) { s = &tlSel[k]; break; }
-  if (!s) { for (int k = 0; k < 4; k++) if (!tlSel[k].C) { s = &tlSel[k]; break; } if (!s) s = &tlSel[0]; s->C = C; s->pass = pass; s->age = 1 << 20; }
+  TlSel *s = 0; for (int k = 0; k < 8; k++) if (tlSel[k].C == C && tlSel[k].pass == pass) { s = &tlSel[k]; break; }
+  if (!s) { for (int k = 0; k < 8; k++) if (!tlSel[k].C) { s = &tlSel[k]; break; } if (!s) s = &tlSel[0]; s->C = C; s->pass = pass; s->age = 1 << 20; }
   float dx = ex - s->e[0], dy = ey - s->e[1], dz = ez - s->e[2];
   if (s->age >= TL_REUSE_AGE || s->oy != oy || dx * dx + dy * dy + dz * dz > TL_REUSE * TL_REUSE) {   // пересчёт отбора
     int k = 0; unsigned lines = 0;

@@ -1,0 +1,11 @@
+### №944 лист на чёрном: звезда входа (msnart.c) тем же путём, что у двери в игре (flag glintlab 2); растр — rasterdoor.py
+scene F_LAB944
+flag cfgdefaults 1
+flag repair
+wait 4
+flag glintlab 2
+wait 1
+shot lab
+wait 0.4
+shot lab_b
+end

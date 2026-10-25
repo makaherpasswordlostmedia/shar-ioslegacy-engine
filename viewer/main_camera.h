@@ -81,7 +81,7 @@ static float rayCarFrac(const float a[3], const float b[3], const Car *k) {
 static float camCarsFrac(const float a[3], const float b[3]) {
   if (camCarsOld) return 1.f;
   float f = 1.f, mx = (a[0] + b[0]) * .5f, mz = (a[2] + b[2]) * .5f, R = hypotf(b[0] - a[0], b[2] - a[2]) * .5f + 8.f;
-#define CAMCAR(K) do { const Car *k_ = (K); if (hypotf(k_->x - mx, k_->z - mz) < R) { float g_ = rayCarFrac(a, b, k_); if (g_ < f) f = g_; } } while (0)
+#define CAMCAR(K) do { const Car *k_ = (K); if (hypotf(k_->x - mx, k_->z - mz) < R) { float g_ = rayCarFrac(a, b, k_); if (g_ < f) { f = g_; CarBox cb_; carBox(k_, &cb_); homerCamCarTop = cb_.y + cb_.hi; } } } while (0)   // №982: верх задержавшего кузова — камере у машины над крышей
   if (haveTraffic) {
     for (int i = 0; i < traffic.maxCars; i++) if (traffic.car[i].mode != TRM_OFF) CAMCAR(&traffic.car[i].car);
     for (int i = 0; i < traffic.npark; i++) if (!traffic.park[i].gone) CAMCAR(&traffic.park[i].car);
@@ -204,9 +204,9 @@ static void camSubReport(void) {
   unsigned n_ = sceKernelGetSystemTimeLow(); csubN++; if (!csubT0) csubT0 = n_;
   if (n_ - csubT0 < 1000000u) return;
   char l_[300]; float k_ = 1.f / (float)csubN;
-  snprintf(l_, sizeof l_, "CAMSUB t=%.1f n=%u chase=%.0f safe=%.0f floor=%.0f dbg=%.0f camf=%.0f fnear=%.0f nfr=%.0f rw=%.0f rays=%.1f nf=%.2f mm=%u (мкс на кадр)\n", smkT, csubN,
+  snprintf(l_, sizeof l_, "CAMSUB t=%.1f n=%u chase=%.0f safe=%.0f floor=%.0f dbg=%.0f camf=%.0f fnear=%.0f nfr=%.0f rw=%.0f rays=%.1f nf=%.2f mm=%u still=%u (мкс на кадр)\n", smkT, csubN,
            csubT[0] * k_, csubT[1] * k_, csubT[2] * k_, csubT[3] * k_, csubT[4] * k_, csubT[5] * k_, csubT[6] * k_, csubT[7] * k_,
-           (csRayCalls - csubRay0) * k_, (csNfCalls - csubNf0) * k_, csRaysMismatch);
+           (csRayCalls - csubRay0) * k_, (csNfCalls - csubNf0) * k_, csRaysMismatch, csNfStillHit);
   smkWrite(l_); memset(csubT, 0, sizeof csubT); csubN = 0; csubT0 = n_; csubRay0 = csRayCalls; csubNf0 = csNfCalls;
 }
 #define CPT0 unsigned cpt_ = cgProf ? sceKernelGetSystemTimeLow() : 0

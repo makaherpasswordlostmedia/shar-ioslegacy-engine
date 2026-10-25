@@ -51,18 +51,25 @@ int cfxPlay(const char *name, const float pos[3]) {
   return n;
 }
 
+// №976 (Роб 25.10: «звёздочки спиралью как ДНК — красивая анимация, но слишком насыщенные: прозрачнее; доработать движение»; канон кинематики: скорость и фаза, не позиция, без рывков,
+// мягкое появление и исчезание): прежний ход — высота линейно 25 м/с и обрыв на 12 м (излом скорости), звёзды появлялись в кадре, когда фронт проходил очередную ступень (щелчок),
+// прозрачность линейными рампами. Теперь: скорость фронта плавно падает до нуля у вершины (h = H(1 − (1 − t/T)²)), каждая звезда входит и выходит по smoothstep (по расстоянию от
+// фронта и по времени), радиус спирали раскрывается и закрывается мягко, общая прозрачность COL976_A. Фаза спирали — по-прежнему равномерная угловая скорость. GLINT976_OLD=1 — как было
+#include "glintmotion976.h"
 static void columnFrame(float dt) {
   int tex = fxTexFind("glowsolid.bmp");
   for (int i = 0; i < CFX_COL_MAX; i++) {
     CfxCol *c = &col[i]; if (!c->on) continue;
-    float t = c->t, h = fminf(CFX_COL_H, 25.f * t);
-    float a = fminf(1.f, t / .1f) * (t > .65f ? fmaxf(0.f, (CFX_COL_LIFE - t) / (CFX_COL_LIFE - .65f)) : 1.f);
+    float t = c->t, h, a, rad = .35f, k976 = 1.f;
+    if (fxGlint976Old) { h = fminf(CFX_COL_H, 25.f * t); a = fminf(1.f, t / .1f) * (t > .65f ? fmaxf(0.f, (CFX_COL_LIFE - t) / (CFX_COL_LIFE - .65f)) : 1.f); }
+    else { gm976Col(t, CFX_COL_H, CFX_COL_LIFE, &h, &a, &rad); k976 = COL976_A; }
     if (tex >= 0 && h > .2f && a > .01f) {
       float lvl = .42f * a; unsigned v = (unsigned)(lvl * 255.f + .5f);
       unsigned col32 = 0xff000000u | (v << 16) | ((unsigned)(lvl * .85f * 255.f + .5f) << 8) | (unsigned)(lvl * .6f * 255.f + .5f);   // abgr: бледно-голубой
-      for (float y = 0.f; y < h; y += .7f) {
-        float ph = y * 1.8f - t * 9.f, sx = .35f * cosf(ph), sz = .35f * sinf(ph);
-        if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(c->p[0] + sx, c->p[1] + y, c->p[2] + sz, 1.05f, 0xFFFFD999u, a, y * .37f); cfxSprites++; continue; }   // №839: столб — бликами
+      for (float y = 0.f; y < h + (fxGlint976Old ? 0.f : COL976_SOFT * .2f); y += .7f) {
+        float ph = y * 1.8f - t * 9.f, sx = rad * cosf(ph), sz = rad * sinf(ph), ya = a;
+        if (!fxGlint976Old) { ya = gm976Star(a, h, y); if (ya < .01f) continue; }
+        if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(c->p[0] + sx, c->p[1] + y, c->p[2] + sz, 1.05f, 0xFFFFD999u, ya * k976, y * .37f); cfxSprites++; continue; }   // №839: столб — бликами
         fxSprite(tex, c->p[0] + sx, c->p[1] + y, c->p[2] + sz, 1.5f, 1.5f, 0.f, col32, 1, 0);
         fxSprite(tex, c->p[0] - sx, c->p[1] + y + .35f, c->p[2] - sz, 1.5f, 1.5f, 0.f, col32, 1, 0);
         cfxSprites += 2;
@@ -84,7 +91,7 @@ void cfxFrame(float dt) {
       if (b->blend ? fmaxf(v[2], fmaxf(v[3], v[4])) <= .004f : v[5] <= .004f) continue;   // погасший квад не тратит заливку
       if (b->blend == 1 && fxGlowGlint && !GLOW_GLINT_OLD) {   // №839: звезда/вспышка сложением — векторным бликом
         unsigned c_ = 0; for (int c = 0; c < 3; c++) { float x = v[2 + c] * 255.f + .5f; c_ |= (x <= 0.f ? 0u : x >= 255.f ? 255u : (unsigned)x) << (8 * c); }
-        fxGlowGlint(r->p[0] + b->off[0], r->p[1] + b->off[1], r->p[2] + b->off[2], fmaxf(v[0], v[1]) * .7f, c_, 1.f, (float)k * .53f); cfxSprites++; continue; }
+        fxGlowGlint(r->p[0] + b->off[0], r->p[1] + b->off[1], r->p[2] + b->off[2], fmaxf(v[0], v[1]) * .7f, c_, fxGlint976Old ? 1.f : COL976_A, (float)k * .53f); cfxSprites++; continue; }
       int tex = fxTexFind(b->tex); if (tex < 0) continue;
       unsigned c8[4]; for (int c = 0; c < 4; c++) { float x = v[2 + c] * 255.f + .5f; c8[c] = x <= 0.f ? 0u : x >= 255.f ? 255u : (unsigned)x; }
       fxSprite(tex, r->p[0] + b->off[0], r->p[1] + b->off[1], r->p[2] + b->off[2], v[0], v[1], 0.f,

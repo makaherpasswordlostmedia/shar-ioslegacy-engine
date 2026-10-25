@@ -79,5 +79,6 @@ const void *bwTraffic(void);
 int bwTrafficCounts(int *cars, int *peds, int *parked);   // сейчас едет машин, идёт пешеходов, стоящих мест; 0 — трафика нет
 void bwPlantCar(float x, float y, float z, float h);
 void bwHitTraffic(Car *c);
+extern unsigned long long bwPhaseNs[8]; extern int bwProf;   // №984 стенд city984: время фаз bwStep, нс (при bwProf = 1)
 extern int bwLastDeathZone;  // Observation only: actual gameDeath return in last bwStep, -1 otherwise.
 #endif

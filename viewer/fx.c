@@ -329,7 +329,17 @@ static void applyDead(void) {   // умершие частицы задания 
   for (int k = 0; k < FJ.ndead; k++) { Inst *s = &in_[FJ.dead[k].inst]; s->live[FJ.dead[k].em - S[s->sys].firstEmit]--; s->nlive--; }
   FJ.ndead = 0;
 }
+// №976 (Роб 25.10: «точка, куда надо дойти: голубой кружок на полу — проверить, что векторный, ровный край; звёздочки, что танцуют спиралью как ДНК и исчезают, когда заходишь, — слишком
+// насыщенные, прозрачнее и доработать движение»): кружок — vecGlowHook (lightsprite.h), уже векторный, но 18 сторон: у сферы цели — SPHERE976_N сторон, пока ближе VG_LOD_D; столб звёзд
+// (collectfx.c) — прозрачность COL976_A и ход по канону кинематики. GLINT976_OLD=1 / flag glint976old 1 — как TEST66
+#ifndef GLINT976_OLD
+#define GLINT976_OLD 0
+#endif
+int fxGlint976Old = GLINT976_OLD;
+int fxGlintOne970;   // №970 (fx.h)
+static int coinSat970;   // №970: сколько монет кадра уже получили три звезды (сброс в fxUpdate)
 void fxUpdate(float dt) {
+  coinSat970 = 0;   // №970: новый кадр — счёт монет с тремя звёздами заново
   if (!ready) return;
   if (dt > .1f) dt = .1f;
   if (simPend) { FJ.E = E; FJ.stage = FXD_SIM; fxdRun(&FJ); applyDead(); simPend = 0; }
@@ -416,11 +426,47 @@ void fxSparkle(float x, float y, float z, float size, float phase) { fxSparkleC(
 #ifndef COIN_GLINT_LIFT
 #define COIN_GLINT_LIFT .3f
 #endif
+// №970 (Роб 25.10: «на монетке блик другой: меньше, но несколько маленьких вокруг монетки»): вместо одной звезды в центре — COIN_SAT_N маленьких на кольце вокруг монеты в плоскости,
+// перпендикулярной взгляду (центр кольца — центр монеты, сдвиг к глазу вдоль луча тот же, что в №965: все звёзды целиком перед монетой). Кольцо поворачивается со вращением монеты,
+// размеры и радиусы у звёзд разные (не «часы»). Дальше COIN_SAT_D м — одна маленькая в центре (цена: каждая звезда — своя пачка вершин). GLINT970_OLD=1 / flag glint970old 1 — как №965
+#ifndef GLINT970_OLD
+#define GLINT970_OLD 0
+#endif
+int fxGlint970Old = GLINT970_OLD;
+#ifndef COIN_SAT_N
+#define COIN_SAT_N 3
+#endif
+// цена (просьба 25.10: три звезды у каждой монеты +0,5 мс PSP — дорого): звёзды маленькие, поэтому ОДНА звезда на блик (вторая не нужна), три звезды — только у монет ближе COIN_SAT_NEAR
+// м и не больше COIN_SAT_MAXN монет за кадр; до COIN_SAT_FAR м — одна маленькая звезда в центре; дальше блика нет. Вершины всех звёзд кадра — общим списком в одном вызове (gvFlush)
+#ifndef COIN_SAT_NEAR
+#define COIN_SAT_NEAR 11.f
+#endif
+#ifndef COIN_SAT_FAR
+#define COIN_SAT_FAR 22.f
+#endif
+#ifndef COIN_SAT_MAXN
+#define COIN_SAT_MAXN 6
+#endif
+#ifndef COIN_SAT_A
+#define COIN_SAT_A .4f
+#endif   // доля прозрачности маленькой звезды: меньше размер — можно чуть плотнее, суммарный свет не растёт
 void fxSparkleCoin(float x, float y, float z, float size, float phase, float ex, float ey, float ez) {
-  float k = 1.f;
-  if (!COIN_GLINT965_OLD) { float dx = ex - x, dy = ey - y, dz = ez - z, d = sqrtf(dx * dx + dy * dy + dz * dz), o = COIN_GLINT_LIFT;
+  float k = 1.f, dx = ex - x, dy = ey - y, dz = ez - z, d = sqrtf(dx * dx + dy * dy + dz * dz);
+  if (!COIN_GLINT965_OLD) { float o = COIN_GLINT_LIFT;
     if (d > o + .3f) { k = (d - o) / d; x += dx * (o / d); y += dy * (o / d); z += dz * (o / d); } }   // ближе — монета у самых глаз, сдвиг не нужен
-  fxSparkleCA(x, y, z, size * COIN_GLINT_S * k, phase, 0xffc8f0ff, COIN_GLINT_A);
+  if (fxGlint970Old || COIN_GLINT965_OLD || d < .3f) { fxSparkleCA(x, y, z, size * COIN_GLINT_S * k, phase, 0xffc8f0ff, COIN_GLINT_A); return; }
+  if (d > COIN_SAT_FAR) return;   // далеко: блика нет
+  fxGlintOne970 = 1;
+  if (d > COIN_SAT_NEAR || coinSat970 >= COIN_SAT_MAXN) { fxSparkleCA(x, y, z, size * .3f * k, phase, 0xffc8f0ff, COIN_SAT_A); fxGlintOne970 = 0; return; }
+  coinSat970++;
+  static const float sz[COIN_SAT_N] = {.2f, .15f, .18f}, rho[COIN_SAT_N] = {.36f, .42f, .33f}, ang0[COIN_SAT_N] = {.4f, 2.6f, 4.5f};   // размер звезды и радиус кольца — доли size
+  float vx = dx / d, vy = dy / d, vz = dz / d, rl = sqrtf(vx * vx + vz * vz); if (rl < 1e-3f) { fxSparkleCA(x, y, z, size * .3f * k, phase, 0xffc8f0ff, COIN_SAT_A); fxGlintOne970 = 0; return; }
+  float Rx = -vz / rl, Rz = vx / rl, Ux = -vy * vx / rl, Uy = rl, Uz = -vy * vz / rl;   // оси экрана: вправо (горизонталь), вверх
+  for (int j = 0; j < COIN_SAT_N; j++) {
+    float a = ang0[j] + phase * 6.2831853f * .7f, ca = cosf(a), sa = sinf(a), r = rho[j] * size * k;
+    fxSparkleCA(x + (Rx * ca + Ux * sa) * r, y + Uy * sa * r, z + (Rz * ca + Uz * sa) * r, size * sz[j] * k, phase + (float)j * .31f, 0xffc8f0ff, COIN_SAT_A);
+  }
+  fxGlintOne970 = 0;
 }
 
 // ---------- рисование ----------

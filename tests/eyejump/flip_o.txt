@@ -1,0 +1,16 @@
+# №916в/№980: перескок камеры у стены по записи PS2 (CAM_WALL_PS2) — фасад L1 z 180,9: Гомер идёт на стену, камера упирается и прыгает на другую сторону. Одно место, один перескок: CAMJUMP > 1,5 м не больше одного (--cuts 1)
+wait 12
+flag cfgdefaults 1
+flag player
+flag caminlog
+flag camflip1old 1
+scene FLIP_L1
+foot 254 180.2 3.1416
+wait 3
+flag camin 1
+press up 8
+wait 9
+flag camin
+scene Z_END
+wait 1
+end

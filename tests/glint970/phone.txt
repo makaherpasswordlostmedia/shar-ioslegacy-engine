@@ -1,0 +1,17 @@
+### №970 будка L1: камера на значок-трубку над будкой 0 (flag phonego), кадры через 0,3 с. @OLD@ = 1 — как TEST66
+scene BQ_load
+flag golevel 1
+flag glint970old @OLD@
+wait 15
+flag player 1
+scene PH3
+flag phonego 0
+wait 2.5
+shot ph0
+wait 0.3
+shot ph1
+wait 0.3
+shot ph2
+wait 0.3
+shot ph3
+end
