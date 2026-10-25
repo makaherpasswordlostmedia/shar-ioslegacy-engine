@@ -1,0 +1,40 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 5
+scene T
+flag repair
+goto 221.98 140.65 3.1416
+wait 2.5
+flag autostraight 2.0
+wait 0.15
+shot tr_00
+wait 0.15
+shot tr_01
+wait 0.15
+shot tr_02
+wait 0.15
+shot tr_03
+wait 0.15
+shot tr_04
+wait 0.15
+shot tr_05
+wait 0.15
+shot tr_06
+wait 0.15
+shot tr_07
+wait 0.15
+shot tr_08
+wait 0.15
+shot tr_09
+wait 0.15
+shot tr_10
+wait 0.15
+shot tr_11
+wait 0.15
+shot tr_12
+wait 0.15
+shot tr_13
+flag stop
+wait 1
+end

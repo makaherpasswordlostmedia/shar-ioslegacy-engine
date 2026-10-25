@@ -1,6 +1,6 @@
 # Status
 
-Where the port stands against the original PS2 game, as of October 25, 2026 (build 65). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
+Where the port stands against the original PS2 game, as of October 25, 2026 (build 66). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
 
 - **Hardware:** PSP-2000 with custom firmware, PAL disc. Nothing else has been tested.
 - **Latest hardware tour:** a scripted run of 33 scenes across all 7 levels (build "TEST62", second run). The final build ("TEST64") is on the PSP but has not been measured yet, so the numbers below belong to the previous build.
@@ -26,6 +26,7 @@ Where the port stands against the original PS2 game, as of October 25, 2026 (bui
 | Bonus game (7 tracks) | implemented, not tested on hardware | emulator |
 | Cutscenes (16 videos) | on the card; verified on hardware: intro, logos, one clip; the rest not | hardware (partial), code |
 | Ending, save after the last mission, credits | implemented; a hang in the ending scene was bypassed, cause not found; not tested to the credits on hardware | emulator |
+| Poles and lamp posts when hit | works: fall like the PS2 (whole, pivoting at the base), fall time within 0.3 s of PS2 recordings at four speeds on level 1; other levels and large trees not recorded on the PS2 | emulator vs PS2 recording |
 | Player-character cars, damage, smoke, wheels | partial: tuned against PS2 recordings for two vehicles only | hardware (level 1), emulator |
 | Police and Hit & Run | partial: verified on hardware in early builds, not in recent tours | emulator |
 | Traffic and pedestrians | partial: density and variety not compared with PS2 | hardware, emulator |

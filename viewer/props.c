@@ -379,7 +379,7 @@ void propsRespawnStep(Props *p, float ex, float ez, float dt,
     if ((s->away += fminf(dt, .05f)) < 5.f) continue;
     s->x = s->home[0]; s->y = s->home[1]; s->z = s->home[2]; memcpy(s->q, p->def[i].q, sizeof s->q);
     memset(s->vel, 0, sizeof s->vel); memset(s->w, 0, sizeof s->w);
-    s->asleep = s->fresh = 1; s->hidden = 0; s->away = s->hitCool = s->sleepT = s->gOff = s->fadeT = 0.f;
+    s->asleep = s->fresh = 1; s->hidden = 0; s->away = s->hitCool = s->sleepT = s->gOff = s->fadeT = 0.f; s->pole = 0;
   }
 }
 
@@ -388,13 +388,44 @@ void propsRespawnStep(Props *p, float ex, float ez, float dt,
 #endif
 #define PROP_TALL_HY 2.f
 int propsTallFallOld = PROP_TALL_FALL_OLD;
+// №968 (Роб 25.10: «всё должно падать как в оригинале, что столбы, что деревья»). Замер PS2 (двойник pcsx2-twins, tests/fall968/ps2, уличный фонарь L1 (245,4; 167,8), 1000 кг, машина без газа, 6 скоростей 2,4…22,8 м/с):
+// фонарь падает целым столбом на шарнире у основания, угол от вертикали растёт как θ'' = 0,5·sin θ (рад/с²) от начального 1° и начальной скорости
+// ω0 = 0,2 + 0,07·max(0, v − 12) рад/с; до 85° от первого наклона 3,3 с при ≤ 12 м/с (PS2 3,2–3,8), 2,0 с при 16,8 (PS2 2,1), 1,3 с при 22,8 (PS2 1,3); центр уходит на 7–9 м, основание на месте.
+// Прежнее (№946) валило столб за 0,6–1,0 с и «бульдозер» гнал его перед машиной. PROP_POLE968_OLD=1 / flag pole968old 1 — как было
+#ifndef PROP_POLE968_OLD
+#define PROP_POLE968_OLD 0
+#endif
+int propsPole968Old = PROP_POLE968_OLD;
+#define POLE_A 0.5f
+#define POLE_W0 0.2f
+#define POLE_WK 0.07f
+#define POLE_V0 12.f
+static void poleStep(PropState *st, float dt) {
+  float th = st->poleTh, w = st->poleW, h = dt / 4.f; int done = 0;
+  for (int k = 0; k < 4 && !done; k++) { w += POLE_A * sinf(th) * h; th += w * h; if (th >= 1.5707963f) { th = 1.5707963f; done = 1; } }
+  st->poleTh = th; st->poleW = done ? 0.f : w;
+  float dx = st->poleD[0], dz = st->poleD[1];
+  float hs = sinf(th * 0.5f), hc = cosf(th * 0.5f), dq[4] = {hc, dz * hs, 0.f, -dx * hs};   // ось = вверх × направление = (dz, 0, −dx)
+  const float *q = st->poleQ0;
+  float r[4] = {
+    dq[0] * q[0] - dq[1] * q[1] - dq[2] * q[2] - dq[3] * q[3],
+    dq[0] * q[1] + dq[1] * q[0] + dq[2] * q[3] - dq[3] * q[2],
+    dq[0] * q[2] - dq[1] * q[3] + dq[2] * q[0] + dq[3] * q[1],
+    dq[0] * q[3] + dq[1] * q[2] - dq[2] * q[1] + dq[3] * q[0]};
+  float n = sqrtf(r[0] * r[0] + r[1] * r[1] + r[2] * r[2] + r[3] * r[3]); if (n < 1e-6f) n = 1.f;
+  for (int i = 0; i < 4; i++) st->q[i] = r[i] / n;
+  float sn = sinf(th), cs = cosf(th), thick = fminf(st->hx, st->hz);
+  st->x = st->poleB[0] + st->hy * sn * dx; st->z = st->poleB[2] + st->hy * sn * dz; st->y = st->poleB[1] + st->hy * cs + thick * sn;
+  st->vel[0] = st->vel[1] = st->vel[2] = 0.f; st->w[0] = st->w[1] = st->w[2] = 0.f;
+  if (done) { st->pole = 2; st->asleep = 1; st->fresh = 0; st->sleepT = 0.f; }
+}
 void propsAdvance(Props *p, const ColWorld *world, float dt) {
   if (dt <= 0.f) return;
   if (dt > 0.05f) dt = 0.05f;
   for (unsigned i = 0; i < p->ninst; i++) {
     PropState *st = &p->st[i]; if (st->hidden) continue;
     st->hitCool = fmaxf(0.f, st->hitCool - dt);
-    if (!st->asleep) integrateProp(st, world, dt);
+    if (!st->asleep) { if (st->pole == 1) poleStep(st, dt); else integrateProp(st, world, dt); }
 #ifndef PROP_FADE_OLD
     // №589 (метка #18): сбитое/пнутое копит время лёжа на карте; уход — в propsRespawnStep (вне вида камеры, без предметов миссий)
     if (!st->fresh && !st->noRespawn) st->fadeT += dt;
@@ -421,7 +452,7 @@ void propsHitCar(Props *p, const ColWorld *world, Car *car, const CarBox *previo
   if (!PROP_HITSLOW_OLD && carSpeed < 0.5f) return;
   for (unsigned i = 0; i < p->ninst; i++) {
     PropState *st = &p->st[i]; const PropType *ty = &p->types[p->def[i].type];
-    if (st->hidden) continue;
+    if (st->hidden || st->pole == 1) continue;   // №968: падающий на шарнире столб машину не трогает (скорость машина потеряла при ударе)
     int awake = !st->asleep;
     if (carSpeed < 0.5f) continue;
     float dx = st->x - cb.x, dz = st->z - cb.z;
@@ -484,6 +515,8 @@ void propsHitCar(Props *p, const ColWorld *world, Car *car, const CarBox *previo
     }
     if (!hasGround) { st->hitCool = .5f; continue; } // нет ни обломка, ни пола: не запускать бесконечное падение/звук
     float massRatio = car->p.mass / (car->p.mass + fmaxf(ty->mass, 1.f));
+    // №968: столб (высокий предмет с известным стволом, без обломка) валится на шарнире у основания по замеру PS2; машина теряет скорость как у тяжёлого (ниже)
+    int pole968 = !propsPole968Old && trunkKnown && st->hy >= PROP_TALL_HY && st->pole != 1 && carSpeed > 0.5f;
     // Правка «В138» (10.10, PS2-Наблюдатель b2_mail, почтовый ящик 125 кг, машина 11.28 м/с): ящик уходит ~10 м/с (порт при 1.2 давал 11.6)
     // и машина за 0.04 с теряет 1.19 м/с по импульсу ящика (m·v / ~1.1 т; порт «терял» 0.1: car->v не двигал скорость). Коэффициент
     // 1.04 и потеря импульсом (m·v / (0.75·M), не больше 0.3 скорости). -DPROP_KICK_OLD=1 — прежнее (1.2 и мнимая потеря через car->v)
@@ -507,6 +540,12 @@ void propsHitCar(Props *p, const ColWorld *world, Car *car, const CarBox *previo
     if (!propsTallFallOld && st->hy >= PROP_TALL_HY) ang = fmaxf(ang, fminf(kick * 0.6f, 3.f));
     st->w[0] = dirz * ang; st->w[1] = -side * 3.f; st->w[2] = -dirx * ang;
     st->asleep = 0; st->sleepT = 0.f; st->fresh = 1;
+    if (pole968) {   // кинематика шарнира вместо импульса коробки: основание на месте, угол по θ'' = 0,5·sin θ
+      st->pole = 1; st->poleTh = 0.0174533f; st->poleW = POLE_W0 + POLE_WK * fmaxf(0.f, carSpeed - POLE_V0);
+      st->poleD[0] = dirx; st->poleD[1] = dirz; memcpy(st->poleQ0, st->q, sizeof st->poleQ0);
+      st->poleB[0] = st->x; st->poleB[1] = st->y - st->hy; st->poleB[2] = st->z;
+      st->vel[0] = st->vel[1] = st->vel[2] = 0.f; st->w[0] = st->w[1] = st->w[2] = 0.f;
+    }
 #ifndef PROP_HEAVY_OLD
 #define PROP_HEAVY_OLD 0   // 1 — тяжёлый проп скорость не гасит (прежняя потеря через car->v, на скорость не действует)
 #endif

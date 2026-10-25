@@ -22,7 +22,7 @@ static float gSt[4][4]; static float gFall;   // gFall: сколько секу�
 static int onKick(void *u, unsigned i, float dx, float dz) { (void)u; (void)dx; (void)dz; kicked = 1; kickI = (int)i; return 0; }
 
 static int runP(unsigned i, int head, float v0, float *gap) {
-  if (getenv("TALLOLD946")) propsTallFallOld = 1;
+  if (getenv("TALLOLD946")) propsTallFallOld = 1; if (getenv("POLE968OLD")) propsPole968Old = 1;
   float T0r = props.types[props.def[i].type].radius; if (getenv("V946")) v0 = (float)atof(getenv("V946"));
   for (unsigned k = 0; k < props.ninst; k++) props.st[k] = snap946[k];
   PropState *s = &props.st[i]; float hx = s->x, hz = s->z; const float h0[3] = {s->x, s->y, s->z};

@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+extern int propsPole968Old;   // №968: 1 — столб (высокий предмет без обломка) падает физикой коробки, как до правки (flag pole968old)
 extern int propsTallFallOld;   // №946: 1 — высокий предмет падает медленно, как было (flag tallfall946old)
 typedef struct { float ox, oy, oz, sc; int tex, flags; unsigned nv, ni, vOff, iOff; } PropPiece;  // кусок типа (файл psp_export.py)
 typedef struct { float radius, halfH, mass; unsigned firstPiece, nPiece; } PropType;               // тип пропа
@@ -30,6 +31,8 @@ typedef struct {
   float home[3], away, hitCool; // исходный центр, время вне вида, защита от повторного неудачного удара
   int noRespawn;              // владелец миссии/коллекции запрещает фоновое восстановление
   float fadeT;                // №589: время после сбития для ухода в фейд
+  int pole;                   // №968: 1 — столб падает на шарнире у основания (кинематика по PS2), 2 — упал; 0 — обычная физика коробки
+  float poleTh, poleW, poleB[3], poleD[2], poleQ0[4];   // №968: угол от вертикали и его скорость, основание, направление падения (xz), исходная ориентация
 } PropState;
 
 typedef struct {
