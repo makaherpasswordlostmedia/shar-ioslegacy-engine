@@ -1,0 +1,20 @@
+### №941 огни машины: стоп-сигналы и задний ход (блик carvis), L1 J9: разгон с места, торможение, задний ход
+scene F_LIGHTS
+flag repair
+goto 113.0 158.1 1.5708
+wait 2
+flag autostraight 1.2
+wait 1.4
+press circle 0.6
+wait 0.2
+shot l_a
+wait 0.2
+shot l_b
+press circle 2
+wait 0.5
+shot l_c
+wait 0.5
+shot l_d
+wait 0.5
+shot l_e
+end

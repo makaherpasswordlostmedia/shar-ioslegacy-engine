@@ -143,7 +143,7 @@ static void bsqCheck(BuiPut put, void *u, int row, const char *key, const char *
 static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   // 31234 -> 31.2k
   if (v >= 10000) snprintf(b, n, "%s%d.%dk%s", pre, v / 1000, v % 1000 / 100, post); else snprintf(b, n, "%s%d%s", pre, v, post);
 }
-// Роб 17.10 вечер: «нахуя там PSP 2000? нужна информация, сколько часов на тесты, сколько конвертнули, что пропатчили, свет, прорисовка
+// Роб 17.10 вечер: «зачем там PSP 2000? нужна информация, сколько часов на тесты, сколько конвертнули, что пропатчили, свет, прорисовка
 // дальности — как будто реально загружаются вещи, с которыми мы работали». Верхний блок — наша работа, числа настоящие (пересчитаны 20.10 по просьбе Роба
 // «чтобы на загрузочном экране счётчик был актуален»; 17.10: 2077 прогонов, 24 ч, 741 правка, сборка 31):
 //   DISC  18754 — файлов распакованного PS2-диска Роба (hit-and-run-web/source/game), из них собраны пакеты PSP
@@ -158,18 +158,18 @@ static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   /
 #define BOOT_WORK_OLD 0
 #endif
 #define BOOT_W_DISC 18754
-#define BOOT_W_RUNS 2579
+#define BOOT_W_RUNS 3012   // TEST64: 2956 (TEST63) + 56 журналов smoke.txt с 25.10 11:36 (деревья t64-*, тур TEST63 в эмуляторе); счёт — нижняя граница
 #define BOOT_W_PS2REC 130
 #define BOOT_W_HOURS 38
-#define BOOT_W_FIXES 885
-#define BOOT_W_BUILDS 52
+#define BOOT_W_FIXES 965   // TEST64: номер последней строки ПРАВКИ_РОБА.md
+#define BOOT_W_BUILDS 64
 static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   char b[80], c[40];
   if (n <= 0) {   // первый кадр: производитель и копирайт слева вверху, подсказка и идентификатор внизу — как у BIOS сразу при включении
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/23/26-GONEMAKERS-SHAR-PORT-52");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/25/26-GONEMAKERS-SHAR-PORT-64");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;

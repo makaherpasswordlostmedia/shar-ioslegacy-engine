@@ -3,6 +3,10 @@
 #include <math.h>
 #include <string.h>
 #include "game.h"
+#include "xsub.h"
+#if !SHR_REL_SMK
+unsigned xsubU[XS_N], xsubC[XS_N], xsubW[XS_N]; int xsubOn, xsubSkin, xsubCar, xsubFlag;
+#endif
 #include "carcoins.h"
 
 #define world (*g->pWorld)
@@ -26,14 +30,26 @@
 int gameOnFoot(const Game *g) { return haveHomer && !homerDriving(&homer); }
 
 // сбитый DynaPhys с обломком BreakableObject: проиграть обломок в его исходной точке; 1 — у обломка есть меши, проп спрятать
+// №923 (Роб 24.10: «бью вперёд, а разбивается влево»): осколки (частицы и куски обломка) летят по скорости машины в кадре удара. props.c даёт направление по скорости
+// ПОСЛЕ шага: стена мира (стекло витрины, будка в COL1) к этому месту уже погасила или отбросила машину — направление вбок или назад. Берём скорость в начале шага
+// (car.velPre); пешим ударом (Гомер, машина стоит) остаётся направление удара. BREAK_DIR923_OLD=1 — как было
+#ifndef BREAK_DIR923_OLD
+#define BREAK_DIR923_OLD 0
+#endif
 int gamePropKick(void *u, unsigned i, float dx, float dz) {
   Game *g = u;
   float pos[3] = {props.def[i].x, props.def[i].y, props.def[i].z};
+  float v2[2] = {0.f, 0.f}, *pv = NULL;
+  if (!BREAK_DIR923_OLD) {
+    float l = hypotf(car.velPre[0], car.velPre[2]);
+    if (l > 1.5f) { dx = car.velPre[0] / l; dz = car.velPre[2] / l; v2[0] = car.velPre[0]; v2[1] = car.velPre[2]; pv = v2; }
+    else if (dx * dx + dz * dz > .25f) { v2[0] = dx; v2[1] = dz; pv = v2; }
+  }
   if (g->hk.propKick) g->hk.propKick(g->hk.u, i, pos, fabsf(car.v), dx, dz);   // родной звук предмета, частицы ATC
   gameHnrOffense(g, HNR_PROP);   // Hit & Run: сбитый предмет
   if (!haveSP) return 0;
   int b = spBreakOf(&sprops, props.def[i].type); if (b < 0) return 0;
-  int r = spBreak(&sprops, (unsigned)b, pos, props.def[i].q);
+  int r = spBreakDir(&sprops, (unsigned)b, pos, props.def[i].q, pv);
 #ifndef BREAK_FX_OLD
   // №419 (Роб 09.10: «стеклянная труба L5 F3-5 должна разбиться, а летает, как металлическая»): обломок без мешей, чьи частицы — сами
   // осколки предмета (данные BreakableObject 0x3001000: 18 «l02z4_glasshatter» — стеклянная игла l2z4/l5z4, 30/31/32
@@ -204,10 +220,16 @@ void gameCarLimits(const Game *g, CarInput *in) {
   if (gameOnFoot(g)) { in->throttle = in->brake = in->steer = 0.f; in->handbrake = 1.f; }   // этап 4: водителя нет — стоит на ручнике
 }
 
+// №927 (Роб 24.10: «когда сдаю назад и жму △, нет правила, что машина тормозит, чтобы выйти»): тормоз гасит только ход вперёд (car.c: brake при движении назад — это газ назад,
+// «brk > 0 && along <= .15» — тяга назад), поэтому на заднем ходу выход ждал самого наката, пока скорость не упадёт ниже GAME_EXIT_V. Задний ход гасится газом вперёд
+// (тяга против хода; выход по |v| < GAME_EXIT_V — раньше, чем скорость сменит знак). GAME_EXIT_REV_OLD=1 — как было
+#ifndef GAME_EXIT_REV_OLD
+#define GAME_EXIT_REV_OLD 0
+#endif
 void gameExitAssist(Game *g, CarInput *in) {
   if (!g->exitReq) return;
   if (!homerDriving(&homer) || (car.destroyed && !carHuskDrives(&car))) { g->exitReq = 0; return; }
-  in->throttle = 0.f; in->brake = car.v > .5f ? 1.f : 0.f; in->handbrake = fabsf(car.v) < 3.f ? 1.f : 0.f;   // стоя тормоз = назад, поэтому ручник
+  in->throttle = (!GAME_EXIT_REV_OLD && car.v < -.5f) ? 1.f : 0.f; in->brake = car.v > .5f ? 1.f : 0.f; in->handbrake = fabsf(car.v) < 3.f ? 1.f : 0.f;   // стоя тормоз = назад, поэтому ручник
   if (fabsf(car.v) < GAME_EXIT_V) gameTriangle(g);
 }
 
@@ -218,7 +240,8 @@ static int coinGround(void *u, float x, float z, float yTop, float *gy) {   // �
   return colGround((const ColWorld *)u, x, z, yTop, yTop - 6.f, gy, 0);
 }
 void gameAfterCar(Game *g, const GamePad *p, float dt) {
-  carBoomCoins(&car, haveCoins ? &coins : NULL, haveCol ? &world : NULL, &g->coinBoomArmed);
+  unsigned xt_ = XS_T(), xw_ = XS_W();
+  carBoomCoins(&car, haveCoins ? &coins : NULL, haveCol ? &world : NULL, &g->coinBoomArmed); XS_LAP(4, xt_, xw_);
   if (haveHomer) {   // этап 4: Гомер — после carVisUpdate (дверь поверх шарниров), до пропов/монет
     HomerCar hc; memset(&hc, 0, sizeof hc); homerCarFrom(&hc, &car, LIFT);   // нули: неиспользуемые контакты кузова не несут мусор стека (сверка побайтно)
     // разбита: Гомер вылетает (homerEject, правка 147: через ~0,75 с, до взрыва). Правка 355: в остов после взрыва сесть можно —
@@ -237,8 +260,9 @@ void gameAfterCar(Game *g, const GamePad *p, float dt) {
     }
     if (homerDriving(&homer)) homerDriveInput(&homer, drvIn.steer, drvIn.throttle, drvIn.brake, car.v, car.damage - drvDmg > .02f);
     drvDmg = car.damage; memset(&drvIn, 0, sizeof drvIn);
-    homerUpdate(&homer, g->pHomerWorld ? g->pHomerWorld : &world, &hc, &hi, dt);
-    if (g->hk.afterHomer) g->hk.afterHomer(g->hk.u, &hc);
+    XS_LAP(13, xt_, xw_);
+    homerUpdate(&homer, g->pHomerWorld ? g->pHomerWorld : &world, &hc, &hi, dt); XS_LAP(5, xt_, xw_);
+    if (g->hk.afterHomer) g->hk.afterHomer(g->hk.u, &hc); XS_LAP(6, xt_, xw_);
     HomerEvent e;
     while (homerPopEvent(&homer, &e)) {
       if (e.type == HOMER_EV_HIT || e.type == HOMER_EV_STOMP) {
@@ -272,7 +296,8 @@ void gameAfterCar(Game *g, const GamePad *p, float dt) {
         coins.collected -= n; coinsDrop(&coins, n, e.x, e.y, e.z, homer.groundY); }
     }
   }
-  if (haveProps) propsUpdate(&props, &world, &car, dt);
+  XS_LAP(7, xt_, xw_);
+  if (haveProps) propsUpdate(&props, &world, &car, dt); XS_LAP(8, xt_, xw_);
   if (haveSP) {   // стейтпропы: машина состояний, удары машины, монеты; частицы — пресеты в fx.c
     spUpdate(&sprops, &world, &car, haveCoins ? &coins : NULL, dt);
     // правка Роба 135.1: звук — на событие удара (машина, пинок/стомп Гомера: очередь spSndPop), не на любую смену состояния:
@@ -287,7 +312,8 @@ void gameAfterCar(Game *g, const GamePad *p, float dt) {
     SpFxOut o;
     while (spFxPop(&sprops, &o)) if (g->hk.spFx) g->hk.spFx(g->hk.u, &o);
   }
-  gameWrenchStep(g);   // пункт 4: гаечные ключи (машина чинится, в том числе остов)
+  XS_LAP(9, xt_, xw_);
+  gameWrenchStep(g); XS_LAP(10, xt_, xw_);   // пункт 4: гаечные ключи (машина чинится, в том числе остов)
   if (haveCoins) {   // этап 4: монеты подбирает Гомер пешком (inCar = 0, досягаемость ×1) или машина (×2.25)
     float cp[3] = {car.x, car.y + 0.8f, car.z}; int drv = !haveHomer || homerDriving(&homer);
     if (haveHomer) homerCoinPoint(&homer, cp);
@@ -296,12 +322,14 @@ void gameAfterCar(Game *g, const GamePad *p, float dt) {
     coins.dropAuto = drv; coinsUpdate(&coins, cp[0], cp[1], cp[2], drv, dt);
     if (coins.collected > c0 && g->hk.coin) g->hk.coin(g->hk.u);
   }
+  XS_LAP(11, xt_, xw_);
   if (g->pColl) {   // В5: карточки, осы, гэги — после монет (монеты гэгов и ос вылетают в этом же кадре)
     int foot = haveHomer && homerOnFoot(&homer);
     CollPlayer p = {foot ? homer.x : car.x, foot ? homer.y : car.y, foot ? homer.z : car.z, foot, g->collRoom - 1, g->collAction};
     collectStep(g->pColl, &p, haveHomer ? &homer : 0, &car, &world, haveCoins ? &coins : 0, dt);
     g->collAction = 0;
   }
+  XS_LAP(12, xt_, xw_);
 }
 
 #define WRENCH_REACH_FOOT .3f   // правило порта: запас к радиусу ключа (сфера ActionEvent 2.5 м) — пешком и в машине

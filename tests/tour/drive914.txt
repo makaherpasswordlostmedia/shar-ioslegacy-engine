@@ -1,0 +1,45 @@
+# №914: flag drive в сценах тура: машина у Гомера, езда весь срок. Сцены тура TEST57 (golevel -> △ -> flag drive 20)
+wait 12
+flag cfgdefaults 1
+wait 3
+scene D_L4
+flag golevel 4
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+flag stop
+scene D_L6
+flag golevel 6
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+flag stop
+scene D_L7
+flag golevel 7
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+flag stop
+scene D_L2
+flag golevel 2
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+flag stop
+scene D_L5
+flag golevel 5
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+flag stop
+end

@@ -15,6 +15,7 @@
 #include <math.h>
 #include "props.h"
 #include "stateprops.h"
+unsigned homerSolidFrame = 0;   // props.c: кеш Гомера (homer.c), в гейте не нужен
 static Props props; static StateProps sp; static ColWorld world; static Car car;
 
 static void quatR3(const float q[4], float R[9]) {   // как stateprops.c: мир = R*v + T, R по столбцам

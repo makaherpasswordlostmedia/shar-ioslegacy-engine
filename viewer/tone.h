@@ -29,6 +29,7 @@ int  toneSatIndex(int pct);        // номер значения строки 0
 int  toneSatFromIndex(int idx);
 void tonePal(unsigned char *pal);  // 256 записей RGBA на месте (альфа не трогается)
 void toneColorRGB(unsigned char *c);   // №785: один цвет RGB(A) той же цепочкой, что запись палитры (без стягивания к среднему текстуры): цвета вершин купола неба
+void toneColorRGBNT(unsigned char *c);   // №954: цвет RGB(A) цепочкой тона без шагов мультика (палитра неба-текстуры); слой неба-градиент переходит к toneColorRGB к верху
 unsigned toneKey(void);           // №785: ключ текущей настройки тона (мультик, насыщенность, гамма, контраст) — пересчитать то, что тонировано по нему
 void toneSetStat(const unsigned char *st);   // №754: перед tonePal/toneRedo* — средний цвет текстуры и доля рисунка {r, g, b, k·255}; 0 — нет (палитра не стягивается)
 void toneSetToon(int on);

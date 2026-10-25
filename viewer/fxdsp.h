@@ -14,6 +14,27 @@
 #include <math.h>
 #include "fx.h"
 
+// №937 «поп» звезды-sparkle: размер частицы плавной кривой от возраста — 0 → 1,15 за FXD_POP_T1 с, → 1 к FXD_POP_T2 с, дальше 1 (гаснет по ALOL/COOL эмиттера, как было).
+// Только у эмиттеров с картинкой scratch2_blue / _red (флаг пункта эмиттера 0x40 ставит fx.c при загрузке). Чистая функция, без вызовов (ME). FX_SPARKLE937_OLD=1 — без попа
+#ifndef FX_SPARKLE937_OLD
+#define FX_SPARKLE937_OLD 0
+#endif
+#ifndef FXD_POP_T1
+#define FXD_POP_T1 .07f
+#endif
+#ifndef FXD_POP_T2
+#define FXD_POP_T2 .14f
+#endif
+#ifndef FXD_POP_OVER
+#define FXD_POP_OVER 1.15f
+#endif
+static inline float fxdPop(float a) {
+  if (a <= 0.f) return 0.f;
+  if (a < FXD_POP_T1) { float u = a * (1.f / FXD_POP_T1), v = 1.f - u; return FXD_POP_OVER * (1.f - v * v); }
+  if (a < FXD_POP_T2) { float u = (a - FXD_POP_T1) * (1.f / (FXD_POP_T2 - FXD_POP_T1)); return FXD_POP_OVER + (1.f - FXD_POP_OVER) * (u * u * (3.f - 2.f * u)); }
+  return 1.f;
+}
+
 enum { P_RAT, P_SPD, P_SPDV, P_LIF, P_LIFV, P_SIZ, P_SIZV, P_SPI, P_SPIV, P_WGT, P_WGTV, P_GRA, P_DRA, P_ALP, P_ALPV,
        P_CLRR, P_CLRG, P_CLRB, P_CLRV, P_NUM, P_TX, P_TY, P_TZ, P_QW, P_QX, P_QY, P_QZ, NP };
 #define NOL 16
@@ -181,6 +202,7 @@ void __attribute__((noinline, noclone)) fxdBuild(FxJob *j) {
         const FxPart *p = &j->ps[i]; const FxEmit *e = &E[p->em]; float u = p->age * p->inv;
         px = p->x; py = p->y; pz = p->z;
         hw = .5f * p->size * fxdLut(e->olSize, u); hh = hw * e->aspect;
+        if (!FX_SPARKLE937_OLD && (e->flags & 0x40)) { float pk = fxdPop(p->age); hw *= pk; hh *= pk; }   // №937: поп звезды-sparkle
         unsigned ol = fxdLutc(e->ol, u), rgb = p->rgb | 0xff000000u;
         c = fxdMulc(ol, rgb);
         unsigned al = (unsigned)(((c >> 24) & 255) * p->ak); if (al > 255) al = 255;

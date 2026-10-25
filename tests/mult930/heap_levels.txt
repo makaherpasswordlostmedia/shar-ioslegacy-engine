@@ -1,0 +1,46 @@
+# №930 ст.2 куча: загрузка всех уровней подряд (стоя), строки LEVEL (heap) и BB (heap, blk)
+wait 12
+flag cfgdefaults 1
+flag repair
+wait 6
+scene H_L1
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L2
+flag golevel 2
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L3
+flag golevel 3
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L4
+flag golevel 4
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L5
+flag golevel 5
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L6
+flag golevel 6
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+scene H_L7
+flag golevel 7
+wait 22
+flag toon 1
+flag flat912 1
+wait 22
+end

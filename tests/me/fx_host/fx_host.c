@@ -34,6 +34,7 @@ void sceGuDisable(int s) { (void)s; } void sceGuEnable(int s) { (void)s; }
 void sceGuTexFunc(int a, int b) { (void)a; (void)b; } void sceGuTexFilter(int a, int b) { (void)a; (void)b; } void sceGuTexWrap(int a, int b) { (void)a; (void)b; }
 void sceGuTexScale(float u, float v) { (void)u; (void)v; } void sceGuTexOffset(float u, float v) { (void)u; (void)v; } void sceGuDepthMask(int m) { (void)m; }
 void sceGuSetMatrix(int t, const ScePspFMatrix4 *m) { (void)t; (void)m; }
+void sceGuAlphaFunc(int func, int value, int mask) { (void)func; (void)value; (void)mask; }   // №731: заглушка, у стенда вырезка по альфе не считается
 void sceGuBlendFunc(int op, int src, int dst, unsigned a, unsigned b) { bOp = op; bSrc = src; bDst = dst; bA = a; bB = b; }
 void sceGuClutMode(unsigned c, unsigned s, unsigned m, unsigned a) { (void)c; (void)s; (void)m; (void)a; }
 void sceGuClutLoad(int n, const void *p) { (void)n; (void)p; }

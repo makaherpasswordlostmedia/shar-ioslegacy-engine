@@ -245,7 +245,7 @@ static void slShFlushVec(void) {
     float C[3] = {s->x + s->n[0] * .04f, s->y + s->n[1] * .04f, s->z + s->n[2] * .04f};
     float dx = eyeX - C[0], dy = eyeY - C[1], dz = eyeZ - C[2], d = sqrtf(dx * dx + dy * dy + dz * dz), kk = d > 1e-3f ? fminf(SL_HT_PULL / d, SL_HT_PULLK) : 0.f;
     unsigned a = s->a * 2u > 255u ? 255u : s->a * 2u; a = a * s->tone / 255u; unsigned c = a << 24;
-    if (!TOON_INK_OLD && skinToonEnabled()) { unsigned at = s->a * 2u > 255u ? 255u : s->a * 2u; at = at * TOON_SH_A / 255u; c = at << 24 | (TOON_INK_ABGR & 0xffffffu); }   // №754: в мультике тень в тон туши, одна плотность у машин и людей   // плотность из списка теней (угасание у края дальности) × SV_A — один тон у всех (Роб 17.10: «пропорционально такие же у всех»)
+    if (!TOON_INK_OLD && skinToonEnabled()) { unsigned at = s->a * 2u > 255u ? 255u : s->a * 2u; at = at * TOON_SH_A / 255u; c = at << 24 | (skinInkAbgr(INK_SHADOW) & 0xffffffu); }   // №754: в мультике тень в тон туши, одна плотность у машин и людей   // плотность из списка теней (угасание у края дальности) × SV_A — один тон у всех (Роб 17.10: «пропорционально такие же у всех»)
     float px[CS_N > SV_N ? CS_N : SV_N], pz[CS_N > SV_N ? CS_N : SV_N]; int np;
     if (s->box && s->sil) {   // №811: машина необычной формы — многоугольник по силуэту сверху (доли габарита), то же сжатие, что у восьмиугольника
       float hw = s->hx * SL_DISK / slCarKX * SV_CAR_W, hl = s->hz * SL_DISK / slCarKZ * SV_CAR_L;
@@ -506,6 +506,10 @@ static void slShadowFrame(const ColWorld *w, float ex, float ez) {
 #ifndef LIGHT_SPRITES
 #define LIGHT_SPRITES 0       // до тура выкл; «flag lightspr 1» включает без пересборки
 #endif
+#ifndef NEONSIGN950_OLD
+#define NEONSIGN950_OLD 0
+#endif
+static int neonSign950 = !NEONSIGN950_OLD;
 #define SL_L_MAX 3072
 #define SL_UV_MAX 4.f         // размах текстурных координат меша не больше 4 повторов
 #ifndef SL_POOLS
@@ -513,12 +517,12 @@ static void slShadowFrame(const ColWorld *w, float ex, float ez) {
 #endif
 #define SL_POOL_MAX 6.f       // плоское пятно света не больше 6 м (пятна под фонарями 2–4 м)
 #define SL_L_BUDGET 160       // квадов света в кадре
-typedef struct { float p[3], X[3], Y[3], uv[4][2]; uint32_t cB, cT; int tex; uint8_t kind; } SlL;   // kind 0 — вертикальный (билборд от оси Y), 1 — плоский (оси X, Y заданы)
+typedef struct { float p[3], X[3], Y[3], uv[4][2]; uint32_t cB, cT; int tex; uint8_t kind, pool; uint16_t pi1; } SlL;   // pi1 (№933): индекс пропа + 1 у свечения пропа (0 — не от пропа): сбитый или сдвинутый проп гасит своё свечение   // pool (№935): 0 — не искали, 1 — эллипс под конусом рисовать, 2 — мост/эстакада, без эллипса   // kind 0 — вертикальный (билборд от оси Y), 1 — плоский (оси X, Y заданы)
 static unsigned slDbgAdd, slDbgMaxNi;
-static SlL *slL; static unsigned slLn, slLcap; static const void *slLspInst; static unsigned char *slLdone; static unsigned slLdoneN;
+static SlL *slL; static unsigned slLn, slLcap; static const void *slLspInst, *slLpInst; static unsigned char *slLdone; static unsigned slLdoneN;
 static int slLightInit = LIGHT_SPRITES; static unsigned slLQuads, slLDraws, slLFrames, slLUs, slLBuildUs, slLCells;
 static int slLCmp(const void *a, const void *b) { int x = ((const SlL *)a)->tex, y = ((const SlL *)b)->tex; return x < y ? -1 : x > y; }
-static void slLightReset(void) { free(slL); free(slLdone); slL = 0; slLdone = 0; slLspInst = 0; slLn = slLcap = slLdoneN = 0; slLightResetReq = 0; }
+static void slLightReset(void) { free(slL); free(slLdone); slL = 0; slLdone = 0; slLspInst = 0; slLpInst = 0; slLn = slLcap = slLdoneN = 0; slLightResetReq = 0; }
 static uint32_t slAvg(const uint32_t *c, int n) {
   if (!n) return 0; unsigned a = 0, b = 0, g = 0, r = 0; for (int i = 0; i < n; i++) { a += c[i] >> 24; b += (c[i] >> 16) & 255; g += (c[i] >> 8) & 255; r += c[i] & 255; }
   return ((a / n) << 24) | ((b / n) << 16) | ((g / n) << 8) | (r / n);
@@ -533,6 +537,10 @@ static void slLightVerts(float (*P)[3], float (*U)[2], const uint32_t *C, int n,
   if (ext < .05f && dy < .05f) return;
   if (umx - umn > SL_UV_MAX || vmx - vmn > SL_UV_MAX) return;   // плитка по меш-текстуре в десятки повторов (мерцание воды, узор): спрайтом не передать, остаётся без свечения
   if (dy < .3f * ext && (!SL_POOLS || ext > SL_POOL_MAX)) return;   // PS2: пятен света на земле нет (гараж АЭС, фонари L7)   // большие плоские аддитивные куски (вода, мерцание) — не свет: остаются как были (прежний путь, не нарисованы)
+  // №950 (Роб 25.10, TEST59: «L6 причал C8-6: очень много вывесок со светом, долго прогружаются; свет вывескам не нужен, достаточно текстуры вывески, без свечения — на PSP не потянем»):
+  // вертикальный невысокий аддитивный кусок (неон, табличка: высота не больше 1,5 ширины) — плашка свечения вывески; таблица её больше не строит (рисуется только своя текстура вывески,
+  // куски города со сложением и так скрыты NEON_SKIP). Остаются конусы и лучи (вытянутые). NEONSIGN950_OLD=1 / «flag neonsign950 0» — плашки как были
+  if (neonSign950 && dy * .5f <= 1.5f * ext * .5f) return;
   if (slLn >= SL_L_MAX) return;
   if (slLn >= slLcap) { unsigned nc = slLcap ? slLcap * 2 : 256; if (nc > SL_L_MAX) nc = SL_L_MAX; SlL *q = (SlL *)realloc(slL, nc * sizeof(SlL)); if (!q) return; slL = q; slLcap = nc; }
   SlL *e = &slL[slLn];
@@ -600,10 +608,43 @@ static void slLightSprops(void) {   // стейтпропы (фонари, ла�
     }
   }
 }
+// №933 (Роб: «все светы — векторные»): у ПРОПОВ (PRP1: фонари L7 tex 419, 74 экземпляра; L6 tex 27, 31) малые куски со сложением NEON_SKIP не рисует, а таблица света брала только стейтпропы и город —
+// свечения у них не было вовсе. Теперь те же куски (≤ NEON_GLOW_MAXTRI треугольников, F_ADDITIVE) уходят в таблицу тем же slLightVerts в позе экземпляра на момент загрузки (фонарь стоит) и
+// рисуются тем же одним вызовом slLightDrawVec. SLPROPS933_OLD=1 / «flag slprops933 0» / файл slprops933old — как было (без свечения)
+#ifndef SLPROPS933_OLD
+#define SLPROPS933_OLD 0
+#endif
+// slProps933: 0 — как было (без свечения пропов), 1 — плашка как у неона города, 2 — мягкий диск (векторный, к краю в ноль): у пропов свечение — круглое пятно у лица/лампы, ровная плашка закрывает предмет прямоугольником
+static int slProps933 = SLPROPS933_OLD ? 0 : 2; static unsigned slPropN;
+static void slLightProps(void) {
+  if (!haveProps || !slProps933) return; unsigned pc0_ = 0, pe0_ = slLn; (void)pc0_;
+  for (unsigned i = 0; i < props.ninst; i++) {
+    const PropState *st = &props.st[i]; const PropType *ty = &props.types[props.def[i].type]; if (st->hidden) continue;
+    for (unsigned k = 0; k < ty->nPiece; k++) {
+      const PropPiece *pp = &props.pieces[ty->firstPiece + k];
+      if (!(pp->flags & F_ADDITIVE) || pp->ni < 3 || pp->ni > 3 * NEON_GLOW_MAXTRI) continue;
+      float m[16]; propPieceMatrix(st, pp->ox, pp->oy, pp->oz, pp->sc, m);
+      const char *vb = (const char *)props.vertBase + pp->vOff; const unsigned short *ix = (const unsigned short *)((const char *)props.idxBase + pp->iOff);
+      int v12 = (pp->flags & F_V12) != 0, vs = v12 ? 12 : 16, xo = v12 ? 6 : 8, noidx = (pp->flags & F_NOIDX) != 0;   // как drawGeo: 12-байтовые вершины без цвета, без индексов — подряд
+      int n = (int)pp->ni - (int)pp->ni % 3; if (n > SL_MAXV) n = SL_MAXV;
+      float P[SL_MAXV][3], U[SL_MAXV][2]; uint32_t C[SL_MAXV];
+      for (int a = 0; a < n; a++) { unsigned vi = noidx ? (unsigned)a : ix[a]; if (vi >= pp->nv) { n = 0; break; }
+        const char *b = vb + vi * vs; const short *uv = (const short *)b, *xyz = (const short *)(b + xo); float x = xyz[0] * (1.f / 32768.f), y = xyz[1] * (1.f / 32768.f), z = xyz[2] * (1.f / 32768.f);
+        P[a][0] = m[0] * x + m[4] * y + m[8] * z + m[12]; P[a][1] = m[1] * x + m[5] * y + m[9] * z + m[13]; P[a][2] = m[2] * x + m[6] * y + m[10] * z + m[14];
+        U[a][0] = uv[0] * (1.f / 256.f); U[a][1] = uv[1] * (1.f / 256.f); C[a] = v12 ? 0xFFFFFFFFu : *(const uint32_t *)(b + 4); }
+      if (n < 3) continue;
+      unsigned before = slLn; slLightVerts(P, U, C, n, pp->tex); slPropN += slLn - before; pc0_++;
+      if (slLn > before && slProps933 >= 2 && slL[before].kind == 0 && slL[before].Y[1] * 2.f <= slL[before].X[0] * 2.f * 1.5f) slL[before].kind = 2;   // невысокий вертикальный (не конус/луч) — диск
+      if (slLn > before && i < 65535u) slL[before].pi1 = (uint16_t)(i + 1);
+    }
+  }
+  if (smkOn) { char l_[140]; snprintf(l_, sizeof l_, "SLPROPS pieces=%u entries=%u ninst=%u t=%.1f\n", pc0_, slLn - pe0_, props.ninst, smkT); smkWrite(l_); }
+}
 static void slLightBuild(void) {
   if (!cl || !ncell || !pc) return;
-  if (slLdoneN != ncell) { free(slLdone); slLdone = (unsigned char *)calloc(ncell, 1); slLdoneN = slLdone ? ncell : 0; slLn = 0; slLspInst = 0; }
+  if (slLdoneN != ncell) { free(slLdone); slLdone = (unsigned char *)calloc(ncell, 1); slLdoneN = slLdone ? ncell : 0; slLn = 0; slLspInst = 0; slLpInst = 0; }
   if (sprops.ninst && slLspInst != sprops.inst) { slLspInst = sprops.inst; slLightSprops(); slLCells++; }
+  if (haveProps && props.ninst && slProps933 && slLpInst != props.st) { slLpInst = props.st; slLightProps(); slLCells++; }   // №933: свет пропов
   if (!slLdone) return;
   unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0, built = 0, before = slLn;
   for (unsigned c = 0; c < ncell && built < 2; c++) {
@@ -615,13 +656,17 @@ static void slLightBuild(void) {
       else if (smkOn && (d->r.flags & F_ADDITIVE) && d->r.owner == 0) {   // №805: служебно — аддитивный кусок крупнее предела (остаётся картинкой)
         char b[200]; snprintf(b, sizeof b, "SLBIG cell=%u ni=%d tex=%d bb=%.1f,%.1f,%.1f..%.1f,%.1f,%.1f\n", c, d->r.ni, d->r.tex, d->r.bb[0], d->r.bb[1], d->r.bb[2], d->r.bb[3], d->r.bb[4], d->r.bb[5]); smkWrite(b); } }
   }
-  if (smkOn && slLn != before) for (unsigned k = before; k < slLn; k++) { const SlL *e = &slL[k]; char b[260]; snprintf(b, sizeof b, "SLENTRY k=%u kind=%d tex=%d p=%.1f,%.1f,%.1f X=%.2f,%.2f,%.2f Y=%.2f,%.2f,%.2f uv0=%.2f,%.2f uv3=%.2f,%.2f cB=%08x cT=%08x\n", k, e->kind, e->tex, e->p[0], e->p[1], e->p[2], e->X[0], e->X[1], e->X[2], e->Y[0], e->Y[1], e->Y[2], e->uv[0][0], e->uv[0][1], e->uv[3][0], e->uv[3][1], e->cB, e->cT); smkWrite(b); }
+  if (smkOn && slLn != before) for (unsigned k = before; k < slLn; k++) { const SlL *e = &slL[k]; char b[260]; snprintf(b, sizeof b, "SLENTRY sc=%s k=%u kind=%d tex=%d p=%.1f,%.1f,%.1f X=%.2f,%.2f,%.2f Y=%.2f,%.2f,%.2f uv0=%.2f,%.2f uv3=%.2f,%.2f cB=%08x cT=%08x\n", smkScene, k, e->kind, e->tex, e->p[0], e->p[1], e->p[2], e->X[0], e->X[1], e->X[2], e->Y[0], e->Y[1], e->Y[2], e->uv[0][0], e->uv[0][1], e->uv[3][0], e->uv[3][1], e->cB, e->cT); smkWrite(b); }
   if (slLn != before && slLn > 1) qsort(slL, slLn, sizeof(SlL), slLCmp);
   if (smkOn) slLBuildUs += sceKernelGetSystemTimeLow() - t0;
 }
 // Закон света Роба 17.10 («векторный 2D-конус к нам, книзу затухает, снизу эллипс — такой свет везде»): авторские световые куски тем же приёмом, что конусы
 // таблицы (lightsprite.h vecLightDraw): вертикальный вытянутый (конус, луч) — трапеция ровного цвета, узко у верха, книзу в ноль, под ним эллипс; вертикальный
 // невысокий (неон, табличка) — ровная полупрозрачная плашка; плоский (пятно) — эллипс. Без текстур, один вызов. При vecLight 0 — прежние картинки со сложением
+static unsigned slPoolSkipN, slPoolDrawN;
+#define SL_DISC_R 1.2f   // радиус диска свечения пропа — доля большей полустороны куска
+#define SL_DISC_A 1.2f   // альфа в центре — доля VL_A
+static void slResetPool935(void) { for (unsigned k = 0; k < slLn; k++) slL[k].pool = 0; }   // №935: флаг сценария lamppool935 меняет правило — решения по конусам заново   // №935: конусы таблицы клеток/стейтпропов: без эллипса (мост) и с эллипсом
 static void slLightDrawVec(float ex, float ey, float ez) {
   typedef struct { unsigned c; float x, y, z; } VV;
   unsigned b0 = ggVbUsed, nv = 0, cap = slLn * (12 + VL_POOL_N * 3); if (cap > 24000u) cap = 24000u;
@@ -629,14 +674,23 @@ static void slLightDrawVec(float ex, float ey, float ez) {
   float e3[3] = {ex, ey, ez}; unsigned quads = 0;
   for (unsigned k = 0; k < slLn && nv + 12 + VL_POOL_N * 3 <= cap; k++) {
     const SlL *e = &slL[k];
+    if (e->pi1 && slProps933 && (!haveProps || e->pi1 > props.ninst)) continue;
+    if (e->pi1 && haveProps) { const PropState *ps_ = &props.st[e->pi1 - 1]; if (ps_->hidden || fabsf(ps_->x - ps_->home[0]) + fabsf(ps_->z - ps_->home[2]) > .6f || fabsf(ps_->y - ps_->home[1]) > 1.5f) continue; }   // №933: сбитый (спрятан, играет обломок) или сдвинутый проп — свечения нет
     float dx = e->p[0] - ex, dy = e->p[1] - ey, dz = e->p[2] - ez, d2 = dx * dx + dy * dy + dz * dz, f = lspFadeAt(d2); if (f <= 0.f) continue;
     float rad = sqrtf(e->X[0] * e->X[0] + e->Y[1] * e->Y[1] + e->Y[2] * e->Y[2]) * 1.42f + .5f; if (rfSphereOut(pl, e3, e->p, rad)) continue;
-    uint32_t rgb = vlColor(e->kind == 0 ? e->cT : e->cB);
+    uint32_t rgb = vlColor(e->kind != 1 ? e->cT : e->cB);
     if (e->kind == 1) {   // пятно на полу — эллипс
       unsigned c = ((unsigned)(VL_POOL_A * 1.4f * f + .5f) << 24) | rgb; float R0 = e->X[0], R1 = e->Y[2], kk = sqrtf(d2) > .3f ? VL_PULL / sqrtf(d2) : .5f; if (kk > .5f) kk = .5f;
       vlPoolTab(); for (int j = 0; j < VL_POOL_N; j++) {
         float P[3][3] = {{e->p[0], e->p[1] + .02f, e->p[2]}, {e->p[0] + R0 * vlPC_[j], e->p[1] + .02f, e->p[2] + R1 * vlPS_[j]}, {e->p[0] + R0 * vlPC_[j + 1], e->p[1] + .02f, e->p[2] + R1 * vlPS_[j + 1]}};
         for (int m = 0; m < 3; m++) { VV *o = &q[nv++]; o->c = c; o->x = P[m][0] + (ex - P[m][0]) * kk; o->y = P[m][1] + (ey - P[m][1]) * kk; o->z = P[m][2] + (ez - P[m][2]) * kk; } }
+      quads++; continue; }
+    if (e->kind == 2) {   // №933: свечение пропа (фонарь-тыква, лампа) — мягкий диск лицом к камере: в центре «немножко света», к краю в ноль; восемь секторов, 24 вершины
+      float xl2 = sqrtf(dx * dx + dz * dz), Rx = xl2 > 1e-3f ? dz / xl2 : 1.f, Rz = xl2 > 1e-3f ? -dx / xl2 : 0.f, R = fmaxf(e->X[0], e->Y[1]) * SL_DISC_R;
+      unsigned cC = ((unsigned)(VL_A * SL_DISC_A * f + .5f) << 24) | rgb, cE = rgb;
+      vlPoolTab(); for (int j = 0; j < 8; j++) { int a0 = 2 * j, a1 = 2 * j + 2;
+        float P3[3][3] = {{e->p[0], e->p[1], e->p[2]}, {e->p[0] + Rx * R * vlPC_[a0], e->p[1] + R * vlPS_[a0], e->p[2] + Rz * R * vlPC_[a0]}, {e->p[0] + Rx * R * vlPC_[a1], e->p[1] + R * vlPS_[a1], e->p[2] + Rz * R * vlPC_[a1]}};
+        for (int m = 0; m < 3; m++) { VV *o = &q[nv++]; o->c = m ? cE : cC; o->x = P3[m][0]; o->y = P3[m][1]; o->z = P3[m][2]; } }
       quads++; continue; }
     // вертикальный: ось «вправо» лицом к камере вокруг вертикали
     float xl = sqrtf(dx * dx + dz * dz), Xx = xl > 1e-3f ? (dz / xl) * e->X[0] : e->X[0], Xz = xl > 1e-3f ? (-dx / xl) * e->X[0] : 0.f, hh = e->Y[1];
@@ -648,7 +702,11 @@ static void slLightDrawVec(float ex, float ey, float ez) {
                      {e->p[0] - Xx, bot, e->p[2] - Xz}, {e->p[0] + Xx, bot, e->p[2] + Xz}};
     static const unsigned char tri[12] = {0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5};
     for (int m = 0; m < 12; m++) { int c_ = tri[m]; VV *o = &q[nv++]; o->c = c_ < 2 ? cT : c_ < 4 ? cM : cB; o->x = P[c_][0]; o->y = P[c_][1]; o->z = P[c_][2]; }
-    if (cone) {   // эллипс под конусом (пятно на полу)
+    if (cone && !((SlL *)e)->pool) {   // №935: тот же признак, что у ламп таблицы света (lamppool935.h): под полотном вторая поверхность глубже 3 м — эллипс не рисуется, конус остаётся
+      float F_[3] = {e->p[0], bot, e->p[2]}, gy_, n_[3]; int sk_ = 0;
+      if (haveCol && colGround(&world, e->p[0], e->p[2], bot + 1.f, bot - 12.f, &gy_, n_)) sk_ = lpPoolSkip(&world, F_, gy_);
+      ((SlL *)e)->pool = (uint8_t)(sk_ ? 2 : 1); if (sk_) slPoolSkipN++; else slPoolDrawN++; }
+    if (cone && e->pool != 2) {   // эллипс под конусом (пятно на полу)
       unsigned c = ((unsigned)(VL_POOL_A * f + .5f) << 24) | rgb; float R0 = e->X[0], kk = sqrtf(d2) > .3f ? VL_PULL / sqrtf(d2) : .5f; if (kk > .5f) kk = .5f;
       vlPoolTab(); for (int j = 0; j < VL_POOL_N; j++) {
         float Q[3][3] = {{e->p[0], bot + .02f, e->p[2]}, {e->p[0] + R0 * vlPC_[j], bot + .02f, e->p[2] + R0 * vlPS_[j]}, {e->p[0] + R0 * vlPC_[j + 1], bot + .02f, e->p[2] + R0 * vlPS_[j + 1]}};
@@ -702,7 +760,7 @@ static void slLightDraw(float ex, float ey, float ez, int inR) {
       else { X[0] = (dz / xl) * e->X[0]; X[1] = 0.f; X[2] = (-dx / xl) * e->X[0]; } }
     float w[4][3]; for (int c = 0; c < 4; c++) { float sx = (c & 1) ? 1.f : -1.f, sy = (c & 2) ? 1.f : -1.f; for (int a = 0; a < 3; a++) w[c][a] = e->p[a] + sx * X[a] + sy * Y[a]; }
     LV *o = q + nq * 6;
-    for (int m = 0; m < 6; m++) { int c = ord[m]; o[m].u = e->uv[c][0]; o[m].v = e->uv[c][1]; o[m].c = (e->kind == 0 && (c & 2)) ? cT : cB; o[m].x = w[c][0]; o[m].y = w[c][1]; o[m].z = w[c][2]; }
+    for (int m = 0; m < 6; m++) { int c = ord[m]; o[m].u = e->uv[c][0]; o[m].v = e->uv[c][1]; o[m].c = (e->kind != 1 && (c & 2)) ? cT : cB; o[m].x = w[c][0]; o[m].y = w[c][1]; o[m].z = w[c][2]; }
     nq++; quads++;
     if (k + 1 >= slLn || slL[k + 1].tex != curTex) { sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nq * 6, 0, q); slLDraws++; nq = 0; q = 0; }
   }
@@ -710,13 +768,13 @@ static void slLightDraw(float ex, float ey, float ez, int inR) {
   if (open) { ggVbWriteback(bb0); sceGuTexScale(128.f, 128.f); if (!inR) sceGuEnable(GU_FOG); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0); resetState(); }
   slLQuads += quads; if (smkOn) slLUs += sceKernelGetSystemTimeLow() - t0;
 }
-static unsigned slNVert(void) { unsigned n = 0; for (unsigned k = 0; k < slLn; k++) n += slL[k].kind == 0; return n; }
+static unsigned slNVert(void) { unsigned n = 0; for (unsigned k = 0; k < slLn; k++) n += slL[k].kind != 1; return n; }
 static void slStatLine(void) {   // из smkStat: строка на сцену
   if (!smkOn || (!slShFrames && !slLFrames)) { slShQuads = slShDraws = slShUs = slShFrames = 0; return; }
   char s[200]; double k = 1.0 / (slShFrames ? slShFrames : 1);
   if (slShFrames) snprintf(s, sizeof s, "SHADOWSPR scene=%s on=%d quads=%.1f draws=%.1f us=%.0f frames=%u ppl=%.1f props=%.1f rim_us=%.0f rim_cut=%u\n", smkScene, slShadowOn, slShQuads * k, slShDraws * k, slShUs * k, slShFrames, slPplN * k, slPropN * k, slRimUs * k, slRimCut);
   if (slShFrames) smkWrite(s); slShQuads = slShDraws = slShUs = slShFrames = 0; slPplN = slPropN = slRimUs = slRimCut = 0;
-  { static int dumped; if (!dumped && lsp.n && lsp.n < 400 && smkOn) { dumped = 1; for (unsigned k = 0; k < lsp.n; k++) { const LspE *e = &lsp.e[k]; char b[200]; snprintf(b, sizeof b, "LSPENTRY k=%u mode=%d tex=%d p=%.1f,%.1f,%.1f hw=%.2f hh=%.2f abgr=%08x flags=%x\n", k, e->mode, e->tex, e->p[0], e->p[1], e->p[2], e->hw, e->hh, e->abgr, e->flags); smkWrite(b); } } }
+  { static int dumped = -1; if (dumped != gameLevel && lsp.n && lsp.n < 400 && smkOn) { dumped = gameLevel; for (unsigned k = 0; k < lsp.n; k++) { const LspE *e = &lsp.e[k]; char b[220]; snprintf(b, sizeof b, "LSPENTRY lv=%d k=%u mode=%d tex=%d p=%.1f,%.1f,%.1f hw=%.2f hh=%.2f abgr=%08x flags=%x inst=%u bill=%u type=%u\n", gameLevel, k, e->mode, e->tex, e->p[0], e->p[1], e->p[2], e->hw, e->hh, e->abgr, e->flags, e->inst, (unsigned)e->bill, (unsigned)sprops.inst[e->inst].type); smkWrite(b); } } }
   if (slLFrames && slLn && slLn < 40) for (unsigned k = 0; k < slLn; k++) { const SlL *e = &slL[k]; char b[260]; snprintf(b, sizeof b, "SLENTRY k=%u kind=%d tex=%d p=%.1f,%.1f,%.1f hw=%.2f hh=%.2f uv0=%.2f,%.2f uv3=%.2f,%.2f cB=%08x cT=%08x\n", k, e->kind, e->tex, e->p[0], e->p[1], e->p[2], e->X[0], e->Y[1], e->uv[0][0], e->uv[0][1], e->uv[3][0], e->uv[3][1], e->cB, e->cT); smkWrite(b); }
   if (slLFrames) { double k2 = 1.0 / slLFrames; snprintf(s, sizeof s, "LIGHTSPR scene=%s on=%d table=%u vert=%u cells=%u dbgadd=%u dbgmaxni=%u quads=%.1f draws=%.1f us=%.0f build_us=%u frames=%u\n", smkScene, slLightOn, slLn, slNVert(), slLCells, slDbgAdd, slDbgMaxNi, slLQuads * k2, slLDraws * k2, slLUs * k2, slLBuildUs, slLFrames);
     smkWrite(s); }
@@ -802,7 +860,30 @@ static GlV *glQ; static unsigned glN, glCap, glBb0, glRingN; static GlV *glRing;
 #define GLINT_VA .55f   // альфа лучей у основания (к концам 0): «сильно прозрачные, но видимые»
 #endif
 typedef struct { unsigned c; float x, y, z; } GvV;   // 16 Б: цвет + точка
-#define GV_STAR 72u   // вершин звезды: 6 лучей × 3 треугольника + ядро 6 треугольников
+// №900 (Роб 23.10: «блик под гаечным ключом — мультяшный, без контура: рисованная асимметричная звёздочка, как снежинка, лучи в разные стороны;
+// у лучей округлые основания и острые кончики, к центру сходятся в звёздочку; два векторных объекта чуть-чуть двигаются относительно друг друга
+// („блинк-блинк“) — мягкость, как будто размыто, но без блюра»): луч — лепесток (основание — полукруг у центра, бока сходятся в острый кончик),
+// ровная заливка без затухания к кончику; ядро — ровный светлый шестиугольник. Вторая звезда меньше, светлее, повёрнута и плавает по кругу на
+// несколько сантиметров относительно первой. Блик общий (ключ, трубка будки, значки заданий, искры — слово Роба 18.10 «блик один»).
+// GLINT_SNOW900_OLD=1 — прежние клинья с изломом (№816)
+#ifndef GLINT_SNOW900_OLD
+#define GLINT_SNOW900_OLD 0
+#endif
+#define GV_STAR (GLINT_SNOW900_OLD ? 72u : 108u)   // вершин звезды: прежняя 6 лучей × 3 треугольника + ядро 6; №900 — 6 лепестков × 5 + ядро 6
+// №941 (Роб 24.10: «блики сделали как снежинки — переделать в ромбик, как бубна на картах, с доведением округлого угла к центру; контур не нужен; четырёхконечный,
+// пятиконечный, асимметричный; внутренняя дуга округлая, внешняя точка острая»): общий шейп viewer/glintshape941.h вместо лепестков №900. Звезда A — четыре луча, B — пять
+// (меньше, повёрнута), оба асимметричные; ровная заливка веером от центра, светлая сердцевина — тот же шейп .36, без контура. Вершин на звезду 72 / 90 (было 108).
+// GLINT_SHAPE941_OLD=1 — лепестки №900
+#include "glintshape941.h"
+#define GV_STAR_MAX 108u
+#define GV_SEG_RAY 4      // отрезков на сторону луча (отклонение дуги от хорды ≈ 1 % радиуса)
+#define GV_SEG_CORE 2
+#define GV_CORE_K .36f
+static const GsDef *gvDef(int s) { return s ? &GS_GLINT_B : &GS_GLINT_A; }
+static unsigned gvNs(int s) {   // вершин звезды s (0 — A, 1 — B)
+  if (GLINT_SHAPE941_OLD) return GLINT_SNOW900_OLD ? 72u : 108u;
+  return (unsigned)gvDef(s)->n * 3u * (GV_SEG_RAY + GV_SEG_CORE);
+}
 static struct { GvV *v; unsigned n; } gvB[32]; static unsigned gvNB, gvBb0;
 static unsigned gvCol(unsigned rgb, float a) { if (a < 0.f) a = 0.f; if (a > 1.f) a = 1.f; return (unsigned)(a * 255.f + .5f) << 24 | (rgb & 0xFFFFFFu); }   // rgb = 0xBBGGRR
 // цена (замер 18.10, эмулятор, сцена S_MSN с двумя значками): звезда с 36 синусами/косинусами на каждый кадр — около 70 мкс на значок, x_fx 1,00 -> 1,42 мс.
@@ -812,7 +893,29 @@ static unsigned gvCol(unsigned rgb, float a) { if (a < 0.f) a = 0.f; if (a > 1.f
 #define GV_PRE_OLD 0
 #endif
 typedef struct { GvV *o; const float *c, *R, *U; float rad; const unsigned *col; } GvEmit;   // куда и как класть точки звезды
+static void gvShapeSnow(float rot, void (*emit)(void *u, float x, float y, int k), void *u) {   // №900: лепестки-лучи снежинки, k как у gvShape
+  static const float len[6] = {1.f, .7f, .92f, .6f, .97f, .74f}, jit[6] = {0.f, .09f, -.07f, .12f, -.1f, .05f}, wid[6] = {.13f, .11f, .12f, .1f, .13f, .11f};
+  for (int i = 0; i < 6; i++) {   // основание — полукруг радиуса w с центром на r0 от середины звезды (обращён к центру), кончик — точка на L
+    float an = rot + (float)i * 1.0471976f + jit[i], dx = cosf(an), dy = sinf(an), px = -dy, py = dx, L = len[i], w = wid[i], r0 = .1f;
+    float cx = dx * r0, cy = dy * r0, P[4][2];
+    for (int k = 0; k < 4; k++) { float a = 1.5707963f + 1.0471976f * (float)k;   // 90°, 150°, 210°, 270° от направления луча: полукруг к центру
+      float ca = cosf(a), sa = sinf(a); P[k][0] = cx + (dx * ca + px * sa) * w; P[k][1] = cy + (dy * ca + py * sa) * w; }
+    for (int k = 0; k < 3; k++) { emit(u, cx, cy, 1); emit(u, P[k][0], P[k][1], 0); emit(u, P[k + 1][0], P[k + 1][1], 0); }
+    emit(u, cx, cy, 1); emit(u, P[3][0], P[3][1], 0); emit(u, dx * L, dy * L, 2);   // бока к острому кончику
+    emit(u, cx, cy, 1); emit(u, dx * L, dy * L, 2); emit(u, P[0][0], P[0][1], 0);
+  }
+  for (int i = 0; i < 6; i++) { float a0 = rot + (float)i * 1.0471976f + .5235988f, a1 = a0 + 1.0471976f;   // ядро: ровный шестиугольник 0,16
+    emit(u, 0.f, 0.f, 3); emit(u, cosf(a0) * .16f, sinf(a0) * .16f, 4); emit(u, cosf(a1) * .16f, sinf(a1) * .16f, 4); }
+}
+static void gvShape941(int s, void (*emit)(void *u, float x, float y, int k), void *u) {   // №941: веер от центра по контуру общего шейпа; k 0 — луч, 3 — сердцевина
+  float px[GS_MAXPTS], py[GS_MAXPTS]; const GsDef *d = gvDef(s);
+  for (int pass = 0; pass < 2; pass++) {
+    int seg = pass ? GV_SEG_CORE : GV_SEG_RAY, m = gsOutline(d, seg, pass ? GV_CORE_K : 1.f, px, py), k = pass ? 3 : 0;
+    for (int i = 0; i < m; i++) { int j = (i + 1) % m; emit(u, 0.f, 0.f, k); emit(u, px[i], py[i], k); emit(u, px[j], py[j], k); }
+  }
+}
 static void gvShape(float rot, void (*emit)(void *u, float x, float y, int k), void *u) {   // треугольники звезды радиуса 1; k — цвет точки:
+  if (!GLINT_SNOW900_OLD) { gvShapeSnow(rot, emit, u); return; }
   static const float len[6] = {1.f, .64f, .88f, .58f, .95f, .72f}, jit[6] = {0.f, .06f, -.05f, .09f, -.08f, .04f}, bend[6] = {.05f, -.07f, .04f, -.05f, .08f, -.06f};   // 0 основание луча, 1 середина, 2 кончик, 3 центр ядра, 4 край ядра
   for (int i = 0; i < 6; i++) {   // луч: основание у центра (±w), середина со сдвигом поперёк (излом), кончик — хвостик дальше в ту же сторону
     float an = rot + (float)i * 1.0471976f + jit[i], dx = cosf(an), dy = sinf(an), px = -dy, py = dx, L = len[i], w = .06f, b = bend[i] * L;
@@ -829,15 +932,17 @@ static void gvEmitWorld(void *u, float x, float y, int k) {   // точка зв
   GvEmit *e = (GvEmit *)u; GvV *o = e->o++; x *= e->rad; y *= e->rad; o->c = e->col[k];
   o->x = e->c[0] + e->R[0] * x + e->U[0] * y; o->y = e->c[1] + e->R[1] * x + e->U[1] * y; o->z = e->c[2] + e->R[2] * x + e->U[2] * y;
 }
-static float gvTpl[2][GV_STAR][2]; static unsigned char gvTk[2][GV_STAR]; static unsigned gvTplN; static int gvTplOk;   // шаблон двух звёзд (повороты 0 и 30°)
+static float gvTpl[2][GV_STAR_MAX][2]; static unsigned char gvTk[2][GV_STAR_MAX]; static unsigned gvTplN; static int gvTplOk;   // шаблон двух звёзд (повороты 0 и 30°)
 static void gvEmitTpl(void *u, float x, float y, int k) {
-  int s = *(const int *)u; if (gvTplN >= GV_STAR) return; gvTpl[s][gvTplN][0] = x; gvTpl[s][gvTplN][1] = y; gvTk[s][gvTplN] = (unsigned char)k; gvTplN++;
+  int s = *(const int *)u; if (gvTplN >= GV_STAR_MAX) return; gvTpl[s][gvTplN][0] = x; gvTpl[s][gvTplN][1] = y; gvTk[s][gvTplN] = (unsigned char)k; gvTplN++;
 }
 static GvV *gvStar(GvV *o, const float *c, const float *R, const float *U, float rad, int s, unsigned rgb, unsigned core, float a) {   // s: 0 — звезда A, 1 — B (+30°)
-  const unsigned col[5] = {gvCol(rgb, a), gvCol(rgb, a * .45f), gvCol(rgb, 0.f), gvCol(core, a * .75f), gvCol(core, 0.f)};   // ядро — тоже прозрачное: сквозь просвет трубки не белое пятно
-  if (GV_PRE_OLD) { GvEmit e = {o, c, R, U, rad, col}; gvShape(s ? .5235988f : 0.f, gvEmitWorld, &e); return e.o; }
-  if (!gvTplOk) { for (int k = 0; k < 2; k++) { gvTplN = 0; gvShape(k ? .5235988f : 0.f, gvEmitTpl, &k); } gvTplOk = 1; }
-  for (unsigned i = 0; i < GV_STAR; i++, o++) {
+  unsigned col[5] = {gvCol(rgb, a), gvCol(rgb, a * .45f), gvCol(rgb, 0.f), gvCol(core, a * .75f), gvCol(core, 0.f)};   // ядро — тоже прозрачное: сквозь просвет трубки не белое пятно
+  if (!GLINT_SNOW900_OLD) { col[0] = col[1] = col[2] = gvCol(rgb, a); col[3] = col[4] = gvCol(core, a * .8f); }   // №900: ровная мультяшная заливка лучей и ядра
+  if (!GLINT_SHAPE941_OLD) col[0] = col[1] = col[2] = gvCol(rgb, a);   // №941: рабочие цвета те же, шейп общий
+  if (GV_PRE_OLD) { GvEmit e = {o, c, R, U, rad, col}; if (!GLINT_SHAPE941_OLD) gvShape941(s, gvEmitWorld, &e); else gvShape(s ? .5235988f : 0.f, gvEmitWorld, &e); return e.o; }
+  if (!gvTplOk) { for (int k = 0; k < 2; k++) { gvTplN = 0; if (!GLINT_SHAPE941_OLD) gvShape941(k, gvEmitTpl, &k); else gvShape(k ? .5235988f : 0.f, gvEmitTpl, &k); } gvTplOk = 1; }
+  for (unsigned i = 0, ns_ = gvNs(s); i < ns_; i++, o++) {
     float x = gvTpl[s][i][0] * rad, y = gvTpl[s][i][1] * rad; o->c = col[gvTk[s][i]];
     o->x = c[0] + R[0] * x + U[0] * y; o->y = c[1] + R[1] * x + U[1] * y; o->z = c[2] + R[2] * x + U[2] * y;
   }
@@ -854,30 +959,56 @@ static float gvSinT(float turns) {   // sin(2π · turns) по таблице 25
   if (!gvSinOk) { for (int i = 0; i < 256; i++) gvSinTab[i] = sinf(6.2831853f * (float)i / 256.f); gvSinOk = 1; }
   float f = turns - floorf(turns); return gvSinTab[(int)(f * 256.f) & 255];
 }
+// №944 (служебно): перепись путей бликов взаимодействия. g944Note — первое появление (место, что, a, b) в журнале smoke строкой GLINT944 note; g944Bill — квады-билборды, что остались
+// картинкой (вычитание — тени — не пишется); счётчики за секунду — в строке GLINT944 (glintStatTick)
+static unsigned g944Cnt[8];   // 0 props_bill, 1 coll_bill, 2 bonus_bill (всё, что осталось картинкой, кроме вычитания)
+static void g944Note(const char *site, const char *what, const float *p, int a, int b) {
+  if (!smkOn) return;
+  static struct { char k[56]; } seen[96]; static int ns; char key[56]; snprintf(key, sizeof key, "%s/%s/%d/%d", site, what, a, b);
+  for (int i = 0; i < ns; i++) if (!strcmp(seen[i].k, key)) return;
+  if (ns >= 96) return; snprintf(seen[ns++].k, sizeof seen[0].k, "%s", key);
+  char l[220]; snprintf(l, sizeof l, "GLINT944 note site=%s what=%s a=%d b=%d p=%.1f,%.1f,%.1f\n", site, what, a, b, p ? p[0] : 0.f, p ? p[1] : 0.f, p ? p[2] : 0.f); smkWrite(l);
+}
+static void g944Bill(const char *site, int blm, int bt, const float *v, unsigned col, unsigned inst, unsigned b) {
+  if (!smkOn || blm == 3) return;
+  g944Cnt[site[0] == 'p' ? 0 : site[0] == 'c' ? 1 : 2]++;
+  { float c[3] = {(v[0] + v[9]) * .5f, (v[1] + v[10]) * .5f, (v[2] + v[11]) * .5f}; char w[40]; snprintf(w, sizeof w, "i%u_b%u_t%d", inst, b, bt); g944Note(site, w, c, blm, (int)(col >> 24)); }
+}
 static unsigned gsAdd, gsAo, gsQ, gsFl, gsF0, gsUs, gsT0, gsFlUs;   // №845 (служебно): блики на кадр — строка GLINTSTAT раз в секунду
 static void glintStatTick(void) {
   if (!smkOn) return; unsigned n = sceKernelGetSystemTimeLow(); if (!gsT0) { gsT0 = n; gsF0 = smkFrameAbs; }
   if (n - gsT0 < 1000000u) return; unsigned fr = smkFrameAbs - gsF0; if (!fr) fr = 1;
   char s_[200]; snprintf(s_, sizeof s_, "GLINTSTAT t=%.1f sc=%s fr=%u add=%.1f ao=%.1f q=%.1f flush=%.1f add_us=%.0f flush_us=%.0f vg=%.1f vg_v=%.0f vg_us=%.0f (на кадр)\n", smkT, smkScene, fr, (float)gsAdd / fr, (float)gsAo / fr, (float)gsQ / fr, (float)gsFl / fr, (float)gsUs / fr, (float)gsFlUs / fr, (float)vgStatN / fr, (float)vgStatV / fr, (float)vgStatUs / fr);
-  smkWrite(s_); gsAdd = gsAo = gsQ = gsFl = gsUs = gsFlUs = 0; vgStatN = vgStatUs = vgStatV = 0; gsT0 = n; gsF0 = smkFrameAbs;
+  smkWrite(s_);
+  if (g944Cnt[0] | g944Cnt[1] | g944Cnt[2] | g944DoorOld | g944DoorNew) { char l_[200]; snprintf(l_, sizeof l_, "GLINT944 t=%.1f sc=%s fr=%u door_old=%u door_new=%u props_img=%u coll_img=%u bonus_img=%u (за секунду)\n", smkT, smkScene, fr, g944DoorOld, g944DoorNew, g944Cnt[0], g944Cnt[1], g944Cnt[2]); smkWrite(l_);
+    g944DoorOld = g944DoorNew = 0; memset(g944Cnt, 0, sizeof g944Cnt); }
+  gsAdd = gsAo = gsQ = gsFl = gsUs = gsFlUs = 0; vgStatN = vgStatUs = vgStatV = 0; gsT0 = n; gsF0 = smkFrameAbs;
 }
 static void gvAdd(const float c[3], float ex, float ey, float ez, float scale, unsigned rgb1, unsigned rgb2, float alpha, float phase) {
   if (gvNB >= 32) return;
+  if (smkOn) { static int n944_, lv944_ = -1; static int16_t k944_[96][3]; if (lv944_ != gameLevel) { lv944_ = gameLevel; n944_ = 0; } if (n944_ < 96) { int16_t q_[3] = {(int16_t)lroundf(c[0]), (int16_t)lroundf(c[1]), (int16_t)lroundf(c[2])}; int j_ = 0; for (; j_ < n944_; j_++) if (!memcmp(k944_[j_], q_, sizeof q_)) break;   // №957б служебно: где в мире стоят блики (первое появление на 1 м сетке)
+      if (j_ == n944_) { memcpy(k944_[n944_++], q_, sizeof q_); char l_[160]; snprintf(l_, sizeof l_, "GV944 lv=%d sc=%s p=%.1f,%.1f,%.1f scale=%.2f rgb=%06x,%06x a=%.2f\n", gameLevel, smkScene, c[0], c[1], c[2], scale, rgb1 & 0xffffffu, rgb2 & 0xffffffu, alpha); smkWrite(l_); } } }
   unsigned gs0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; gsAdd++;
   float dx = c[0] - ex, dy = c[1] - ey, dz = c[2] - ez, l = sqrtf(dx * dx + dz * dz), dl = sqrtf(dx * dx + dy * dy + dz * dz); if (l < 1e-3f) return;
   // №845 (тур TEST38 на PSP: блики — 1,5–3 мс кадра L2/L3, на блик 144 вершины считает процессор): блик вне кадра не считается; дальше GV_LOD_D —
   // одна звезда (большая); пульс — по таблице синуса (sinf на PSP медленный). GV_COST845_OLD=1 — как было
   if (!GV_COST845_OLD) { float e3_[3] = {ex, ey, ez}; if (!bonusTrack && rfSphereOut(pl, e3_, c, .6f * scale + .3f)) { if (smkOn) gsUs += sceKernelGetSystemTimeLow() - gs0_; return; } }
   int two_ = GV_COST845_OLD || dl < GV_LOD_D;
-  GvV *v = (GvV *)ggVbAlloc((two_ ? 2u : 1u) * GV_STAR * sizeof(GvV));
+  GvV *v = (GvV *)ggVbAlloc((gvNs(0) + (two_ ? gvNs(1) : 0u)) * sizeof(GvV));
   const float R[3] = {-dz / l, 0.f, dx / l}, U[3] = {-dy / dl * dx / l, l / dl, -dy / dl * dz / l};
   float tm = (float)(sceKernelGetSystemTimeLow() % 60000000u) * 1e-6f + phase;
   float kA, kB;
   if (GV_COST845_OLD) { kA = 1.f + .14f * sinf(6.2831853f * tm / 1.3f); kB = 1.f + .3f * sinf(6.2831853f * tm / .85f + 2.1f); }   // пульс двух звёзд не в фазе
   else { kA = 1.f + .14f * gvSinT(tm / 1.3f); kB = 1.f + .3f * gvSinT(tm / .85f + .3342254f); }   // 2,1 рад = 0,334 оборота
+  if (!GV_COST845_OLD && !GLINT_SNOW900_OLD) { kA = 1.f + .06f * gvSinT(tm / 1.3f); kB = 1.f + .12f * gvSinT(tm / .85f + .3342254f); }   // №900: пульс мягче — «блинк-блинк» сдвигом
   GvV *o = gvStar(v, c, R, U, .5f * scale * kA, 0, rgb1, 0xFFF0E0u, alpha);
+  if (two_ && !GLINT_SNOW900_OLD) {   // №900: вторая звезда плавает по кругу на 6 % размера относительно первой, светлее (цвет к белому)
+    float ox = .06f * scale * gvSinT(tm / 1.1f), oy = .05f * scale * gvSinT(tm / 1.1f + .25f), cB[3] = {c[0] + R[0] * ox + U[0] * oy, c[1] + R[1] * ox + U[1] * oy, c[2] + R[2] * ox + U[2] * oy};
+    unsigned l2 = ((((rgb2 >> 16) & 255u) + 255u) / 2u) << 16 | ((((rgb2 >> 8) & 255u) + 255u) / 2u) << 8 | (((rgb2 & 255u) + 255u) / 2u);
+    gvStar(o, cB, R, U, .5f * scale * .62f * kB, 1, l2, 0xFFF0E0u, alpha * .9f);
+  } else
   if (two_) gvStar(o, c, R, U, .5f * scale * .62f * kB, 1, rgb2, 0xFFF0E0u, alpha * .9f);
-  gvB[gvNB].v = v; gvB[gvNB].n = (two_ ? 2u : 1u) * GV_STAR; gvNB++;
+  gvB[gvNB].v = v; gvB[gvNB].n = gvNs(0) + (two_ ? gvNs(1) : 0u); gvNB++;
   if (smkOn) gsUs += sceKernelGetSystemTimeLow() - gs0_;
 }
 static void gvFlush(void) {
@@ -894,6 +1025,29 @@ static void gvFlush(void) {
   sceGuEnable(GU_FOG); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0); sceGuDepthMask(GU_FALSE); resetState();
   gvNB = 0;
   if (smkOn) gsFlUs += sceKernelGetSystemTimeLow() - gf0_;
+}
+// №941 (служебно, flag glintlab 1): лист форм на чёрном — A, B (путь блика spritelight), звезда стекла (kind 3) и звезда частиц (kind 1) в ряд, прямо перед камерой, один размер (радиус 48 пикс);
+// гейт tests/glint941 меряет растр снимка (доля тела, острота кончиков, число лучей). При GLINT_SHAPE941_OLD — прежние формы тем же путём
+static int glintLab941;
+static void glintLabDraw(float ex, float ey, float ez, float fx, float fy, float fz, float fovDeg) {
+  float fl = sqrtf(fx * fx + fz * fz); if (smkOn) { static int n_; if (n_++ < 3) { char l_[160]; snprintf(l_, sizeof l_, "GLINTLAB e=%.1f,%.1f,%.1f f=%.3f,%.3f,%.3f fov=%.1f\n", ex, ey, ez, fx, fy, fz, fovDeg); smkWrite(l_); } }
+  if (fl < 1e-4f) return;
+  float f[3] = {fx, fy, fz}, R[3] = {-fz / fl, 0.f, fx / fl}, U[3] = {-fy * fx / fl, fl, -fy * fz / fl};
+  float e3_[3] = {ex, ey, ez}, D = 10.f, ppm = ((float)SCR_H * .5f) / tanf(fovDeg * .5f * 3.14159265f / 180.f) / D;   // пикселей на метр на расстоянии D
+  sceGuScissor(0, 0, SCR_W, SCR_H); sceGuClearColor(0xff000000); sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+  if (glintLab941 == 2) {   // №944: звезда входа (msnart.c) тем же путём, что у двери в игре; центр экрана на 20 пикс выше середины, полуось квада 38,4 пикс (кончик большого луча 1,25 от неё = 48)
+    float c[3], rad = 38.4f / ppm, X[3], Y[3]; for (int j = 0; j < 3; j++) { c[j] = e3_[j] + f[j] * D + U[j] * (20.f / ppm); X[j] = R[j] * rad; Y[j] = U[j] * rad; }
+    msnartDoorLab944(c, X, Y, 0xFFFFFFFFu, 0.f); resetState(); return;
+  }
+  for (int i = 0; i < 4; i++) {
+    float px = (float)(i - 1) * 120.f - 60.f, c[3], rad = 48.f / ppm;   // центры: -180, -60, 60, 180 пикс от середины экрана, на 20 пикс выше середины (сверху — строки HUD, снизу — радар)
+    for (int j = 0; j < 3; j++) c[j] = e3_[j] + f[j] * D + R[j] * (px / ppm) + U[j] * (20.f / ppm);
+    sceGuDisable(GU_DEPTH_TEST);   // глубина после очистки обратная (GEQUAL) — лист рисуется без проверки
+    if (i < 2) {
+      gvBb0 = ggVbUsed; GvV *v = (GvV *)ggVbAlloc(gvNs(i) * sizeof(GvV)); if (!v) continue;
+      gvStar(v, c, R, U, rad, i, 0xFFFFFFu, 0xFFFFFFu, .7f); gvB[0].v = v; gvB[0].n = gvNs(i); gvNB = 1; gvFlush();
+    } else { fxLab941(c, R, U, i == 2 ? rad / .78f : rad, i == 2 ? 3 : 1); resetState(); }   // звезда стекла: радиус = .78 полуоси квада
+  }
 }
 static void glintBegin(unsigned cap) { if (!GLINT_VEC_OLD) { gvNB = 0; gvBb0 = ggVbUsed; return; }
   glQ = 0; glN = 0; glCap = cap * 2u < GL_MAX ? cap * 2u : GL_MAX; glRing = 0; glRingN = 0; glBb0 = ggVbUsed; }   // cap — сколько бликов (по 2 звезды)
@@ -934,12 +1088,18 @@ static void glintFlush(void) {
 // рисунка msnart (квады сложением у «!», $, кубиков, флажков, стрелок, предметов) — наш векторный блик (две шестиконечные звезды не в фазе, как у ключа
 // и трубки): центр — самого крупного квада кадра, размер — его ширина × GG_K (не больше GG_MAX м), цвета — двух крупных квадов, альфа — кадра
 #define GG_K .7f
+// №908 (Роб 23.10: «блики возле «!» и возле места, которое нужно сделать, слишком яркие — прозрачнее»): блики значков (свечения msnart: «!», цель,
+// предметы; блик под «!» и трубкой) — доля MARK_GLINT_K. GLINT_MARK908_OLD=1 — как было (1)
+#ifndef GLINT_MARK908_OLD
+#define GLINT_MARK908_OLD 0
+#endif
+#define MARK_GLINT_K (GLINT_MARK908_OLD ? 1.f : .5f)
 #define GG_MAX 3.f
 static int glowGlintHook(const char *name, const float p[3], float w, unsigned c1, unsigned c2, float a, float ex, float ey, float ez) {
   float sc = w * GG_K; if (sc > GG_MAX) sc = GG_MAX;
   if (smkOn) { static char seen_[16][24]; static int nseen_; int k_ = 0; for (; k_ < nseen_; k_++) if (!strcmp(seen_[k_], name)) break;
     if (k_ == nseen_ && nseen_ < 16) { snprintf(seen_[nseen_++], 24, "%s", name); char l_[160]; snprintf(l_, sizeof l_, "GLOWGLINT %s p=%.1f,%.1f,%.1f w=%.2f scale=%.2f c1=%06x c2=%06x a=%.2f\n", name, p[0], p[1], p[2], w, sc, c1 & 0xffffffu, c2 & 0xffffffu, a); smkWrite(l_); } }
-  glintBegin(1); glintAdd(p, ex, ey, ez, sc, c1 & 0xffffffu, c2 & 0xffffffu, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * (a > 1.f ? 1.f : a), (p[0] + p[2]) * .37f); glintFlush(); sceGuDisable(GU_FOG);
+  glintBegin(1); glintAdd(p, ex, ey, ez, sc, c1 & 0xffffffu, c2 & 0xffffffu, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * MARK_GLINT_K * (a > 1.f ? 1.f : a), (p[0] + p[2]) * .37f); glintFlush(); sceGuDisable(GU_FOG);   // №908: MARK_GLINT_K
   return 1;
 }
 // №839: очередь бликов кадра — свечения вне прохода значков (искры fx.c, столб и звёзды подбора collectfx.c, огни машин carvis.c, квады сложением
@@ -950,8 +1110,11 @@ static GgQ ggQ[GGQ_MAX]; static unsigned ggQn, ggQdrop;
 static void glowGlintQ_(float x, float y, float z, float sc, unsigned abgr, float a, float ph) {
   if (sc < .02f || a < .004f) return; if (ggQn >= GGQ_MAX) { ggQdrop++; return; }
   gsQ++;
+  if (smkOn) { static int n_, lv_ = -1; static int16_t k_[200][3]; if (lv_ != gameLevel) { lv_ = gameLevel; n_ = 0; } if (n_ < 200) { int16_t g_[3] = {(int16_t)lroundf(x), (int16_t)lroundf(y), (int16_t)lroundf(z)}; int j_ = 0; for (; j_ < n_; j_++) if (!memcmp(k_[j_], g_, sizeof g_)) break;
+      if (j_ == n_) { memcpy(k_[n_++], g_, sizeof g_); char l_[160]; snprintf(l_, sizeof l_, "GQ944 lv=%d site=%s p=%.1f,%.1f,%.1f sc=%.2f abgr=%06x a=%.2f\n", gameLevel, gq944Site ? gq944Site : "?", x, y, z, sc, abgr & 0xffffffu, a); smkWrite(l_); } } }   // №957б служебно: квады свечения пропов, ставшие бликом
   GgQ *q = &ggQ[ggQn++]; q->p[0] = x; q->p[1] = y; q->p[2] = z; q->sc = sc > GG_MAX ? GG_MAX : sc; q->a = a > 1.f ? 1.f : a; q->ph = ph; q->c = abgr & 0xFFFFFFu;
 }
+static const char *gq944Site;   // служебно: кто поставил квад в очередь бликов
 static void glowQuadQ(const float *v, unsigned abgr, float ph) {   // квад (4 угла v[12]) -> блик в его центре, размер — бо́льшая сторона × GG_K
   float w = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]));
   float h = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]));
@@ -1001,6 +1164,8 @@ static int aoBillNeon(unsigned i, const float *v) {   // №885: квад-све
 }
 static void aoBillGlint(unsigned i, const float *v, uint32_t col, float ex, float ey, float ez) {   // квад выключателя (4 угла v) -> блик в его центре
   gsAo++;
+  if (smkOn) { static int n_, lv_ = -1; static int16_t k_[64][3]; if (lv_ != gameLevel) { lv_ = gameLevel; n_ = 0; } if (n_ < 64) { int16_t g_[3] = {(int16_t)lroundf((v[0] + v[9]) * .5f), (int16_t)lroundf((v[1] + v[10]) * .5f), (int16_t)lroundf((v[2] + v[11]) * .5f)}; int j_ = 0; for (; j_ < n_; j_++) if (!memcmp(k_[j_], g_, sizeof g_)) break;
+      if (j_ == n_) { memcpy(k_[n_++], g_, sizeof g_); char l_[160]; snprintf(l_, sizeof l_, "AOQ944 lv=%d inst=%u p=%.1f,%.1f,%.1f act=%d\n", gameLevel, i, (v[0] + v[9]) * .5f, (v[1] + v[10]) * .5f, (v[2] + v[11]) * .5f, aoActM && i < aoBillN ? !!(aoActM[i >> 3] & (1u << (i & 7))) : -1); smkWrite(l_); } } }   // №957б служебно: квады объектов, ставшие бликом
   if (!GV_COST845_OLD) { float cx_ = (v[0] + v[9]) * .5f - ex, cy_ = (v[1] + v[10]) * .5f - ey, cz_ = (v[2] + v[11]) * .5f - ez; if (cx_ * cx_ + cy_ * cy_ + cz_ * cz_ > GV_AO_D * GV_AO_D) return; }   // №845
   float c[3] = {(v[0] + v[3] + v[6] + v[9]) * .25f, (v[1] + v[4] + v[7] + v[10]) * .25f, (v[2] + v[5] + v[8] + v[11]) * .25f};
   float w = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]));
@@ -1222,7 +1387,7 @@ static int iconSprHook(const char *name, const float *c, const float *cr, const 
       if (a == WS_EXCL && !GLINT_VEC_OLD) { p[0] = cr[0]; p[2] = cr[2]; }   // «!» стоит в позе покоя — блик под ним, не у свечения клипа
       dx = p[0] - ex; dz = p[2] - ez; l = sqrtf(dx * dx + dz * dz);
       if (l > 1e-3f) { p[0] += dx / l * gd; p[2] += dz / l * gd; }
-      glintBegin(1); glintAdd(p, ex, ey, ez, gs, 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, GLINT_VEC_OLD ? GLINT_A : GLINT_VA, (float)a * .53f); glintFlush(); sceGuDisable(GU_FOG); } }
+      glintBegin(1); glintAdd(p, ex, ey, ez, gs, 0xFF2685u, GLINT_VEC_OLD ? 0xFF4640u : 0xFF5B48u, (GLINT_VEC_OLD ? GLINT_A : GLINT_VA) * MARK_GLINT_K, (float)a * .53f);   /* №908 */ glintFlush(); sceGuDisable(GU_FOG); } }
   static unsigned logged_; if (smkOn && !(logged_ & (1u << a))) { logged_ |= 1u << a; char l_[160]; snprintf(l_, sizeof l_, "ICONSPR %s c=%.2f,%.2f,%.2f tilt=%.2f g=%.2f,%.2f,%.2f gw=%.2f gd=%.2f\n", name, c[0], c[1], c[2], tilt, g[0], g[1], g[2], gs, gd); smkWrite(l_); }
   if (a == WS_EXCL && !EXCL_PIVOT_OLD) { float p3[3] = {br[0], bt[1], br[2]};
     if (!EXCL_EASE_OLD) wsAddPivOff(a, p3, EXCL_TILT_K * (16.95f * 3.1415927f / 180.f) * cosf(6.2831853f * cf / 30.f), pv[0], pv[1], EXCL_NUDGE_X, EXCL_NUDGE_Y);

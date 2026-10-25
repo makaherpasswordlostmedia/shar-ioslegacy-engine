@@ -1,0 +1,10 @@
+flag menu
+wait 6
+press up
+wait 0.5
+press up
+wait 0.5
+press cross
+wait 2
+shot opt_a
+end

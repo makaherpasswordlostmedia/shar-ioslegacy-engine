@@ -2,6 +2,7 @@
 // Настоящая физика viewer/car.c + viewer/col.c на данных уровня, без эмулятора. Печатает по заезду строку
 //   <вид> <номер> <скорость в конце, м/с> <интеграл доли кузова в листве, с>
 // для каждого куста уровня (объёмы FOLIAGE: лежачие изгороди, кусты-ящики, шары):
+//   (последний столбец par и crs — толщина куста поперёк, м)
 //   par — вдоль куста в 0.5 м от его края (не касаясь), 15 м/с на газу, с обеих сторон; полоса без другой листвы ближе 0.3 м
 //   crs — поперёк через середину куста накатом 12 м/с
 //   h10 — путь из жалобы (эмулятор agent297_304a): тротуар вдоль ряда изгородей H10-5, полный газ 5.5 с
@@ -69,7 +70,7 @@ int main(int argc, char **argv) {
       float off = Wv + .5f + hw, sx = cx - ux * (Lu + 6.f) + vx * off * side, sz = cz - uz * (Lu + 6.f) + vz * off * side;
       id++;
       if (!laneFree(sx, sz, ux, uz, len, hw, cx, cz, hypotf(Lu, Wv) + .2f)) continue;
-      if (run(sx, sz, atan2f(ux, uz), 15.f, 1.f, len / 15.f, &v, &c)) printf("par %d %.4f %.4f\n", id, v, c);
+      if (run(sx, sz, atan2f(ux, uz), 15.f, 1.f, len / 15.f, &v, &c)) printf("par %d %.4f %.4f %.3f\n", id, v, c, 2.f * Wv);
     }
     for (int side = -1; side <= 1; side += 2) {   // поперёк через середину
       float sx = cx - vx * (Wv + hw + 5.f) * side, sz = cz - vz * (Wv + hw + 5.f) * side;

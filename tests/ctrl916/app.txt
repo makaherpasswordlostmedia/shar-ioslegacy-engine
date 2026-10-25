@@ -1,0 +1,30 @@
+# №916: пешком к машине и к двери дома с зажатым стиком; журнал CTRLYAW (кадр управления, курс ходьбы, курс камеры) и CAMF (глаз камеры)
+wait 12
+flag cfgdefaults 1
+flag player
+flag camlog
+scene APP_car_straight
+foot 250 172 -1.5708
+wait 3
+press up 9
+wait 9.5
+scene APP_car_side
+foot 215 195 3.1416
+wait 3
+press up 9
+wait 9.5
+scene APP_car_steer
+foot 250 176 -1.5708
+wait 3
+press up 10
+wait 1.5
+press right 1.0
+wait 2.0
+press left 1.0
+wait 3
+scene APP_door
+foot 229 158 0
+wait 3
+press up 7
+wait 7.5
+end

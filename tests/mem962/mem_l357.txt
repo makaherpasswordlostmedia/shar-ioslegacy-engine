@@ -1,0 +1,23 @@
+# №962 (Небо): куча на L3/L5/L7 после загрузки, по уровню 20 с покоя; служебная сборка с учётом выделений (LEAK696_TRACE + LT_ABS)
+scene M_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene M_L3
+flag golevel 3
+wait 18
+shot m_l3
+wait 2
+scene M_L5
+flag golevel 5
+wait 18
+shot m_l5
+wait 2
+scene M_L7
+flag golevel 7
+wait 18
+shot m_l7
+wait 2
+scene M_END
+wait 2
+end

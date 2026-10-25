@@ -1,0 +1,12 @@
+# №958: NEW GAME сразу на L6 (flag lvset 6): после загрузки цель HUD, маркер и миссия рантайма — первой сюжетной миссии L6, не «поехать в дом Гомера» (L1 M1)
+flag menu
+flag lvset 6
+wait 1.5
+press cross
+wait 70
+flag msnhud 1
+wait 3
+shot s6_new_a
+wait 3
+flag msnhud 1
+end

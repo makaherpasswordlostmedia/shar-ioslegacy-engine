@@ -156,6 +156,7 @@ void uiSetRadar(float x, float z, float heading);  // engine metres + main.c hea
 // icon 0..31 = UI_F_OBJICON order; seconds <= 0 = until replaced.  NULL/"" hides it.
 void uiMessage(const char *text, int icon, float seconds);
 void uiObjectiveCollapse(int on);   // 1 (по умолчанию): задание через 3.5 с сворачивается — значок в угол вверху слева (как PS2); 0 — рамка всё время
+void uiObjDebug(int *icon, int *hasPix, const char **txt, const char **last);   // №958б: диагностика угла (flag msnhud)
 void uiObjective(int index, int icon);             // original MISSION_OBJECTIVE_<index> string (-1 hides)
 // Значок задания из данных миссии (msnicons, viewer/msnart.c): icon = UI_OBJICON_EXTERNAL в uiMessage/uiObjective рисует
 // эту картинку (RGBA 8888, текстура tw x th, картинка w x h в её левом верхнем углу) в рамке ObjectiveIcon, по центру с
@@ -388,6 +389,7 @@ void uiSetLog(void (*log)(const char *));
 void uiTrace(unsigned bits);
 void uiAnimOff(unsigned bits);
 void uiForceShow(int tag, float seconds);   // тег HUD виден seconds с (поверх игры); 0 — снять
+void uiClkTest(int mode, float v);             // служебно (сценарий): 1 — часы HUD стоят, 2 — сдвиг на v с, 0 — идут
 void uiHnrScript(int on);                   // кольцо H&R по сценарию гейта (удары +7.5% до полного, погоня, сброс)
 
 // Stats of the last uiDraw* call (for the lead's frame budget).

@@ -7,7 +7,10 @@
 #include "../build/main278/legacy.c" // prepared by tests/main_split/check.py
 #else
 #include "main_state.h"
+#include "toonflat.h"
+#include "carfill930.h"   // №930: куски машин трафика заливкой (мультик)
 #include "pfetch.h"
+#include "flatdiag.h"
 #include "main_stream.h"
 #include "main_camera.h"
 #include "main_render.h"

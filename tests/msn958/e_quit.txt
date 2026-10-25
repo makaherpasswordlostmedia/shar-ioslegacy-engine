@@ -1,0 +1,44 @@
+# №958б путь E: NEW GAME на L1 (цель L1 активна) -> пауза -> QUIT GAME в главное меню -> lvset 6 -> NEW GAME -> L6; MSNICON/MSNHUD и снимки угла через 3, 10, 30 с
+flag menu
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+shot e_l1
+press start
+wait 1
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+wait 0.6
+shot e_quit_pick
+press cross
+wait 1
+shot e_quit_ask
+press cross
+wait 8
+shot e_menu
+flag lvset 6
+wait 1.5
+press cross
+wait 70
+flag msnhud 1
+wait 3
+shot e_l6_t3
+flag msnhud 1
+wait 7
+shot e_l6_t10
+flag msnhud 1
+wait 20
+shot e_l6_t30
+flag msnhud 1
+end

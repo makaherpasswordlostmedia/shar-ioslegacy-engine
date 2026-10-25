@@ -1,0 +1,55 @@
+# №946: L7 кадры сбитого столба каждые 0,25 с
+scene P_load
+flag golevel 7
+wait 20
+flag cfgdefaults 1
+flag repair
+scene P_shots
+flag repair
+flag repair
+goto -9.37 517.23 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 0.8
+shot q332_0
+wait 0.2
+shot q332_1
+wait 0.2
+shot q332_2
+wait 0.2
+shot q332_3
+wait 0.2
+shot q332_4
+wait 0.2
+shot q332_5
+wait 0.2
+shot q332_6
+wait 0.2
+shot q332_7
+wait 0.2
+flag propstat 332
+flag repair
+goto 400.09 -74.30 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 0.8
+shot q243_0
+wait 0.2
+shot q243_1
+wait 0.2
+shot q243_2
+wait 0.2
+shot q243_3
+wait 0.2
+shot q243_4
+wait 0.2
+shot q243_5
+wait 0.2
+shot q243_6
+wait 0.2
+shot q243_7
+wait 0.2
+flag propstat 243
+flag repair
+wait 1
+end

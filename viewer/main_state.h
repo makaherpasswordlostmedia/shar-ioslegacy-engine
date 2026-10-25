@@ -75,6 +75,8 @@ static int kexcRc = 1;   // 0 — ловушка стоит; <0 — код ош�
 volatile int fpuKeep; volatile unsigned fpuSeenThr, fpuSeenFlg;
 static unsigned fpuBoot = ~0u, fpuApplied = ~0u, fpuSeenTold;   // FCR31 главного потока до и после правила (шапка ящика «fpu»)
 #include "traffic.h"      // этап 5: трафик, стоящие машины, пешеходы (build/traffic.shr, tools/traffic_export.py)
+extern unsigned skinWProf, skinW[5], skinNB[2];   // №914: слова GE по стадиям skinDrawPal (skin.c)
+extern unsigned trfProf, trfPoseUs, trfDrawUs, trfPoseN, trfWords;   // №914: разложение цены пешеходов (traffic.c)
 #include "animobj.h"     // объекты уровня AnimCollision/Anim: грузовик Duff, ветка, платформы АЭС — действия и живая коллизия (ANM1)
 #include "savemenu.h"     // сохранения оригинала на карте памяти PSP (viewer/savemenu.c, savegame.c; fsave.shr / psave.shr)
 #include "msncam.h"       // правка 40: камеры старта миссий — «наезды» (msncam.shr, tools/msncam_export.py)
@@ -308,7 +310,7 @@ static void rbldTick(int n) {
   if (n == BBP_CITY) rbldN++;
   rbldT = now;
 }
-#define BBP(n) (rbldTick(n), smkBbp(n, draws, drawnTris, binds, (int)sceGuCheckList()), bbPhase = (n), trLeft > 0 ? trPhase(n) : (void)0)   // RBLD (подфазы сборки) + PHDRAW (вызовы по фазам)
+#define BBP(n) (flatOff(), rbldTick(n), smkBbp(n, draws, drawnTris, binds, (int)sceGuCheckList()), bbPhase = (n), trLeft > 0 ? trPhase(n) : (void)0)   // RBLD (подфазы сборки) + PHDRAW (вызовы по фазам)
 void bbBeatTick(void) { bbBeat++; }
 // Правка Роба 293 (04.10, «в самом начале наезда к газете мигает пол»; повторы 244, 265 — каждый раз в другой момент перелёта).
 // Смена буфера кадра должна попасть в обратный ход луча: sceGuSwapBuffers ставит новый буфер «со следующего кадрового импульса»
@@ -377,7 +379,7 @@ static int seamsOld;          // служебный файл seamsold: горо�
 static int seamChk;           // служебный файл seamchk (с clearchk): город без альфа-теста и полупрозрачного — пурпур остаётся только
                               // в щелях между непрозрачными поверхностями (правки 224/237/251, tools/seams_emu.py; листва иначе — тысячи «швов»)
 static int ccViews, ccMax; static long ccTot;
-typedef struct { int w, h, levels; void *pal; void *lv[8]; void *slv[8]; int pre; float slope; int ground; int t4; const void *opqPal; int opq; unsigned char tstat[5], tstatOk; } Tex;   // tstat[4] (№786): 1 — текстура без шагов мультика (облака неба)   // t4: правка 129 — 4 бита (байт 6 = 4); opq/opqPal — правка 413 (carGlass)
+typedef struct { int w, h, levels; void *pal; void *lv[8]; void *slv[8]; int pre; float slope; int ground; int t4; const void *opqPal; int opq; unsigned char tstat[5], tstatOk; int levelsAll; unsigned char lat; unsigned flatC; unsigned char flatK, flatE, flatS, flatR, flatEd, flatDone; } Tex;   // №904: levelsAll — уровней мипа в файле, lat — решётка (latticeScan, main_levels.h)   // tstat[4] (№786): 1 — текстура без шагов мультика (облака неба)   // t4: правка 129 — 4 бита (байт 6 = 4); opq/opqPal — правка 413 (carGlass)
 // строка уровня в файле, байт: T8 — ширина (в swizzle не меньше 16 Б, Ф2); T4 (правка 129, только в swizzle) — полширины, не меньше 16 Б
 static inline int texRowBytes(int t4, int pre, int lw) { return t4 ? ((lw + 1) >> 1 < 16 ? 16 : (lw + 1) >> 1) : (pre && lw < 16 ? 16 : lw); }
 // ширина буфера GE (TBW) в текселах: T8 не меньше 16, T4 не меньше 32 (блок swizzle 16 Б = 32 тексела по 4 бита)
@@ -385,7 +387,7 @@ static inline int texTbw(int t4, int lw) { return t4 ? (lw < 32 ? 32 : lw) : (lw
 typedef struct {
   float bb[6]; int tex, flags, nv, ni, owner; float ox, oy, oz, sc; unsigned off, nf, cell, pad[2];
 } Rec;
-typedef struct { Rec r; float cx, cy, cz, rad; Vert *v; unsigned short *idx, *fidx; GgBatch *ggBatch; void *unr; } Piece;   // unr — развёртка полос в списки (stripdraw.h), только у кусков с F_STRIP, по требованию
+typedef struct { Rec r; float cx, cy, cz, rad; Vert *v; unsigned short *idx, *fidx; GgBatch *ggBatch; void *unr; unsigned nz; } Piece;   // unr — развёртка полос в списки (stripdraw.h), только у кусков с F_STRIP, по требованию; nz — №949: код масштаба шума земли (u | v << 8, toonflat.h), 0 — нет
 typedef struct {
   float bb[6]; unsigned first, n, owner, off, size, pad;
   float cx, cy, cz, rad;
@@ -434,16 +436,18 @@ static CullRec *cr;
 // пока клетка в памяти (unloadCell освобождает). ok: 0 — не собран, 1 — собран, 2 — у клетки нет непрозрачных кусков
 // Правка «плавность» (10.10, M313_boom пешком у остова): второй лист клетки — без кусков под риском среза (правка 340), собранный под маску
 // этих кусков (pmask, бит — номер куска в клетке); пока маска та же, клетка у камеры — один вызов листа + срез только рискованных кусков
-typedef struct { unsigned *buf; int tris, draws; unsigned bytes; unsigned char ok;
+typedef struct { unsigned *buf; int tris, draws; unsigned bytes; unsigned char ok; unsigned short nb, pnb, fnb; unsigned char noise, pnoise, fnoise;   // №912: смен состояния текстуры (привязка или заливка) внутри листа
                  unsigned *pbuf; int ptris, pdraws; unsigned pbytes; unsigned long long pmask; unsigned char pok;
                  unsigned long long mkVal; unsigned mkEpoch;
-                 unsigned *fbuf; int ftris, fdraws; unsigned fbytes; unsigned char fok; } CellDL;   // fbuf/fok: лист дальней версии клетки (far_plain, TEST23); fok 1 — собран, 3 — не собрался   // mkVal/mkEpoch: маска рискованных кусков для стоящей камеры (BOOM_CITY_OLD)
+                 unsigned *fbuf; int ftris, fdraws; unsigned fbytes; unsigned char fok; unsigned *mbuf, *mbuf2; unsigned mbytes, mbytes2; int mtrisA, mtrisB; unsigned char mok, mok2; } CellDL;   // mbuf/mok (№912): отдельный лист разметки клетки (рисуется ближе MARK_RANGE)   // fbuf/fok: лист дальней версии клетки (far_plain, TEST23); fok 1 — собран, 3 — не собрался   // mkVal/mkEpoch: маска рискованных кусков для стоящей камеры (BOOM_CITY_OLD)
 static CellDL *cdl; static unsigned *cdlMark, cdlEpoch; static unsigned dlBuilt, dlBytesNow, dlCallsFrame, dlFallFrame;
 static void dlFree(unsigned ci) {
   if (!cdl || ci >= ncell) return;
   if (cdl[ci].buf) { dlBytesNow -= cdl[ci].bytes; free(cdl[ci].buf); }
   if (cdl[ci].pbuf) { dlBytesNow -= cdl[ci].pbytes; free(cdl[ci].pbuf); }
   if (cdl[ci].fbuf) { dlBytesNow -= cdl[ci].fbytes; free(cdl[ci].fbuf); }
+  if (cdl[ci].mbuf) { dlBytesNow -= cdl[ci].mbytes; free(cdl[ci].mbuf); }
+  if (cdl[ci].mbuf2) { dlBytesNow -= cdl[ci].mbytes2; free(cdl[ci].mbuf2); }
   memset(&cdl[ci], 0, sizeof cdl[ci]);
 }
 static unsigned short *carP, *skyP; static int ncarP, nskyP;
@@ -502,6 +506,16 @@ static ZoneGate *zg; static ZonePlace *zp; static int nzg, nzp, zgOn, zgInit, zg
 static unsigned char zgWas[ZG_MAX]; static float zgPx, zgPz; static unsigned zgFired, zgUnloads;
 static char path[256];
 static ColWorld world; static int haveCol, autodrive, slowmo; static float adT, adStop; static Car car;
+// №914: служебный автопилот (flag drive / walk). AD_CLOCK_OLD=1 — часы adT шли дважды за кадр (строка «if (autodrive)» перед шагом машины
+// плюс свой шаг режима 4 и 5): срок вдвое короче заданного. AD_SEAT_OLD=1 — flag drive пешком не сажал Гомера в машину (в L2/L4/L6/L7 она стоит
+// в координатах L1, путь 0 м). Красные контроли гейта tests/tour/drive914.sh: flag adclockold 1 / flag adseatold 1
+#ifndef AD_CLOCK_OLD
+#define AD_CLOCK_OLD 0
+#endif
+#ifndef AD_SEAT_OLD
+#define AD_SEAT_OLD 0
+#endif
+static int adClockOld = AD_CLOCK_OLD, adSeatOld = AD_SEAT_OLD;
 static int carExplosionOld;
 static int radarPhonesOld;
 static void carExplosionAt(float x, float y, float z) {
@@ -526,12 +540,19 @@ static AnimObjs ao; static int haveAo, aoAct;   // ANM1 (viewer/animobj.c): де
 // сбитый DynaPhys с обломком BreakableObject: проиграть обломок в его исходной точке; 1 — у обломка есть меши, проп спрятать
 // + частицы удара по таблице ATC типа (PRP2 @44): обломок (вода гидранта, листья/щепа деревьев, стекло Krusty) и
 // система частиц (3 куст, 4 мусор, 5 листья дуба, 6 почта) — родные из fx.shr; eSpark (фонари) — искры кодом
+#ifndef BREAK_DIR923_OLD
+#define BREAK_DIR923_OLD 0   // №923: 1 — осколки по осям мира / предмета, как было
+#endif
 static void onPropKickFx(void *u, unsigned i, const float pos[3], float carV, float dx, float dz) {   // звук и частицы удара (логика — gamePropKick)
   (void)u;
   sndObjectHit(SND_SET_PROPS, i, pos[0], pos[1], pos[2], carV);   // родной звук предмета
   int part, brk; propsTypeFx(&props, props.def[i].type, &part, &brk);
   if (brk >= 0) tutEvent(TUT_BREAK);   // подсказка Барта «ломай предметы — будут монеты» (запись PS2 2:20)
-  if (brk >= 0) fxBurstBreakable(brk, pos, NULL);
+  if (brk >= 0) {
+    // №923: осколки по ходу машины (dx, dz — направление, gamePropKick); нет направления или BREAK_DIR923_OLD=1 — по осям мира, как было
+    if (!BREAK_DIR923_OLD && dx * dx + dz * dz > .25f) fxBurstBreakableYaw(brk, pos, atan2f(dx, dz));
+    else fxBurstBreakable(brk, pos, NULL);
+  }
   // Правка Роба 493 (10.10): стеклянный щит Krusty (l1_krustyglass_Shape, обломок BreakableObject 19 = eKrustyGlassBreaking) при разбитии даёт монеты — тем
   // же разлётом, что ящик (штатный coinsDrop, пол — земля под щитом). Числа на диске НЕТ (ATC/BreakableObject без монет, разбор 10.10), N — ПРАВИЛО ПОРТА по
   // видео PS2 (27:18, 40:49, 41:00, 41:28), ответ Наблюдателя: счётчик +5 на щит ровно (267→272, 273→278, 281→286), вылетает видимо 5–8, несобранных не осталось
@@ -711,6 +732,7 @@ static char levelShr[256];   // level.shr уровня gameLevel (у уровн�
 #ifndef BONUS_OLD
 #define BONUS_OLD 0
 #endif
+static int msnBot; static float msnBotT;   // №бот миссий (flag msnbot 1, MSNBOT_OLD): помощник игрока для ночного бота миссий — пропуск реплик и брифинга, △ и посадка по этапу
 static int bonusTrack, mainMini = -1, mainScrap = -1, endingPending;   // endingPending — №860: титры игры ждут главного меню (menuRun)   // mainScrap — №862: SCRAP BOOK главного меню (альбом карточек)
 static const MsnCars *bonusCarsPtr; static const char *bonusPlayerModel;   // машины гонки (рисование моделей пакета msncars)
 // правка 421: открытые трассы игры в памяти (бит N-1 — трасса N, viewer/bonus_unlock.h). До первой игры — по самому свежему

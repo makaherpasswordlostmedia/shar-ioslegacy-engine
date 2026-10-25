@@ -1,0 +1,24 @@
+# №940 приёмка: хвост L3 тура TEST59 (F_FLAT_L3S, F_FLAT_L3B, F_L3_FAR1, F_L3_FAR0) с пределом участка длинных треугольников (имитация нехватки места на PSP). Строка POOLLIM заменяется приёмкой.
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+scene F_GO8_L3
+flag golevel 3
+wait 40
+POOLLIM
+scene F_FLAT_L3S
+flag flat912 1
+foot 180.2 64.2 -1.571
+wait 5
+scene F_FLAT_L3B
+flag flat912 1
+foot -525.6 -40.7 0.28
+wait 8
+scene F_L3_FAR1
+flag far150 1
+wait 6
+scene F_L3_FAR0
+flag far150 0
+wait 6
+end

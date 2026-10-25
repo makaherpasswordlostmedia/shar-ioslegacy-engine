@@ -16,9 +16,9 @@ cp -cR "$PK" "$TMP" 2>/dev/null || cp -R "$PK" "$TMP"; cp "$EB" "$TMP/EBOOT.PBP"
 SAV="$HOME/.ppsspp/PSP/SAVEDATA"; [ -d "$SAV" ] && find "$SAV" -type f -exec shasum {} \; | sort > "$OUT/savedata_before.sha"
 run() {   # run ИМЯ СЦЕНАРИЙ МАКС_С
   ( SHIP_LEVELS="2 3 4 5 6 7" SMOKE_HEADLESS=1 SMOKE_FILEDATA="meaudio=3" SMOKE_SCN="$2" SMOKE_MAXT=$3 nice -n 20 tools/smoke.sh "$TMP" ) > "$OUT/$1.out" 2>&1
-  D="$ROOT/build/smoke/$(ls -t "$ROOT/build/smoke" | head -1)"; cp -R "$D" "$OUT/$1"
+  D="$ROOT/build/smoke/$(ls -t "$ROOT/build/smoke" | head -1)"; rm -rf "${OUT:?}/$1"; cp -R "$D" "$OUT/$1"   # 24.10: без rm повторный запуск клал прогон ВНУТРЬ старой папки, а проверялись файлы прошлой попытки
 }
-run resume "$ROOT/tools/frame_gate_scenario.txt" 220
-run new "$ROOT/tools/frame_gate_new.txt" 160
+run resume "$ROOT/tools/frame_gate_scenario.txt" ${FG_RESUME_MAXT:-220}   # FG_*_MAXT — больше при загруженном Маке (24.10: боты, load 50 — TIMEOUT на сцене, а не зависание)
+run new "$ROOT/tools/frame_gate_new.txt" ${FG_NEW_MAXT:-160}
 [ -d "$SAV" ] && find "$SAV" -type f -exec shasum {} \; | sort > "$OUT/savedata_after.sha"
 python3 "$ROOT/tools/frame_gate.py" "$OUT" ${GATE_EXPECT_FAIL:+--expect-fail "$GATE_EXPECT_FAIL"}

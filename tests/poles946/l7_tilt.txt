@@ -1,0 +1,85 @@
+# №946: L7, предмет после удара: вертикальность (up: 1 стоит, 0 лежит) каждые 0,4 с
+scene P_load
+flag golevel 7
+wait 20
+flag cfgdefaults 1
+flag repair
+scene P_hits
+flag repair
+goto -9.37 517.23 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 0.6
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag propstat 332
+wait 0.4
+flag repair
+goto 182.69 261.88 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 0.6
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag propstat 325
+wait 0.4
+flag repair
+goto 400.09 -74.30 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 0.6
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag propstat 243
+wait 0.4
+flag repair
+wait 1
+end

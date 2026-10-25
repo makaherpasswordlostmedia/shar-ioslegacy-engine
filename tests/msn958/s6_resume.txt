@@ -1,0 +1,26 @@
+# №958: LOAD GAME на сохранении L6 -> «Continue» -> титул «Press START» -> меню: RESUME GAME (курсор на нём) -> игра: цель HUD и миссия рантайма — миссия сохранения, не «поехать в дом Гомера» (L1 M1)
+flag menu
+flag saves
+wait 1.5
+press right
+wait 0.4
+press cross
+wait 2.5
+shot s6r_slots
+press cross
+wait 2.5
+shot s6r_loaded
+press cross
+wait 6
+shot s6r_after
+press start
+wait 3
+shot s6r_menu
+press cross
+wait 70
+flag msnhud 1
+wait 3
+shot s6r_a
+wait 3
+flag msnhud 1
+end

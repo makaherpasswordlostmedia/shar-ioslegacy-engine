@@ -1,0 +1,22 @@
+### №941 телефон: поиск ракурса (Гомер у будки L1, четыре курса)
+scene BQ_load
+flag golevel 1
+wait 15
+flag player 1
+scene PH0
+foot 223.5 153.8 1.5708
+wait 2.5
+shot ph0
+scene PH1
+foot 223.5 153.8 -1.5708
+wait 2.5
+shot ph1
+scene PH2
+foot 223.5 153.8 0
+wait 2.5
+shot ph2
+scene PH3
+foot 223.5 153.8 3.1416
+wait 2.5
+shot ph3
+end

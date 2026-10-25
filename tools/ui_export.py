@@ -53,7 +53,7 @@ from p3d import read, walk, string  # noqa: E402  (MIT, hit-and-run-web)
 from textures import decode_image  # noqa: E402
 
 SCROOBY = WEB / 'source/game/art/frontend/scrooby'
-SCRATCH = Path(os.environ.get('UI_SCRATCH', '/private/tmp/claude-501/-Users-robertvagin-Downloads-shar-psp/'
+SCRATCH = Path(os.environ.get('UI_SCRATCH', '/private/tmp/claude-501/-Users-USER-Downloads-shar-psp/'
                               '3f2ce002-62fd-4bf8-9553-98f95067c719/scratchpad/streams/ui'))
 OUTDIR = ROOT / 'build/ui'           # layout.json (human readable); the pack itself -> build/<PAK_NAME>
 PREFIX_GAP = 2                       # px between the coin icon and the coin count (ui.c: same)
@@ -3509,9 +3509,18 @@ def abgr(c):
 OBJ_ICONS = set()
 
 
+# №888 (Роб 23.10: «стрелки ◀ ▶ у New Game / Resume Game / Load Game битые, пиксели поломаны в центре, не как в остальных меню»): стрелки главного меню лежали
+# на общей странице ui1 с 255 цветами на всё — k-means размазывал зелёную рампу граней, в центре стрелки появлялись тёмные штрихи. Теперь они на своей
+# маленькой странице со своей палитрой (как в пакетах меню, где стрелки чистые). ARROWS_PAGE_OLD=1 — прежнее (общая страница)
+ARROWS_PAGE_OLD = os.environ.get('ARROWS_PAGE_OLD') == '1'
+ARROW_IMGS = ('larrow.png', 'rarrow.png', 'larrowg.png', 'rarrowg.png')
+
+
 def page_group(key):
     if key.startswith('tvframe'):
         return 'tv'
+    if not ARROWS_PAGE_OLD and key.split('@')[0] in ARROW_IMGS:
+        return 'arrows'
     if key.split('@')[0] in OBJ_ICONS:
         return 'icons'
     return 'ui'
@@ -3705,7 +3714,7 @@ def pack(out=None, spec=None):
     tex = []            # dicts: psm, w, h, pixels(bytes, swizzled), clut(bytes), nclut
     where = {}          # bitmap key -> (tex, x, y, w, h)
     preview = []
-    for gname in sp.get('groups', ('ui', 'icons', 'tv')):
+    for gname in sp.get('groups', ('ui', 'icons', 'tv', 'arrows')):
         if gname not in groups:
             continue
         pages, wh = build_pages(groups[gname])
@@ -3718,6 +3727,10 @@ def pack(out=None, spec=None):
                 print('QSTAT %s%d op=%d leak=%d err=%.2f' % (gname, pi, int(_o.sum()), int((_q[..., 3][_o] < 255).sum()), float(np.abs(_q[..., :3][_o] - _s[..., :3][_o]).mean()) if _o.any() else 0.0))
             # store only the rows in use (+8 for bilinear neighbours); TSIZE still says pow2 h
             used = int(np.where(idx.max(1) > 0)[0].max()) + 1
+            # №948б (Роб 25.10, повтор №809: «в меню будки у картинки сгоревшей машины снизу битые пиксели»): хранились строки по последнему непрозрачному индексу (+8), а у последней
+            # картинки страницы низ холста прозрачный (у каркаса husk 18 пустых строк из 116) — хвост картинки глубже хранимых строк: GE читал за концом данных (мусор снизу).
+            # Теперь страница хранится до низа самой нижней картинки (+1 строка билинейного соседа). UI_ROWS948_OLD=1 — как было
+            if os.environ.get('UI_ROWS948_OLD') != '1': used = max([used] + [y_ + h_ + 1 for (pi_, x_, y_, w_, h_) in wh.values() if pi_ == pi])
             rows = min(h, (used + 8 + 7) // 8 * 8)
             tex.append(dict(psm=PSM_T8, w=w, h=h, rows=rows, pixels=swizzle(idx[:rows].reshape(-1), w, rows),
                             clut=clut.tobytes(), nclut=256, name='%s%d' % (gname, pi)))
@@ -3729,6 +3742,16 @@ def pack(out=None, spec=None):
     qbitmaps = {}
     for k, (ti, x, y, w, h) in where.items():
         qbitmaps[k] = preview[ti].crop((x, y, x + w, y + h))
+    if os.environ.get('UI_ROWS_STATS'):   # №948б (диагностика): страницы CLUT8 — хранимые строки и нижний край картинок, чей низ глубже хранимых строк
+        for _i, _t in enumerate(tex):
+            if _t.get('rows') is not None: print('PAGE %d %s w=%d h=%d rows=%d' % (_i, _t.get('name'), _t['w'], _t['h'], _t['rows']))
+        for k, (ti, x, y, w, h) in where.items():
+            if os.environ['UI_ROWS_STATS'] in str(k) and y + h > tex[ti]['rows']: print('SHORT %s page=%d bottom=%d rows=%d' % (k, ti, y + h, tex[ti]['rows']))
+    if os.environ.get('UI_DUMP_Q'):   # №948б (диагностика, пакет не меняет): исходные и квантованные кадры картинок по ключу-подстроке в папку (замер краёв)
+        _d = Path(os.environ['UI_DUMP_Q']); _d.mkdir(parents=True, exist_ok=True)
+        for k, q in qbitmaps.items():
+            if os.environ.get('UI_DUMP_KEY', 'pcar2d') in k:
+                _n = ''.join(ch if (ch.isalnum() or ch in '_.-') else '_' for ch in str(k)); assets.bitmaps[k].convert('RGBA').save(_d / (_n + '.orig.png')); q.convert('RGBA').save(_d / (_n + '.quant.png'))
     # ---- font page (T4, alpha ramp)
     faces = []
     for dl in screens.values():
@@ -3745,6 +3768,13 @@ def pack(out=None, spec=None):
                 subset[t['font']] = None if (cur is None or not (t.get('title') or t.get('subset'))) else \
                     cur | {ord(c) for sv in t['strings'] if sv for c in sv} | {ord('?'), ord(' ')} | \
                     {ord(c) for c in t.get('subset_chars', '')}   # правка 312: строки, которые ставит код (ui_typo.py)
+    # №926 (Роб 24.10: «в Scrapbook слева внизу LEVEL и L/R, но там стоит знак (вопросительный?)»): подпись уровня альбома ставит код (viewer/main_save.h scrapRun,
+    # «LEVEL N» и «L / R» гранью uiFontFind("boulder_16") основного пакета ui.shr — там «boulder_16*2», пунктов меню); её атлас — только буквы строк пакета и «?»:
+    # цифр и «/» не было, вместо них запасной знак. Цифры, «/» и буквы L E V R (после №925 у пунктов паузы другая грань, и V из «LEVEL PROGRESS» в этой выпала) добавляются в атлас граней boulder_16 (15 ячеек). SCRAP926_OLD=1 — как было
+    if os.environ.get('SCRAP926_OLD') != '1':
+        for face in list(subset):
+            if face.startswith('boulder_16') and subset[face] is not None:
+                subset[face] = subset[face] | {ord(c) for c in 'LEVR0123456789/'}
     # правка 163: грань с трекингом ('boulder_16@1+2') — те же буквы, что у грани без '+': одна ячейка атласа на обе (akeys)
     akeys = []
     for face in faces:

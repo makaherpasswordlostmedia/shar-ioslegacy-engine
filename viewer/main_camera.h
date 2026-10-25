@@ -16,7 +16,13 @@ static float chaseNear = NEAR_Z;   // ближняя плоскость каме
 #endif
 static int camWallOrgOld = CAM_WALL_ORG_OLD;
 static int chaseWallOff;           // служебное (красный контроль tests/camera): без обхода стен
-static int camFrames, camBlocked; static float camStatT0;   // гейт tests/camera: кадры и кадры с глазом за препятствием
+static int camFrames, camBlocked; static float camStatT0;
+// CAMPERF (23.10): служебная проверка «глаз за препятствием» (луч коллизии + опора под глазом каждый кадр) шла в любом смоуке, в туре тоже, — считала кадры, которые никто не читал
+// (читает только строка CAMW по «flag camstat»). Теперь — только после первого «flag camstat». CAM_STAT_ALWAYS_OLD=1 / flag camstatalwaysold 1 — как было
+#ifndef CAM_STAT_ALWAYS_OLD
+#define CAM_STAT_ALWAYS_OLD 0
+#endif
+static int camStatAlwaysOld = CAM_STAT_ALWAYS_OLD, camStatOn;   // гейт tests/camera: кадры и кадры с глазом за препятствием
 typedef struct { int init; float ex, ez, ey, evx, evz, evy, vyLP, yaw, yawV, pull, lx, ly, lz, lvx, lvy, lvz, ay, lift, liftV, wallD, rise, tilt, bumpLift; int hits; } ChaseCam;   // bumpLift — №791: подъём глаза бампера над асфальтом
 static ChaseCam chase;
 static void cdStep(float *e, float *ev, float w, float dt) {   // критическое затухание, точное решение за dt
@@ -105,7 +111,11 @@ static int camInJump, camInRelOk, camInCarPrev, camPivotCar; static float camInJ
 #define CAM_AVOID_OLD 0
 #endif
 static int camAvoidOld = CAM_AVOID_OLD;
-#define CS_PE (camAvoidOld ? 1 : (camGeomOld ? 5 : 13))   // луч опора -> глаз: мир, чужие тела (своя машина за рулём не в счёт), видимая геометрия (8)
+#ifndef CAM_WALLUP_OLD
+#define CAM_WALLUP_OLD 0
+#endif
+static int camWallUpOld = CAM_WALLUP_OLD;
+#define CS_PE ((camAvoidOld ? 1 : (camGeomOld ? 5 : 13)) | (camWallUpOld ? 0 : 128))   // луч опора -> глаз: мир, чужие тела (своя машина за рулём не в счёт), видимая геометрия (8)
 #ifndef CAM_VEL_PAD_OLD
 #define CAM_VEL_PAD_OLD 0
 #endif
@@ -169,6 +179,36 @@ static int camSafeSkipOld = CAM_SAFE_SKIP_OLD, camSkipPrev, camSkipN;
 static int camNearCacheOld = CAM_NEAR_CACHE_OLD, camDataGroundOld = CAM_DATA_GROUND_OLD, dgFix;
 static int camPhoneStepOld = CAM_PHONE_STEP_OLD, phPrevOk, phJump, phClamp, phHold; static float phPrevE[3], phJmax, phDmax;
 static int camInGeom; static unsigned cpT[8], camPN; static float pe[3]; static int peOk;   // служебное (flag camin): мкс по частям правила глаза: 0 сцена, 1 cgStep, 2 глаз годен?, 3 кандидаты, 4 перелёт, 5 ближняя плоскость
+// CAMPERF (ускорение камеры, дирижёр 23.10): мкс на кадр по подфазам камеры, строка CAMSUB раз в секунду (только смоук): chase — погоня chaseCamUpdate, safe — правило глаза
+// camSafeEye (с пропуском кадров), floor — защита пола №837, dbg — служебная проверка глаза за стеной (гейт tests/camera; в туре идёт всегда), camf — запись CAMF,
+// fnear — floorNearFrame, nfr — camSafeFrame (лучи ближней плоскости csNearFree), rw — camRealWall; rays/nf — вызовы csRayFrac и csNearFree за кадр
+static unsigned csubT[10], csubN, csubT0, csubRay0, csubNf0;
+#define CSUBT0 unsigned csb_ = smkOn ? sceKernelGetSystemTimeLow() : 0
+#define CSUB(i) do { if (smkOn) csubT[i] += sceKernelGetSystemTimeLow() - csb_; } while (0)
+// Диагностика окна «Оптимизация» (24.10): участки фазы города x_city, мс на кадр (строка CITYSUB, только смоук): setup — сброс, ирис, камера до ближней плоскости; cam — floorNearFrame + camSafeFrame;
+// frame — перспектива, ближняя плоскость, решение ggOn; view — матрицы вида; sky0 — небо до города; cover — земля №437; pre — горизонт, силуэты, подложка; dl — город листами (CITYDL);
+// post — комната, небо после города, джиттер мира. Только при смоуке (цена 9 отсечек ≈ 10 мкс на кадр PSP)
+#if SHR_REL_SMK   // релиз: диагностики нет, сборка байт в байт прежняя
+#define CSM0() ((void)0)
+#define CSM(i) ((void)0)
+#define CSFLUSH() ((void)0)
+#else
+static unsigned csuA[9], csuN, csuT;
+#define CSM0() do { if (smkOn) csuT = sceKernelGetSystemTimeLow(); } while (0)
+#define CSM(i) do { if (smkOn) { unsigned n_ = sceKernelGetSystemTimeLow(); csuA[i] += n_ - csuT; csuT = n_; } } while (0)
+#define CSFLUSH() do { if (smkOn && ++csuN >= 30) { char l_[260]; snprintf(l_, sizeof l_, "CITYSUB t=%.1f sc=%s n=%u setup=%.3f cam=%.3f frame=%.3f view=%.3f sky0=%.3f cover=%.3f pre=%.3f dl=%.3f post=%.3f (мс/кадр)\n", smkT, smkScene, csuN, \
+      csuA[0] / 1000.0 / csuN, csuA[1] / 1000.0 / csuN, csuA[2] / 1000.0 / csuN, csuA[3] / 1000.0 / csuN, csuA[4] / 1000.0 / csuN, csuA[5] / 1000.0 / csuN, csuA[6] / 1000.0 / csuN, csuA[7] / 1000.0 / csuN, csuA[8] / 1000.0 / csuN); smkWrite(l_); memset(csuA, 0, sizeof csuA); csuN = 0; } } while (0)
+#endif
+static void camSubReport(void) {
+  if (!smkOn) return;
+  unsigned n_ = sceKernelGetSystemTimeLow(); csubN++; if (!csubT0) csubT0 = n_;
+  if (n_ - csubT0 < 1000000u) return;
+  char l_[300]; float k_ = 1.f / (float)csubN;
+  snprintf(l_, sizeof l_, "CAMSUB t=%.1f n=%u chase=%.0f safe=%.0f floor=%.0f dbg=%.0f camf=%.0f fnear=%.0f nfr=%.0f rw=%.0f rays=%.1f nf=%.2f mm=%u (мкс на кадр)\n", smkT, csubN,
+           csubT[0] * k_, csubT[1] * k_, csubT[2] * k_, csubT[3] * k_, csubT[4] * k_, csubT[5] * k_, csubT[6] * k_, csubT[7] * k_,
+           (csRayCalls - csubRay0) * k_, (csNfCalls - csubNf0) * k_, csRaysMismatch);
+  smkWrite(l_); memset(csubT, 0, sizeof csubT); csubN = 0; csubT0 = n_; csubRay0 = csRayCalls; csubNf0 = csNfCalls;
+}
 #define CPT0 unsigned cpt_ = cgProf ? sceKernelGetSystemTimeLow() : 0
 #define CPT(i) do { if (cgProf) { unsigned n_ = sceKernelGetSystemTimeLow(); cpT[i] += n_ - cpt_; cpt_ = n_; } } while (0)
 static void csAddCar(const Car *k, const float e[3], float R) {
@@ -208,7 +248,7 @@ static void camGeomCollect(const float P[3], const float e[3]) {
     if (!cgAheadOld && peOk) { float vx = e[0] - pe[0], vz = e[2] - pe[2]; if (fabsf(vx) < 3.f && fabsf(vz) < 3.f) { ax += fmaxf(-60.f, fminf(60.f, vx * 45.f)); az += fmaxf(-60.f, fminf(60.f, vz * 45.f)); } }
     memcpy(pe, e, 12); peOk = 1;
     cgAhX = cgAheadOld ? -1e9f : ax; cgAhZ = az; cgStep(e[0], e[2]); CPT(1); }
-  csScene.ntri = 0; camGeomTris = 0; csScene.geomRay = (CAM_GEOM_FAST && !camGeomOld && !inRoom()) ? cgRayFrac : 0;
+  csScene.ntri = 0; camGeomTris = 0; csScene.geomRay = (CAM_GEOM_FAST && !camGeomOld && !inRoom()) ? cgRayFracCam : 0;
   if (!pc || !cl || inRoom()) return;
   if (CAM_GEOM_FAST ? !(smkOn && camInOn && camInGeom) : (camGeomOld && !(smkOn && camInOn))) return;   // быстрый путь: треугольники только для замера «flag camingeom 1» (с flag camin они раньше шли всегда и в туре давали ph6 +1,4…2,4 мс)
   float lo[3], hi[3]; for (int k = 0; k < 3; k++) { lo[k] = fminf(P[k], e[k]) - CAM_GEOM_PAD; hi[k] = fmaxf(P[k], e[k]) + CAM_GEOM_PAD; }
@@ -240,8 +280,22 @@ static void camGeomCollect(const float P[3], const float e[3]) {
   }
   camGeomTris = csScene.ntri;
 }
+// №922: над точкой p есть видимая геометрия города (кусок, чей ящик по x, z содержит p и поднимается выше p, но не выше p + CAM_WALL_UP + 0,5 по низу): крыша за фасадом без коллизии
+static int camRoofAbove(const float p[3]) {
+  for (unsigned c = 0; c < ncell; c++) {
+    const Cell *C = &cl[c];
+    if (C->state != 2 || p[0] < C->bb[0] - .5f || p[0] > C->bb[3] + .5f || p[2] < C->bb[2] - .5f || p[2] > C->bb[5] + .5f) continue;
+    for (unsigned k = C->first; k < C->first + C->n && k < npc; k++) {
+      const Rec *r = &pc[k].r;
+      if (r->owner != 0 || (r->flags & 4) || !pc[k].v) continue;
+      if (p[0] < r->bb[0] - .5f || p[0] > r->bb[3] + .5f || p[2] < r->bb[2] - .5f || p[2] > r->bb[5] + .5f) continue;
+      if (r->bb[4] > p[1] + .2f && r->bb[1] < p[1] + CAM_WALL_UP + .5f) return 1;
+    }
+  }
+  return 0;
+}
 static void camSafeSceneX(const float e[3], float R) {
-  CPT0; camGeomCollect(camPivot, e); CPT(6); csScene.useTri = !CAM_GEOM_FAST && !camGeomOld;
+  csScene.roofAbove = camRoofAbove;   CPT0; camGeomCollect(camPivot, e); CPT(6); csScene.useTri = !CAM_GEOM_FAST && !camGeomOld;
   csScene.w = onFoot() && G.pHomerWorld ? G.pHomerWorld : &world; csScene.nbox = csScene.ncyl = 0;
   if (inRoom()) return;   // комната: свои стены, машин и прохожих нет
   if (haveTraffic) {
@@ -501,9 +555,16 @@ static void chaseCamUpdate(const Car *c, float yawOfs, float dt, float cam[3], f
     for (int k = 0; k < 4; k++) {
       float up = k * .8f, E[3] = {cam[0], cam[1] + up, cam[2]}, fr = 1.f;
       float L = sqrtf((E[0] - T[0]) * (E[0] - T[0]) + (E[1] - T[1]) * (E[1] - T[1]) + (E[2] - T[2]) * (E[2] - T[2]));
+      float cfr_[5], Ar_[5][3], Br_[5][3];   // CAMPERF (23.10): 5 лучей стены к коллизии одним обходом клеток (colRaysFrac), ответ каждого тот же; CAM_RAYS_OLD=1 / flag camraysold 1 — по одному
+      if (!camRaysOld) {
+        for (int r = 0; r < 5; r++) { float sx = r == 1 ? .4f : r == 2 ? -.4f : 0.f, sy = r == 3 ? .25f : r == 4 ? -.25f : 0.f;
+          memcpy(Ar_[r], T, 12); Br_[r][0] = E[0] - fz * sx; Br_[r][1] = E[1] + sy; Br_[r][2] = E[2] + fx * sx; }
+        colRaysFrac(&world, 5, (const float (*)[3])Ar_, (const float (*)[3])Br_, cfr_);
+        if (camRaysVerify) for (int r = 0; r < 5; r++) if (fabsf(colRayFrac(&world, Ar_[r], Br_[r], 0) - cfr_[r]) > 1e-6f) csRaysMismatch++;
+      }
       for (int r = 0; r < 5; r++) {                             // центр и 4 края: вбок ±0.4 м, вверх/вниз ±0.25 м
         float sx = r == 1 ? .4f : r == 2 ? -.4f : 0.f, sy = r == 3 ? .25f : r == 4 ? -.25f : 0.f;
-        float Er[3] = {E[0] - fz * sx, E[1] + sy, E[2] + fx * sx}, f = fminf(colRayFrac(&world, T, Er, 0), camCarsFrac(T, Er));   // 284: и машины
+        float Er[3] = {E[0] - fz * sx, E[1] + sy, E[2] + fx * sx}, f = fminf(camRaysOld ? colRayFrac(&world, T, Er, 0) : cfr_[r], camCarsFrac(T, Er));   // 284: и машины
         if (k == 0 && f < 1.f) s->hits++;
         if (f < fr) fr = f;
       }
@@ -557,6 +618,15 @@ static void chaseCamUpdate(const Car *c, float yawOfs, float dt, float cam[3], f
 #define CF_EYE_CLEAR .35f
 #define CF_EDGE_CLEAR .40f
 #define CF_RAISE_MAX 1.5f
+// №898 (Роб 23.10, L1 L5-5: «у мостов с перекладинами камера постоянно дёргается»): низ ближней плоскости ищет опору в 2 м ВЫШЕ глаза (top = глаз + 2) — под
+// фермой/мостом поверх дороги верх балки (коробка коллизии, 2,7 м над точкой) считался полом под глазом, и камера прыгала вверх сразу на CF_RAISE_MAX (1,5 м), на выезде
+// назад. Полом считается опора не выше точки + CF_OVER (видимый асфальт выше коллизии на 0,3–0,37, №791; запас 0,25 м). Настоящая земля под глазом, провалившимся
+// глубже, ловится правилом пола за машиной (CAM_GROUND_MIN, правка 284) и комнатами. CAM_FLOOR_OVER_OLD=1 / flag camflooroverold 1 — как было (красный контроль)
+#ifndef CAM_FLOOR_OVER_OLD
+#define CAM_FLOOR_OVER_OLD 0
+#endif
+#define CF_OVER .6f
+static int camFloorOverOld = CAM_FLOOR_OVER_OLD;
 static float cfLift; static unsigned cfLiftN;   // cfLiftN — кадров с подъёмом (служебно, строка CAMFLOOR)
 static void camFloorGuard(const ColWorld *w, float *cp, float *lk, float nearD, float fovY, float dt) {
   float f[3] = {lk[0] - cp[0], lk[1] - cp[1], lk[2] - cp[2]}, fl = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]); if (fl < 1e-4f || !w) return;
@@ -567,7 +637,8 @@ static void camFloorGuard(const ColWorld *w, float *cp, float *lk, float nearD, 
     float p[3], g, cl = i < 0 ? CF_EYE_CLEAR : CF_EDGE_CLEAR;
     if (i < 0) { p[0] = cp[0]; p[1] = cp[1]; p[2] = cp[2]; }
     else { float sx = (float)(i - 1) * th; for (int k = 0; k < 3; k++) p[k] = cp[k] + nearD * (f[k] + sx * r[k] - tv * u[k]); }
-    if (colGround(w, p[0], p[2], top, p[1] - 3.f, &g, 0) && p[1] < g + cl) need = fmaxf(need, g + cl - p[1]);
+    float tp = camFloorOverOld ? top : fminf(top, p[1] + CF_OVER);   // №898: пол — только то, что выше точки не больше CF_OVER; перекрытие, ферма, перекладина над глазом — не пол
+    if (colGround(w, p[0], p[2], tp, p[1] - 3.f, &g, 0) && p[1] < g + cl) need = fmaxf(need, g + cl - p[1]);
   }
   if (need > CF_RAISE_MAX) need = CF_RAISE_MAX;
   if (need > cfLift) cfLift = need; else cfLift += (need - cfLift) * (1.f - expf(-dt * 3.f));
@@ -700,6 +771,92 @@ static int skyHorizonCacheOld = SKY_HORIZON_CACHE_OLD, skyHorizonCacheValid;
 static int skyHorizonRfPair;
 static unsigned skyHorizonCacheColor, skyHorizonCacheHits, skyHorizonCalculations;
 static void skyHorizonInvalidate(void) { skyHorizonCacheValid = 0; }
+// №954 + №957 (Роб 25.10 после TEST59: «купол фона — вместо текстуры, ради еле видных звёзд, градиент того же перехода; макушка ровная; звёзды, может, вектором»): слои неба, у которых
+// текстура — вертикальный градиент (непрозрачная, строка почти одного цвета: точек, отличных от медианы строки больше чем на 16, не больше 5 %, больше чем на 40 — не больше 0,5 %),
+// теряют текстуру: цвет вершины = медиана строки по V вершины × цвет вершины (как множит GE), кусок — без текстуры и смешивания. Медиана по строке не видит звёзд (редкие точки),
+// облака и рисунок (доля отличных точек больше) остаются текстурой. Строки берутся из ИСХОДНОЙ палитры при загрузке уровня (до palTone, main_levels.h), потом купол и слой идут одной
+// цепочкой тона (skyDomeTone), поэтому стык слоя с куполом не расходится (прежде палитра слоя и цвет вершин купола красились разными путями, на L6 — ступенька на y 18 м).
+// Звёзды (редкие яркие точки текстуры, ≤ SKY954_STARS на текстуру) — точками GU_POINTS в месте точки на куске (барицентрическая развёртка по UV), один вызов, 1 пиксель;
+// цвет звезды — исходный цвет точки через toneColorRGB. SKY954_OLD=1 / файл sky954old рядом с EBOOT — как в TEST59; sky954starsold — без звёзд-точек
+#ifndef SKY954_OLD
+#define SKY954_OLD 0
+#endif
+#define SKY954_STARS 96
+typedef struct { unsigned short h, nd; unsigned char *row; struct { unsigned short x, y; unsigned char c[3]; } dot[SKY954_STARS]; } SkyGrad;
+static int sky954Old = SKY954_OLD, sky954StarsOld;
+static SkyGrad **sky954G; static unsigned sky954N;
+static struct { float x, y, z; unsigned c0, c; } sky954Star[512]; static int sky954NStar; static unsigned sky954StarKey = ~0u;
+static struct { int tex; unsigned char stars; } *sky954Slot;   // по месту в skyP: tex — исходная текстура-градиент (−1 нет, −2 ещё не решено), stars — звёзды этого куска сняты
+static int sky954Dome; static unsigned sky954Conv, sky954Seen;   // журнал: слоёв превращено / видено текстурных слоёв неба
+static void sky954Free(void) { for (unsigned i = 0; i < sky954N; i++) { if (sky954G[i]) free(sky954G[i]->row); free(sky954G[i]); } free(sky954G); sky954G = 0; sky954N = 0; free(sky954Slot); sky954Slot = 0; sky954NStar = 0; sky954StarKey = ~0u; sky954Conv = sky954Seen = 0; }
+// точка текстуры уровня 0 (как skyTexel: T4/T8, swizzle), RGBA исходной палитры
+static void sky954Px(const Tex *t, int x, int y, unsigned char *o) {
+  int bx = t->t4 ? x >> 1 : x, rb = texRowBytes(t->t4, t->pre, t->w);
+  unsigned q = t->pre ? ((y >> 3) * (rb >> 4) + (bx >> 4)) * 128 + (y & 7) * 16 + (bx & 15) : y * rb + bx;
+  unsigned ix = ((unsigned char *)t->lv[0])[q]; if (t->t4) ix = (x & 1) ? ix >> 4 : ix & 15;
+  memcpy(o, (const unsigned char *)t->pal + ix * 4, 4);
+}
+static int sky954Med(const unsigned *hist, int n) { int a = 0; for (int k = 0; k < 256; k++) { a += (int)hist[k]; if (a * 2 >= n) return k; } return 255; }
+// at — номер текстуры; зовут при загрузке уровня для текстур кусков неба, палитра ещё исходная
+static void sky954Build(unsigned at, const Tex *t) {
+  if (sky954Old || at >= sky954N || !t->pal || !t->lv[0] || t->w < 2 || t->h < 2 || t->w > 256 || t->h > 256) return;
+  int w = t->w, h = t->h; unsigned char px[4]; unsigned char *row = malloc((size_t)h * 3), *dv = malloc((size_t)w * h);
+  if (!row || !dv) { free(row); free(dv); return; }
+  unsigned n16 = 0, n40 = 0; int ok = 1;
+  for (int y = 0; y < h && ok; y++) {
+    unsigned hs[3][256]; memset(hs, 0, sizeof hs);
+    for (int x = 0; x < w; x++) { sky954Px(t, x, y, px); if (px[3] < 250) { ok = 0; break; } for (int c = 0; c < 3; c++) hs[c][px[c]]++; }
+    if (!ok) break;
+    for (int c = 0; c < 3; c++) row[y * 3 + c] = (unsigned char)sky954Med(hs[c], w);
+    for (int x = 0; x < w; x++) { sky954Px(t, x, y, px); int dm = 0; for (int c = 0; c < 3; c++) { int e = abs((int)px[c] - (int)row[y * 3 + c]); if (e > dm) dm = e; }
+      dv[y * w + x] = (unsigned char)(dm > 255 ? 255 : dm); n16 += dm > 16; n40 += dm > 40; }
+  }
+  unsigned all = (unsigned)w * (unsigned)h;
+  if (ok && n16 * 20u <= all && n40 * 200u <= all) {
+    SkyGrad *g = calloc(1, sizeof *g);
+    if (g) { g->h = (unsigned short)h; g->row = row; row = 0;
+      for (int y = 0; y < h; y++) for (int x = 0; x < w; x++) {   // звезда — точка, светлее медианы строки, максимум разницы в окрестности 3×3
+        int d0 = dv[y * w + x]; if (d0 < 30) continue; sky954Px(t, x, y, px);
+        int lum = px[0] + px[1] + px[2], lm = g->row[y * 3] + g->row[y * 3 + 1] + g->row[y * 3 + 2]; if (lum < lm + 45) continue;
+        int mx = 1; for (int j = -1; j <= 1 && mx; j++) for (int i = -1; i <= 1; i++) { int xx = x + i, yy = y + j; if (xx < 0 || yy < 0 || xx >= w || yy >= h || (!i && !j)) continue;
+          int d1 = dv[yy * w + xx]; if (d1 > d0 || (d1 == d0 && (j < 0 || (j == 0 && i < 0)))) { mx = 0; break; } }
+        if (!mx) continue;
+        if (g->nd < SKY954_STARS) { g->dot[g->nd].x = (unsigned short)x; g->dot[g->nd].y = (unsigned short)y; memcpy(g->dot[g->nd].c, px, 3); g->nd++; } }
+      sky954G[at] = g; }
+  }
+  free(row); free(dv);
+}
+// развёртка звёзд на куске: точка текстуры (x+.5, y+.5) → положение в пространстве неба (то же, что множит drawPiece: sc × вершина + начало). Куски без индексов: тройки вершин подряд.
+// u, v вершин — 1/256 повтора текстуры; точка тоже на повторе k = −1..ceil(maxU)
+static void sky954Dots(const Piece *d, const SkyGrad *g, int w, int h) {
+  if (sky954StarsOld || !g->nd || !(d->r.flags & F_NOIDX)) return;
+  float k = d->r.sc / 32768.f;
+  for (int j = 0; j + 2 < d->r.nv; j += 3) {
+    const Vert *V[3] = {&d->v[j], &d->v[j + 1], &d->v[j + 2]}; float U[3], Vv[3];
+    for (int q = 0; q < 3; q++) { U[q] = (unsigned short)V[q]->u / 256.f; Vv[q] = (unsigned short)V[q]->v / 256.f; }
+    float u0 = fminf(U[0], fminf(U[1], U[2])), u1 = fmaxf(U[0], fmaxf(U[1], U[2])), v0 = fminf(Vv[0], fminf(Vv[1], Vv[2])), v1 = fmaxf(Vv[0], fmaxf(Vv[1], Vv[2]));
+    float det = (U[1] - U[0]) * (Vv[2] - Vv[0]) - (U[2] - U[0]) * (Vv[1] - Vv[0]); if (fabsf(det) < 1e-7f) continue;
+    for (int s = 0; s < g->nd; s++) {
+      float dv_ = (g->dot[s].y + .5f) / h; if (dv_ < v0 - 1e-4f || dv_ > v1 + 1e-4f) continue;
+      for (int rep = (int)floorf(u0) - 1; rep <= (int)ceilf(u1); rep++) {
+        float du = (g->dot[s].x + .5f) / w + rep; if (du < u0 - 1e-4f || du > u1 + 1e-4f) continue;
+        float a = ((du - U[0]) * (Vv[2] - Vv[0]) - (U[2] - U[0]) * (dv_ - Vv[0])) / det, b = ((U[1] - U[0]) * (dv_ - Vv[0]) - (du - U[0]) * (Vv[1] - Vv[0])) / det;
+        if (a < -1e-3f || b < -1e-3f || a + b > 1.001f || sky954NStar >= (int)(sizeof sky954Star / sizeof sky954Star[0])) continue;
+        float x = V[0]->x + a * (V[1]->x - V[0]->x) + b * (V[2]->x - V[0]->x), y = V[0]->y + a * (V[1]->y - V[0]->y) + b * (V[2]->y - V[0]->y), z = V[0]->z + a * (V[1]->z - V[0]->z) + b * (V[2]->z - V[0]->z);
+        sky954Star[sky954NStar].x = x * k + d->r.ox; sky954Star[sky954NStar].y = y * k + d->r.oy; sky954Star[sky954NStar].z = z * k + d->r.oz;
+        sky954Star[sky954NStar].c0 = (unsigned)g->dot[s].c[0] | (unsigned)g->dot[s].c[1] << 8 | (unsigned)g->dot[s].c[2] << 16 | 0xff000000u; sky954Star[sky954NStar].c = sky954Star[sky954NStar].c0; sky954NStar++; break; }
+    }
+  }
+}
+// цвета вершин слоя из строки текстуры; piece — номер в pc, буфер в исходном виде (прочитан из файла). Метка pad 0x954 у вершины 0 — буфер уже превращён (перечитанный метки не имеет)
+#define SKY954_MARK 0x3954
+static void sky954Fill(Piece *d, const SkyGrad *g) {
+  int h = g->h;
+  for (int i = 0; i < d->r.nv; i++) { Vert *v = &d->v[i]; int ty = (int)floorf((unsigned short)v->v / 256.f * h) % h; if (ty < 0) ty += h;
+    unsigned c = v->c, r = (c & 255) * g->row[ty * 3] / 255u, gg = (c >> 8 & 255) * g->row[ty * 3 + 1] / 255u, b = (c >> 16 & 255) * g->row[ty * 3 + 2] / 255u;
+    v->c = r | gg << 8 | b << 16 | 0xff000000u; }
+  d->v[0].pad = SKY954_MARK; sceKernelDcacheWritebackRange(d->v, d->r.nv * sizeof(Vert));
+}
 // №785 (Роб 18.10 после TEST34: «самая верхушка неба, звёзды, не окрашивается цветокоррекцией мультика — пусть цветокоррекция распространяется на небо»): купол неба —
 // куски неба БЕЗ текстуры (tex −1; L1 — 4 куска по 507–537 вершин), градиент в цветах вершин, а тон менял только палитры. В мультике цвета вершин купола идут той же
 // цепочкой, что запись палитры (toneColorRGB); исходные хранятся, смена настройки (toneKey) или перечитанная клетка — пересчёт. В обычном режиме купол как был.
@@ -712,16 +869,28 @@ static void skyHorizonInvalidate(void) { skyHorizonCacheValid = 0; }
 static struct { Vert *v; unsigned *orig; unsigned n, key, c0; } skyTone[SKY_TONE_N]; static const void *skyToneLevel;
 static void skyDomeTone(void) {
   if (SKY_TONE_OLD) return;
-  if (skyToneLevel != (const void *)pc) { for (int s = 0; s < SKY_TONE_N; s++) { free(skyTone[s].orig); memset(&skyTone[s], 0, sizeof skyTone[s]); } skyToneLevel = pc; }   // новый уровень — новый массив кусков
+  if (skyToneLevel != (const void *)pc || (!sky954Slot && nskyP > 0)) { for (int s = 0; s < SKY_TONE_N; s++) { free(skyTone[s].orig); memset(&skyTone[s], 0, sizeof skyTone[s]); } skyToneLevel = pc;   // новый уровень — новый массив кусков
+    free(sky954Slot); sky954Slot = nskyP > 0 ? calloc((size_t)nskyP, sizeof *sky954Slot) : 0; for (int s = 0; sky954Slot && s < nskyP; s++) sky954Slot[s].tex = -2; sky954NStar = 0; sky954StarKey = ~0u;
+    sky954Dome = 0; for (int s = 0; s < nskyP; s++) { const Piece *d = &pc[skyP[s]]; if (d->r.tex < 0 && !(d->r.flags & (1 << 24))) sky954Dome = 1; } }   // №954: есть купол без текстуры (цвета вершин, тон мультика) — слой-градиент к верху переходит в его тон
   unsigned key = toneToon() ? toneKey() : 0u; int changed = 0;
   for (int s = 0; s < nskyP; s++) {
     Piece *d = &pc[skyP[s]];
-    if (cl[d->r.cell].state != 2 || !d->v || d->r.tex >= 0 || (d->r.flags & F_V12) || !d->r.nv) continue;
+    if (cl[d->r.cell].state != 2 || !d->v || (d->r.flags & F_V12) || !d->r.nv) continue;
+    if (sky954Slot && !sky954Old) {   // №954: слой-градиент → цвета вершин (строка текстуры × цвет вершины), без текстуры
+      if (sky954Slot[s].tex == -2) { int t_ = d->r.tex, sh_ = 0; sky954Slot[s].tex = -1;
+        if (t_ >= 0 && (unsigned)t_ < sky954N && sky954G[t_]) { sky954Seen++; for (int s2 = 0; s2 < nskyP; s2++) if (s2 != s && pc[skyP[s2]].v == d->v) sh_ = 1;   // общий буфер с другим куском — не трогаем
+          if (!sh_) sky954Slot[s].tex = t_; } else if (t_ >= 0) sky954Seen++; }
+      if (sky954Slot[s].tex >= 0 && d->v[0].pad != SKY954_MARK) { const SkyGrad *g_ = sky954G[sky954Slot[s].tex]; const Tex *tx_ = &tex[sky954Slot[s].tex];
+        if (!sky954Slot[s].stars) { sky954Slot[s].stars = 1; sky954Dots(d, g_, tx_->w, tx_->h); }   // до смены цветов: у звёзд своя развёртка по UV
+        sky954Fill(d, g_); d->r.tex = -1; d->r.flags &= ~3; sky954Conv++; changed = 1; }
+    }
+    if (d->r.tex >= 0) continue;
+    unsigned pk = sky954Slot && sky954Slot[s].tex >= 0 ? (toneKey() | 0x80000000u | (sky954Dome ? 0x40000000u : 0u)) : key;   // превращённый слой: тон как у палитры слоя и в обычном режиме (купол — как был)
     int e = -1, fr = -1;
     for (int k = 0; k < SKY_TONE_N; k++) { if (skyTone[k].v == d->v) { e = k; break; } if (!skyTone[k].v && fr < 0) fr = k; }
     unsigned n = d->r.nv;
     for (int s2 = s + 1; s2 < nskyP; s2++) { const Piece *d2 = &pc[skyP[s2]]; if (d2->v == d->v && d2->r.nv > n) n = d2->r.nv; }   // общий буфер — по самому длинному куску
-    if (e >= 0 && skyTone[e].key == key && skyTone[e].n >= n && d->v[0].c == skyTone[e].c0) continue;   // уже в тоне (частый случай, каждый кадр)
+    if (e >= 0 && skyTone[e].key == pk && skyTone[e].n >= n && d->v[0].c == skyTone[e].c0) continue;   // уже в тоне (частый случай, каждый кадр)
     if (e >= 0 && (skyTone[e].n < n || d->v[0].c != skyTone[e].c0)) { free(skyTone[e].orig); memset(&skyTone[e], 0, sizeof skyTone[e]); fr = e; e = -1; }   // буфер перечитан или больше прежнего
     if (e < 0) {   // новый (или перечитанный) буфер: в памяти исходные цвета из файла
       if (fr < 0) continue;
@@ -729,17 +898,26 @@ static void skyDomeTone(void) {
       skyTone[e].v = d->v; skyTone[e].n = n; skyTone[e].key = 0; skyTone[e].c0 = d->v[0].c;
       for (unsigned k = 0; k < n; k++) skyTone[e].orig[k] = d->v[k].c;
     }
-    if (skyTone[e].key == key) continue;
+    if (skyTone[e].key == pk) continue;
     n = skyTone[e].n;
     for (unsigned k = 0; k < n; k++) {
       unsigned c = skyTone[e].orig[k];
-      if (key) { unsigned char q[4] = {(unsigned char)c, (unsigned char)(c >> 8), (unsigned char)(c >> 16), (unsigned char)(c >> 24)}; toneColorRGB(q);
+      if (pk) { unsigned char q[4] = {(unsigned char)c, (unsigned char)(c >> 8), (unsigned char)(c >> 16), (unsigned char)(c >> 24)};
+        if (pk & 0x80000000u) {   // №954: слой-градиент: у горизонта — тон палитры слоя (как прежде, без шагов мультика), к верху слоя — тон купола (стык без ступеньки)
+          unsigned char n_[4]; memcpy(n_, q, 4); toneColorRGBNT(n_); toneColorRGB(q);
+          float t = (pk & 0x40000000u) ? fminf(1.f, fmaxf(0.f, (unsigned short)skyTone[e].v[k].v / 256.f)) : 0.f; t = t * t * (3.f - 2.f * t);
+          for (int ch = 0; ch < 3; ch++) q[ch] = (unsigned char)(n_[ch] + ((int)q[ch] - (int)n_[ch]) * t + .5f); }
+        else toneColorRGB(q);
         c = q[0] | (unsigned)q[1] << 8 | (unsigned)q[2] << 16 | (c & 0xff000000u); }
       skyTone[e].v[k].c = c;
     }
     sceKernelDcacheWritebackRange(skyTone[e].v, n * sizeof(Vert));
-    skyTone[e].key = key; skyTone[e].c0 = skyTone[e].v[0].c; changed = 1;
+    skyTone[e].key = pk; skyTone[e].c0 = skyTone[e].v[0].c; changed = 1;
   }
+  if (sky954NStar && sky954StarKey != key) { sky954StarKey = key;   // звёзды-точки: цвет точки той же цепочкой тона, что цвета купола
+    for (int k = 0; k < sky954NStar; k++) { unsigned c = sky954Star[k].c0;
+      if (key) { unsigned char q[4] = {(unsigned char)c, (unsigned char)(c >> 8), (unsigned char)(c >> 16), (unsigned char)(c >> 24)}; toneColorRGB(q); c = q[0] | (unsigned)q[1] << 8 | (unsigned)q[2] << 16 | 0xff000000u; }
+      sky954Star[k].c = c; } }
   if (changed) skyHorizonInvalidate();
 }
 static unsigned skyHorizonColor(void) {

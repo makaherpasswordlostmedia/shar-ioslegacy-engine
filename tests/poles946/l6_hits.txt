@@ -1,0 +1,244 @@
+# №946: L6, заезд машиной в лоб (flag autostraight) по 2 предметам каждого типа PRP1; PROPKICK / PROPSTAT — сбит ли предмет в игре
+scene P_load
+flag golevel 6
+wait 20
+flag cfgdefaults 1
+flag repair
+scene P_hits
+flag repair
+goto 86.22 60.88 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 0
+flag repair
+goto -225.81 163.84 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 11
+flag repair
+goto -0.70 116.38 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 17
+flag repair
+goto 91.39 128.36 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 16
+flag repair
+goto -500.51 34.19 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 33
+flag repair
+goto -500.60 82.86 3.1416
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 27
+flag repair
+goto -460.46 166.90 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 60
+flag repair
+goto 95.33 87.65 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 48
+flag repair
+goto 74.28 92.08 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 98
+flag repair
+goto -11.73 204.38 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 104
+flag repair
+goto -476.25 32.06 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 145
+flag repair
+goto -448.41 36.17 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 144
+flag repair
+goto -6.07 64.01 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 156
+flag repair
+goto -499.93 33.55 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 163
+flag repair
+goto 91.05 145.28 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 170
+flag repair
+goto 82.12 179.52 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 171
+flag repair
+goto 175.12 -294.86 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 207
+flag repair
+goto -445.66 220.53 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 203
+flag repair
+goto -272.46 133.60 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 227
+flag repair
+goto -242.20 133.60 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 226
+flag repair
+goto -316.38 -60.52 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 260
+flag repair
+goto -481.67 -7.38 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 276
+flag repair
+goto 127.09 -213.36 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 280
+flag repair
+goto 113.65 -312.77 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 284
+flag repair
+goto -24.46 17.08 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 286
+flag repair
+goto -24.67 -19.94 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 285
+flag repair
+goto -231.08 47.58 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 293
+flag repair
+goto -230.93 199.76 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 294
+flag repair
+goto -418.95 49.52 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 303
+flag repair
+goto -502.66 37.24 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 304
+flag repair
+goto -473.60 36.27 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 305
+flag repair
+goto -241.89 -270.16 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 306
+flag repair
+goto -413.74 -219.22 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 310
+flag repair
+goto -393.51 -321.94 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 311
+flag repair
+goto -458.45 -305.17 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 313
+flag repair
+goto -282.78 -245.86 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 315
+flag repair
+goto -282.77 -203.35 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 318
+flag repair
+goto -285.56 -191.64 3.1416
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 321
+flag repair
+goto -278.56 -198.31 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.4
+flag propstat 322
+flag repair
+wait 1
+end

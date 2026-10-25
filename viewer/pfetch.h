@@ -4,3 +4,4 @@
 #define PFETCH_H
 extern void *(*pfTakeHook)(const char *path, unsigned *size);
 #endif
+extern void *(*trAllocHook)(unsigned n); extern void (*trFreeHook)(void *p);   // №962: буфер traffic.shr в запас участка lva (traffic.c, main_levels.h)

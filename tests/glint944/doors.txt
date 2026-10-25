@@ -1,0 +1,38 @@
+### №944 L1: звёзды входа у домов. Дом Симпсонов, Kwik-E-Mart, школа: рисунок l1_doorstars (три звезды) и миссионные simp/kwik/school_mission_doorstar. Мир без миссии: пакеты входов грузит flag g944art, Гомера ставит g944door
+scene m0
+wait 3
+flag msn
+wait 3
+flag g944art
+wait 8
+flag g944draw 4
+flag g944door 0 5
+wait 3
+shot hs_a
+flag g944door 0 9
+wait 2
+shot hs_b
+flag g944draw 5
+flag g944door 0 6
+wait 2
+shot hs_c
+flag g944draw 4
+flag g944door 1 5
+wait 3
+shot kw_a
+flag g944door 1 9
+wait 2
+shot kw_b
+flag g944draw 6
+flag g944door 1 6
+wait 2
+shot kw_c
+flag g944draw 4
+flag g944door 2 5
+wait 3
+shot sc_a
+flag g944draw 7
+flag g944door 2 7
+wait 2
+shot sc_c
+end

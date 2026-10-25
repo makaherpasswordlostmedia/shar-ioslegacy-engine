@@ -1,0 +1,83 @@
+wait 12
+scene LOAD
+flag golevel 1
+wait 40
+flag cfgdefaults 1
+goto 222 168 3.0
+wait 4
+foot 224.5 169.5 0
+wait 3
+press triangle 0.2
+wait 4
+scene CARV
+camrel -5.5 1.6 0 1 -0.2 0
+flag lumakey 0
+wait 3
+shot f
+flag lumakey 1
+wait 2
+shot fk
+camrel 5.5 1.6 0 -1 -0.2 0
+flag lumakey 0
+wait 3
+shot b
+flag lumakey 1
+wait 2
+shot bk
+camrel 0 1.5 5.5 0 -0.2 -1
+flag lumakey 0
+wait 3
+shot l
+flag lumakey 1
+wait 2
+shot lk
+camrel 0 1.5 -5.5 0 -0.2 1
+flag lumakey 0
+wait 3
+shot r
+flag lumakey 1
+wait 2
+shot rk
+camrel -9 3.2 3 1 -0.3 -0.3
+flag lumakey 0
+wait 3
+shot hf
+flag lumakey 1
+wait 2
+shot hfk
+camrel 9 3.2 -3 -1 -0.3 0.3
+flag lumakey 0
+wait 3
+shot hb
+flag lumakey 1
+wait 2
+shot hbk
+camrel -3.5 1.1 2.2 1 0 -0.3
+flag lumakey 0
+wait 3
+shot n1
+flag lumakey 1
+wait 2
+shot n1k
+camrel 3.2 1.2 -2.5 -1 0 0.4
+flag lumakey 0
+wait 3
+shot n2
+flag lumakey 1
+wait 2
+shot n2k
+camrel -14 1.8 2 1 -0.05 0
+flag lumakey 0
+wait 3
+shot far
+flag lumakey 1
+wait 2
+shot fark
+camrel -0.5 7 0.3 0 -1 0.02
+flag lumakey 0
+wait 3
+shot top
+flag lumakey 1
+wait 2
+shot topk
+end

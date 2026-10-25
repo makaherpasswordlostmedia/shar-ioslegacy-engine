@@ -49,6 +49,7 @@ void svmMatrix(void);                            // замер всех вари
 // загрузка слота с записью утилиты — окном LOAD; слоты оригинала остаются, окно подтверждает выбранный (savemenu.c, ST_SYSDLG).
 // Окно — в обычном запуске; служебный (scenario.txt рядом с EBOOT) — тихо, как раньше. Окно не справилось — прежний тихий путь
 void svmDialog(int on);                          // служебное: flag svdialog — окно и в служебном запуске; flag svquiet — прежний тихий путь (красный)
+void svmPickEmpty(int on);                       // служебное: flag svpickempty — запись только в пустой слот, пустого нет — отмена (ENDSAVE skip)
 void svmDialogFail(int on);                      // служебное: flag svdlgfail — окно отвергает все варианты (живёт ли тихий запасной путь)
 unsigned svmDialogFrame(float dt, int start);    // в main.c: раз в кадр, пока окно на экране (start — первый кадр окна), — сценарий смоука
                                                  // (press/wait/shot) и кнопки сценария в контроллер эмулятора (строка TWPAD); -> кнопки (на PSP 0)
@@ -62,4 +63,5 @@ unsigned svmDialogFrame(float dt, int start);    // в main.c: раз в кад�
 #define SVM_DEV_COINS 99999
 int  svmIsDev(const SaveGame *g);                // запись разработчика: seq 0 и есть дата записи (в памяти игры записи без даты — не DEV)
 void svmDevBoot(int (*levelAvail)(int level));   // после svmScan: флаг-файл devsave -> слот 4; levelAvail — набор уровня рядом с EBOOT
+void svmAllBoot(void);                           // служебное (сборка с -DSVM_ALLSAVE): флаг-файл allsave + allsave.bin рядом с EBOOT -> запись «пройдено всё» в слот; в обычной игре пусто
 #endif

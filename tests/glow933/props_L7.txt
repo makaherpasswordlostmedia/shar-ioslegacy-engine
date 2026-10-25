@@ -1,0 +1,37 @@
+wait 12
+scene LOAD
+flag golevel 7
+wait 40
+flag cfgdefaults 1
+flag camin 1
+flag slprops933 MODE
+wait 3
+scene L0
+foot 165 135 0
+wait 2.5
+shot l0_a
+press r 1.0
+wait 1.2
+shot l0_b
+scene L1
+foot 139 108 0
+wait 2.5
+shot l1_a
+press r 1.0
+wait 1.2
+shot l1_b
+scene L2
+foot 116 205 0
+wait 2.5
+shot l2_a
+press r 1.0
+wait 1.2
+shot l2_b
+scene L3
+foot 100 150 0
+wait 2.5
+shot l3_a
+press r 1.0
+wait 1.2
+shot l3_b
+end

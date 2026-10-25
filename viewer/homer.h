@@ -215,7 +215,7 @@ typedef struct {
   // --- события
   HomerEvent ev[HOMER_MAXEV]; int nev;
   // --- камера пешком
-  float camYaw, camY, frame, heldX, heldY; int camInit;
+  float camYaw, camY, frame, heldX, heldY, neutralT, steerGap, sweepT; int camInit;   // №920: neutralT — сколько стик уже в нуле (кадр управления держится STEER_NEUTRAL_T); steerGap — сколько steer не вызывался (после машины, пинка, падения кадр не считается свежим)
   float safe[3], launchV; int idleNext;
   // --- отладка / тесты
   float maxY, lastLandV; int landings;
@@ -318,8 +318,9 @@ void homerCamDeathPose(Homer *H);
 #define HOMER_CAM_DEATH_EYE 1.891f    // [PS2] В86 trace.tsv кадр 608: cam y − Гомер y
 int camOverGround(const ColWorld *w, float x, float z, float y);   // правка 40: под глазом камеры есть опора коллизии
 extern int homerIrisCarOld;   // правка 333: 1 — прежнее (клипы двери и у машин с SetIrisTransition); красный контроль tests/homer/iris_car.py
-extern int homerExitYawOld, homerCtrlFreezeOld, homerCtrlOn, homerCamBusy; extern float homerCtrlYaw;   // homerCamBusy — №836: камера в переходе/вращается (ставит main_loop.h)   // №704: курс управления, замороженный на время облёта камеры
+extern int homerCtrl916Old, homerExitYawOld, homerCtrlFreezeOld, homerCtrlOn, homerCamBusy; extern float homerCtrlYaw;   // homerCamBusy — №836: камера в переходе/вращается (ставит main_loop.h)   // №704: курс управления, замороженный на время облёта камеры
 extern int homerFlipStandOld;   // HOMER_FLIP_STAND_OLD=1 / flag homerflipstandold 1 — перескок камеры у стены и у стоящего Гомера (как было)
+extern int homerCamFlipOld, homerCamFlipN, homerFlipBusyOld, homerFlipHold;   // №916в: перескок камеры у стены одним кадром (CAM_FLIP1_OLD=1 / flag camflip1old 1 — как было); счётчик перескоков
 extern int homerCamPs2Old;   // CAM_WALL_PS2_OLD=1 / flag camwallps2old 1 — стена за камерой пешком как раньше (подъезд + подъём), не как у PS2
 extern int homerCamWallOff;   // 1 — камера пешком без обхода стен (служебное, красный контроль tests/camera)
 extern float homerCamDist, homerCamEyeH, homerCamLookH;   // камера пешком (HOMER_CAM_DIST / _EYE_H / _LOOK_H; служебное — красный контроль)

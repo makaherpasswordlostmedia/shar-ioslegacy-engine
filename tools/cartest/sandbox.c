@@ -29,6 +29,7 @@ static int speed=1, paused, stopping, fatal, episodeTicks=1800;
 static uint32_t campaignSeed=7;
 static double began;
 static double cpuNow(void){struct timespec t;clock_gettime(CLOCK_PROCESS_CPUTIME_ID,&t);return t.tv_sec+t.tv_nsec*1e-9;}
+unsigned homerSolidFrame;   // homer.c в рой не входит; 0 = «вне homerUpdate», кеш соседей props.c выключен (как в прежних тестах)
 static Props objects;static StateProps stateObjects;
 static unsigned char *glassVisited;static int contactCar,glassTotal,glassCovered;
 static unsigned long propImpacts,glassBreaks,stateHits;
@@ -221,6 +222,7 @@ static void commands(void){
     }else if(len<(int)sizeof line-1)line[len++]=ch;
   }
 }
+#ifndef SANDBOX_NO_MAIN   // bots_swarm.c подключает этот файл и ставит свой main
 int main(int argc,char **argv){
   const char *level=0,*road=0,*inject=0;int ticks=0,emit=4;
   for(int i=1;i<argc;i++){
@@ -249,3 +251,4 @@ int main(int argc,char **argv){
   propsFree(&objects);spFree(&stateObjects);free(glassVisited);colFree(&W);free(file);free(roads);free(nxtStart);free(nxtList);
   return fatal?1:0;
 }
+#endif

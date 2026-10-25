@@ -1,0 +1,22 @@
+### №941 «!» над персонажем миссии L1 (общий блик под значком; тот же путь, что у трубки над будкой): Гомер рядом, 4 курса
+scene BQ_load
+flag golevel 1
+wait 15
+flag player 1
+scene EX0
+foot 213.0 172.0 1.5708
+wait 2.5
+shot ex0
+scene EX1
+foot 213.0 172.0 0.7
+wait 2.5
+shot ex1
+scene EX2
+foot 213.0 172.0 0.0
+wait 2.5
+shot ex2
+scene EX3
+foot 213.0 172.0 -0.7
+wait 2.5
+shot ex3
+end

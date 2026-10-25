@@ -1,3 +1,4 @@
+#include "xsub.h"
 // ---------- карта высот и стены ----------
 #include "bisect.h"
 static int ground(float x, float z, float y, float step, float *out) {
@@ -67,7 +68,8 @@ static float groundMul = 1.f; static unsigned groundTexN;   // groundTexN: ск�
 static inline float texSlope(const Tex *x) { return groundSlope(x->slope, x->ground, groundMul, GROUNDBIAS_RT_OLD); }
 static float mipBias = MIP_BIAS;   // правка 416, служебное «flag mipbias X» (с dloff 1): сдвиг уровня мипа при выборе по глубине — замер мерцания дали
 // сброс кэша состояний; заодно выключает отсечение граней (HUD, частицы, тень, фонари рассчитаны на выключенное) и сдвиг глубины слоёв
-static void resetState(void) { curLvlMode = -1; bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curSlope = -1.f; setCull(0); setBias(0); }   // 265: наклон мипа гостиной не переносится в город
+static void carToonHullFlush(void);
+static void resetState(void) { flatOff(); carToonHullFlush(); curLvlMode = -1; bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curSlope = -1.f; setCull(0); setBias(0); }   // 265: наклон мипа гостиной не переносится в город
 static void texEnable(int on) {
   if (on == texOn) return; texOn = on;
   if (on) sceGuEnable(GU_TEXTURE_2D); else sceGuDisable(GU_TEXTURE_2D);
@@ -77,6 +79,7 @@ static void texEnable(int on) {
 static Tex *rgTex; static unsigned rgNtex;
 static Tex *cxTex; static unsigned cxNtex;   // В5: текстуры пакета collect-l1.shr (номер COLL_CTEX0 + k, viewer/collect.h)
 static Tex *texAt(int t) {
+  if (t == NOISE_TEX_ID) return noiseReady ? &noiseTex : 0;   // №912: процедурный шум земли
   if (t >= COLL_CTEX0) { t -= COLL_CTEX0; return t < (int)cxNtex ? &cxTex[t] : 0; }
   if (t >= RTEX0) { t -= RTEX0; return t < (int)rgNtex ? &rgTex[t] : 0; }
   return t >= 0 && t < (int)ntex ? &tex[t] : 0;
@@ -161,7 +164,7 @@ static void tsFrame(void) {
 }
 static int texRegOld = TEXREG_OLD;   // №657: «flag texreg 1» — меньше слов GE на привязку (регистры, что не менялись, не пишутся); по умолчанию как в сборке (TEXREG_OLD=1 — полная запись)
 static unsigned rbMode, rbFmt, rbSize[8], rbPal;
-static void bindTexLean(int t) {
+static void bindTexLean0(int t) {
   if (!(opt & O_TEX)) t = -1;
   if (phPlant && phAllow && t >= 0) t += 0x2000;   // служебное: номер вне таблицы (texAt пусто), не RTEX0/COLL_CTEX0
   if (t == bound && phAllow == phBoundAllow) { if (smkOn) tsSame++; return; } int prevBound = bound; bound = t; phBoundAllow = phAllow;
@@ -211,6 +214,32 @@ static void bindTexLean(int t) {
     if (curLvlMode != target) { sceGuTexLevelMode(GU_TEXTURE_AUTO, bias); curLvlMode = target; }
   }
 }
+// №912: заливка вместо текстуры (toonflat.h). Свет GE без источников: окружающий цвет модели = заливка, материал ambient = цвет вершины (результат — заливка × цвет вершины)
+static void flatLightOn(unsigned amb) {
+  if (flatLit != 1) { sceGuColorMaterial(GU_AMBIENT); sceGuEnable(GU_LIGHTING); flatLit = 1; flatTouched = 1; flatAmbOk = 0; flatSwitches++; }
+  if (!flatAmbOk || amb != flatAmb) { sceGuAmbient(amb); flatAmb = amb; flatAmbOk = 1; }
+}
+// №949: масштаб текстуры шума куска (toonflat.h nz*): тайл шума noisePitch метров. Код куска nzPend ставит NZP(d) перед привязкой; действует на одну привязку
+static inline void nzApply(void) {
+  unsigned w = nzPend; nzPend = 0; if (!nzOn) return; if ((int)w == nzCur) return;
+  if (!w) { nzReset(); return; }
+  float ip = 128.f / noisePitch, su = nzLut[w & 255] * ip, sv = nzLut[(w >> 8) & 255] * ip;
+  if (!(w & 255)) su = 128.f; if (!((w >> 8) & 255)) sv = 128.f;
+  sceGuTexScale(su, sv); nzCur = (int)w; nzBinds++;
+}
+#define NZP(d) (nzPend = (d)->nz)
+static void bindTexLean(int t) {
+  int fk = (!flatOn || !(opt & O_TEX)) ? 0 : flatKind(t);
+  if (!fk) { nzPend = 0; if (flatLit != 0 && flatTouched) flatOff(); else flatLit = 0; if (nzCur) nzReset(); bindTexLean0(t); return; }
+  if (fk == 2) nzApply(); else nzPend = 0;
+  int eff = (int)(flatExact[t] | (unsigned)fk);   // ключ состояния заливки: точный тон (24 бита) и вид; бит 30 — признак
+  if (eff == bound && phAllow == phBoundAllow && flatLit == 1) { if (smkOn) tsSame++; return; }
+  if (fk == 2) { if (!(bound >= 0x40000000 && (bound & 3) == 2)) { bound = -2; bindTexLean0(NOISE_TEX_ID); }
+    if (TOON_NOISE_WORLD) { if (flatMap != 1) { sceGuTexMapMode(GU_TEXTURE_MATRIX, 0, 0); sceGuTexProjMapMode(GU_POSITION); flatMap = 1; } if (!flatInList && flatMdlGen != flatTexGen) flatTexEmit(); }
+    flatNoiseN++; } else { texEnable(0); rbId = -9; }
+  if (fk == 2 && noiseNoLight) { if (flatLit == 1) { sceGuDisable(GU_LIGHTING); sceGuColorMaterial(0); flatLit = 0; flatAmbOk = 0; } } else flatLightOn(flatTint[t]);
+  bound = eff; phBoundAllow = phAllow; flatBinds++;
+}
 static int curCull;
 static void setCull(int on) {
   if (on == curCull) return; curCull = on;
@@ -247,6 +276,19 @@ static void setCull(int on) {
 #define NEON_GLOW_MAXTRI 64
 #endif
 static int neonGlowOn = NEON_GLOW_ON;
+// №933 служебно (инвентарь светящегося текстурой/сложением): GLOWTOP раз в секунду — что ещё рисуется как свет не вектором. src: фаза кадра для кусков со сложением (A<фаза>), «B» — билборд-квад (текстура, режим BLMD, PVIS)
+static int gloSite;   // №933 служебно: 1 пропы, 2 стейтпропы, 3 собираемое (collDraw), 0 прочее — откуда рисуется кусок (GLOWBIG)
+static struct { char src; int a, b, c; unsigned n, tris; } gloT[24]; static int gloN; static float gloT0; static unsigned gloFr;
+static void gloAdd(char src, int a, int b, int c, unsigned tris) {
+  if (!smkOn) return;
+  if (smkT - gloT0 >= 1.f || smkT < gloT0) { if (gloN) { char l[700]; int o = snprintf(l, sizeof l, "GLOWTOP t=%.1f sc=%s", smkT, smkScene);
+      for (int i = 0; i < gloN; i++) for (int j = i + 1; j < gloN; j++) if (gloT[j].n > gloT[i].n) { __typeof__(gloT[0]) x = gloT[i]; gloT[i] = gloT[j]; gloT[j] = x; }
+      for (int i = 0; i < gloN && i < 8 && o < 620; i++) o += snprintf(l + o, sizeof l - (size_t)o, " [%c tex=%d %d %d n=%u tris=%u]", gloT[i].src, gloT[i].a, gloT[i].b, gloT[i].c, gloT[i].n, gloT[i].tris);
+      snprintf(l + o, sizeof l - (size_t)o, "\n"); smkWrite(l); } gloN = 0; gloT0 = smkT; }
+  int k = 0; for (; k < gloN; k++) if (gloT[k].src == src && gloT[k].a == a && gloT[k].b == b && gloT[k].c == c) break;
+  if (k == gloN) { if (gloN >= 24) return; gloT[k].src = src; gloT[k].a = a; gloT[k].b = b; gloT[k].c = c; gloT[k].n = gloT[k].tris = 0; gloN++; }
+  gloT[k].n++; gloT[k].tris += tris;
+}
 static unsigned dbgAddN, dbgAddTri, dbgAddBig;   // №703 (диагностика): аддитивные куски города, прошедшие NEON_SKIP за кадры с прошлого «flag addstat»
 static int slLightOn, slLightResetReq;   // №658 (viewer/spritelight.h): flag lightspr 1 — авторские световые куски города рисует таблица спрайтов; сброс таблицы при смене уровня
 static int glowBias;   // TEST19 (диагностика мигания света): «flag glowbias N» — добавочный сдвиг глубины N единиц к камере для всех кусков и билбордов со сложением (световые пятна лежат в 8 см над землёй, 16-бит глубина их не различает); 0 — как есть
@@ -315,10 +357,11 @@ static inline void gateCount(int cnt) { int p = bbPhase; if (p < 0 || p >= 24) p
 #endif
 // №674 diaglog: журнал отрисовки диагональных вспышек (флаг сценария «diaglog», только smokeOn). Треугольники, которые уходят в GE БЕЗ среза ggCut и под риском защитной полосы
 // (ggRisk: вершина ближе near или дальше GG_SAFE px от центра, треугольник касается кадра): GE выбрасывает такой треугольник целиком или рисует клин. Одна строка DIAGF на кадр с такими треугольниками
+static int diagAbsM = -1;   // №921: 1 — матрица куска мировая (минус глаз), 0 — уже от глаза (город: drawPiece), -1 — угадать по переносу (прежнее правило diagGeo ошибалось у кусков города: перенос включает центр куска)
 static float ggLowH = GG_LOW_H; static unsigned ggLowFrames; static int diagOn; static ScePspFMatrix4 diagM; static int diagMok;
 static void diagGeo(const Piece *d, int far, int cnt);
 #undef sceGuSetMatrix
-#define sceGuSetMatrix(t, m) (diagOn && (t) == GU_MODEL ? (void)(diagM = *(const ScePspFMatrix4 *)(m), diagMok = 1) : (void)0, geSetMatrixSafe(t, m))
+#define sceGuSetMatrix(t, m) (diagOn && (t) == GU_MODEL ? (void)(diagM = *(const ScePspFMatrix4 *)(m), diagMok = 1) : (void)0, flatCapture(t, m), geSetMatrixSafe(t, m))
 static void drawGeo(const Piece *d, int far, int cnt) {
   gateCount(cnt);
   if (diagOn) diagGeo(d, far, cnt);
@@ -350,6 +393,19 @@ typedef struct { unsigned short u, v; unsigned c; float x, y, z; } GgVert;
 #define GG_VT (GU_TEXTURE_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D)
 static int ggBatchOld=GG_BATCH_OLD,ggBatchCapture;
 static int ggMode = GG_OLD, ggOn, ggLog; static GgCam ggK; static float ggE[3], ggR[3], ggU[3], ggF[3];
+// №912: текстурная матрица шума земли из матрицы модели (мир = M·p + глаз; u = мир.x / шаг, v = мир.z / шаг; целая часть сдвига отброшена — тайл повторяется)
+static void flatTexEmit(void) {
+  if (!flatMdlOk) return; flatTexGen = flatMdlGen; flatTexEmitN++; const float *m = flatMdl; const float ip = 1.f / NOISE_PITCH;
+  float tu = (m[12] + ggE[0]) * ip, tv = (m[14] + ggE[2]) * ip; tu -= floorf(tu); tv -= floorf(tv);
+  const float g = noiseUvG;   // множитель координат: у кадра sceGuTexScale(128, 128) — проверено замером, нужен ли делитель 128 («flag noiseg»)
+  ScePspFMatrix4 T = {{m[0] * ip * g, m[2] * ip * g, 0, 0}, {m[4] * ip * g, m[6] * ip * g, 0, 0}, {m[8] * ip * g, m[10] * ip * g, 0, 0}, {tu * g, tv * g, 0, 1}};
+  geSetMatrixSafe(GU_TEXTURE, &T);
+}
+static inline void flatCapture(int t, const void *mp) {
+  if (t != GU_MODEL || !flatOn) return; memcpy(flatMdl, mp, 64); flatMdlOk = 1; flatMdlGen++;
+  if (TOON_NOISE_WORLD && flatMap == 1 && !flatInList) flatTexEmit();
+}
+
 static int ggBigOnly; static unsigned ggBigFrames;   // №840: срез включён только правилом «крупные треугольники у камеры» — режутся лишь помеченные куски (main_state.h)
 #define GG_PIECE_OK(e) (!ggBigOnly || ((e)->r.owner == 0 && (e)->r.pad[1] == 1u))
 #define GG_CELL_OK(ci) (!ggBigOnly || (cellBigF && cellBigF[ci]))
@@ -441,7 +497,7 @@ static void ggVbWriteback(unsigned from) {   // сброс кэша строк �
 static float ggCamKey[15]; static unsigned ggCamEpoch = 1, ggCamStill; static unsigned ggReplayF;
 static void ggcGarbageFlush(void);
 static void ggCamUpdate(void) {
-  ggcGarbageFlush();   // начало кадра: GE прошлого кадра отработал (sceGuSync), его память можно отдать
+  ggcGarbageFlush(); marksGarbageFlush();   // начало кадра: GE прошлого кадра отработал (sceGuSync), его память можно отдать
   float k[15] = {ggE[0], ggE[1], ggE[2], ggR[0], ggR[1], ggR[2], ggU[0], ggU[1], ggU[2], ggF[0], ggF[1], ggF[2], ggK.zn, ggK.tvx, ggK.tvy};
   int same = 1;
   for (int i = 0; i < 15 && same; i++) { float tol = i < 3 ? .003f : i < 13 ? 1e-4f : 1e-5f; if (fabsf(k[i] - ggCamKey[i]) > tol) same = 0; }
@@ -548,7 +604,17 @@ static int ggForce; static unsigned bigPiecesF;   // ggForce: срез куск�
 #ifndef GG_CAR853_OLD
 #define GG_CAR853_OLD 0
 #endif
+// №921 (боты 24.10, «выброс треугольников GE у глаза»: L1 P026, L3 P027, L4 P045/P063, L5 P000/P040/P041): заплатка №853 стояла только у машин (owner != 0). Куски пропов, стейтпропов и
+// света (owner 0, рисуются drawPieceM) шли в GE как есть, если не «крупные» №640 (поперечник 10…150 м и глаз ближе размера куска к центру): проп с треугольником 4–5 м или конус света
+// 14 м при ближней плоскости 0,3–0,7 м терял треугольник целиком (L5 P040: все 6 треугольников куска каждый кадр, 186 в секунду; конус L4 P045: 19 в секунду). Теперь для куска с owner 0
+// действует та же проверка carNear853 (шар куска и правила (1)–(3)), выброшенные треугольники дорисовываются срезом веером; полупрозрачные куски из очереди — тем же путём (граница
+// 2048 px у стекла). Цена — одна проверка шара на кусок; срез только у куска у глаза. DROPFIX921_OLD=1 / «flag dropfix921 0» / файл dropfix921old рядом с EBOOT — прежнее
+#ifndef DROPFIX921_OLD
+#define DROPFIX921_OLD 0
+#endif
+static int dropFix921 = !DROPFIX921_OLD;
 static void drawGeoG(const Piece *d, int far, int cnt, const ScePspFMatrix4 *m, int absM) {
+  diagAbsM = absM;   // №921 служебно: diagGeo из drawGeo ниже по этому куску
   if ((!ggOn && !ggForce) || d->r.owner != 0 || !(d->r.flags & F_NOIDX) || cnt > 65535 || (!ggForce && (!GG_PIECE_OK(d) || !ggBoxRiskW(d->r.bb)))) { drawGeo(d, far, cnt); return; }
   ggPiecesF++;ggExamF+=cnt/3;unsigned us0 = sceKernelGetSystemTimeLow();
   unsigned vb0_ = ggVbUsed;
@@ -701,7 +767,7 @@ static void drawPiece(Piece *d, int far, float tx, float ty, float tz, float c, 
   if ((d->r.flags & F_NEAR) && !(far && (farPlainD > 0.f || (opqFar && d >= pc && d < pc + npc && opqFar[d - pc])) && (d->r.flags & F_FARP))) far = 0;   // правка 508: F_FARP — дальняя версия без нарезки по far_plain
   int cnt = far ? (int)d->r.nf : d->r.ni;
   if (cnt <= 0 || geOver(GE_HARD) || !pieceOk(d, far) || NEON_SKIP(d) || TREESH_SKIP(d)) return;   // правка 103: список GE почти полон / битый адрес
-  if (d->r.flags & F_ADDITIVE) { dbgAddN++; dbgAddTri += (unsigned)cnt / 3; if (cnt > 600) dbgAddBig++; }
+  if (d->r.flags & F_ADDITIVE) { dbgAddN++; dbgAddTri += (unsigned)cnt / 3; if (cnt > 600) dbgAddBig++; gloAdd('c', d->r.tex, far, d->r.ni > 600, (unsigned)cnt / 3); }   // №933: город со сложением, прошедший NEON_SKIP (вода: ni > 192)
   float k = d->r.sc, ox = d->r.ox, oy = d->r.oy, oz = d->r.oz;
   ScePspFMatrix4 m = {
     {c * k, 0, -s * k, 0}, {0, k, 0, 0}, {s * k, 0, c * k, 0},
@@ -709,7 +775,7 @@ static void drawPiece(Piece *d, int far, float tx, float ty, float tz, float c, 
   if (tqPush(d, &m, far, cnt, (d->r.bb[0] + d->r.bb[3]) * .5f + tx, (d->r.bb[1] + d->r.bb[4]) * .5f + ty, (d->r.bb[2] + d->r.bb[5]) * .5f + tz)) return;
   drawnTris += cnt / 3; draws++;
   if (!far && toonWorldOk(d)) carToonHull(d, (const float *)&m);   // №675
-  phAllow = d->r.owner == 0; bindTexLean(d->r.tex); phAllow = 0; { int ccn_ = camClipNear(d); camClipPieces += ccn_; setFlags(d->r.flags | (ccn_ ? F_LSIDE : 0)); }
+  phAllow = d->r.owner == 0; NZP(d); bindTexLean(d->r.tex); phAllow = 0; { int ccn_ = camClipNear(d); camClipPieces += ccn_; setFlags(d->r.flags | (ccn_ ? F_LSIDE : 0)); }
   sceGuSetMatrix(GU_MODEL, &m);
   int glowFog = glowFogBegin(d->r.flags);
   drawGeoG(d, far, cnt, &m, !(tx == -ggE[0] && ty == -ggE[1] && tz == -ggE[2]));   // правка 340: у камеры — срез по полосе
@@ -727,39 +793,124 @@ static unsigned carToonDraws;
 #ifndef CAR_TOON_W779_OLD
 #define CAR_TOON_W779_OLD 0
 #endif
-#define CAR_TOON_SIL_M .15f
+// №901 (Роб 23.10: «внутри однотонного линий нет»): на капоте и крыше машины, у швов между кусками, тушь 15-сантиметровой оболочки проступала редкими точками в щелях (кусок позади шва — салон, моторный отсек —
+// ближе 15 см). Сдвиг назад 30 см: точки уходят, внешний ободок против мира и линия у колёс остаются. CAR_TOON_DOT901_OLD=1 — 15 см, как TEST36
+#ifndef CAR_TOON_DOT901_OLD
+#define CAR_TOON_DOT901_OLD 0
+#endif
+#ifndef CAR_TOON_SIL_M
+#define CAR_TOON_SIL_M (CAR_TOON_DOT901_OLD ? .15f : .3f)
+#endif
+// №870 (Роб 22.10: «проверь, что по разрешению для PSP чересчур детально»): контур мультика — второй проход каждого куска машины; у своей машины 33 куска,
+// 15 из них — плоские детали на 2–11 треугольников (фары, накладки) и крошки меньше 30 см: их контура не видно, а вызов стоит как у кузова (контур машины
+// ≈ 0,4 мс эмулятора ≈ 2 мс PSP). Такие куски контура не получают. TOON_HULL870_OLD=1 — контур у всех кусков
+#ifndef TOON_HULL870_OLD
+#define TOON_HULL870_OLD 0
+#endif
+static int thDiag; static unsigned thCalls, thWords, thUs;   // №912 диагностика: контур машин за секунду — вызовы, слова списка GE, мкс процессора (строка TOONHULL, только в смоуке)
+// №912 (Роб 23.10: «мультик основа игры», окно «Оптимизация»: мультик ≈ 0,8 мс эмулятора ≈ 3,8–4,7 мс PSP на кадр, из них контур машин): разбор carToonHull по стадиям (L1, эмулятор, 28 вызовов на кадр, 8,5 мкс на вызов):
+// матрица куска 38 % (полное умножение 4×4 при диагональной A), состояние + возврат после КАЖДОГО куска 30 % (пересброс текстуры, флагов, дымки — следующий настоящий кусок привязывает текстуру заново), рисование 19 %.
+// Правило семейства: (1) матрица M = m·A считается по диагональной A (те же числа, 12 умножений вместо 64); (2) контур не рисуется между кусками, а копится в очередь и рисуется пачкой в конце фазы машин (flush в
+// resetState и перед фазой пропов): состояние GE ставится один раз на пачку, текстура настоящих кусков не сбрасывается. Контур идёт без записи глубины и сдвинут назад (silD), поэтому внутри силуэта его закрывает
+// сам кусок и соседи, снаружи остаётся ободок — порядок «контур, затем кусок» нужен был только для отбора, пачка после всех кусков закрывает больше, не меньше. HULL912_OLD=1 — как было (контур перед каждым куском)
+#include "hullmat912.h"
+#ifndef HULL912_OLD
+#define HULL912_OLD 0
+#endif
+#ifndef HULL912_MAT_OLD
+#define HULL912_MAT_OLD 0
+#endif
+// №930г (дирижёр 25.10: город +0,147 мс Мак ≈ +0,85 мс PSP на L4/L7 стоя даёт только слияние №930, флаг carfill930 0 не возвращает): виновата не заливка, а очередь контура. На L4 в кадре до 75 кусков контура (пары «машины, прохожие, пропы»);
+// при 56 местах очередь выпускалась дважды за кадр — каждый выпуск сам по себе (состояние GE, сброс привязки) стоит ≈ 0,14 мс Мак. Проба: 160 -> x_city 1,199 (как до слияния), 56 -> 1,348, CARFILL930_OLD при 56 -> 1,354.
+// Теперь 96 мест (≈ 9 КБ вместо 15 КБ у 160): пик 75 на L4 влезает. THQ930D_OLD=1 — 56, как test62
+#ifndef THQ930D_OLD
+#define THQ930D_OLD 0
+#endif
+#define THQ_MAX (CARFILL930_OLD ? 160 : THQ930D_OLD ? 56 : 96)   // №930 (память: компенсация кода и таблиц carfill930.h): очередь контура машин — 56 мест вместо 160 (≈ 9,6 КБ). Пик в прогонах: 23 почти везде, 68 один раз на L5 (на 4 места больше — один лишний выпуск пачки); полна — выпуск пачки и дальше, как было
+typedef struct { float M[16]; unsigned ink; int silD, flags, ni; const Vert *v; const unsigned short *idx, *fidx; } ThQ;   // только то, что нужно drawGeo: копия куска целиком (memcpy) стоила больше самой матрицы
+static ThQ thQ[THQ_MAX]; static int thQn, thQPeak; static unsigned thQFlush, thQItems, thUsPush, thUsFlush;   // thQPeak — наибольшая заполненность очереди (служебно, строка CARFILL)
+// №922 (Роб: «у края кадра ничего не режется», закон объектива; боты 24.10, №921 п.в): обводка машины (оболочка куска, tex 0) у глаза теряла треугольники — кусок линии. Заплатка №853 теперь и у обводки:
+// carNear853 по матрице оболочки, веера на месте выброшенных рисуются в том же состоянии (тушь дымкой, без глубины). DROPINK922_OLD=1 / «flag dropink922 0» / файл dropink922old — прежнее
+#ifndef DROPINK922_OLD
+#define DROPINK922_OLD 0
+#endif
+static int dropInk922 = !DROPINK922_OLD;
+// цена: проверка обводки по матрице оболочки стоила +0,1…0,2 мс Мака на кадр у машины (замер A/B ik0/ik1, секунды с веерами), поэтому обводка латается только у куска, у кузова которого в этом кадре
+// уже были веера (кузов и оболочка — одни вершины; кузов рисуется раньше выпуска очереди обводок). Список — до 8 кусков, обнуляется в начале кадра (main_loop.h)
+static const void *carFanV[8]; static int carFanN;
+static inline int carFanHas(const void *v) { for (int i = 0; i < carFanN; i++) if (carFanV[i] == v) return 1; return 0; }
+static int carNear853(const Piece *d, const ScePspFMatrix4 *m); static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m);
+static int carToonNpcNow;   // №931: рисуется контур NPC-машины (npcCarToon): тоньше и светлее с расстоянием, дальше TOON_NPC_N линии нет; машина игрока — прежнее
 static void carToonHull(Piece *d, const float *m) {
   if (d->r.ni <= 0 || geOver(GE_HARD) || d->r.sc <= 0.f) return;
+  if (!TOON_HULL870_OLD && (d->r.ni < 16 * 3 || fmaxf(fmaxf(d->r.bb[3] - d->r.bb[0], d->r.bb[4] - d->r.bb[1]), d->r.bb[5] - d->r.bb[2]) < .3f)) return;
+  unsigned th0_ = thDiag ? sceKernelGetSystemTimeLow() : 0, thw_ = thDiag ? (unsigned)sceGuCheckList() : 0;
   float dx_ = m[12] - eyeX, dy_ = m[13] - eyeY, dz_ = m[14] - eyeZ, dist_ = sqrtf(dx_ * dx_ + dy_ * dy_ + dz_ * dz_);
   // №823 (Роб 18.10: «своя машина сзади — задний бампер — контур массивный»): вытяжка по ближнему краю куска, а не по его началу (кузов — один кусок
   // в 4–5 м: при расстоянии до середины 5 м бампер в 2,5 м получал линию вдвое толще). TOON_RANGE823_OLD=1 — по началу куска, как TEST35
   float dW_ = dist_;
   if (!TOON_RANGE823_OLD) { float hx_ = (d->r.bb[3] - d->r.bb[0]) * .5f, hy_ = (d->r.bb[4] - d->r.bb[1]) * .5f, hz_ = (d->r.bb[5] - d->r.bb[2]) * .5f;
     dW_ = fmaxf(fmaxf(dist_ - sqrtf(hx_ * hx_ + hy_ * hy_ + hz_ * hz_), dist_ * .45f), 1.5f); }
-  float W_ = CAR_TOON_W779_OLD ? CAR_TOON_W : skinToonWorldW(dW_);
+  float W_ = CAR_TOON_W779_OLD ? CAR_TOON_W : carToonNpcNow ? skinToonWorldWNpc(dW_) : skinToonWorldW(dW_);
   if (W_ <= 0.f) return;
-  unsigned ink_ = TOON_INK_OLD ? 0u : (CAR_TOON_W779_OLD ? TOON_INK_ABGR : skinToonAirMix(TOON_LINE_ABGR, dist_)) & 0xffffffu;   // №796: перо линий
+  unsigned ink_ = TOON_INK_OLD ? 0u : (CAR_TOON_W779_OLD ? TOON_INK_ABGR : carToonNpcNow ? skinToonAirMixNpc(skinInkAbgr(INK_CHAR), dist_) : skinToonAirMix(skinInkAbgr(INK_CHAR), dist_)) & 0xffffff;   // №796: перо линий
   int silD_ = (!CAR_TOON_W779_OLD && dist_ > .5f) ? (int)fminf(20000.f, CAR_TOON_SIL_M * 65535.f / dist_) : 0;
-  float A[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}, o[3] = {d->r.ox, d->r.oy, d->r.oz};
+  float sc3[3], tr3[3], o[3] = {d->r.ox, d->r.oy, d->r.oz};   // оболочка: масштаб по осям вокруг центра куска и сдвиг (диагональная A)
   for (int i = 0; i < 3; i++) {
     float half = (d->r.bb[i + 3] - d->r.bb[i]) * .5f, c = (d->r.bb[i + 3] + d->r.bb[i]) * .5f;
     float sc = half > W_ ? 1.f + W_ / half : 1.f, cr = (c - o[i]) / d->r.sc;   // центр в сырых координатах вершин
-    A[i * 5] = sc; A[12 + i] = cr * (1.f - sc);
+    sc3[i] = sc; tr3[i] = cr * (1.f - sc);
   }
-  float M[16];
-  for (int c = 0; c < 4; c++) for (int r = 0; r < 4; r++) {   // M = m · A (столбцы подряд, как ScePspFMatrix4)
-    float v = 0.f; for (int k = 0; k < 4; k++) v += m[k * 4 + r] * A[c * 4 + k]; M[c * 4 + r] = v; }
+  int queued = !HULL912_OLD && !(d->r.flags & F_STRIP);
+  if (queued && thQn >= THQ_MAX) carToonHullFlush();   // очередь полна — выпустить и копить дальше
+  float Mloc[16], *M = queued ? thQ[thQn].M : Mloc;
+  if (HULL912_MAT_OLD) {
+    float A[16] = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}; for (int i = 0; i < 3; i++) { A[i * 5] = sc3[i]; A[12 + i] = tr3[i]; }
+    hullMatFull(m, A, M);
+  } else hullMatDiag(m, sc3, tr3, M);   // №912: A — диагональ и сдвиг, числа те же, знак нуля может отличаться (hullmat912.h)
+  if (queued) {
+    ThQ *q = &thQ[thQn]; q->ink = ink_; q->silD = silD_; q->flags = d->r.flags; q->ni = d->r.ni; q->v = d->v; q->idx = d->idx; q->fidx = d->fidx;
+    thQn++; thQItems++; carToonDraws++; if (thQn > thQPeak) thQPeak = thQn;
+    if (thDiag) { thCalls++; thUsPush += sceKernelGetSystemTimeLow() - th0_; thUs += sceKernelGetSystemTimeLow() - th0_; thWords += ((unsigned)sceGuCheckList() - thw_) / 4; }
+    return;
+  }
   texEnable(0); bound = -2; setFlags(d->r.flags & ~3);
   sceGuEnable(GU_FOG); sceGuFog(0.f, 1e-3f, ink_); fogK = -1.f;   // №754: дымка в цвет туши — ободок ровной тушью (№779: вдали светлее)
   sceGuDepthMask(GU_TRUE);   // без записи глубины: кусок ляжет поверх, снаружи силуэта останется ободок
   if (!SKIN_TOON_V675_OLD && TOON_INK_OLD) { sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0, TOON_HULL_DST); }   // №675: контур 70 % чёрного (дымка даёт 0, фон проходит на 30 %)
   sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)M);
   if (silD_) sceGuDepthRange(65535 - silD_, 0);   // №779: только внешний силуэт
-  drawGeo(d, 0, d->r.ni);   // №853: обводку у камеры не латаем — выброс даёт лишь кадр без куска линии, а проверка стоила столько же, сколько у кузова
+  if (dropInk922 && dropFix921 && carFanHas(d->v) && carNear853(d, (const ScePspFMatrix4 *)M)) drawGeoPatch853(d, (const ScePspFMatrix4 *)M);   // №922: обводка у глаза — с заплаткой, как кузов
+  else drawGeo(d, 0, d->r.ni);   // №853: обводку у камеры не латали — выброс давал кадр без куска линии (№922: теперь латаем, см. выше)
   if (silD_) sceGuDepthRange(65535, 0);
   if (!SKIN_TOON_V675_OLD && TOON_INK_OLD) sceGuDisable(GU_BLEND);
   curFlags = -1; fogBase(); if (!groundCoverFog(&groundCover) && !fogCityOld) sceGuDisable(GU_FOG);   // параметры дымки — обратно (их включают carvis/fx)
   carToonDraws++;
+}
+// пачка контура: состояние один раз, на кусок — дымка (перо зависит от расстояния), матрица, сдвиг глубины, вызов; потом возврат как после одиночного
+static void carToonHullFlush(void) {
+  if (thQn <= 0) return;
+  int n = thQn; thQn = 0; thQFlush++;
+  unsigned th0_ = thDiag ? sceKernelGetSystemTimeLow() : 0, thw_ = thDiag ? (unsigned)sceGuCheckList() : 0;
+  static Piece tp;   // для drawGeo нужны только флаги, число вершин, адреса данных; остальное нули (static)
+  texEnable(0); bound = -2;
+  sceGuEnable(GU_FOG); sceGuDepthMask(GU_TRUE);
+  if (!SKIN_TOON_V675_OLD && TOON_INK_OLD) { sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0, TOON_HULL_DST); }
+  unsigned lastInk = 0xffffffffu; int lastSil = 0;
+  for (int i = 0; i < n; i++) {
+    ThQ *q = &thQ[i]; if (geOver(GE_HARD)) break;
+    setFlags(q->flags & ~3); sceGuDepthMask(GU_TRUE);   // setFlags пишет маску глубины по флагам куска — контур глубину не пишет
+    if (q->ink != lastInk) { sceGuFog(0.f, 1e-3f, q->ink); lastInk = q->ink; }
+    sceGuSetMatrix(GU_MODEL, (const ScePspFMatrix4 *)q->M);
+    if (q->silD != lastSil) { sceGuDepthRange(q->silD ? 65535 - q->silD : 65535, 0); lastSil = q->silD; }
+    tp.r.flags = q->flags; tp.r.ni = q->ni; tp.v = (Vert *)q->v; tp.idx = (unsigned short *)q->idx; tp.fidx = (unsigned short *)q->fidx;
+    if (dropInk922 && dropFix921 && carFanHas(tp.v) && carNear853(&tp, (const ScePspFMatrix4 *)q->M)) drawGeoPatch853(&tp, (const ScePspFMatrix4 *)q->M);   // №922
+    else drawGeo(&tp, 0, q->ni);
+  }
+  if (lastSil) sceGuDepthRange(65535, 0);
+  if (!SKIN_TOON_V675_OLD && TOON_INK_OLD) sceGuDisable(GU_BLEND);
+  fogK = -1.f; curFlags = -1; fogBase(); if (!groundCoverFog(&groundCover) && !fogCityOld) sceGuDisable(GU_FOG);
+  if (thDiag) { thUsFlush += sceKernelGetSystemTimeLow() - th0_; thUs += sceKernelGetSystemTimeLow() - th0_; thWords += ((unsigned)sceGuCheckList() - thw_) / 4; }
 }
 // №640 (диагональные линии на перекрёстках/в езде; слово дирижёра 16.10): ggCut режет по защитной полосе GE только куски города в кадре с ggOn. Крупные куски пропов и стейтпропов (щиты 12 м, плиты 13×18 м,
 // конструкции 23 м; они без индексов, как город) шли в GE как есть: у ближней плоскости вершина уходит за ±2048 px, GE выбрасывает треугольник целиком или рисует клин. Правило: кусок с поперечником
@@ -778,13 +929,19 @@ static BigInfo bigTab[512]; static int bigCutBlock; static int bigCutOld = BIG_C
 typedef struct { unsigned frame; const void *v; int tris, risk, owner, ni, phase, tex, nearN, farN; float zmin, pxmax; } DiagEnt;
 static unsigned diagListRisk, diagListCells, diagListDrop;   // №791: риск в клетках, ушедших листом (diagCellList)
 static unsigned diagDropOwn[4];   // №853 служебно: выброшенные и видимые по владельцу куска (0 город, 1 машина, 2 небо, 3 прочее)
+static unsigned diagDropReal, diagDropInk;   // №921: из выброшенных — без заплатки (настоящая потеря) и из них обводка машин (tex 0, фазы машин: по замыслу №853 не латается)
 static unsigned diagCityDrop;   // №791: из «риска» кусков, нарисованных без среза, — точно выброшенные GE и видимые (ggDropExact)
 static int ggDropExact(const GgV *a, const GgV *b, const GgV *c, const GgCam *k);
+// №921 служебно (боты 24.10, выброс GE у глаза): какой кусок GE отбрасывает целиком и каким путём он нарисован — строка DIAGD раз в секунду (только diaglog)
+static int diagPatch;   // 1 — кусок рисует drawGeoPatch853 (веера на месте выброшенных), 2 — drawGeo из очереди/среза с вееером, 0 — обычный drawGeo (потеря настоящая)
+static struct { const void *v; int ni, tex, owner, ph, fl, patch, far, gon, bigf; unsigned n; float zmin, edge, dist, ext; } diagDt[16]; static int diagDtN;
 static DiagEnt diagEnt[24]; static int diagN, diagFrRisk; static unsigned diagTotRisk, diagTotTri, diagLines, diagUs; static unsigned diagPh[24];
+static const BigInfo *bigInfo(const void *v, int ni, int flags);
 static void diagGeo(const Piece *d, int far, int cnt) {
+  if (flatInList) return;   // №921: идёт сборка листа клетки — это не рисование (лист в кадр попадает, только если клетка не под риском: её меряет diagCellList, а куски под риском режутся и рисуются отдельно); раньше такие выбросы шли в DIAGS как «город»
   if (!diagMok || bigCutBlock || ggK.tvy <= 0.f) return;   // нет матрицы модели или бонусный уровень (оси камеры не заданы)
   unsigned us0 = sceKernelGetSystemTimeLow(); const ScePspFMatrix4 *m = &diagM;
-  int absM = !(m->w.x == -ggE[0] && m->w.y == -ggE[1] && m->w.z == -ggE[2]);
+  int absM = diagAbsM >= 0 ? diagAbsM : !(m->w.x == -ggE[0] && m->w.y == -ggE[1] && m->w.z == -ggE[2]); diagAbsM = -1;
   float T0 = m->w.x - (absM ? ggE[0] : 0.f), T1 = m->w.y - (absM ? ggE[1] : 0.f), T2 = m->w.z - (absM ? ggE[2] : 0.f);
   const float *ax[3] = {ggR, ggU, ggF}; float A[3][3], B[3];
   for (int r = 0; r < 3; r++) {
@@ -803,7 +960,13 @@ static void diagGeo(const Piece *d, int far, int cnt) {
     }
     if (g[0].c[2] >= GG_ZFAR && g[1].c[2] >= GG_ZFAR && g[2].c[2] >= GG_ZFAR) continue;
     if (!ggRisk(&g[0], &g[1], &g[2], &ggK)) continue;
-    risk++; if (ggDropExact(&g[0], &g[1], &g[2], &ggK)) { diagCityDrop++; diagDropOwn[d->r.owner < 4 ? d->r.owner : 3]++; }   // №853: по владельцу (0 город, 1 машина, 2 небо)
+    risk++; if (ggDropExact(&g[0], &g[1], &g[2], &ggK)) { diagCityDrop++; diagDropOwn[d->r.owner < 4 ? d->r.owner : 3]++; if (!diagPatch) { diagDropReal++; if (d->r.tex == 0 && bbPhase >= BBP_CAR3D && bbPhase <= BBP_MCR3D) diagDropInk++; }
+      { int k_ = 0; for (; k_ < diagDtN; k_++) if (diagDt[k_].v == d->v && diagDt[k_].ni == d->r.ni && diagDt[k_].ph == bbPhase && diagDt[k_].patch == diagPatch) break;
+        if (k_ == diagDtN && diagDtN < 16) { memset(&diagDt[k_], 0, sizeof diagDt[k_]); diagDt[k_].v = d->v; diagDt[k_].ni = d->r.ni; diagDt[k_].tex = d->r.tex; diagDt[k_].owner = d->r.owner; diagDt[k_].ph = bbPhase; diagDt[k_].fl = d->r.flags; diagDt[k_].patch = diagPatch; diagDt[k_].far = far; diagDt[k_].gon = ggOn + 2 * ggBigOnly; diagDt[k_].bigf = d->r.pad[1]; diagDt[k_].zmin = 1e30f; diagDtN++; }
+        if (k_ < diagDtN) { float e2 = 0.f, zm = 1e30f; for (int i = 0; i < 3; i++) { const float *p0 = g[i].c, *p1 = g[(i + 1) % 3].c; float l2 = (p0[0] - p1[0]) * (p0[0] - p1[0]) + (p0[1] - p1[1]) * (p0[1] - p1[1]) + (p0[2] - p1[2]) * (p0[2] - p1[2]); if (l2 > e2) e2 = l2; if (p0[2] < zm) zm = p0[2]; }
+          diagDt[k_].n++; if (zm < diagDt[k_].zmin) diagDt[k_].zmin = zm; if (sqrtf(e2) > diagDt[k_].edge) diagDt[k_].edge = sqrtf(e2);
+          if (d->r.flags & F_NOIDX) { const BigInfo *bi_ = bigInfo(d->v, d->r.ni, d->r.flags); float ex_ = 0.f; for (int a_ = 0; a_ < 3; a_++) { float e_ = (bi_->hi[a_] - bi_->lo[a_]); if (e_ > ex_) ex_ = e_; } diagDt[k_].ext = ex_; }
+          float cx_ = (g[0].c[0] + g[1].c[0] + g[2].c[0]) / 3.f, cy_ = (g[0].c[1] + g[1].c[1] + g[2].c[1]) / 3.f, cz_ = (g[0].c[2] + g[1].c[2] + g[2].c[2]) / 3.f; float dd_ = sqrtf(cx_ * cx_ + cy_ * cy_ + cz_ * cz_); if (diagDt[k_].dist == 0.f || dd_ < diagDt[k_].dist) diagDt[k_].dist = dd_; } } }   // №853: по владельцу (0 город, 1 машина, 2 небо)
     for (int i = 0; i < 3; i++) { float z = g[i].c[2]; if (z < zmin) zmin = z; if (z < ggK.zn) { nearN++; bad = 1; }
       if (z > 1e-3f) { float px = fabsf(g[i].c[0] / (ggK.tvx * z)) * 240.f; float py = fabsf(g[i].c[1] / (ggK.tvy * z)) * 136.f; if (px > pxmax) pxmax = px; if (py > pxmax) pxmax = py; if (px > 2048.f || py > 2048.f) { farN++; bad = 1; } } }
     (void)bad;
@@ -824,9 +987,11 @@ static void diagFrameEnd(void) {
 }
 static void svDiagSecond853(void);   // №853 служебно: тени (spritelight.h)
 static void diagSecond(void) {
-  char s[480]; snprintf(s, sizeof s, "DIAGS t=%.1f sc=%s fr=%u tris=%u risk=%u citydrop=%u drop_city=%u drop_car=%u drop_sky=%u listrisk=%u listdrop=%u listcells=%u city=%u car=%u npc=%u trf=%u mcr=%u props=%u fx=%u lines=%u diag_us=%u\n", smkT, smkScene, smkFrameAbs, diagTotTri, diagTotRisk, diagCityDrop, diagDropOwn[0], diagDropOwn[1], diagDropOwn[2], diagListRisk, diagListDrop, diagListCells,
-    diagPh[BBP_CITY], diagPh[BBP_CAR3D], diagPh[BBP_NPC3D], diagPh[BBP_TRF3D], diagPh[BBP_MCR3D], diagPh[BBP_PROPS3D], diagPh[BBP_FX3D], diagLines, diagUs);
-  smkWrite(s); svDiagSecond853(); diagTotTri = diagTotRisk = diagUs = 0; diagListRisk = diagListCells = diagListDrop = diagCityDrop = 0; memset(diagDropOwn, 0, sizeof diagDropOwn); memset(diagPh, 0, sizeof diagPh);
+  char s[480]; snprintf(s, sizeof s, "DIAGS t=%.1f sc=%s fr=%u tris=%u risk=%u citydrop=%u drop_city=%u drop_car=%u drop_sky=%u listrisk=%u listdrop=%u listcells=%u city=%u car=%u npc=%u trf=%u mcr=%u props=%u fx=%u lines=%u diag_us=%u drop_real=%u drop_ink=%u\n", smkT, smkScene, smkFrameAbs, diagTotTri, diagTotRisk, diagCityDrop, diagDropOwn[0], diagDropOwn[1], diagDropOwn[2], diagListRisk, diagListDrop, diagListCells,
+    diagPh[BBP_CITY], diagPh[BBP_CAR3D], diagPh[BBP_NPC3D], diagPh[BBP_TRF3D], diagPh[BBP_MCR3D], diagPh[BBP_PROPS3D], diagPh[BBP_FX3D], diagLines, diagUs, diagDropReal, diagDropInk);
+  smkWrite(s);
+  for (int k_ = 0; k_ < diagDtN; k_++) { char l_[300]; snprintf(l_, sizeof l_, "DIAGD t=%.1f sc=%s ph=%d own=%d tex=%d fl=%x ni=%d v=%p patch=%d far=%d gon=%d bigf=%d drops=%u zmin=%.2f edge=%.2f dist=%.2f ext=%.1f\n", smkT, smkScene, diagDt[k_].ph, diagDt[k_].owner, diagDt[k_].tex, diagDt[k_].fl, diagDt[k_].ni, diagDt[k_].v, diagDt[k_].patch, diagDt[k_].far, diagDt[k_].gon, diagDt[k_].bigf, diagDt[k_].n, diagDt[k_].zmin, diagDt[k_].edge, diagDt[k_].dist, diagDt[k_].ext); smkWrite(l_); }
+  diagDtN = 0; diagDropReal = diagDropInk = 0; svDiagSecond853(); diagTotTri = diagTotRisk = diagUs = 0; diagListRisk = diagListCells = diagListDrop = diagCityDrop = 0; memset(diagDropOwn, 0, sizeof diagDropOwn); memset(diagPh, 0, sizeof diagPh);
 }
 // №791 (камера ломает пол/асфальт на PSP): diagGeo видит только куски, которые рисуются по одному. Клетка у камеры, ушедшая ЛИСТОМ (ggOn нет или клетка не в риске),
 // мимо него: её треугольники под риском полосы GE (вершина за near или за ±2048 px) на PSP GE выбрасывает целиком, а эмулятор с окном рисует. Здесь — тот же ggRisk по
@@ -927,7 +1092,7 @@ static CarDropK carDropK(void) {   // параметры полосы — пер
   c.K = kx < ky ? kx : ky; c.iK = 1.f / c.K; c.gx = Gx * ggK.tvx; c.gy = Gy * ggK.tvy; c.lx = c.gx * ggK.zn; c.ly = c.gy * ggK.zn; c.zn = ggK.zn; c.tvx = ggK.tvx; c.tvy = ggK.tvy; return c;
 }
 static float matScale(const float *mm) { float s0 = 0.f; for (int a = 0; a < 3; a++) { const float *col = mm + 4 * a; float q = col[0] * col[0] + col[1] * col[1] + col[2] * col[2]; if (q > s0) s0 = q; } return sqrtf(s0); }
-static unsigned carNearN, carNearCut, carPatchTri, carPatchFans, carPatchUs, carNearUs;
+static unsigned carNearN, carNearCut, carPatchTri, carPatchFans, carPatchUs, carNearUs, cltBuilds, cltBuildUs, cltFailN;
 // GE выбросит треугольник (модель ggDropExact без делений): вершина многоугольника после среза по near за полосой lim px; треугольник не целиком за гранью кадра
 static int ggDropLim(const GgV *a, const GgV *b, const GgV *c, const GgCam *k, float lim) {
   const GgV *v[3] = {a, b, c}; float p[6][3]; int n = 0;
@@ -951,18 +1116,57 @@ static int ggDropLim(const GgV *a, const GgV *b, const GgV *c, const GgCam *k, f
 #define CLT_G 8
 #define CLT_N 96
 #define CLT_POOL (24u << 10)
-typedef struct { const void *v; int ni; unsigned sum; int nl, ng; unsigned short *t; float *gb; } CarLT;   // gb: по 7 чисел на группу — бокс (6) и наибольшее ребро в осях куска
+typedef struct { const void *v; int ni; unsigned sum; int nl, ng; unsigned short *t; float *gb; unsigned last, h0, h1; short bad, quiet; } CarLT;   // gb: по 7 чисел на группу — бокс (6) и наибольшее ребро в осях куска
 static CarLT carLT[CLT_N]; static int carLTn; static unsigned char cltPool[CLT_POOL] __attribute__((aligned(16))); static unsigned cltUsed;
-static void carLtReset(void) { carLTn = 0; cltUsed = 0; }
-static void *cltAlloc(unsigned n) { n = (n + 15u) & ~15u; if (cltUsed + n > CLT_POOL) return 0; void *p = cltPool + cltUsed; cltUsed += n; return p; }
+static unsigned cltDiagN;   // №940: сколько строк CLT940 записано на этом уровне
+static void carLtReset(void) { carLTn = 0; cltUsed = 0; cltDiagN = 0; }
+static unsigned cltLim940 = CLT_POOL;   // №940: предел участка (служебно «flag cltpool940»), по умолчанию весь
+static void *cltAlloc(unsigned n) { n = (n + 15u) & ~15u; if (cltUsed + n > cltLim940) return 0; void *p = cltPool + cltUsed; cltUsed += n; return p; }
 static unsigned cltMorton(unsigned x) { x &= 1023u; x = (x | x << 16) & 0x030000FFu; x = (x | x << 8) & 0x0300F00Fu; x = (x | x << 4) & 0x030C30C3u; x = (x | x << 2) & 0x09249249u; return x; }
 static unsigned cltKey_[1024]; static unsigned short cltIdx_[1024];
-static const CarLT *carLongTris(const Piece *d, float sc) {
+// №940 (L3 набережная на PSP 28 -> 18 к/с, CARPATCH patch_us 287 мс в секунду, tri=0): участок CLT_POOL (24 КБ) вмещает ~12 кусков; не влезший кусок строился заново при КАЖДОМ вызове
+// (сортировка вставками до 1024 треугольников = 3,4 мс PSP), потому что отказ нигде не запоминался, а недозаписанный кусок ещё и тёк участком. Теперь: (1) отказ запоминается в таблице
+// на CLT_RETRY кадров; (2) недозапись откатывается; (3) не больше CLT_BUILDS_F построек за кадр, остальное в следующем кадре; (4) при нехватке места участок уплотняется (записи, не
+// тронутые CLT_KEEP кадров, уходят, остальные сдвигаются по порядку); (5) сортировка Шелла по упакованному ключу на месте (O(n log n) вместо вставок O(n²), без доп. памяти); (6) тот же кадр и матрица, и прошлый обход выбросов не нашёл — обход пропускается (cltHash, стоянка). CLT_FIX940_OLD=1 /
+// «flag cltfix940 0» / файл cltfix940old рядом с EBOOT — прежнее. Для гейта: «flag cltpool940 N» — предел участка N байт (имитация нехватки), «flag cltstress940 1» — ключ меняется каждый кадр
+#ifndef CLT_FIX940_OLD
+#define CLT_FIX940_OLD 0
+#endif
+#define CLT_BUILDS_F 2
+#define CLT_RETRY 300
+#define CLT_KEEP 120
+static int cltFix940 = !CLT_FIX940_OLD, cltStress940; static unsigned cltFrame, cltGen, cltBuiltF, cltDeferN, cltCompactN, cltBadHit, cltQuietN;
+static unsigned cltCompactBad, cltCmpF = ~0u;
+static unsigned cltSumArr(const void *p, unsigned n) { const unsigned char *c = (const unsigned char *)p; unsigned h = 2166136261u; for (unsigned i = 0; i < n; i++) h = (h ^ c[i]) * 16777619u; return h; }
+static void cltCompact(void) {
+  unsigned cur = 0; int w = 0;
+  for (int i = 0; i < carLTn; i++) { CarLT e = carLT[i]; if (e.bad ? cltFrame - e.last >= CLT_RETRY : cltFrame - e.last > CLT_KEEP) continue;   // отказ живёт CLT_RETRY кадров, запись — CLT_KEEP кадров без обращений
+    unsigned s0 = 0, s1 = 0, nt = (unsigned)e.nl * 2u, ngb = (unsigned)e.ng * 28u;
+    if (smkOn) { if (e.t) s0 = cltSumArr(e.t, nt); if (e.gb) s1 = cltSumArr(e.gb, ngb); }   // служебно (смоук): сверка содержимого до/после сдвига
+    if (e.t) { if (cltPool + cur != (unsigned char *)e.t) memmove(cltPool + cur, e.t, nt); e.t = (unsigned short *)(cltPool + cur); cur += (nt + 15u) & ~15u; }
+    if (e.gb) { if (cltPool + cur != (unsigned char *)e.gb) memmove(cltPool + cur, e.gb, ngb); e.gb = (float *)(cltPool + cur); cur += (ngb + 15u) & ~15u; }
+#ifdef CLT_BREAK940
+    if (e.gb && w == 0) ((unsigned char *)e.gb)[1] ^= 1;   // ТОЛЬКО красный контроль гейта: порча одного байта после сдвига (сверка cbad обязана заметить)
+#endif
+
+    if (smkOn && ((e.t && cltSumArr(e.t, nt) != s0) || (e.gb && cltSumArr(e.gb, ngb) != s1))) cltCompactBad++;
+    carLT[w++] = e; }
+  carLTn = w; cltUsed = cur; cltGen++; cltCompactN++;
+}
+static void cltCompactOnce(void) { if (cltCmpF != cltFrame) { cltCmpF = cltFrame; cltCompact(); } }   // не чаще раза в кадр: уплотнять нечего, если ничего не устарело
+static void *cltAlloc940(unsigned n) { n = (n + 15u) & ~15u; if (cltUsed + n > cltLim940) return 0; void *p = cltPool + cltUsed; cltUsed += n; return p; }
+static void cltSort940(int nl) {   // на месте (без доп. памяти): ключ Мортона 7 бит на ось << 10 | номер треугольника в куске; сортировка Шелла (шаги Циура), порядок равных — по номеру
+  unsigned *k = cltKey_; static const int gap[8] = {701, 301, 132, 57, 23, 10, 4, 1};
+  for (int gi = 0; gi < 8; gi++) { int g = gap[gi]; if (g >= nl) continue;
+    for (int i = g; i < nl; i++) { unsigned v = k[i]; int j = i; while (j >= g && k[j - g] > v) { k[j] = k[j - g]; j -= g; } k[j] = v; } }
+  for (int i = 0; i < nl; i++) cltIdx_[i] = (unsigned short)((k[i] & 1023u) * 3u);
+}
+static const CarLT *carLongTris_(const Piece *d, float sc, int *built) {
   int vs = (d->r.flags & F_V12) ? 12 : 16, po = (d->r.flags & F_V12) ? 6 : 8, ni = d->r.ni; const unsigned char *vb = (const unsigned char *)d->v;
   unsigned sum = 0; for (int i = 0; i < 4 && i < ni; i++) { const short *q = (const short *)(vb + i * vs + po); sum = sum * 31u + (unsigned short)q[0] + (unsigned)(unsigned short)q[1] * 7u + (unsigned)(unsigned short)q[2] * 13u; }
   for (int i = 0; i < carLTn; i++) if (carLT[i].v == d->v && carLT[i].ni == ni && carLT[i].sum == sum) return &carLT[i];
   if (carLTn >= CLT_N || ni / 3 > 1024 || sc <= 0.f) return 0;
-  CarLT *L = &carLT[carLTn]; const float S = 1.f / 32768.f, e2min = (CLT_EMIN / sc) * (CLT_EMIN / sc);
+  *built = 1; CarLT *L = &carLT[carLTn]; const float S = 1.f / 32768.f, e2min = (CLT_EMIN / sc) * (CLT_EMIN / sc);
   const BigInfo *b = bigInfo(d->v, ni, d->r.flags); float lo[3] = {b->lo[0], b->lo[1], b->lo[2]}, ex[3];
   for (int a = 0; a < 3; a++) { ex[a] = b->hi[a] - lo[a]; if (ex[a] < 1e-6f) ex[a] = 1e-6f; }
   int nl = 0;
@@ -983,16 +1187,81 @@ static const CarLT *carLongTris(const Piece *d, float sc) {
         for (int a = 0; a < 3; a++) { float x = q[a] * S; P[k][a] = x; if (x < B[a]) B[a] = x; if (x > B[3 + a]) B[3 + a] = x; } }
       for (int k = 0; k < 3; k++) { float dx = P[k][0] - P[(k + 1) % 3][0], dy = P[k][1] - P[(k + 1) % 3][1], dz = P[k][2] - P[(k + 1) % 3][2], l2 = dx * dx + dy * dy + dz * dz; if (l2 > e2g) e2g = l2; } }
     B[6] = sqrtf(e2g); }
-  L->v = d->v; L->ni = ni; L->sum = sum; L->nl = nl; L->ng = ng; carLTn++; return L;
+  L->v = d->v; L->ni = ni; L->sum = sum; L->nl = nl; L->ng = ng; L->bad = 0; L->quiet = 0; carLTn++; return L;
+}
+static const CarLT *carLongTris940(const Piece *d, float sc, int *built) {
+  int vs = (d->r.flags & F_V12) ? 12 : 16, po = (d->r.flags & F_V12) ? 6 : 8, ni = d->r.ni; const unsigned char *vb = (const unsigned char *)d->v;
+  unsigned sum = 0; for (int i = 0; i < 4 && i < ni; i++) { const short *q = (const short *)(vb + i * vs + po); sum = sum * 31u + (unsigned short)q[0] + (unsigned)(unsigned short)q[1] * 7u + (unsigned)(unsigned short)q[2] * 13u; }
+  if (cltStress940) sum ^= cltFrame * 2654435761u;   // служебно (гейт): ключ меняется каждый кадр — кэш не попадает
+  for (int i = 0; i < carLTn; i++) if (carLT[i].v == d->v && carLT[i].ni == ni && carLT[i].sum == sum) { CarLT *E = &carLT[i];
+    if (!E->bad) { E->last = cltFrame; return E; }
+    if (cltFrame - E->last < CLT_RETRY) { cltBadHit++; return 0; }   // отказ запомнен: без пересчёта
+    cltCompact(); break; }   // срок отказа вышел: уплотнить (эта запись уходит) и попробовать как новый
+  if (ni / 3 > 1024 || sc <= 0.f) return 0;
+  if (cltBuiltF >= CLT_BUILDS_F) { cltDeferN++; return 0; }   // предел построек на кадр; кусок получит заплатку в следующем кадре
+  if (carLTn >= CLT_N) { cltCompactOnce(); if (carLTn >= CLT_N) return 0; }
+  cltBuiltF++; *built = 1;
+  const float S = 1.f / 32768.f, e2min = (CLT_EMIN / sc) * (CLT_EMIN / sc);
+  const BigInfo *b = bigInfo(d->v, ni, d->r.flags); float lo[3] = {b->lo[0], b->lo[1], b->lo[2]}, ex[3];
+  for (int a = 0; a < 3; a++) { ex[a] = b->hi[a] - lo[a]; if (ex[a] < 1e-6f) ex[a] = 1e-6f; }
+  int nl = 0;
+  for (int t = 0; t + 2 < ni; t += 3) { float P[3][3], e2 = 0.f;
+    for (int k = 0; k < 3; k++) { const short *q = (const short *)(vb + (t + k) * vs + po); P[k][0] = q[0] * S; P[k][1] = q[1] * S; P[k][2] = q[2] * S; }
+    for (int k = 0; k < 3; k++) { float dx = P[k][0] - P[(k + 1) % 3][0], dy = P[k][1] - P[(k + 1) % 3][1], dz = P[k][2] - P[(k + 1) % 3][2], l2 = dx * dx + dy * dy + dz * dz; if (l2 > e2) e2 = l2; }
+    if (e2 <= e2min) continue;
+    unsigned c[3]; for (int a = 0; a < 3; a++) { float m = ((P[0][a] + P[1][a] + P[2][a]) * (1.f / 3.f) - lo[a]) / ex[a]; c[a] = (unsigned)(fmaxf(0.f, fminf(1.f, m)) * 127.f); }
+    cltKey_[nl] = (cltMorton(c[0]) | cltMorton(c[1]) << 1 | cltMorton(c[2]) << 2) << 10 | (unsigned)(t / 3); nl++; }
+  cltSort940(nl);
+  int ng = (nl + CLT_G - 1) / CLT_G; unsigned short *T = 0; float *GB = 0; int ok = 1;
+  for (int pass = 0; pass < 2 && nl; pass++) {   // не влезло — один раз уплотнить участок и повторить; недозапись откатывается (не течёт)
+    unsigned u0 = cltUsed; T = (unsigned short *)cltAlloc940((unsigned)nl * 2u); GB = T ? (float *)cltAlloc940((unsigned)ng * 7u * 4u) : 0;
+    if (T && GB) { ok = 1; break; }
+    cltUsed = u0; ok = 0; T = 0; GB = 0; if (pass == 0) cltCompactOnce();
+  }
+  if (!ok) {   // отказ запоминается: ни пересчёта, ни сортировки до CLT_RETRY кадров
+    if (carLTn < CLT_N) { CarLT *B = &carLT[carLTn++]; memset(B, 0, sizeof *B); B->v = d->v; B->ni = ni; B->sum = sum; B->bad = 1; B->last = cltFrame; }
+    return 0;
+  }
+  CarLT *L = &carLT[carLTn]; L->t = T; L->gb = GB;
+  for (int i = 0; i < nl; i++) L->t[i] = cltIdx_[i];
+  for (int g = 0; g < ng; g++) { float *B = L->gb + 7 * g, e2g = 0.f; B[0] = B[1] = B[2] = 1e30f; B[3] = B[4] = B[5] = -1e30f;
+    for (int i = g * CLT_G; i < nl && i < (g + 1) * CLT_G; i++) { float P[3][3];
+      for (int k = 0; k < 3; k++) { const short *q = (const short *)(vb + (L->t[i] + k) * vs + po);
+        for (int a = 0; a < 3; a++) { float x = q[a] * S; P[k][a] = x; if (x < B[a]) B[a] = x; if (x > B[3 + a]) B[3 + a] = x; } }
+      for (int k = 0; k < 3; k++) { float dx = P[k][0] - P[(k + 1) % 3][0], dy = P[k][1] - P[(k + 1) % 3][1], dz = P[k][2] - P[(k + 1) % 3][2], l2 = dx * dx + dy * dy + dz * dz; if (l2 > e2g) e2g = l2; } }
+    B[6] = sqrtf(e2g); }
+  L->v = d->v; L->ni = ni; L->sum = sum; L->nl = nl; L->ng = ng; L->bad = 0; L->quiet = 0; L->last = cltFrame; carLTn++;
+  if (smkOn && cltDiagN < 40) { cltDiagN++; char l_[160]; snprintf(l_, sizeof l_, "CLT940 sc=%s ni=%d nl=%d ng=%d tex=%d own=%d used=%u/%u n=%d\n", smkScene, ni, nl, ng, d->r.tex, d->r.owner, cltUsed, cltLim940, carLTn); smkWrite(l_); }
+  return L;
+}
+static const CarLT *carLongTris(const Piece *d, float sc) { int bl = 0; unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; const CarLT *r = cltFix940 ? carLongTris940(d, sc, &bl) : carLongTris_(d, sc, &bl); if (smkOn) { if (bl) { cltBuilds++; cltBuildUs += sceKernelGetSystemTimeLow() - t0; } if (!r) cltFailN++; } return r; }
+// №940: тот же кадр камеры и матрица куска, и прошлый полный обход не нашёл ни одного выброса — обход повторять нечего (камера стоит: стоянка, пауза, съёмка). Два 32-битных хеша от битов 31 числа
+static void cltHash(const ScePspFMatrix4 *m, unsigned *h0, unsigned *h1) {
+  float f[31]; memcpy(f, m, 64); memcpy(f + 16, ggE, 12); memcpy(f + 19, ggR, 12); memcpy(f + 22, ggU, 12); memcpy(f + 25, ggF, 12); f[28] = ggK.zn; f[29] = ggK.tvx; f[30] = ggK.tvy;
+  unsigned a = 2166136261u, b = 0x9E3779B9u;
+  for (int i = 0; i < 31; i++) { unsigned u; memcpy(&u, &f[i], 4); a = (a ^ u) * 16777619u; a ^= a >> 13; b = (b + u) * 2654435761u; b ^= b << 7; }
+  *h0 = a; *h1 = b;
+}
+static int cltBoxSkip(const float *bx, float A[3][3], const float B[3], const CarDropK *q, float zk) {   // 1 — в боксе GE не выбросит ни один длинный треугольник (правила (2), безопасная пирамида, вне кадра)
+  float lo3[3], hi3[3], zlim = bx[6] * zk;   // (2) по наибольшему ребру
+  for (int r = 0; r < 3; r++) { float l = B[r], h = B[r]; for (int a = 0; a < 3; a++) { float p0 = A[r][a] * bx[a], p1 = A[r][a] * bx[3 + a]; if (p0 < p1) { l += p0; h += p1; } else { l += p1; h += p0; } } lo3[r] = l; hi3[r] = h; }
+  if (lo3[2] >= zlim || hi3[2] < ggK.zn) return 1;   // (2) и целиком за ближней плоскостью
+  float zc = lo3[2] > ggK.zn ? lo3[2] : ggK.zn;   // часть перед near — внутри пирамиды полосы целиком: выброса нет
+  if (hi3[0] <= q->gx * zc && -lo3[0] <= q->gx * zc && hi3[1] <= q->gy * zc && -lo3[1] <= q->gy * zc) return 1;
+  if (lo3[0] > q->tvx * hi3[2] || -hi3[0] > q->tvx * hi3[2] || lo3[1] > q->tvy * hi3[2] || -hi3[1] > q->tvy * hi3[2]) return 1;   // вне кадра
+  return 0;
 }
 // кусок рисуется целиком как обычно (один вызов); затем по группам длинных треугольников (carLongTris) только те, что GE выбросит (ggDropLim), —
 // срез по пирамиде полосы, веером на их место. Остальное GE рисует сам. Стекло (флаг 2) — по точной полосе 2048: двойное наложение было бы видно
 static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m) {
-  int cnt = d->r.ni; drawGeo(d, 0, cnt);
+  unsigned f0_ = carPatchFans; int cnt = d->r.ni; diagPatch = 1; diagAbsM = 1; drawGeo(d, 0, cnt); diagPatch = 0;
   if ((d->r.flags & F_STRIP) || !(d->r.flags & F_NOIDX)) return;
   unsigned us0 = smkOn ? sceKernelGetSystemTimeLow() : 0, vb0_ = ggVbUsed;
   float sc = matScale((const float *)m); const CarLT *L = carLongTris(d, sc);
   if (!L || !L->nl) { if (smkOn) carPatchUs += sceKernelGetSystemTimeLow() - us0; return; }
+  CarLT *Lm = (CarLT *)L; unsigned qh0 = 0, qh1 = 0;
+  if (cltFix940) { cltHash(m, &qh0, &qh1); if (Lm->quiet && Lm->h0 == qh0 && Lm->h1 == qh1) { cltQuietN++; if (smkOn) carPatchUs += sceKernelGetSystemTimeLow() - us0; return; } }   // №940: ничего не изменилось, выбросов не было
+  int hitN = 0;
   const float lim = (d->r.flags & 2) ? 2048.f : GG_SAFE;
   int v12 = (d->r.flags & F_V12) != 0, vs = v12 ? 12 : 16, po = v12 ? 6 : 8; const float S = 1.f / 32768.f;
   const unsigned char *vb = (const unsigned char *)d->v;
@@ -1003,12 +1272,8 @@ static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m) {
   }
   CarDropK q = carDropK(); float zk = sc * q.iK;
   for (int gi = 0; gi < L->ng; gi++) {
-    const float *bx = L->gb + 7 * gi; float lo3[3], hi3[3], zlim = bx[6] * zk;   // (2) по наибольшему ребру группы
-    for (int r = 0; r < 3; r++) { float l = B[r], h = B[r]; for (int a = 0; a < 3; a++) { float p0 = A[r][a] * bx[a], p1 = A[r][a] * bx[3 + a]; if (p0 < p1) { l += p0; h += p1; } else { l += p1; h += p0; } } lo3[r] = l; hi3[r] = h; }
-    if (lo3[2] >= zlim || hi3[2] < ggK.zn) continue;   // (2) и целиком за ближней плоскостью
-    float zc = lo3[2] > ggK.zn ? lo3[2] : ggK.zn;   // часть группы перед near — внутри пирамиды полосы целиком: выброса нет
-    if (hi3[0] <= q.gx * zc && -lo3[0] <= q.gx * zc && hi3[1] <= q.gy * zc && -lo3[1] <= q.gy * zc) continue;
-    if (lo3[0] > q.tvx * hi3[2] || -hi3[0] > q.tvx * hi3[2] || lo3[1] > q.tvy * hi3[2] || -hi3[1] > q.tvy * hi3[2]) continue;   // вне кадра
+    const float *bx = L->gb + 7 * gi; float zlim = bx[6] * zk;   // (2) по наибольшему ребру группы
+    if (cltBoxSkip(bx, A, B, &q, zk)) continue;
     for (int li = gi * CLT_G; li < L->nl && li < (gi + 1) * CLT_G; li++) { int t = L->t[li];
     GgV g[3]; float zmn = 1e30f, lxm = 0.f, lym = 0.f;
     for (int i = 0; i < 3; i++) { const short *qv = (const short *)(vb + (t + i) * vs + po); float lx = qv[0] * S, ly = qv[1] * S, lz = qv[2] * S;
@@ -1019,6 +1284,7 @@ static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m) {
       g[i].c[0] = A[0][0] * lx + A[0][1] * ly + A[0][2] * lz + B[0]; g[i].c[1] = A[1][0] * lx + A[1][1] * ly + A[1][2] * lz + B[1];
       if (fabsf(g[i].c[0]) > lxm) lxm = fabsf(g[i].c[0]); if (fabsf(g[i].c[1]) > lym) lym = fabsf(g[i].c[1]); }
     if ((lxm <= q.lx && lym <= q.ly) || !ggDropLim(&g[0], &g[1], &g[2], &ggK, lim)) continue;   // (3) и точная модель
+    hitN++;
     for (int i = 0; i < 3; i++) {
       const unsigned char *p = vb + (t + i) * vs; const unsigned short *uv = (const unsigned short *)p; g[i].t[0] = uv[0]; g[i].t[1] = uv[1];
       if (v12) { unsigned c5 = *(const unsigned short *)(p + 4), r = c5 & 31, gg = (c5 >> 5) & 63, b = c5 >> 11;
@@ -1037,13 +1303,16 @@ static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m) {
     sceGuDrawArray(GU_TRIANGLE_FAN, GG_VT, n, 0, w); carPatchFans++;
     }
   }
+  if (cltFix940) { Lm->h0 = qh0; Lm->h1 = qh1; Lm->quiet = !hitN; }
+  if (carPatchFans != f0_ && carFanN < 8 && !carFanHas(d->v)) carFanV[carFanN++] = d->v;   // №922: у этого куска в кадре были веера — обводка проверяется
   if (smkOn) carPatchUs += sceKernelGetSystemTimeLow() - us0;
 }
 static int carNear853(const Piece *d, const ScePspFMatrix4 *m) {
-  if (GG_CAR853_OLD || bigCutBlock || ggK.tvy <= 0.f || d->r.owner == 0 || !(d->r.flags & F_NOIDX) || d->r.ni < 3 || d->r.ni > 65535) return 0;
+  if (GG_CAR853_OLD || bigCutBlock || ggK.tvy <= 0.f || (d->r.owner == 0 && !dropFix921) || !(d->r.flags & F_NOIDX) || d->r.ni < 3 || d->r.ni > 65535) return 0;   // №921: owner 0 — проп/свет (сюда город не попадает)
   if (smkOn) { static float cpT_; if (smkT - cpT_ >= 1.f || smkT < cpT_) { char l_[220];   // служебно: заплатка машин за секунду
-      snprintf(l_, sizeof l_, "CARPATCH t=%.1f sc=%s tests=%u box=%u tri=%u fans=%u near_us=%u patch_us=%u bigmiss=%u\n", smkT, smkScene, carNearN, carNearCut, carPatchTri, carPatchFans, carNearUs, carPatchUs, bigInfoMiss853); smkWrite(l_);
-      carNearN = carNearCut = carPatchTri = carPatchFans = carNearUs = carPatchUs = bigInfoMiss853 = 0; cpT_ = smkT; } }
+      snprintf(l_, sizeof l_, "CARPATCH t=%.1f sc=%s tests=%u box=%u tri=%u fans=%u near_us=%u patch_us=%u bigmiss=%u clt=%d/%u/%u bld=%u bld_us=%u fail=%u defer=%u badhit=%u compact=%u quiet=%u cbad=%u\n", smkT, smkScene, carNearN, carNearCut, carPatchTri, carPatchFans, carNearUs, carPatchUs, bigInfoMiss853, carLTn, cltUsed, (unsigned)CLT_POOL, cltBuilds, cltBuildUs, cltFailN, cltDeferN, cltBadHit, cltCompactN, cltQuietN, cltCompactBad); smkWrite(l_);
+      carNearN = carNearCut = carPatchTri = carPatchFans = carNearUs = carPatchUs = bigInfoMiss853 = cltBuilds = cltBuildUs = cltFailN = cltDeferN = cltBadHit = cltCompactN = cltQuietN = 0; cpT_ = smkT; } }
+  if (d->r.owner == 0) { float dx_ = m->w.x - ggE[0], dy_ = m->w.y - ggE[1], dz_ = m->w.z - ggE[2]; if (dx_ * dx_ + dy_ * dy_ + dz_ * dz_ > 3600.f) return 0; }   // №923: проп/свет дальше 60 м от глаза (куски до 23 м, крупнее — bigNear) выброса у глаза не даёт: без поиска в таблице кусков (+0,02–0,03 мс Мака на кадр от №921)
   carNearN++; int k = 0;
   CarDropK q = carDropK(); const BigInfo *b = bigInfo(d->v, d->r.ni, d->r.flags); const float *mm = (const float *)m; float sc = matScale(mm), e = b->edge * sc;
   if (e > q.K * ggK.zn) {   // (1)
@@ -1059,26 +1328,71 @@ static int carNear853(const Piece *d, const ScePspFMatrix4 *m) {
   carNearCut += (unsigned)k; return k;
 }
 static unsigned dbgPM, dbgPMgeo;
+// №913 (оптимизация предметов, срез у глаза: на L5 в езде режется ОДИН кусок пропа (текстура 63, 1884 вершины, подвижный, 16–28 м от глаза), каждый кадр целиком по треугольникам —
+// 0,75 мс Мака, 0,8–1,0 мс «x_props»): у городских кусков срез идёт по иерархии групп (gg_batch.h: ящик 16 и 16×N треугольников, безопасные группы пропускаются без расчёта), у кусков
+// пропов и стейтпропов (временный Piece без ggBatch) — нет. Теперь для куска, который режется (bigNear), иерархия строится лениво один раз по его вершинам (память пропов не двигается;
+// ключ — адрес вершин, число, флаги; сброс при загрузке уровня) и передаётся срезу. Группы пропускаются только когда GE заведомо не выбросит ни один их треугольник (ggBatchMayRisk, как у города),
+// результат тот же. GG_PROPBATCH_OLD=1 / «flag ggpropbatch 0|1» / файл ggpropbatchold рядом с EBOOT — прежний полный обход
+#ifndef GG_PROPBATCH_OLD
+#define GG_PROPBATCH_OLD 0
+#endif
+static int ggPropBatchOn = !GG_PROPBATCH_OLD;
+typedef struct { const void *v; int ni, flags; GgBatch *b; } PropBatch;
+static PropBatch pbat[24]; static int pbatN; static unsigned pbatBuilt;
+static void propBatchReset(void) { for (int i = 0; i < pbatN; i++) free(pbat[i].b); pbatN = 0; }
+static GgBatch *propBatchGet(const Piece *d) {
+  for (int i = 0; i < pbatN; i++) if (pbat[i].v == d->v && pbat[i].ni == d->r.ni && pbat[i].flags == d->r.flags) return pbat[i].b;
+  if (pbatN >= 24 || d->r.ni < 3 || d->r.ni > 65535 || (d->r.flags & F_STRIP) || !(d->r.flags & F_NOIDX)) return 0;
+  GgBatch *b = (GgBatch *)malloc(ggBatchStorage((unsigned)d->r.ni) * sizeof(GgBatch)); if (!b) return 0;
+  int v12 = (d->r.flags & F_V12) != 0; ggBatchCacheBuild(b, d->v, (unsigned)d->r.ni, v12 ? 12 : 16, v12 ? 6 : 8);
+  pbat[pbatN].v = d->v; pbat[pbatN].ni = d->r.ni; pbat[pbatN].flags = d->r.flags; pbat[pbatN].b = b; pbatN++; pbatBuilt++; return b;
+}
+static struct { int tex, ni, ph, fl; unsigned n, cuts; double us; float p[3], dist; } ggfTab[12]; static unsigned smkBigNearUs, smkBigNearN, smkBigCutUs, smkBigCutN;   // №913 служебно: какие куски режет процессор (GGFORCE раз в 2 с)
+// №930в (дирижёр 25.10, трафик +0,3 мс PSP в туре): замеры CFCOST читали системное время (вызов ядра) 4 раза на каждый кусок машины NPC — это цена самих замеров в туре, в игре без смоука её нет. Теперь выключены:
+// включает «flag cfcost 1» в сценарии; CFCOST_OLD=1 — как test62 (читать всегда при смоуке)
+#ifndef CFCOST_OLD
+#define CFCOST_OLD 0
+#endif
+static int cfCostFlag;
+#define cfCostOn (smkOn && (CFCOST_OLD || cfCostFlag))
+static unsigned cfUsD[2], cfND[2], cfUsP, cfUsH;   // №930б служебно: мкс/число отрисовок кусков машин NPC [целиком, заливкой]
+static const ScePspFMatrix4 *dpmKeep; static int dpmPlain;   // №930: dpmPlain — последний drawPieceM кончил обычным drawGeo (матрица модели осталась m); dpmKeep — матрица, которую второй вызов не пишет заново
 static void drawPieceM(Piece *d, const ScePspFMatrix4 *m) {   // кусок с готовой матрицей модели
+#if !SHR_REL_SMK
+  unsigned xq_ = xsubCar ? XS_T() : 0, xqw_ = xsubCar ? XS_W() : 0;
+#define XQ(i) do { if (xsubCar) XS_LAP(i, xq_, xqw_); } while (0)
+#else
+#define XQ(i) ((void)0)
+#endif
   RBC(rbcDrawM);
   if (d->r.ni <= 0 || geOver(GE_HARD) || !pieceOk(d, 0) || NEON_SKIP(d) || TREESH_SKIP(d)) return;   // правка 103
-  if (d->r.flags & F_ADDITIVE) { dbgAddN++; dbgAddTri += (unsigned)d->r.ni / 3; if (d->r.ni > 600) dbgAddBig++; }
-  if (tqPush(d, m, 0, d->r.ni, m->w.x, m->w.y, m->w.z)) return;
-  drawnTris += d->r.ni / 3; draws++;
-  bindTexLean(d->r.tex); setFlags(d->r.flags);
-  sceGuSetMatrix(GU_MODEL, m);
-  int glowFog = glowFogBegin(d->r.flags);
+  if (d->r.flags & F_ADDITIVE) { dbgAddN++; dbgAddTri += (unsigned)d->r.ni / 3; if (d->r.ni > 600) dbgAddBig++; gloAdd((char)('A' + (bbPhase < 0 || bbPhase > 20 ? 0 : bbPhase)), d->r.tex, d->r.owner, 0, (unsigned)d->r.ni / 3);
+    if (smkOn && d->r.ni > 600) { static const void *seen_[12]; static int ns_; int k_ = 0; for (; k_ < ns_; k_++) if (seen_[k_] == d->v) break; if (k_ == ns_ && ns_ < 12) { seen_[ns_++] = d->v; char l_[260];
+        snprintf(l_, sizeof l_, "GLOWBIG t=%.1f sc=%s site=%d phase=%d tex=%d ni=%d fl=%x own=%d at=%.1f,%.1f,%.1f sc=%.2f eye_d=%.1f\n", smkT, smkScene, gloSite, (int)bbPhase, d->r.tex, d->r.ni, d->r.flags, d->r.owner, m->w.x, m->w.y, m->w.z, matScale((const float *)m), sqrtf((m->w.x - eyeX) * (m->w.x - eyeX) + (m->w.y - eyeY) * (m->w.y - eyeY) + (m->w.z - eyeZ) * (m->w.z - eyeZ))); smkWrite(l_); } } }
+  XQ(54); if (tqPush(d, m, 0, d->r.ni, m->w.x, m->w.y, m->w.z)) { XQ(58); return; }
+  XQ(59); drawnTris += d->r.ni / 3; draws++;
+  NZP(d); bindTexLean(d->r.tex); XQ(60); setFlags(d->r.flags); XQ(61);
+  dpmPlain = 0; if (dpmKeep == m) dpmKeep = 0; else sceGuSetMatrix(GU_MODEL, m);   // №930: второй вызов того же куска (carFillDraw) — матрица модели уже в GE
+  int glowFog = glowFogBegin(d->r.flags); XQ(62);
   // матрица мировая (absM=1), как у очереди прозрачного
   dbgPM++;   // счётчики гейта big_cut: кусков, дошедших до рисования / реально отданных в drawGeo (16.10: комментарий проглотил else — ни один кусок не рисовался, а счётчики вызовов росли)
 #ifdef GATE_BREAK_PM
   return;   // отрицательный контроль гейта «КАДР ИГРОКА»: воспроизводит баг 44c9a048 (кусок посчитан, не нарисован)
 #endif
-  if (bigNear(d, m)) { ggForce = 1; drawGeoG(d, 0, d->r.ni, m, 1); ggForce = 0; bigPiecesF++; dbgPMgeo++; }
-  else if (carNear853(d, m)) { drawGeoPatch853(d, m); dbgPMgeo++; }   // №853: кусок машины у камеры — целиком и веера на месте выброшенных
+  unsigned bn0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; int bn_ = bigNear(d, m); if (smkOn) { smkBigNearUs += sceKernelGetSystemTimeLow() - bn0_; smkBigNearN++; } XQ(55);   // №913: цена bigNear на кусок
+  if (bn_) { unsigned bc0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; Piece pb_; const Piece *dg_ = d;
+    if (ggPropBatchOn && !d->ggBatch && d->r.owner == 0 && !ggBatchOld) { GgBatch *gb_ = propBatchGet(d); if (gb_) { pb_ = *d; pb_.ggBatch = gb_; dg_ = &pb_; } }   // №913
+    unsigned gt0_ = ggTrisF; ggForce = 1; drawGeoG(dg_, 0, d->r.ni, m, 1); ggForce = 0; bigPiecesF++; dbgPMgeo++;
+    if (smkOn) { unsigned dt_ = sceKernelGetSystemTimeLow() - bc0_; smkBigCutUs += dt_; smkBigCutN++;
+      int hit_ = -1; for (int q_ = 0; q_ < 12; q_++) if (ggfTab[q_].n && ggfTab[q_].tex == d->r.tex && ggfTab[q_].ni == d->r.ni && ggfTab[q_].ph == bbPhase) { hit_ = q_; break; }
+      if (hit_ < 0) for (int q_ = 0; q_ < 12; q_++) if (!ggfTab[q_].n) { hit_ = q_; ggfTab[q_].tex = d->r.tex; ggfTab[q_].ni = d->r.ni; ggfTab[q_].ph = bbPhase; ggfTab[q_].us = 0; memcpy(ggfTab[q_].p, &m->w, sizeof ggfTab[q_].p); ggfTab[q_].dist = sqrtf((m->w.x - ggE[0]) * (m->w.x - ggE[0]) + (m->w.y - ggE[1]) * (m->w.y - ggE[1]) + (m->w.z - ggE[2]) * (m->w.z - ggE[2])); break; }
+      if (hit_ >= 0) { ggfTab[hit_].n++; ggfTab[hit_].us += dt_; ggfTab[hit_].fl = d->r.flags; ggfTab[hit_].cuts += ggTrisF - gt0_; } } }
+  else { int cn_ = carNear853(d, m); XQ(56); if (cn_) { drawGeoPatch853(d, m); dbgPMgeo++; }   // №853: кусок машины у камеры — целиком и веера на месте выброшенных
 #ifndef GATE_DROP_DRAW
-  else { drawGeo(d, 0, d->r.ni); dbgPMgeo++; }
-#endif   // GATE_DROP_DRAW=1 — ТОЛЬКО отрицательный контроль гейтов (tests/missions/drawn_gate.sh): куски не рисуются, как при баге 16.10
-  glowFogEnd(glowFog);
+    else { diagAbsM = 1; drawGeo(d, 0, d->r.ni); dbgPMgeo++; dpmPlain = 1; }
+#endif
+    XQ(57); }   // GATE_DROP_DRAW=1 — ТОЛЬКО отрицательный контроль гейтов (tests/missions/drawn_gate.sh): куски не рисуются, как при баге 16.10
+  glowFogEnd(glowFog); XQ(63);
 }
 // Правка «плавность» (10.10, место «ящики» L1: binds 230 против 160 у drive): пропы и стейтпропы рисовались в порядке экземпляров,
 // каждый кусок — со своей сменой текстуры. Непрозрачные куски (флаг 2 не стоит) копятся и рисуются раз в кадре по (флаги, текстура);
@@ -1089,6 +1403,7 @@ static void drawPieceM(Piece *d, const ScePspFMatrix4 *m) {   // кусок с �
 #define PROP_SORT_OLD 0
 #endif
 #define MAXPB 512
+#include "propsort913.h"
 typedef struct { int tex, flags, ni; Vert *v; unsigned short *idx; float m[16]; } PBItem;
 static PBItem pbq[MAXPB]; static int npb;
 static int pbCmp(const void *a, const void *b) {
@@ -1108,12 +1423,32 @@ static int pbCmpP(const void *a, const void *b) {
 }
 static void propFlush(void) {
   if (!npb) return;
-  if (!PROP_SORT_PTR_OLD) { for (int i = 0; i < npb; i++) pbp[i] = &pbq[i]; qsort(pbp, npb, sizeof *pbp, pbCmpP); }
+  if (!PROP_SORT_PTR_OLD) {
+    int done_ = 0;
+    if (!PROPSORT913_OLD) { static int kf_[MAXPB], kt_[MAXPB]; static unsigned short ord_[MAXPB]; for (int i = 0; i < npb; i++) { kf_[i] = pbq[i].flags; kt_[i] = pbq[i].tex; }   // разбор L3/L5: ключ и поразрядная сортировка вместо qsort с функцией (propsort913.h)
+      if (pbSortKeys(kf_, kt_, npb, ord_)) { for (int i = 0; i < npb; i++) pbp[i] = &pbq[ord_[i]]; done_ = 1; } }
+    if (!done_) { for (int i = 0; i < npb; i++) pbp[i] = &pbq[i]; qsort(pbp, npb, sizeof *pbp, pbCmpP); } }
   else qsort(pbq, npb, sizeof *pbq, pbCmp);
   for (int i = 0; i < npb; i++) { const PBItem *q = PROP_SORT_PTR_OLD ? &pbq[i] : pbp[i]; Piece tmp; memset(&tmp, 0, sizeof tmp);
     tmp.r.tex = q->tex; tmp.r.flags = q->flags; tmp.r.ni = q->ni; tmp.v = q->v; tmp.idx = q->idx;
     drawPieceM(&tmp, (const ScePspFMatrix4 *)q->m); }
   npb = 0;
+}
+// №923 служебно (разбор x_props железа L1/L3): SPTOP раз в секунду — типы стейтпропов, давшие больше всего нарисованных кусков (экземпляров в кадре, кусков на кадр, у типа: кусков, суставов, состояний, вид, билбордов, маска PVIS)
+static unsigned pcTested, pcCulled, pcViol;
+static struct { unsigned type, inst, drawn, nP, nJ, nS, kind, nB, pv; } spTop[24]; static int spTopN; static unsigned spTopFr; static float spTopT;
+static void spTopAdd(unsigned type, unsigned drawn, unsigned nP, unsigned nJ, unsigned nS, unsigned kind, unsigned nB, unsigned pv) {
+  int k = 0; for (; k < spTopN; k++) if (spTop[k].type == type) break;
+  if (k == spTopN) { if (spTopN >= 24) return; spTop[k].type = type; spTop[k].inst = spTop[k].drawn = 0; spTop[k].nP = nP; spTop[k].nJ = nJ; spTop[k].nS = nS; spTop[k].kind = kind; spTop[k].nB = nB; spTop[k].pv = pv; spTopN++; }
+  spTop[k].inst++; spTop[k].drawn += drawn;
+}
+static void spTopTick(void) {
+  spTopFr++; if (smkT - spTopT < 1.f && smkT >= spTopT) return; spTopT = smkT;
+  for (int i = 0; i < spTopN; i++) for (int j = i + 1; j < spTopN; j++) if (spTop[j].drawn > spTop[i].drawn) { __typeof__(spTop[0]) x = spTop[i]; spTop[i] = spTop[j]; spTop[j] = x; }
+  char l[600]; int o = snprintf(l, sizeof l, "SPTOP t=%.1f sc=%s fr=%u", smkT, smkScene, spTopFr);
+  for (int i = 0; i < spTopN && i < 6 && o < 520; i++) o += snprintf(l + o, sizeof l - (size_t)o, " [t%u inst=%.1f pcs=%.1f of %u j%u s%u k%u b%u pv%u]", spTop[i].type, spTop[i].inst / (float)spTopFr, spTop[i].drawn / (float)spTopFr, spTop[i].nP, spTop[i].nJ, spTop[i].nS, spTop[i].kind, spTop[i].nB, spTop[i].pv);
+  o += snprintf(l + o, sizeof l - (size_t)o, " pcull=%.1f/%.1f viol=%u", pcTested / (float)spTopFr, pcCulled / (float)spTopFr, pcViol); pcTested = pcCulled = pcViol = 0;
+  snprintf(l + o, sizeof l - (size_t)o, "\n"); smkWrite(l); spTopN = 0; spTopFr = 0;
 }
 static void propPiece(const Piece *tmp, const float *m) {   // кусок пропа/стейтпропа: в пачку или сразу
   if (PROP_SORT_OLD) { drawPieceM((Piece *)tmp, (const ScePspFMatrix4 *)m); return; }
@@ -1203,7 +1538,9 @@ static void tqRegroup(void) {
 #define TQTOP_ON 1
 #endif
 static int tqSkipTex = -1, tqDumpTex = -1, tqDumpV = 2;   // tqdump N — построчная выгрузка кусков текстуры N в TQTOP-кадре   // TEST20: «flag tqskip N» — не рисовать полупрозрачные куски текстуры N (разбор, что в очереди); -1 — всё
+static int tqPart; static float tqPartD2;   // №932б: 1 — рисуется только дальнее (key > tqPartD2), оно помечается key = -1 и не рисуется второй раз; очередь не сбрасывается
 static void tqFlush(void) {
+  int part_ = tqPart; int tqOn_ = tqOn;
   tqOn = 0;
   for (int i = 0; i < ntq; i++) tqp[i] = &tq[i];
   unsigned tq0_ = meProf ? sceKernelGetSystemTimeLow() : 0;
@@ -1215,13 +1552,16 @@ static void tqFlush(void) {
   tqRegroup();
   for (int i = 0; i < ntq; i++) {
     if (geOver(GE_HARD) || !pieceOk(&tqp[i]->p, tqp[i]->far) || tqp[i]->p.r.tex == tqSkipTex) continue;   // правка 103
-    TQ *q = tqp[i]; drawnTris += q->cnt / 3; draws++;
-    phAllow = q->p.r.owner == 0; bindTexLean(q->p.r.tex); phAllow = 0; setFlags(q->p.r.flags);
+    TQ *q = tqp[i]; if (q->key < 0.f || (part_ && q->key <= tqPartD2)) continue; if (part_) q->key = -1.f;
+    drawnTris += q->cnt / 3; draws++;
+    phAllow = q->p.r.owner == 0; NZP(&q->p); bindTexLean(q->p.r.tex); phAllow = 0; setFlags(q->p.r.flags);
     sceGuSetMatrix(GU_MODEL, &q->m);
     int glowFog = glowFogBegin(q->p.r.flags);
-    drawGeoG(&q->p, q->far, q->cnt, &q->m, 1);   // правка 340: тени-наклейки у камеры — срез по полосе (матрица очереди мировая)
+    if (dropFix921 && !q->far && q->p.r.owner == 0 && q->cnt == q->p.r.ni && !ggForce && carNear853(&q->p, &q->m)) { diagPatch = 1; drawGeoPatch853(&q->p, &q->m); diagPatch = 0; }   // №921: конус света/проп у глаза — заплатка, как у машин
+    else drawGeoG(&q->p, q->far, q->cnt, &q->m, 1);   // правка 340: тени-наклейки у камеры — срез по полосе (матрица очереди мировая)
     glowFogEnd(glowFog);
   }
+  if (part_) { tqOn = tqOn_; return; }
   if (smkOn && TQTOP_ON && ntq > 0) {   // TEST20 (разбор L3: что в fx на причале): раз в ~2 с строка TQTOP — топ текстур очереди полупрозрачного по треугольникам (индекс, размер, кусков, ктрис, ближний/дальний, м)
     static unsigned tqTopN; if ((tqTopN++ & 63) == 0) {
       struct { int tex, n; unsigned tris, ftris, fnear; float dmin, dmax; } a[8]; int na = 0;
@@ -1276,6 +1616,14 @@ static void drawSky(float ex, float ey, float ez, int depthTest) {
     if (sv != skyClamp) { sceGuTexWrap(GU_REPEAT, sv ? GU_CLAMP : GU_REPEAT); skyClamp = sv; }
     drawPiece(d, 0, ex, ey, ez, 1, 0); skN_++;
   }
+  if (sky954NStar > 0 && !sky954Old && !sky954StarsOld && !geOver(GE_HARD)) {   // №954: звёзды-точки купола (развёртка точек текстуры, main_camera.h sky954Dots): один вызов GE, 1 пиксель
+    typedef struct { unsigned c; float x, y, z; } StV; StV *q = (StV *)sceGuGetMemory((unsigned)sky954NStar * sizeof(StV));
+    for (int k = 0; k < sky954NStar; k++) q[k] = (StV){sky954Star[k].c, sky954Star[k].x, sky954Star[k].y, sky954Star[k].z};
+    ScePspFMatrix4 m_ = {{1, 0, 0, 0}, {0, 1, 0, 0}, {0, 0, 1, 0}, {ex, ey, ez, 1}};
+    phAllow = 0; bindTexLean(-1); setFlags(4); sceGuSetMatrix(GU_MODEL, &m_);
+    sceGuDrawArray(GU_POINTS, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, sky954NStar, 0, q);
+  }
+  { static unsigned s954T_; unsigned now_ = sceKernelGetSystemTimeLow(); if (smkOn && now_ - s954T_ > 1900000u) { s954T_ = now_; char l_[160]; snprintf(l_, sizeof l_, "SKY954 old=%d seen=%u conv=%u stars=%d starsold=%d depthtest=%d\n", sky954Old, sky954Seen, sky954Conv, sky954NStar, sky954StarsOld, depthTest); smkWrite(l_); } }
   if (skyDebug_ && depthTest) {   // №701 диагностика: где буфер глубины пуст (0) после неба — пурпур (там небо не нарисовано, хотя глубина свободна); серое при непустой глубине — это геометрия
     typedef struct { uint32_t c; int16_t x, y, z, pad; } DbgV; DbgV *q = (DbgV *)sceGuGetMemory(4 * sizeof(DbgV));
     q[0] = (DbgV){0xFFFF00FFu, 0, 0, 0, 0}; q[1] = (DbgV){0xFFFF00FFu, 480, 0, 0, 0}; q[2] = (DbgV){0xFFFF00FFu, 0, 272, 0, 0}; q[3] = (DbgV){0xFFFF00FFu, 480, 272, 0, 0};
@@ -1292,6 +1640,38 @@ static void drawSky(float ex, float ey, float ez, int depthTest) {
 #include "clipguard.h"
 #include "cullhier.h"
 static float pl[4][3], eyeX, eyeY, eyeZ, cfX, cfY, cfZ, drawDist;
+// №923: отсечение КУСКОВ крупных пропов и стейтпропов по боковым плоскостям кадра. Экземпляр с десятками кусков (дерево: 63 куска на 81 суставе, у дороги каждое качается и рисуется не запечённым) целиком
+// проходит проверку сферы экземпляра, хотя половина его кусков вне кадра; каждый такой кусок стоит ≈16 слов списка GE и сотни тактов процессора (≈25 мкс на PSP). Бокс куска (по вершинам, один раз на
+// адрес вершин) через матрицу куска -> сфера с запасом (полудиагональ × наибольший масштаб матрицы), та же проверка rfSphereOut, что у экземпляров. Только экземпляры с ≥ PCULL_MIN кусков.
+// PIECECULL923_OLD=1 / «flag piececull923 0» / файл piececull923old — как было; «flag piececull923 3» — сверка по всем вершинам (viol в SPTOP), 4 — красный контроль: радиус ×0,3 со сверкой (viol > 0)
+#ifndef PIECECULL923_OLD
+#define PIECECULL923_OLD 0
+#endif
+#define PCULL_MIN 6
+static int pieceCull923 = !PIECECULL923_OLD;
+typedef struct { const void *v; float lo[3], hi[3]; } PcBox;
+static PcBox pcbTab[512];
+static int pcOut923(const void *v, unsigned nv, int flags, const float *m, const float e3[3]) {
+  PcBox *b = &pcbTab[((uintptr_t)v >> 4) & 511u];
+  if (b->v != v) {
+    int v12 = (flags & F_V12) != 0, vs = v12 ? 12 : 16, po = v12 ? 6 : 8; float lo[3] = {1e30f, 1e30f, 1e30f}, hi[3] = {-1e30f, -1e30f, -1e30f};
+    if (nv == 0 || nv > 65535) return 0;
+    for (unsigned i = 0; i < nv; i++) { const short *q = (const short *)((const char *)v + i * vs + po); for (int a = 0; a < 3; a++) { float x = q[a] * (1.f / 32768.f); if (x < lo[a]) lo[a] = x; if (x > hi[a]) hi[a] = x; } }
+    b->v = v; for (int a = 0; a < 3; a++) { b->lo[a] = lo[a]; b->hi[a] = hi[a]; }
+  }
+  float c0 = (b->lo[0] + b->hi[0]) * .5f, c1 = (b->lo[1] + b->hi[1]) * .5f, c2 = (b->lo[2] + b->hi[2]) * .5f, h0 = (b->hi[0] - b->lo[0]) * .5f, h1 = (b->hi[1] - b->lo[1]) * .5f, h2 = (b->hi[2] - b->lo[2]) * .5f;
+  float wc[3]; for (int r = 0; r < 3; r++) wc[r] = m[r] * c0 + m[4 + r] * c1 + m[8 + r] * c2 + m[12 + r];
+  float rw = sqrtf(h0 * h0 + h1 * h1 + h2 * h2) * matScale(m) * (pieceCull923 >= 4 ? .3f : 1.f);
+  pcTested++; int out = rfSphereOut((const float (*)[3])pl, e3, wc, rw); pcCulled += (unsigned)out;
+  if (out && pieceCull923 >= 3) {   // служебно (гейт): сверка по всем вершинам — отсечённый кусок не должен иметь вершины внутри всех четырёх плоскостей кадра
+    int v12 = (flags & F_V12) != 0, vs = v12 ? 12 : 16, po = v12 ? 6 : 8; int bad = 0;
+    for (unsigned i = 0; i < nv && !bad; i++) { const short *q = (const short *)((const char *)v + i * vs + po); float x = q[0] * (1.f / 32768.f), y = q[1] * (1.f / 32768.f), z = q[2] * (1.f / 32768.f), w[3]; int inside = 1;
+      for (int r = 0; r < 3; r++) w[r] = m[r] * x + m[4 + r] * y + m[8 + r] * z + m[12 + r] - e3[r];
+      for (int k = 0; k < 4; k++) if (w[0] * pl[k][0] + w[1] * pl[k][1] + w[2] * pl[k][2] < 0) { inside = 0; break; }
+      if (inside) bad = 1; }
+    pcViol += (unsigned)bad; }
+  return out;
+}
 static float cullMg;   // B8: запас ящиков (м) только внутри cullCity: куски чуть за кромкой кадра попадают в список, чтобы он годился для почти той же позы (cullReuse)
 static float curFovY = FOVY;   // вертикальный угол кадра: FOVY, в комнате — FOV её камеры из данных (11.2)
 static void trSpawnLog(void) {   // гейт tests/traffic/spawnview_emu.sh: где родилась машина относительно кадра, который её рисует
@@ -1360,14 +1740,51 @@ static void npcCarToon(Piece *d, const float *m) {
   if (NPC_CAR_TOON_OLD || !skinToonEnabled() || (d->r.flags & 2) || d->r.owner == 4) return;
   float ex = d->r.bb[3] - d->r.bb[0], ey = d->r.bb[4] - d->r.bb[1], ez = d->r.bb[5] - d->r.bb[2];
   if (ex < NPC_TOON_MIN_EXT && ey < NPC_TOON_MIN_EXT && ez < NPC_TOON_MIN_EXT) return;
-  carToonHull(d, m); npcToonDraws++;
+  carToonNpcNow = 1; carToonHull(d, m); carToonNpcNow = 0; npcToonDraws++;
+}
+// №930: кусок машины NPC двумя вызовами: первые kf треугольников — без текстуры (цвет в вершинах), остальные — родной текстурой (фары, решётки, номер, швы). Оба вызова — те же carGlass и drawPieceM, что у целого куска;
+// оболочка контура (npcCarToon) уже поставлена по целому куску. Веера у камеры хвоста записываются на целый кусок (carFanV сверяет адрес начала вершин куска)
+// №930б (дирижёр 25.10: «две заливки на кусок дают +0,79 мс PSP в сценах машин миссий L2/L4 — сделать одну»): общий разбор куска один раз. Два вызова drawPieceM каждый раз заново считали pieceOk, tqPush, bigNear
+// и carNear853 (последние два перебирают вершины и кэшируют отдельно для каждой половины куска по адресу и числу индексов), писали матрицу модели и дымку свечения. Быстрый путь: кусок дальше CF_FAST_R м от глаза (у глаза
+// риск выброса треугольников GE проверяется один раз по целому куску; рискованный — как раньше, два вызова), непрозрачный (флаги 2, 4 и сложение — как раньше), годен целиком: проверки один раз, матрица и дымка один раз, дальше две отрисовки (без текстуры, с родной) —
+// те же bindTexLean / setFlags / drawGeo, что в drawPieceM. CARFILL930B_OLD=1 — как ccf31797 (два вызова)
+#ifndef CARFILL930B_OLD
+#define CARFILL930B_OLD 0
+#endif
+#define CF_FAST_R 20.f
+static void carFillDraw(Piece *d, const ScePspFMatrix4 *m, int kf) {
+  int tex0 = d->r.tex, ni0 = d->r.ni, k3 = kf * 3; unsigned vs = (d->r.flags & F_V12) ? 12u : 16u; Vert *v0 = d->v;
+  if (k3 >= ni0) { d->r.tex = -1; carGlass(d); drawPieceM(d, m); d->r.tex = tex0; return; }
+  if (!CARFILL930B_OLD && !(d->r.flags & (2 | 4 | F_ADDITIVE)) && !geOver(GE_HARD) && !NEON_SKIP(d) && !TREESH_SKIP(d) && !bigCutBlock) {
+    float dx = m->w.x - ggE[0], dy = m->w.y - ggE[1], dz = m->w.z - ggE[2];
+    if ((dx * dx + dy * dy + dz * dz > CF_FAST_R * CF_FAST_R || (!bigNear(d, m) && !carNear853(d, m))) && pieceOk(d, 0)) {   // ближе CF_FAST_R: проверки риска выброса GE — один раз по целому куску (подмножество не рискованнее целого), иначе два вызова
+      RBC(rbcDrawM);
+      d->r.ni = k3; d->r.tex = -1; carGlass(d); drawnTris += k3 / 3; draws++; dbgPM++;
+      NZP(d); bindTexLean(-1); setFlags(d->r.flags); sceGuSetMatrix(GU_MODEL, m);
+      int gf_ = glowFogBegin(d->r.flags); diagAbsM = 1; drawGeo(d, 0, k3); dbgPMgeo++;
+      d->r.ni = ni0 - k3; d->r.tex = tex0; d->v = (Vert *)((char *)v0 + (size_t)k3 * vs); carGlass(d); drawnTris += d->r.ni / 3; draws++; dbgPM++;
+      NZP(d); bindTexLean(tex0); setFlags(d->r.flags); diagAbsM = 1; drawGeo(d, 0, d->r.ni); dbgPMgeo++;
+      glowFogEnd(gf_);
+      if (carFanN < 8 && carFanHas(d->v) && !carFanHas(v0)) carFanV[carFanN++] = v0;
+      d->r.ni = ni0; d->v = v0; return;
+    }
+  }
+  d->r.ni = k3; d->r.tex = -1; carGlass(d); dpmPlain = 0; drawPieceM(d, m); dpmKeep = dpmPlain ? m : 0;   // матрицу второму вызову не писать, если первый кончил обычной отрисовкой (без заплаток у камеры)
+  d->r.ni = ni0 - k3; d->r.tex = tex0; d->v = (Vert *)((char *)v0 + (size_t)k3 * vs); carGlass(d); drawPieceM(d, m); dpmKeep = 0;
+  if (carFanN < 8 && carFanHas(d->v) && !carFanHas(v0)) carFanV[carFanN++] = v0;
+  d->r.ni = ni0; d->v = v0;
 }
 static void trDrawPiece(void *u, const TrPiece *p, const void *verts, const float m[16]) {
   if (p->owner == 3) { flareDrawPiece(p, m, p->tex >= 0 ? (int)trTexBase + p->tex : -1); return; }
   (void)u; Piece d; memset(&d, 0, sizeof d); memcpy(&d.r, p, sizeof d.r);
-  d.r.tex = p->tex >= 0 ? (int)trTexBase + p->tex : -1; d.v = (Vert *)verts;
+  d.r.tex = p->tex >= 0 ? (int)trTexBase + p->tex : -1; unsigned cfp0_ = cfCostOn ? sceKernelGetSystemTimeLow() : 0; int kf_ = carFillPick(p, &verts); d.v = (Vert *)verts; if (cfCostOn) cfUsP += sceKernelGetSystemTimeLow() - cfp0_;   // №930: треугольники куска с ровной областью текстуры — без текстуры (цвет уже в вершинах), с рисунком — родной
+  unsigned tw0_ = smkOn ? (unsigned)sceGuCheckList() : 0, tt0_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
   npcCarToon(&d, m);   // №779
-  carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m);
+  unsigned tw1_ = smkOn ? (unsigned)sceGuCheckList() : 0, tt1_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
+  if (smkOn) cfUsH += tt1_ - tt0_;
+  { unsigned cfq_ = cfCostOn ? sceKernelGetSystemTimeLow() : 0; if (kf_ > 0) carFillDraw(&d, (const ScePspFMatrix4 *)m, kf_); else { carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m); }
+    if (cfCostOn) { cfUsD[kf_ > 0] += sceKernelGetSystemTimeLow() - cfq_; cfND[kf_ > 0]++; } }   // служебно (№930б): мкс и число отрисовок куска машины NPC — целиком / двумя заливками
+  if (smkOn) { smkTrfPc[0] += 1.0; smkTrfPc[1] += (tw1_ - tw0_) / 4u; smkTrfPc[2] += ((unsigned)sceGuCheckList() - tw1_) / 4u; smkTrfPc[3] += (tt1_ - tt0_) / 1000.0; smkTrfPc[4] += (sceKernelGetSystemTimeLow() - tt1_) / 1000.0; }   // №914: кусков, слов оболочки / куска, мс оболочки / куска
 }
 // Машины миссий с ИИ (29.09, viewer/msncar.h — логика общая с ботами): рисунок — модели пакета msncars-l<N>.shr уровня
 // (tools/msncar_export.py, формат MCR1: куски как у трафика TRF1), читаются с карты памяти по требованию, когда сценарий
@@ -1411,7 +1828,7 @@ static void mcrDrop(int k) {   // модель k — в кучу, её текс�
   if (!mcr[k].blob) return;
   bbOp("car-", mcr[k].name, 0);   // правка 103: самописец
   if (mcrTexOk) for (int i = 0; i < MCR_TEXPER; i++) memset(&tex[mcrTexBase + mcr[k].tex0 + i], 0, sizeof(Tex));
-  toneBlkDel(mcr[k].blob); geDeferFree(mcr[k].blob); memset(&mcr[k], 0, sizeof mcr[k]); bound = -2;
+  carFillSetFree(1 + k); toneBlkDel(mcr[k].blob); geDeferFree(mcr[k].blob); memset(&mcr[k], 0, sizeof mcr[k]); bound = -2;   // №930: копия вершин куска — вместе с моделью
 }
 // самоаудит 16.10: список «держать 90 с» (№629) принадлежит уровню, при выгрузке всех машин миссий очищается (MCR_KEEP_CLEAR_OLD=1 — как было)
 #ifndef MCR_KEEP_CLEAR_OLD
@@ -1494,7 +1911,7 @@ static const McrModel *mcrGet(const char *name) {   // модель машины
   if (!fromPre) sceIoClose(f);
   sceKernelDcacheWritebackRange(b, u[1]); toneBlkAdd(b, u[1], TF_MCR, u[0]);   // правка 144: палитры — из пакета заново
   McrModel *M = &mcr[k]; memcpy(M->name, d, 15); M->name[15] = 0; M->blob = b; M->bytes = u[1];
-  M->M = (const TrModel *)(d + 16); M->pc = (const TrPiece *)b; M->vt = b + u[3]; M->tex0 = k * MCR_TEXPER;
+  M->M = (const TrModel *)(d + 16); M->pc = (const TrPiece *)b; M->vt = b + u[3]; M->tex0 = k * MCR_TEXPER; unsigned cf0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; carFillModelLoad(k, M->name, M->pc, u[2], M->vt, mcrPath, u[0] + u[3]); if (smkOn) { char l_[112]; snprintf(l_, sizeof l_, "CARFILLM slot=%d name=%.15s fills=%d t=%.1f ms=%.2f\n", k, M->name, cfSet[1 + k].nbits, smkT, (sceKernelGetSystemTimeLow() - cf0_) / 1000.f); smkWrite(l_); }   // №930: разметка и перекраска модели при загрузке в слот (ms — цена кадра загрузки)
   const unsigned char *p = b + u[5], *end = p + u[6];   // текстуры: как у трафика (заголовок 16 Б, CLUT 1024 Б, уровни в swizzle)
   for (unsigned t = 0; t < u[7] && p + 16 + 1024 <= end; t++) {
     Tex *x = &tex[mcrTexBase + M->tex0 + t]; memset(x, 0, sizeof *x);
@@ -1581,9 +1998,10 @@ static void mcrWarmPolice(void) {
 static void mcDrawPiece(void *u, const TrPiece *p, const void *verts, const float m[16]) {
   if (p->owner == 3) { flareDrawPiece(p, m, p->tex >= 0 ? *(const int *)u + p->tex : -1); return; }
   Piece d; memset(&d, 0, sizeof d); memcpy(&d.r, p, sizeof d.r);
-  d.r.tex = p->tex >= 0 ? *(const int *)u + p->tex : -1; d.v = (Vert *)verts;
+  d.r.tex = p->tex >= 0 ? *(const int *)u + p->tex : -1; int kf_ = carFillPick(p, &verts); d.v = (Vert *)verts;   // №930: куски машин миссий — тоже по боковому файлу пакета
   npcCarToon(&d, m);   // №779: машины миссий
-  carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m);
+  { unsigned cfq_ = cfCostOn ? sceKernelGetSystemTimeLow() : 0; if (kf_ > 0) carFillDraw(&d, (const ScePspFMatrix4 *)m, kf_); else { carGlass(&d); drawPieceM(&d, (const ScePspFMatrix4 *)m); }
+    if (cfCostOn) { cfUsD[kf_ > 0] += sceKernelGetSystemTimeLow() - cfq_; cfND[kf_ > 0]++; } }   // служебно (№930б): мкс и число отрисовок куска машины NPC — целиком / двумя заливками
 }
 // №867: кусок колеса своей машины (CAR1) — боковины с картинкой диска без качения, протектор с качением (wheelcap.h). 1 — нарисовано по частям;
 // 0 — не колесо / делить нечего / полупрозрачное (очередь tq хранит указатель куска — копию на стеке туда не отдаём): рисует вызывающий, как было
@@ -1615,7 +2033,7 @@ static int huskOld;   // правка 286: служебное «flag huskold 1»
 static int mcrDrawPlayer2(const Car *k, float wheelAng, const char *fc);
 static int mcrDrawPlayer(const Car *k, float wheelAng) {
   const char *fc = mvForcedCar(); if (!fc) return 0;
-  trHideDriver = 1; int r = mcrDrawPlayer2(k, wheelAng, fc); trHideDriver = 0; return r;   // №666: у машины игрока водителя нет
+  trHideDriver = 1; carFillPlayer++; int r = mcrDrawPlayer2(k, wheelAng, fc); carFillPlayer--; trHideDriver = 0; return r;   // №930: машина игрока (в том числе после пересадки) — с текстурой   // №666: у машины игрока водителя нет
 }
 static int mcrDrawPlayer2(const Car *k, float wheelAng, const char *fc) {
   // правка Роба 286 (04.10: «школьный автобус горит и взрывается, но стоит целый»): угнанная машина / машина миссии у игрока после
@@ -1835,9 +2253,36 @@ static int pvsEyeOk(void) {
 #ifndef CULL_REUSE_OLD
 #define CULL_REUSE_OLD BIS(3)
 #endif
+#ifndef CR_EYE
 #define CR_EYE .2f
+#endif
+#ifndef CR_DIR
 #define CR_DIR .002f
+#endif
+#ifndef CR_AGE
 #define CR_AGE 24
+#endif
+// №919 (наряд «езда L4/L7»): при езде глаз уходит на 0,5 м за кадр, поворот взгляда 0,5–2° — допуски B8 (0,2 м и ~0,1°) срабатывают 1 кадр из 30 (RFAST cull_reuse), отсечение города (ph7) стоит
+// ~0,5 мс Мака за кадр. Допуски шире (CR_EYE_MV, CR_DIR_MV, возраст CR_AGE_MV) вместе с тем же запасом ящиков cullMg = поворот × (дальность + 30) / 1,4 + смещение + 0,1 (при допусках 1,6 м и 0,016 — около 3,4 м на 150 м дальности; кусков в списке больше на ~4 %): список, собранный для прежней
+// позы, содержит всё, что видно из сдвинутой (вывод у B8). CR_MOVE_OLD=1 / «flag crmove 0|1» / файл crmoveold рядом с EBOOT — прежние допуски. «flag crchk 1» — сверка каждого повтора со свежим
+// отсечением (строка CRCHK: viol — кусков свежего списка, которых нет в повторённом); «flag crmove 2» — отрицательный контроль: широкие допуски без запаса (viol > 0)
+#ifndef CR_MOVE_OLD
+#define CR_MOVE_OLD 0
+#endif
+#ifndef CR_EYE_MV
+#define CR_EYE_MV 1.6f
+#endif
+#ifndef CR_DIR_MV
+#define CR_DIR_MV .016f
+#endif
+#ifndef CR_AGE_MV
+#define CR_AGE_MV 8
+#endif
+static int crMoveOn = !CR_MOVE_OLD;   // 1 — широкие допуски, 0 — B8, 2 — широкие без запаса (только отрицательный контроль)
+static int crChkOn, crVerifyRun; static unsigned crChkFrames, crChkViol, crChkExtra, crChkCand;
+#define CR_EYE_V (crMoveOn ? CR_EYE_MV : CR_EYE)
+#define CR_DIR_V (crMoveOn ? CR_DIR_MV : CR_DIR)
+#define CR_AGE_V (crMoveOn ? CR_AGE_MV : CR_AGE)
 static struct { float e[3], f[3], dd; int fly; unsigned regEye, cellSig, opt, nd; const unsigned short *pvs; int pvsN; unsigned age; int valid; } crv;
 static unsigned rfCullReuse, rfCullAll;
 static void crvResetFwd(void) { crv.valid = 0; }   // новый уровень: список отсечения прошлого не годится
@@ -1846,6 +2291,18 @@ static int ccNoMe, ccFromMe;   // №653: 1 — cullCity считает сам (
 static void ccMainSample(unsigned us);
 static void cullFinish(int fly, const float *fn_, unsigned regE_, const unsigned short *pl0_, int n0_, unsigned us0);
 static int ccBegin(int fly, const unsigned short *pl_, int n, float pr2, unsigned regE_, const float *fn_, const unsigned short *pl0_, int n0_, unsigned us0);
+static void cullCity(int fly);
+// №919: сверка повтора: свежее отсечение для нынешней позы без запаса (cullMg = 0) идёт тем же cullCity в режиме crVerifyRun; каждый его кусок обязан быть в повторённом списке sp[0..nd)
+static void crVerify(int fly) {
+  static unsigned char *bm; static unsigned bmN;
+  if (bmN < npc) { free(bm); bm = (unsigned char *)calloc((npc + 7) / 8, 1); bmN = bm ? npc : 0; if (!bm) return; } else memset(bm, 0, (npc + 7) / 8);
+  int nd0 = nd, pu0 = pvsUsed; unsigned rc0 = regCut, re0 = regEye;
+  for (int i = 0; i < nd0; i++) bm[sp[i] >> 3] |= 1u << (sp[i] & 7);
+  crVerifyRun = 1; cullCity(fly); crVerifyRun = 0;
+  unsigned viol = 0; for (int i = 0; i < nd; i++) if (!(bm[tp[i] >> 3] >> (tp[i] & 7) & 1u)) viol++;
+  crChkFrames++; crChkViol += viol; crChkCand += (unsigned)nd; crChkExtra += (unsigned)(nd0 > nd ? nd0 - nd : 0);
+  nd = nd0; pvsUsed = pu0; regCut = rc0; regEye = re0;
+}
 static void cullCity(int fly) {
   unsigned us0 = sceKernelGetSystemTimeLow();   // render_fast: время отсечения (строка RFAST cull_us)
   float fl_ = sqrtf(cfX * cfX + cfY * cfY + cfZ * cfZ); if (fl_ < 1e-6f) fl_ = 1.f; float fn_[3] = {cfX / fl_, cfY / fl_, cfZ / fl_};
@@ -1854,11 +2311,11 @@ static void cullCity(int fly) {
   if (!CULL_REUSE_OLD) {
     n0_ = (opt & O_PVS) && !fly && !regOff && pvsEyeOk() ? pvsListS(eyeX, eyeZ, fn_, &pl0_) : -1;
     float dx = eyeX - crv.e[0], dy = eyeY - crv.e[1], dz = eyeZ - crv.e[2], ax = fn_[0] - crv.f[0], ay = fn_[1] - crv.f[1], az = fn_[2] - crv.f[2];
-    reuseOk = crv.valid && crv.age < CR_AGE && crv.nd == (unsigned)nd && crv.fly == fly && crv.dd == drawDist && crv.regEye == regE_ && crv.opt == (unsigned)opt && crv.pvs == pl0_ && crv.pvsN == n0_
-              && dx * dx + dy * dy + dz * dz <= CR_EYE * CR_EYE && ax * ax + ay * ay + az * az <= CR_DIR * CR_DIR && crv.cellSig == cellSigNow();
+    reuseOk = !crVerifyRun && crv.valid && crv.age < (unsigned)CR_AGE_V && crv.nd == (unsigned)nd && crv.fly == fly && crv.dd == drawDist && crv.regEye == regE_ && crv.opt == (unsigned)opt && crv.pvs == pl0_ && crv.pvsN == n0_
+              && dx * dx + dy * dy + dz * dz <= CR_EYE_V * CR_EYE_V && ax * ax + ay * ay + az * az <= CR_DIR_V * CR_DIR_V && crv.cellSig == cellSigNow();
     rfCullAll++;
-    if (reuseOk) { crv.age++; rfCullReuse++; rfCullUs += sceKernelGetSystemTimeLow() - us0; return; }   // список, сортировка, nd, pvsUsed, regCut — прошлого вычисления
-    cullMg = CR_DIR * (drawDist + 30.f) / 1.4f + CR_EYE + .1f;
+    if (reuseOk) { if (crChkOn) crVerify(fly); crv.age++; rfCullReuse++; rfCullUs += sceKernelGetSystemTimeLow() - us0; return; }   // список, сортировка, nd, pvsUsed, regCut — прошлого вычисления
+    cullMg = crVerifyRun || crMoveOn == 2 ? 0.f : CR_DIR_V * (drawDist + 30.f) / 1.4f + CR_EYE_V + .1f;
   }
   nd = 0; pvsUsed = 0; regCut = 0; regEye = regE_;   // правка 181: набор ворот
   // «flag noreg» (отрицательный контроль правки 95): все регионы и без PVS (списки PVS уже без чужих регионов) — как до правки
@@ -1867,7 +2324,7 @@ static void cullCity(int fly) {
   if (n >= 0) {                                        // PVS: только куски, видимые из этой клетки 20x20 м
     pvsUsed = 1;
     float pr2 = drawDist > pvsRange ? pvsRange * pvsRange : 1e30f;   // дальний режим: из PVS только до 115 м
-    if (ccBegin(fly, pl_, n, pr2, regE_, fn_, pl0_, n0_, us0)) return;   // №653: задание ушло на ME, результат берёт cullCityEnd
+    if (!crVerifyRun && ccBegin(fly, pl_, n, pr2, regE_, fn_, pl0_, n0_, us0)) return;   // №653: задание ушло на ME, результат берёт cullCityEnd
     if (cr && (opt & O_PLANES) && cullHierReady()) {   // А3: клетка один раз за кадр, куски вне пирамиды не читаются
       if (++cceEp == 0) { memset(cceE, 0, cceN * sizeof *cceE); cceEp = 1; }
       for (int i = 0; i < n; i++) { unsigned k = pl_[i]; if (k >= npc) continue; unsigned ci = crc[k];
@@ -1897,6 +2354,7 @@ static void cullCity(int fly) {
 }
 // хвост cullCity: сортировка подсчётом, запись для повтора (B8), время отсечения. Зовут cullCity и cullCityEnd (отсечение на ME, №653)
 static void cullFinish(int fly, const float *fn_, unsigned regE_, const unsigned short *pl0_, int n0_, unsigned us0) {
+  if (crVerifyRun) { cullMg = 0.f; return; }   // №919: сверочное отсечение — свежий список остаётся в tp[0..nd) несортированным, повторённый sp[] не тронут
   // сортировка подсчётом по (прозрачность, текстура): меньше смен текстур, прозрачное после непрозрачного
   memset(cnt2k, 0, sizeof cnt2k);
   for (int i = 0; i < nd; i++) cnt2k[tk[i]]++;
@@ -2075,8 +2533,53 @@ static int ccCompareKeep(int fly) {
 #define DL_BUILD_MAX 32       // листов за кадр: остальные клетки этого кадра — прежним путём (без рывка на въезде)
 static unsigned farCellPieces;   // правка 508: кусков дальних клеток за кадр (дальняя версия без нарезки), в строку RFAST не входит — для отладки
 static int dlOff, dlNoList, dlNoDepth;   // dlnodepth — красный контроль гейта tests/dl/run.py (лист без границ глубины: дома пропадают)
-static void dlLost(void) { bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curLvlMode = -1; curSlope = -1.f; curCull = -1; curBias = 0x7fffffff; }
+static void dlLost(void) { if (nzOn) nzCur = -1; flatLit = 2; flatAmbOk = 0; bound = -2; texOn = -1; curFlags = -1; curFilt = -1; curLvlMode = -1; curSlope = -1.f; curCull = -1; curBias = 0x7fffffff; }
 // part = 0: полный лист клетки; part = 1 (правка «плавность»): лист без кусков из маски skip (бит — номер куска в клетке), в L->p*
+// №912: разметка дорог — отдельный лист клетки (треугольники без текстуры, сдвиг глубины слоя, цвет вершин = тон разметки × свет), вызывается после основного листа клетки,
+// если клетка ближе MARK_RANGE (м) к глазу; матрица модели та же (оси кусков клетки). Строится по первому вызову, уходит вместе с листами клетки (dlFree)
+#ifndef MARK_RANGE_BIG
+#define MARK_RANGE_BIG 55.f     // крупная разметка (полосы, зебра, стоп-линии): до этой дальности от глаза (по центру клетки, + полклетки)
+#endif
+#ifndef MARK_RANGE_SMALL
+#define MARK_RANGE_SMALL 30.f   // мелочь (короткие штрихи, буквы): только ближе
+#endif
+static float markRangeBig = MARK_RANGE_BIG, markRangeSmall = MARK_RANGE_SMALL; static unsigned marksCalls, marksTrisDrawn;
+static unsigned marksBuildList(unsigned *b, const MkVert *v, unsigned n) {   // один лист: состояние слоя + один DrawArray; -> размер, байт
+  sceKernelDcacheWritebackInvalidateRange(b, 128u * 4u);
+  dlLost(); sceGuStart(GU_CALL, b); flatOff(); flatInList = 1;
+  if (!dlNoDepth) sceGuDepthRange(65535, 0);
+  bindTexLean(-1); setFlags(F_LAYER);
+  sceGuDrawArray(GU_TRIANGLES, MK_VT, (int)n, 0, v);
+  flatOff(); flatInList = 0;
+  unsigned sz = (unsigned)sceGuFinish(); dlLost(); return sz;
+}
+static void ldSignal(void);
+static void marksWake(void) { ldSignal(); }
+static void marksCall(unsigned ci, float ex, float ez) {
+  marksLoaderOn = loaderUp;
+  if (!flatOn || !marksOk || ci >= marksNcell || ci >= ncell) return; MkCell *m = &marksCell[ci];
+  if (!m->ready) marksCellLoad2(ci, 1);
+  if (!m->ready) return;
+  const Cell *c = &cl[ci]; float dx = c->cx - ex, dz = c->cz - ez, d2 = dx * dx + dz * dz, rb = markRangeBig + 10.f, rs = markRangeSmall + 10.f, rf = rs + 30.f;
+  int wantA = m->nbig && d2 <= rb * rb, wantS = m->ns && d2 <= rs * rs; CellDL *L = &cdl[ci];
+  if (m->sready && d2 > rf * rf) { marksSmallDrop(ci); if (L->mbuf2) { dlBytesNow -= L->mbytes2; marksFreeLater(L->mbuf2); L->mbuf2 = 0; L->mok2 = 0; } }   // мелочь далеко — память назад (список GE не освобождаем под рукой GE)
+  if (!wantA && !wantS) return;
+  if (wantA) {
+    if (!L->mok) {
+      unsigned *b = (unsigned *)memalign(16, 128u * 4u); if (!b) return; marksColour(m->v, m->nbig); m->epoch = marksEpoch;
+      if (marksBuildList(b, m->v, m->nbig) > 128u * 4u) { smkGeBad++; free(b); return; }
+      L->mbuf = b; L->mbytes = 128u * 4u; L->mtrisA = (int)(m->nbig / 3u); L->mok = 1; dlBytesNow += L->mbytes; dlBuilt++; }
+    else if (m->epoch != marksEpoch) { L->mok = 0; dlBytesNow -= L->mbytes; marksFreeLater(L->mbuf); L->mbuf = 0; return; }   // тон сменился (marksEpoch): лист пересоберём в следующем кадре
+    sceGuCallList(L->mbuf); dlLost(); drawnTris += L->mtrisA; draws++; marksCalls++; marksTrisDrawn += (unsigned)L->mtrisA; }
+  if (wantS) {
+    if (!m->sready) { marksReqSmall(ci, marksWake); return; }   // мелочь ещё не прочитана: появится через кадр-другой
+    if (!L->mok2) {
+      unsigned *b = (unsigned *)memalign(16, 128u * 4u); if (!b) return; marksColour(m->sv, m->ns); m->sepoch = marksEpoch;
+      if (marksBuildList(b, m->sv, m->ns) > 128u * 4u) { smkGeBad++; free(b); return; }
+      L->mbuf2 = b; L->mbytes2 = 128u * 4u; L->mtrisB = (int)(m->ns / 3u); L->mok2 = 1; dlBytesNow += L->mbytes2; dlBuilt++; }
+    else if (m->sepoch != marksEpoch) { L->mok2 = 0; dlBytesNow -= L->mbytes2; marksFreeLater(L->mbuf2); L->mbuf2 = 0; return; }
+    sceGuCallList(L->mbuf2); dlLost(); drawnTris += L->mtrisB; draws++; marksCalls++; marksTrisDrawn += (unsigned)L->mtrisB; }
+}
 static int dlBuildM(unsigned ci, unsigned long long skip, int part) {
   Cell *c = &cl[ci]; CellDL *L = &cdl[ci]; unsigned short ord[64]; int n = 0; unsigned words = 16;
   if (part && c->n > 64) return -1;
@@ -2085,24 +2588,25 @@ static int dlBuildM(unsigned ci, unsigned long long skip, int part) {
     if (part && (skip >> (k - c->first) & 1ull)) continue;
     if (d->r.ni <= 0 || ((d->r.flags & 2) && !(d->r.flags & 4))) continue;   // полупрозрачное — очередью tq
     if (!(d->r.flags & F_NEAR)) return -1;                                   // уровень по-старому (дальние версии) — прежний путь
-    int j = n++; while (j > 0) { const Piece *e = &pc[ord[j - 1]]; int ke = ((e->r.flags & 3) << 12) | (e->r.tex & 0xfff), kd = ((d->r.flags & 3) << 12) | (d->r.tex & 0xfff);
+    int j = n++; while (j > 0) { const Piece *e = &pc[ord[j - 1]]; int ke = FLAT_SORTKEY(e), kd = FLAT_SORTKEY(d);
                                  if (ke <= kd) break; ord[j] = ord[j - 1]; j--; }
-    ord[j] = (unsigned short)k; words += (d->r.flags & F_STRIP) ? stripDlWords(d, 0) + ((d->r.flags & F_FARP) && d->r.nf > 0 ? stripDlWords(d, 1) : 0) + 72 : 72 + 8 * (d->r.ni / 65532 + 1);
+    ord[j] = (unsigned short)k; words += (d->r.flags & F_STRIP) ? stripDlWords(d, 0) + ((d->r.flags & F_FARP) && d->r.nf > 0 ? stripDlWords(d, 1) : 0) + 76 : 76 + 8 * (d->r.ni / 65532 + 1);   // №949: +4 слова на масштаб шума (2 команды TexScale + возврат)
   }
   if (c->n > 64) return -1;
   if (!n) { if (part) { L->pok = 2; L->pmask = skip; } else L->ok = 2; return 0; }
   unsigned bytes = words * 4; unsigned *b = (unsigned *)memalign(16, bytes); if (!b) return -1;
   sceKernelDcacheWritebackInvalidateRange(b, bytes);   // лист пишется мимо кэша (sceGuStart): грязные строки не должны лечь поверх
-  dlLost(); sceGuStart(GU_CALL, b);
+  dlLost(); sceGuStart(GU_CALL, b); flatOff(); unsigned nb0_ = binds + flatBinds, nn0_ = flatNoiseN; flatInList = 1;
   if (!dlNoDepth) sceGuDepthRange(65535, 0);   // у контекста листа свои границы глубины (нули): sceGuDepthOffset слоёв (setBias) считает от них — как у кадра
   int tris = 0, dr = 0;
   for (int i = 0; i < n; i++) { Piece *d = &pc[ord[i]]; if (!pieceOk(d, 0)) continue;
-    phAllow = d->r.owner == 0; bindTexLean(d->r.tex); phAllow = 0; setFlags(d->r.flags); drawGeo(d, 0, d->r.ni); tris += d->r.ni / 3; dr++; }
+    phAllow = d->r.owner == 0; NZP(d); bindTexLean(d->r.tex); phAllow = 0; setFlags(d->r.flags); drawGeo(d, 0, d->r.ni); tris += d->r.ni / 3; dr++; }
   if (phTfx) { sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA); phTfx = 0; }   // правка 411: лист кончается обычной модуляцией
+  flatOff(); flatInList = 0;
   unsigned sz = (unsigned)sceGuFinish(); dlLost();
   if (sz > bytes) { smkGeBad++; free(b); return -1; }   // не должно быть: запас на кусок 72 слова
-  if (part) { L->pbuf = b; L->pbytes = bytes; L->ptris = tris; L->pdraws = dr; L->pmask = skip; L->pok = 1; dlBuilt++; dlBytesNow += bytes; return 1; }
-  L->buf = b; L->bytes = bytes; L->tris = tris; L->draws = dr; L->ok = 1; dlBuilt++; dlBytesNow += bytes;
+  if (part) { L->pnoise = flatNoiseN != nn0_; L->pnb = (unsigned short)(binds + flatBinds - nb0_); L->pbuf = b; L->pbytes = bytes; L->ptris = tris; L->pdraws = dr; L->pmask = skip; L->pok = 1; dlBuilt++; dlBytesNow += bytes; return 1; }
+  L->noise = flatNoiseN != nn0_; L->nb = (unsigned short)(binds + flatBinds - nb0_); L->buf = b; L->bytes = bytes; L->tris = tris; L->draws = dr; L->ok = 1; dlBuilt++; dlBytesNow += bytes;
   return 1;
 }
 static int dlBuild(unsigned ci) { return dlBuildM(ci, 0, 0); }
@@ -2118,22 +2622,23 @@ static int dlBuildFar(unsigned ci) {
   for (unsigned k = c->first; k < c->first + c->n && n < 64; k++) {
     const Piece *d = &pc[k];
     if (d->r.ni <= 0 || ((d->r.flags & 2) && !(d->r.flags & 4))) continue;   // полупрозрачное — очередью tq
-    int j = n++; while (j > 0) { const Piece *e = &pc[ord[j - 1]]; int ke = ((e->r.flags & 3) << 12) | (e->r.tex & 0xfff), kd = ((d->r.flags & 3) << 12) | (d->r.tex & 0xfff);
+    int j = n++; while (j > 0) { const Piece *e = &pc[ord[j - 1]]; int ke = FLAT_SORTKEY(e), kd = FLAT_SORTKEY(d);
                                  if (ke <= kd) break; ord[j] = ord[j - 1]; j--; }
-    ord[j] = (unsigned short)k; words += (d->r.flags & F_STRIP) ? stripDlWords(d, 0) + ((d->r.flags & F_FARP) && d->r.nf > 0 ? stripDlWords(d, 1) : 0) + 72 : 72 + 8 * (d->r.ni / 65532 + 1);
+    ord[j] = (unsigned short)k; words += (d->r.flags & F_STRIP) ? stripDlWords(d, 0) + ((d->r.flags & F_FARP) && d->r.nf > 0 ? stripDlWords(d, 1) : 0) + 76 : 76 + 8 * (d->r.ni / 65532 + 1);   // №949: +4 слова на масштаб шума (2 команды TexScale + возврат)
   }
   if (!n) { L->fok = 2; return 0; }
   unsigned bytes = words * 4; unsigned *b = (unsigned *)memalign(16, bytes); if (!b) return -1;
   sceKernelDcacheWritebackInvalidateRange(b, bytes);
-  dlLost(); sceGuStart(GU_CALL, b);
+  dlLost(); sceGuStart(GU_CALL, b); flatOff(); unsigned nb0_ = binds + flatBinds, nn0_ = flatNoiseN; flatInList = 1;
   if (!dlNoDepth) sceGuDepthRange(65535, 0);
   int tris = 0, dr = 0;
   for (int i = 0; i < n; i++) { Piece *d = &pc[ord[i]]; int fp = (d->r.flags & F_FARP) != 0 && d->r.nf > 0; if (!pieceOk(d, fp)) continue;
-    phAllow = d->r.owner == 0; bindTexLean(d->r.tex); phAllow = 0; setFlags(d->r.flags); int cnt = fp ? d->r.nf : d->r.ni; drawGeo(d, fp, cnt); tris += cnt / 3; dr++; }
+    phAllow = d->r.owner == 0; NZP(d); bindTexLean(d->r.tex); phAllow = 0; setFlags(d->r.flags); int cnt = fp ? d->r.nf : d->r.ni; drawGeo(d, fp, cnt); tris += cnt / 3; dr++; }
   if (phTfx) { sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA); phTfx = 0; }
+  flatOff(); flatInList = 0;
   unsigned sz = (unsigned)sceGuFinish(); dlLost();
   if (sz > bytes) { smkGeBad++; free(b); return -1; }
-  L->fbuf = b; L->fbytes = bytes; L->ftris = tris; L->fdraws = dr; L->fok = 1; dlBuilt++; dlBytesNow += bytes;
+  L->fnoise = flatNoiseN != nn0_; L->fnb = (unsigned short)(binds + flatBinds - nb0_); L->fbuf = b; L->fbytes = bytes; L->ftris = tris; L->fdraws = dr; L->fok = 1; dlBuilt++; dlBytesNow += bytes;
   return 1;
 }
 static unsigned farListCalls;   // TEST23: вызовов листа дальней клетки за кадр (строка RFAST? нет — отладка, сбрасывается в dlCity)
@@ -2244,6 +2749,7 @@ static unsigned long long ggCellMaskC(unsigned ci) {   // маска клетк�
 #include "horizon.h"
 #include "hlod.h"   // горизонт: плоские силуэты дальнего города (flag horizon)
 #include "silh.h"   // силуэты за дальностью (Загрузка 3)
+#include "road934.h"   // №934: дальние версии кусков дорог и мостов до 520 м (файл road934.shr уровня)
 static unsigned cuDrawn;   // клеток подложки в последнем кадре (отладка)
 static void cellUnderlayDraw(float ex, float ey, float ez) {
   cuDrawn = 0;
@@ -2368,6 +2874,36 @@ static unsigned dlFarN;
 static unsigned dfUs, dfFrame, dfFrameMax, dfFrames, dfT0, dnN, dnUs;   // аудит FPS: листы дальних/ближних клеток, собранные за секунду (число, мкс, максимум за кадр)
 static int dlBuildFarT(unsigned ci) { unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; int r = dlBuildFar(ci); if (smkOn) { DLFARN++; dfFrame++; dfUs += sceKernelGetSystemTimeLow() - t0; } return r; }
 static int dlBuildT(unsigned ci) { unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; int r = dlBuild(ci); if (smkOn) { dnN++; dnUs += sceKernelGetSystemTimeLow() - t0; } return r; }
+// №932б (Роб: «фоны вдалеке мигают»; на L3/L5 причина — 16-битная глубина: дальние слои города 100–250 м делят между собой ≈ 270 ступеней, и слои с общим сдвигом глубины мерцают).
+// Две области глубины: клетки дальше farPlainD (их рисует дальняя версия без нарезки) идут первым проходом со своей проекцией (ближняя плоскость 0,85·farPlainD, дальняя прежняя) —
+// на те же 16 бит приходится не 0,7…260 м, а 85…260 м, ступеней глубины в ≈ 7 раз больше. Дальнее полупрозрачное из очереди tq — туда же (проекция та же); затем глубина очищается
+// и всё остальное (ближние клетки, предметы, машины, люди, эффекты) — прежней проекцией: ближнее не теряет ничего. ZF932_OLD=1 или «flag zf932 0» — как раньше (один проход).
+// Цена: очистка глубины и вторая матрица проекции за кадр. Небо рисуется первым без теста глубины (skyLast не трогаем): очистка его не задевает.
+#ifndef ZF932_OLD
+#define ZF932_OLD 0
+#endif
+#ifndef ZF932_NEAR_K
+#define ZF932_NEAR_K .85f
+#endif
+static int zfUser = !ZF932_OLD; static float zfFov, zfNear;   // zfFov — угол кадра города (0 — не город: комната, служебные окна), zfNear — ближняя плоскость основного прохода
+static ScePspFMatrix4 zfPmBase; static int zfCurSave; static unsigned zfFrames, zfTqFar;
+static int zfBegin(void) { return zfUser && !ZF932_OLD && zfFov > 0.f && farPlainD >= 60.f && drawDist + 10.f > farPlainD * 1.3f ? 2 : 1; }
+static int zfFarPiece(const Piece *d) { unsigned ci = d->r.cell; return ci < ncell && boxD2(cl[ci].bb) > farPlainD * farPlainD; }
+static void zfPassStart(void) {
+  ScePspFMatrix4 pm; zfCurSave = jitCur;
+  sceGumMatrixMode(GU_PROJECTION); sceGumStoreMatrix(&zfPmBase); sceGumPushMatrix(); sceGumLoadIdentity();
+  sceGumPerspective(zfFov, ASPECT, farPlainD * ZF932_NEAR_K, drawDist + 10.f); sceGumStoreMatrix(&pm); sceGumPopMatrix();
+  if (jitActive) { pm.z.x += jitPmJ.z.x - jitPm0.z.x; pm.z.y += jitPmJ.z.y - jitPm0.z.y; }   // тот же сдвиг ¼ px, что у дальних клеток основного прохода
+  sceGuSetMatrix(GU_PROJECTION, &pm); zfHold = 1; zfFrames++;
+}
+static void zfPassEnd(void) {
+  dlLost(); resetState();
+  tqPart = 1; tqPartD2 = farPlainD * farPlainD; tqFlush(); tqPart = 0; resetState();   // дальнее полупрозрачное — этой же проекцией, до очистки глубины
+  sceGuDepthMask(GU_FALSE); sceGuEnable(GU_DEPTH_TEST); sceGuDepthFunc(GU_GEQUAL); sceGuClearDepth(0); sceGuClear(GU_DEPTH_BUFFER_BIT); sceGuDepthRange(65535, 0);
+  zfHold = 0; if (smkOn && (zfFrames % 120) == 1) { char l_[120]; snprintf(l_, sizeof l_, "ZF932 t=%.1f frames=%u far_d=%.0f near=%.2f\n", smkT, zfFrames, farPlainD, farPlainD * ZF932_NEAR_K); smkWrite(l_); }
+  if (jitActive) { sceGuSetMatrix(GU_PROJECTION, zfCurSave ? &jitPmJ : &jitPm0); jitCur = zfCurSave; } else sceGuSetMatrix(GU_PROJECTION, &zfPmBase);
+  sceGumMatrixMode(GU_MODEL);
+}
 static void dlCity(float ex, float ey, float ez) {
   unsigned dcT0_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
   if (smkOn) { if (dfFrame > dfFrameMax) dfFrameMax = dfFrame; dfFrame = 0; dfFrames++; unsigned n_ = sceKernelGetSystemTimeLow(); if (!dfT0) dfT0 = n_;
@@ -2396,7 +2932,11 @@ static void dlCity(float ex, float ey, float ez) {
     unsigned now_ = sceKernelGetSystemTimeLow(); if (!t0_) t0_ = now_;
     if (now_ - t0_ >= 1000000u) { char l_[220]; snprintf(l_, sizeof l_, "CAMCLIPSTAT t=%.1f frames=%u eye_inside=%u near03=%u clip_pieces_max=%u wall_vox=%u wall_grid=%u wall_front=%u ggnear_frames=%u ggnear=%d\n", smkT, nF_, nIn_, nNear_, nMaxCl_, nWall_, nChk_, nFront_, ggNearFrames, ggNearOn); ggNearFrames = 0; smkWrite(l_); t0_ = now_; nF_ = nIn_ = nNear_ = nMaxCl_ = nWall_ = nChk_ = nFront_ = 0; } }
   if (smkOn) dcUs[8] += sceKernelGetSystemTimeLow() - dcS0_;   // TEST24: цена самого счётчика CAMCLIPSTAT (только смоук)
+  int zfN_ = zfBegin();   // №932б: 2 — дальние клетки отдельным проходом со своей проекцией, 1 — как раньше
+  for (int zp_ = 0; zp_ < zfN_; zp_++) {
+  if (zfN_ == 2 && zp_ == 0) zfPassStart();
   for (int i = 0; i < nd; i++) {
+    if (zfN_ == 2 && zfFarPiece(&pc[sp[i]]) != (zp_ == 0)) continue;
     if (sf[i] && geOver(GE_SOFT)) continue;   // правка 103: дальние — первыми из кадра
     if (!(rfOld & RF_DL) && scl[i] < ncell && cdlMark[scl[i]] == cdlEpoch) { rfDlSkip++; continue; }   // О4: клетка уже вызвана — Piece не читаем
     Piece *d = &pc[sp[i]]; unsigned ci = d->r.cell;
@@ -2412,7 +2952,7 @@ static void dlCity(float ex, float ey, float ez) {
         if (FL->fok == 1 && !geOver(GE_HARD)) {
           cdlMark[ci] = cdlEpoch; fogRadial(d, 1);
           float k_ = d->r.sc; ScePspFMatrix4 m_ = {{k_, 0, 0, 0}, {0, k_, 0, 0}, {0, 0, k_, 0}, {d->r.ox - ex, d->r.oy - ey, d->r.oz - ez, 1}};
-          sceGuSetMatrix(GU_MODEL, &m_); sceGuCallList(FL->fbuf); dlLost(); drawnTris += FL->ftris; draws += FL->fdraws; dlCallsFrame++; farListCalls++; continue; }
+          sceGuSetMatrix(GU_MODEL, &m_); if (TOON_NOISE_WORLD && FL->fnoise) flatTexEmit(); sceGuCallList(FL->fbuf); dlLost(); marksCall(ci, ex, ez); drawnTris += FL->ftris; draws += FL->fdraws; lstBinds += FL->fnb; dlCallsFrame++; farListCalls++; continue; }
         if (FL->fok == 2) continue;                                               // у клетки нет непрозрачных кусков
       }
       int fp_ = (d->r.flags & F_FARP) != 0; DPC(1, fogRadial(d, fp_); drawPiece(d, fp_, -ex, -ey, -ez, 1, 0)); farCellPieces++; continue; }
@@ -2448,8 +2988,8 @@ static void dlCity(float ex, float ey, float ez) {
         fogRadial(d, sf[i]);
         if (P_->pok == 1) {
           float k = d->r.sc; ScePspFMatrix4 m = {{k, 0, 0, 0}, {0, k, 0, 0}, {0, 0, k, 0}, {d->r.ox - ex, d->r.oy - ey, d->r.oz - ez, 1}};
-          { unsigned cl0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; sceGuSetMatrix(GU_MODEL, &m); sceGuCallList(P_->pbuf); dlLost(); if (smkOn) smkCtList += (sceKernelGetSystemTimeLow() - cl0_) / 1000.0; }
-          drawnTris += P_->ptris; draws += P_->pdraws; dlCallsFrame++;
+          { unsigned cl0_ = smkOn ? sceKernelGetSystemTimeLow() : 0; sceGuSetMatrix(GU_MODEL, &m); if (TOON_NOISE_WORLD && P_->pnoise) flatTexEmit(); sceGuCallList(P_->pbuf); dlLost(); marksCall(ci, ex, ez); if (smkOn) smkCtList += (sceKernelGetSystemTimeLow() - cl0_) / 1000.0; }
+          drawnTris += P_->ptris; draws += P_->pdraws; lstBinds += P_->pnb; dlCallsFrame++;
         }
         ggCellsF++;
         { unsigned rk_ = smkOn ? sceKernelGetSystemTimeLow() : 0;
@@ -2468,8 +3008,10 @@ static void dlCity(float ex, float ey, float ez) {
     if (geOver(GE_HARD)) continue;
     fogRadial(d, sf[i]);
     float k = d->r.sc; ScePspFMatrix4 m = {{k, 0, 0, 0}, {0, k, 0, 0}, {0, 0, k, 0}, {d->r.ox - ex, d->r.oy - ey, d->r.oz - ez, 1}};
-    { unsigned cl1_ = smkOn ? sceKernelGetSystemTimeLow() : 0; sceGuSetMatrix(GU_MODEL, &m); sceGuCallList(L->buf); dlLost(); if (smkOn) smkCtList += (sceKernelGetSystemTimeLow() - cl1_) / 1000.0; }
-    drawnTris += L->tris; draws += L->draws; dlCallsFrame++;
+    { unsigned cl1_ = smkOn ? sceKernelGetSystemTimeLow() : 0; sceGuSetMatrix(GU_MODEL, &m); if (TOON_NOISE_WORLD && L->noise) flatTexEmit(); sceGuCallList(L->buf); dlLost(); marksCall(ci, ex, ez); if (smkOn) smkCtList += (sceKernelGetSystemTimeLow() - cl1_) / 1000.0; }
+    drawnTris += L->tris; draws += L->draws; lstBinds += L->nb; dlCallsFrame++;
+  }
+  if (zfN_ == 2 && zp_ == 0) zfPassEnd();
   }
   if (jitActive && !JITTER_NEAR_OLD && !jitCur) jitterUse(1);   // дальше (небо) — со сдвигом, как раньше
   if (smkOn) { dcUs[7] += sceKernelGetSystemTimeLow() - dcT0_; dcN[7]++; }

@@ -9,7 +9,10 @@
   швы    — снимки *_gap.bmp (clearchk + nosky + seamchk: щель — пурпур) и *_gapold.bmp (как до правок 224/237/251): щелью
            считается тонкий пурпур — пиксели маски, которые снимает открытие 3×3 (открытый фон без неба — большие пятна,
            щель — линии в 1–2 пикселя); число по каждому виду, новый движок против прежнего.
-  python3 tools/tour_report.py ПАПКА"""
+  окна   — (наряд 24.10, Г1) ph0 > 2 мс подряд >= 3 с: начало/конец, средний ph0, кадр > 150 мс на конце окна и строка перед ним;
+  стоя   — (Г2) секунды, где позиция BB не меняется больше 2 м, а загружено клеток > 5: подряд >= 3 с; секунды сразу после смены сцены не считаются;
+  против прошлого тура — (Г3) по каждой сцене медиана vbl и ph0 (по строкам PHSEC), не p95: p95 хуже от окон Г1, хотя игра быстрее.
+  python3 tools/tour_report.py ПАПКА [ПРОШЛЫЙ_ТУР]   (без второго аргумента — ближайшая более ранняя папка с теми же сценами)"""
 import re, sys
 from pathlib import Path
 import numpy as np
@@ -37,8 +40,76 @@ def cracks(path):
     return int(holes.sum()), int(m.sum()), int(holes[H // 2:].sum())
 
 
+PH0_MS, PH0_SEC, STAND_M, STAND_CELLS, STAND_SEC, SLOW_MS = 2.0, 3.0, 2.0, 5, 3, 150.0
+
+
+def tour_series(sm):
+    """smoke.txt -> (PHSEC [(t, сцена, ph0, vbl)], BB раз в секунду [(t тура, секунда BB, уровень, клетка, x, z, клеток за секунду, мс худшей, сцена)],
+    SLOWFRAME > 150 мс [(t, work, сцена, номер строки)], старты сцен {сцена: t}); t тура — по последней строке PHSEC выше (у BB свои секунды: стенные)"""
+    ph, bb, slow, starts = [], [], [], {}
+    t, sc = 0.0, ''
+    for i, ln in enumerate(sm):
+        if ln.startswith('PHSEC '):
+            kv = dict(re.findall(r'(\w+)=(\S+)', ln))
+            if 'ph0' in kv and 'vbl' in kv:
+                t, sc = float(kv['t']), kv['scene']; ph.append((t, sc, float(kv['ph0']), float(kv['vbl'])))
+        elif ln.startswith('SCENE '):
+            p = ln.split(); starts[p[1]] = float(p[2]); sc = p[1]
+        elif ln.startswith('BB '):
+            m = re.match(r'BB\s+(\d+)\s+-\s+L(\d+)\s+(\S+)\s+(-?\d+)\s+-?\d+\s+(-?\d+)\s', ln)   # '-' — строка раз в секунду, 'op' — по событию
+            c = re.search(r'cell (\d+) (\d+)ms', ln)
+            if m and c: bb.append((t, int(m.group(1)), int(m.group(2)), m.group(3), int(m.group(4)), int(m.group(5)), int(c.group(1)), int(c.group(2)), sc))
+        if 'SLOWFRAME t=' in ln:   # строки лога местами склеены (хвост FLAT + SLOWFRAME), поэтому ищем внутри строки
+            m = re.search(r'SLOWFRAME t=([\d.]+) work=([\d.]+).*?scene=(\S+)', ln)
+            if m and float(m.group(2)) > SLOW_MS: slow.append((float(m.group(1)), float(m.group(2)), m.group(3), i))
+    return ph, bb, slow, starts
+
+
+def ph0_windows(ph):
+    """подряд идущие секунды PHSEC (одна сцена, разрыв < 2,5 с) с ph0 > 2 мс, окно >= 3 с -> [(сцена, начало, конец, средний ph0, секунд)]"""
+    out, run = [], []
+    for x in ph + [(1e9, '', 0.0, 0.0)]:
+        if x[2] > PH0_MS and (not run or (x[0] - run[-1][0] < 2.5 and x[1] == run[-1][1])): run.append(x); continue
+        if run and run[-1][0] - run[0][0] >= PH0_SEC: out.append((run[0][1], run[0][0], run[-1][0], float(np.mean([r[2] for r in run])), len(run)))
+        run = [x] if x[2] > PH0_MS else []
+    return out
+
+
+def stand_loads(bb, starts):
+    """секунды BB, где игрок стоит (до 2 м за секунду, один уровень) и загружено > 5 клеток; подряд >= 3 с (разрыв до 1 с склеивается);
+    первые 10 с сцены не считаются (вход в уровень грузит законно) -> [(сцена, уровень, клетка, x, z, t от, t до, секунда BB от, до, секунд, клеток всего, худшая мс)]"""
+    hot, prev = [], None
+    for b in bb:
+        if prev and prev[2] == b[2] and ((b[4] - prev[4]) ** 2 + (b[5] - prev[5]) ** 2) ** 0.5 <= STAND_M and b[6] > STAND_CELLS \
+                and b[0] - starts.get(b[8], -99) > 10: hot.append(b)
+        prev = b
+    out, run = [], []
+    for b in hot + [None]:
+        if b is not None and (not run or (b[1] - run[-1][1] <= 2 and b[8] == run[-1][8])): run.append(b); continue
+        if len(run) >= STAND_SEC:
+            r0 = run[0]; out.append((r0[8], r0[2], r0[3], r0[4], r0[5], r0[0], run[-1][0], r0[1], run[-1][1], len(run), sum(r[6] for r in run), max(r[7] for r in run)))
+        run = [b] if b is not None else []
+    return out
+
+
+def scene_med(ph):
+    """{сцена: (медиана vbl, медиана ph0, секунд)}"""
+    g = {}
+    for t, sc, p0, vbl in ph: g.setdefault(sc, []).append((p0, vbl))
+    return {k: (float(np.median([v[1] for v in x])), float(np.median([v[0] for v in x])), len(x)) for k, x in g.items()}
+
+
+def prev_tour(d):
+    """ближайшая более ранняя папка рядом с теми же сценами (не меньше 80 % названий сцен) — база для сравнения"""
+    mine = set(scene_med(tour_series((d / 'smoke.txt').read_text(errors='replace').splitlines())[0]))
+    for q in sorted((x for x in d.parent.iterdir() if x.is_dir() and x.name < d.name and (x / 'smoke.txt').exists()), reverse=True):
+        theirs = set(scene_med(tour_series((q / 'smoke.txt').read_text(errors='replace').splitlines())[0]))
+        if mine and theirs and len(mine & theirs) >= 0.8 * min(len(mine), len(theirs)): return q
+    return None
+
+
 def main():
-    d = Path(sys.argv[1]); sm = (d / 'smoke.txt').read_text(errors='replace').splitlines()
+    d = Path(sys.argv[1]); old = Path(sys.argv[2]) if len(sys.argv) > 2 else None; sm = (d / 'smoke.txt').read_text(errors='replace').splitlines()
     stats, shots, bb, bbcpu, audq = [], {}, [], [], []
     for ln in sm:
         if ln.startswith('BBCPU '):   # правка 410: доли потоков — одна строка в секунду (строки BB повторяют её на каждом событии)
@@ -96,6 +167,57 @@ def main():
     for name, kv in stats:
         out.append(f'| {name} | {kv.get("p95")} / {kv.get("p99")} / {kv.get("max")} | {kv.get("missed")} | {kv.get("missvis")} | {kv.get("heapmin")} | '
                    f'{kv.get("blkmin")} | {kv.get("gepeak")} | {kv.get("memfail")} | {kv.get("readerr")} |')
+    ph, bbs, slow, starts = tour_series(sm)
+    wins = ph0_windows(ph)
+    out += ['', f'## Окна: ph0 > {PH0_MS:g} мс подряд >= {PH0_SEC:g} с (начало кадра, «ввод»; в здоровом туре ph0 около 0,1 мс)', '']
+    if wins:
+        out += ['| сцена | начало, с | конец, с | секунд | ph0 средний, мс | кадр > 150 мс на конце (мс) и строка перед ним |', '|---|---|---|---|---|---|']
+        for sc, a, b, mean, n in wins:
+            sf = [x for x in slow if x[2] == sc and a - 1 <= x[0] <= b + 3]
+            if sf:
+                t, w, _, i = max(sf, key=lambda x: x[1])
+                fl = [x.split('SLOWFRAME t=')[0] for x in sm[max(0, i - 12):i + 1] if 'FLAT on=' in x]   # сводка мультика стоит в 1–10 строках перед кадром (строки лога местами склеены, ищем внутри строки)
+                if fl: before = 'FLAT ' + ' '.join(f'{k}={v}' for k, v in re.findall(r'\b(on|cells|verts|res)=(\d+)', fl[-1][fl[-1].index('FLAT on='):][:200])[:4])
+                else: before = sm[i - 1].strip()[:60].replace('|', '/') + ' (FLAT рядом нет)'
+                tail = f'{w:.0f} (t={t:.1f}): `{before}`'
+            else: tail = '—'
+            out.append(f'| {sc} | {a:.1f} | {b:.1f} | {n} | {mean:.1f} | {tail} |')
+        out += ['', f'Окон {len(wins)}, секунд в них {sum(w[4] for w in wins)}; **это не отрисовка**: ph0 — работа до отрисовки (логика, загрузка)']
+    else: out += ['Окон нет']
+    st = stand_loads(bbs, starts)
+    out += ['', f'## Загрузки стоя: позиция BB не меняется > {STAND_M:g} м за секунду, а загружено клеток > {STAND_CELLS}, подряд >= {STAND_SEC} с (первые 10 с сцены не считаются)', '']
+    if st:
+        out += ['| сцена | ур. | клетка | x, z | t тура, с | секунды BB | секунд | клеток всего (в секунду) | худшая задержка, мс |', '|---|---|---|---|---|---|---|---|---|']
+        for sc, lv, cell, x, z, t0, t1, s0, s1, n, cn, ms in st:
+            out.append(f'| {sc} | L{lv} | {cell} | {x}, {z} | {t0:.1f}–{t1:.1f} | {s0}–{s1} | {n} | {cn} ({cn / n:.0f}) | {ms} |')
+        out += ['', 'Секунды BB — стенные часы, не время тура: после замираний они уходят вперёд (в TEST57 к 160-й секунде тура на 22 с); сцену смотри по колонке t тура']
+    else: out += ['Мест нет']
+    if old is None: old = prev_tour(d)
+    if old is not None and (old / 'smoke.txt').exists():
+        pm = scene_med(tour_series((old / 'smoke.txt').read_text(errors='replace').splitlines())[0]); nm = scene_med(ph)
+        out += ['', f'## Против прошлого тура `{old.name}`: медиана по секундам PHSEC (vbl — запас до кадра, больше = лучше; ph0 — меньше = лучше)', '',
+                '| сцена | vbl было → стало, мс | ph0 было → стало, мс | вердикт |', '|---|---|---|---|']
+        bad = 0
+        for sc in nm:
+            if sc not in pm: out.append(f'| {sc} | — → {nm[sc][0]:.1f} | — → {nm[sc][1]:.2f} | новая сцена |'); continue
+            (v0, p0, _), (v1, p1, _) = pm[sc], nm[sc]
+            tags = (['запас vbl упал %.1f' % (v0 - v1)] if v1 < v0 - 1.0 else []) + (['ph0 вырос на %.1f' % (p1 - p0)] if p1 > p0 + 0.5 else [])
+            bad += bool(tags)
+            out.append(f'| {sc} | {v0:.1f} → {v1:.1f} | {p0:.2f} → {p1:.2f} | {"**хуже:** " + ", ".join(tags) if tags else ("лучше" if v1 > v0 + 1.0 else "в норме")} |')
+        out += ['', f'Сцен хуже прошлого тура: {bad} из {len([k for k in nm if k in pm])}']
+    elif ph: out += ['', '## Против прошлого тура', '', 'Прошлый тур с теми же сценами рядом не найден (передай папку вторым аргументом)']
+    pil, st0, psc = [], None, ''   # строки PILOT: сколько автопилот ехал против заданного и какой путь проехал
+    for ln in sm:
+        if ln.startswith('SCENE '): psc = ln.split()[1]
+        m = re.match(r'PILOT start t=([\d.]+) secs=(\d+)', ln)
+        if m: st0 = (float(m.group(1)), int(m.group(2)))
+        m = re.match(r'PILOT end t=([\d.]+) dist=(\d+) stuck=(\d+)', ln)
+        if m and st0: pil.append((psc, st0[1], float(m.group(1)) - st0[0], int(m.group(2)), int(m.group(3)))); st0 = None
+    if pil:
+        out += ['', '## Автопилот (`flag drive`): задано против проехано', '', '| сцена | задано, с | ехал, с | путь, м | застреваний | замечание |', '|---|---|---|---|---|---|']
+        for sc, secs, dt, dist, stk in pil:
+            note = ', '.join((['ехал меньше 75 % срока'] if dt < 0.75 * secs else []) + (['не сдвинулся: езды нет'] if dist < 20 else []))
+            out.append(f'| {sc} | {secs} | {dt:.1f} | {dist} | {stk} | {note or "—"} |')
     gaps = sorted(n for n in shots if n.endswith('_gap'))
     if gaps:
         out += ['', '## Швы на железе: щели — пурпур внутри геометрии (не связан с открытым фоном), новый движок против прежнего (seamsold)', '',

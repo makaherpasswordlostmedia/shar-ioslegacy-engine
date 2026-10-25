@@ -421,7 +421,7 @@ if os.environ.get('SHR_TEXQ', '1') != '0':
     texq.CAP, texq.CLUT4, texq.PRESWIZZLE = CAP, os.environ.get('SHR_T4', '0') == '1' and __name__ == '__main__', True   # Роб 01.10 15:1x: «жёлтый след на асфальте на скорости» — мипы T4 в 16 цветов; выкл., как было
     texq.SMALL_MIPS = os.environ.get('SHR_SMALL_MIPS') == '1'
     if os.environ.get('SHR_TEX_CAP256') == '1':
-        sign = os.environ.get('SHR_SIGN_CAP', '0') == '1'   # Роб 01.10 14:4x: «некоторые билборды очень сильно поговнячил» — 5 вывесок снова 256×128 (128 экономил лишь ~120 КБ)
+        sign = os.environ.get('SHR_SIGN_CAP', '0') == '1'   # Роб 01.10 14:4x: «некоторые билборды очень сильно испортил» — 5 вывесок снова 256×128 (128 экономил лишь ~120 КБ)
         texq.CAPS.update({u: 256 for u in TEX_CAP256_SKY})
         texq.CAPS.update({u: SIGN_CAP if sign else 256 for u in TEX_CAP256_SIGN})
     texq.BLEED_URLS = SKY_TEX   # №511: тот же словарь, пополняется pack_prims
@@ -620,6 +620,12 @@ def toon_std(url):
 TOON_EDGE_DEG, TOON_EDGE_MIN, TOON_EDGE_OUT, TOON_CELL = 60.0, 1.0, 0.025, 64.0
 TOON_NOT_BIG_RE = re.compile(r'shrub|hedge|bush|tree|leaf|grass|fence|rail|wire|pole|lamp|light|sign|sidew|sdewlk|curb|asphalt|road|path|field|dirt|water|river|ocean|sky|horizon|cloud|glow|shadow|decal|wheel|car|char', re.I)
 TOON_LINES = []   # (x1,y1,z1,x2,y2,z2) мир
+# №897 (Роб 23.10: «L1 J3-2: четыре тонкие вертикальные линии уходят в небо, как тросы»): контур собирался с КАЖДОГО вызова pack_prims, в том числе у мешей, которые в город
+# не идут: стейтпропы и анимированные объекты (SPR1: у L1 ветряная мельница windmilShape0, башня 19 м), типы пропов (PRP1), монета. Их меши лежат в осях объекта/типа,
+# экземпляр ставит движок — линии башни повисали в точке (159, −486), где башни нет (рёбра пирамиды 4,5 м у основания, 19 м вверх). Правило: контур — только с мешей города
+# (вызов в цикле сцен main). SHR_TOON_ALL_OLD=1 — как было (красный контроль, tests/toon/ghost_lines.py)
+TOON_ALL_OLD = os.environ.get('SHR_TOON_ALL_OLD') == '1'
+_TOON_CITY = [False]
 def toon_collect_edges(Pw, obj, prim, mat):
     T = np.asarray(Pw, np.float64).reshape(-1, 3, 3)
     if len(T) < 8 or TOON_NOT_BIG_RE.search(prim['shader'] + ' ' + obj['name'] + ' ' + obj['mesh']): return
@@ -725,7 +731,7 @@ def pack_prims(meta, raw, conv_cache, blob, want=lambda o: True):
                 LIT_STATS[0] += len(idx) // 3
             else: Cv = abgr[idx]
             if toon_: Cv = toon_shade(Cv, world[idx])   # №679: одна ступень тени (грань к солнцу + запечённая тень)
-            if TOON and not (flags & 2) and not obj['name'].lower().startswith(SKY_NAMES): toon_collect_edges(world[idx], obj, prim, mat)   # №679: контур зданий и крупных предметов
+            if TOON and (TOON_ALL_OLD or _TOON_CITY[0]) and not (flags & 2) and not obj['name'].lower().startswith(SKY_NAMES): toon_collect_edges(world[idx], obj, prim, mat)   # №679: контур зданий и крупных предметов
             out.append((t, flags, world[idx].astype(np.float32), uv[idx].astype(np.float32), Cv.astype(np.uint32)))
     return out
 
@@ -1093,6 +1099,13 @@ TRACK_FENCE_VIS = 0.3   # м: нарисованное выше опоры ме�
 #   видимым вдоль него — не держит (машина в полёте над крышей/газоном проходит).
 # FENCE_MIN 2.5 м над опорой: кузов 1.6 м + подскок; машина по земле и Гомер одним прыжком (1.9 м) не проходят
 FENCE_PIECE, FENCE_BAND, FENCE_MIN, FENCE_MARGIN, FENCE_BEHIND = 2.0, 1.5, 2.5, 1.0, 2.0
+# №905 (Роб 23.10, L1 H4-6: «прыжок с трамплина — машина врезалась в невидимое препятствие, слева только коричневая гора»): «граница карты» узнавалась только по пустоте опоры
+# коллизии за забором (2 м по −n). У подножия обрыва горы опоры за забором нет (склон — не земля), и одно звено объявлялось краем мира: кусок с верхом +1e6 (L1: сегмент 1688,
+# (76.6, −345.9)–(72.9, −346.3); оба соседних звена той же линии — внутренние, верх 3,0…3,5 м). Машина в полёте над ямой упиралась в стену до неба. Правило: «граница» между
+# внутренними звеньями той же линии (концы сходятся в точках в 10 см, с обоих концов соседи только внутренние) — внутренняя; до FENCE_BRIDGE_RUN звеньев подряд. Настоящая
+# граница карты (линия целиком пустая) прежняя. SHR_FENCE_BRIDGE_OLD=1 — как было (красный контроль, tools/cartest/airwall905.c)
+FENCE_BRIDGE_OLD = os.environ.get('SHR_FENCE_BRIDGE_OLD') == '1'
+FENCE_BRIDGE_RUN = 3
 # Слово дирижёра 15.10 (класс «ударяюсь о прозрачное», №581; перепись tools/fence_vis_census.c: ~20 % длины заборов на каждом уровне без рисунка): внутренние заборы города, у которых
 # подряд FENCE_TRIM_RUN кусков (по 2 м) без нарисованного над землёй и с ровной землёй с обеих сторон, коллизии не получают (как уже делается для трасс). Включение: SHR_FENCE_TRIM=1
 # (по умолчанию выключено до подтверждения оригиналом: Sonnet-PS2 проверяет, держит ли оригинал в таких местах); SHR_FENCE_TRIM_RUN — длина прогона в кусках (по умолчанию 2)
@@ -1736,14 +1749,35 @@ def col_fence_tops(SG, hmap, vis_tris, folmask=None, drop_invisible=False):
         gx = np.floor((x - lo[0]) / CELL).astype(np.int64); gz = np.floor((z - lo[2]) / CELL).astype(np.int64)
         ok = (gx >= 0) & (gx < W) & (gz >= 0) & (gz < H); return gx.clip(0, W - 1), gz.clip(0, H - 1), ok
     out, st = [], dict(bound=0, inner=0, pieces=0, h=[], hedge=0)
-    for s in SG:
+    def is_bound(s_):   # за забором (2 м по -n) пустота — граница карты
+        a_, b_, n_ = s_[0:2], s_[2:4], s_[4:6]; u_ = np.linspace(0, 1, max(2, int(np.ceil(float(np.hypot(*(b_ - a_))))) + 1)); P_ = a_ + (b_ - a_) * u_[:, None]
+        gx_, gz_, ok_ = cells(P_[:, 0] - n_[0] * FENCE_BEHIND, P_[:, 1] - n_[1] * FENCE_BEHIND)
+        return not (ok_ & ~np.isnan(top[gz_, gx_])).mean() > .5
+    isb = [is_bound(s_) for s_ in SG]
+    if not FENCE_BRIDGE_OLD:   # №905: одиночные «границы» посреди линии внутренних звеньев (подножие обрыва) — внутренние
+        ends = {}; key_ = lambda p_: (int(round(float(p_[0]) * 10)), int(round(float(p_[1]) * 10)))
+        for i_, s_ in enumerate(SG): ends.setdefault(key_(s_[0:2]), []).append(i_); ends.setdefault(key_(s_[2:4]), []).append(i_)
+        nbridge = 0
+        for _pass in range(FENCE_BRIDGE_RUN):
+            flip = []
+            for i_, s_ in enumerate(SG):
+                if not isb[i_]: continue
+                good = 0
+                for p_ in (s_[0:2], s_[2:4]):
+                    nb_ = [j_ for j_ in ends.get(key_(p_), []) if j_ != i_]
+                    if nb_ and all(not isb[j_] for j_ in nb_): good += 1
+                if good == 2: flip.append(i_)
+            for i_ in flip: isb[i_] = False
+            nbridge += len(flip)
+            if not flip: break
+        st['bridged'] = nbridge
+    for si_, s in enumerate(SG):
         a, b, n = s[0:2], s[2:4], s[4:6]; L = float(np.hypot(*(b - a)))
         k = max(1, int(np.ceil(L / FENCE_PIECE)))
         u = np.linspace(0, 1, max(2, int(np.ceil(L)) + 1))
         P = a + (b - a) * u[:, None]
         gx, gz, ok = cells(P[:, 0] - n[0] * FENCE_BEHIND, P[:, 1] - n[1] * FENCE_BEHIND)
-        behind = ok & ~np.isnan(top[gz, gx])
-        if behind.mean() <= .5:   # граница карты: за забором пустота — бесконечный, одним куском, как было
+        if isb[si_]:   # граница карты: за забором пустота — бесконечный, одним куском, как было (№905: кроме одиночных звеньев посреди внутренней линии)
             out.append(s); st['bound'] += 1; continue
         st['inner'] += 1
         pieces = []; trim_flags = []
@@ -2656,8 +2690,10 @@ def main(level, out_path=None, scenes=None, coins=True, backdrop_level=None):
                       for m in walk(ent) if m.id == 0x10000}
         for obj in meta['objects']:
             one = dict(meta, objects=[obj])
-            add_city(pack_prims(one, raw, cache, blob, lambda o: not is_sky(o) and o['mesh'] not in city_skip),
-                     reg_of(scene), obj['mesh'] in fol_meshes)
+            _TOON_CITY[0] = True   # №897: контур — только у мешей города
+            try: prims_ = pack_prims(one, raw, cache, blob, lambda o: not is_sky(o) and o['mesh'] not in city_skip)
+            finally: _TOON_CITY[0] = False
+            add_city(prims_, reg_of(scene), obj['mesh'] in fol_meshes)
         if meta.get('collision'):
             o, n = meta['collision']; coll.append(np.frombuffer(raw, '<f4', n, o).reshape(-1, 3, 3))
             if reg_of(scene) >= 0: col_by[scene.lower()] = coll[-1]
@@ -2990,7 +3026,7 @@ def main(level, out_path=None, scenes=None, coins=True, backdrop_level=None):
         Path(os.environ['SHR_FOLTEX_DUMP']).write_text(json.dumps({str(cache[u]): nm for nm, u in conv.textures.items() if FOL_TEX_RE.search(nm) and u in cache}, ensure_ascii=False))
     SG, fst = col_fence_tops(SG, (lo, W, H, hm), np.concatenate(vis_tris), folmask, drop_invisible=TRACK_FENCES and own_scenes and not TRACK_FENCE_KEEP_INVISIBLE and all(re.fullmatch(r'b0\d', x_) for x_ in scenes))   # правка 47: внутренние заборы — до верха видимого
     print(f'заборы: границ (за ними пустота, бесконечные) {fst["bound"]}, внутренних {fst["inner"]} -> кусков {fst["pieces"]} (изгородей {fst["hedge"]}), ' +
-          (f'невидимых звеньев отброшено {fst.get("invisible", 0)}, ' if fst.get("invisible") else '') + (f'FENCE_TRIM: убрано кусков {fst["trimmed"]} ({fst["trim_m"]:.0f} м), ' if fst.get("trimmed") else '') + (f'верх над опорой: медиана {np.median(fst["h"]):.1f} м, 90% {np.percentile(fst["h"], 90):.1f} м' if len(fst["h"]) else 'верх над опорой: заборов нет'))
+          (f'№905: одиночных «границ» между внутренними звеньями -> внутренние {fst["bridged"]}, ' if fst.get("bridged") else '') + (f'невидимых звеньев отброшено {fst.get("invisible", 0)}, ' if fst.get("invisible") else '') + (f'FENCE_TRIM: убрано кусков {fst["trimmed"]} ({fst["trim_m"]:.0f} м), ' if fst.get("trimmed") else '') + (f'верх над опорой: медиана {np.median(fst["h"]):.1f} м, 90% {np.percentile(fst["h"], 90):.1f} м' if len(fst["h"]) else 'верх над опорой: заборов нет'))
     sweep = None
     if aobj: BX, CY, sweep = aobj.col_extend(BX, CY)   # объёмы AnimCollision: статичные + живые (заметание клипа — в сетку)
     jmp, jz, jp = jumps_export.jmp1(level)   # зоны прыжка машин и подкидывающие точки Гомера из данных (правки 46, 47)

@@ -5,6 +5,7 @@
 #include <math.h>
 #include "stateprops.h"
 #include "props.h"
+unsigned homerSolidFrame = 0;   // props.c ссылается на кадр твёрдых тел Гомера из homer.c; 0 — вне homerUpdate, кеш выключен (как tests/smash902/host.c)
 static int fail,broken,solid,stops;
 static void hit(StateProps *s,unsigned i,const SpCol *v,int direction){
  SpRun*r=&s->run[i];float center[3],extent=0;

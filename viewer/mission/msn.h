@@ -212,6 +212,7 @@ typedef struct MsnRuntime {
     int auto_bonus;                   /* 1 (default): action button next to a bonus giver in free roam starts it */
     int dev_bonus_replay;            /* transient DEV-only access to completed bonus NPCs; not saved */
     int fail_count;                   /* rotates the failure hints                                */
+    int defer_first;                  /* №943: msn_level_start does not start the first story mission (the chosen MISSION SELECT row starts itself) */
     /* stage state */
     const MsnStage *st; int st_index; int obj;
     float t_stage;
@@ -260,6 +261,12 @@ void msn_tick(MsnRuntime *rt, float dt, const MsnWorld *w);
 void msn_notify(MsnRuntime *rt, int input, const char *name, int value);
 void msn_retry(MsnRuntime *rt, int from_start);
 void msn_abort(MsnRuntime *rt);
+/* №943 (Роб 24.10, «остаётся миссия "приехать домой"»): смена миссии выбором (MISSION SELECT, служебное) — цель, маркер и реестр прежней миссии снимаются
+   (msn_abort делал так, выбор через CLEANUP — нет), потом msn_start_mission. msn_switch_clear — только снятие; msn_reg_mission_count — сколько записей реестра
+   принадлежит миссии (после снятия 0). msn_start_first — старт «первой непройденной сюжетной» (то, что msn_level_start делал в конце), когда она была отложена */
+void msn_switch_clear(MsnRuntime *rt);
+int  msn_reg_mission_count(const MsnRuntime *rt);
+void msn_start_first(MsnRuntime *rt);
 /* where the objective arrow should point; 0 = none */
 int  msn_nav_target(MsnRuntime *rt, const MsnWorld *w, MsnVec3 *out);
 /* the locator behind the current target (NULL if the target is an entity). Its trigger volumes

@@ -1,0 +1,21 @@
+scene F_L1
+# №851: настройки сборки по умолчанию в начале тура (прежние прогоны сдвигали Draw Distance/насыщенность/линию и сохраняли — туры не сравнить)
+flag cfgdefaults 1
+flag repair
+wait 6
+scene F_GO1_L4
+flag golevel 4
+wait 40
+shot f02_l4_a
+press triangle 0.2
+wait 3
+flag crmove MODE
+flag crchk 1
+flag drive 20
+wait 22
+shot f02_l4_b
+flag stop
+press triangle 0.2
+wait 4
+shot f02_l4_c
+end

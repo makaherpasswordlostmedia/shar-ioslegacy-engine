@@ -1,0 +1,85 @@
+flag level 5
+wait 12
+flag cfgdefaults 1
+flag pbfast MODE
+flag pbchk 1
+scene S5_NEAR
+goto -294.7 -376.4 0
+wait 3
+flag eyeon 1
+flag eyex -297.72
+flag eyey 8.20
+flag eyez -376.42
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n0
+flag eyeon 0
+wait 1
+goto -222.4 -31.9 0
+wait 3
+flag eyeon 1
+flag eyex -225.36
+flag eyey 8.00
+flag eyez -31.90
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n1
+flag eyeon 0
+wait 1
+goto -154.3 -178.8 0
+wait 3
+flag eyeon 1
+flag eyex -157.32
+flag eyey 8.15
+flag eyez -178.80
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n2
+flag eyeon 0
+wait 1
+goto -156.0 -23.0 0
+wait 3
+flag eyeon 1
+flag eyex -159.03
+flag eyey 8.44
+flag eyez -23.00
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n3
+flag eyeon 0
+wait 1
+goto -5.5 19.8 0
+wait 3
+flag eyeon 1
+flag eyex -8.49
+flag eyey 5.39
+flag eyez 19.77
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n4
+flag eyeon 0
+wait 1
+goto 153.4 19.4 0
+wait 3
+flag eyeon 1
+flag eyex 150.37
+flag eyey 7.80
+flag eyez 19.45
+flag eyedx -0.981
+flag eyedy -0.196
+flag eyedz 0.000
+wait 3
+shot n5
+flag eyeon 0
+wait 1
+end

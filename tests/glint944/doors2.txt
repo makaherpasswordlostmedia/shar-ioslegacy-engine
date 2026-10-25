@@ -1,0 +1,25 @@
+### №944 L2: звёзды входа (Moe's: l2_doorstars, moes_mission_doorstar); как doors.txt. flag golevel 2, затем миссия и пакеты входов
+scene L2D
+flag golevel 2
+wait 20
+flag msn
+wait 4
+flag g944art 2
+wait 10
+flag g944doors
+flag g944list
+flag g944draw 11
+flag g944door 1 5
+wait 3
+shot l2_a
+flag g944door 1 9
+wait 2
+shot l2_b
+flag g944draw 12
+flag g944door 1 6
+wait 2
+shot l2_c
+flag g944door 1 6
+wait 2
+shot l2_d
+end

@@ -253,10 +253,31 @@ static int levelEndOld;   // служебное (flag uilevelendold): прежн
 static int iconIndex(const char *icon) {   // значок задания: из msnicons (msnart.shr, может ещё дочитываться) — иначе без значка
   return icon && *icon ? UI_OBJICON_EXTERNAL : -1;
 }
+// №958б (Роб: значок цели с L1 «зависает» и показывается на других уровнях; в эмуляторе не воспроизведено): состояние значка — в строку чёрного ящика
+// каждую секунду (поле ico, viewer/main_frontend.h bbSample) и строкой ICON при каждой смене значка/облачка (кто, какой уровень цели); в игре и в выпуске
+#ifndef BBICON958_OLD
+#define BBICON958_OLD 0
+#endif
+static int iconLv;   // уровень пакета миссии, в котором значок/текст цели поставлены последний раз
+static char iconKey[48];
+void mvIconState(char *o, unsigned n) {
+  int ic, px; const char *t, *l; uiObjDebug(&ic, &px, &t, &l);
+  const char *w = msnartWantIcon(); char tt[14]; unsigned k = 0;
+  for (const char *a = t && *t ? t : "-"; *a && k < sizeof tt - 1; a++) tt[k++] = *a == ' ' ? '_' : *a;
+  tt[k] = 0;
+  snprintf(o, n, "%s/%d/%d/L%d/%s", w && *w ? w : "-", ic, px, iconLv, tt);
+}
+static void iconNote(const char *what) {   // строка ICON в кольцо ящика только при смене (имя значка, текст, уровень)
+  if (BBICON958_OLD) return;
+  char st[56]; mvIconState(st, sizeof st);
+  if (!strcmp(st, iconKey)) return;
+  snprintf(iconKey, sizeof iconKey, "%s", st);
+  char l[112]; snprintf(l, sizeof l, "ICON %s lvpack %d cur %s", what, mvPackLevel(), st); bbNoteIcon(l);
+}
 static void uiObjectiveCb(void *u, const char *text, int msg, const char *icon) {
   (void)u; (void)msg;
-  if (text && *text) { msnartSetObjIcon(icon); uiMessage(text, iconIndex(icon), 0.f); }
-  else uiMessage(NULL, -1, 0.f);
+  if (text && *text) { msnartSetObjIcon(icon); uiMessage(text, iconIndex(icon), 0.f); iconLv = mvPackLevel(); iconNote("set"); }
+  else { uiMessage(NULL, -1, 0.f); iconNote("off"); }
 }
 static void uiTimerCb(void *u, int ms, int up) { (void)u; (void)up; uiHudSet(UI_F_TIMER, ms < 0 ? 0 : ms); uiHudShow(UI_T_TIMER, ms >= 0); }
 static void uiParCb(void *u, int ms) { (void)u; uiHudSet(UI_F_PARTIME, ms < 0 ? 0 : ms); uiHudShow(UI_T_PARTIME, ms >= 0); }
@@ -600,7 +621,7 @@ static void fadeTick(float dt) {
 }
 static void cleanupCb(void *u) {
   (void)u; raceOff(); fadeA = 0.f; fadeDir = 0; stayBlack = 0;   // правка 122: пропы и заборы гонки — до конца гонки
-  H.failed = 0; H.markerOn = 0; H.talk[0] = 0; uiMessage(NULL, -1, 0.f);
+  H.failed = 0; H.markerOn = 0; H.talk[0] = 0; uiMessage(NULL, -1, 0.f); iconNote("cleanup");
   uiHudShow(UI_T_MISSION_FAILED, 0); uiHudShow(UI_T_TIMER, 0); uiHudShow(UI_T_COLLECTIBLES, 0); uiHudShow(UI_T_COUNTDOWN, 0);
   animPrune();
 }
@@ -831,6 +852,18 @@ void mvBusted(void) {
   msn_notify(&M.rt, MSN_IN_BUSTED, NULL, 0);
 }
 void mvMusicResume(void) { if (active) msnAudioSuffix(&M.audio, "_start"); }   // правка 235
+// №бот миссий (окно «Меню», 24.10; flag msnbot 1, дорожка laneD ночного цикла tools/night): чего ждёт текущий этап от игрока — 1: △ (пешком: разговор / посадка),
+// 2: сесть в машину (машинный этап, а Гомер пешком: после △ «в машине» или выхода). Только чтение состояния рантайма, ничего не двигает
+int mvServiceBot(void) {
+  if (!active || M.rt.status != MSN_RUNNING) return 0;
+  if (M.rt.obj == MSN_OBJ_TALKTO) return 1;   // собеседник: пешком △ говорит, в машине △ выходит из неё (миссии m6/m7 начинаются с игроком за рулём)
+  if (!gameOnFoot(M.g)) return 0;
+  switch (M.rt.obj) {
+    case MSN_OBJ_GETIN: return 1;
+    case MSN_OBJ_GOTO: case MSN_OBJ_RACE: case MSN_OBJ_FOLLOW: case MSN_OBJ_LOSETAIL: case MSN_OBJ_DELIVERY: case MSN_OBJ_DUMP: case MSN_OBJ_DESTROY: case MSN_OBJ_DESTROYBOSS: return 2;
+    default: return 0;
+  }
+}
 void mvServiceWin(void) {   // служебное (flag lvwin): все сюжетные миссии уровня пройдены — конец уровня тем же событием рантайма
   if (!active) return;
   const MsnMission *last = 0;
@@ -860,7 +893,7 @@ void mvShutdown(void) {   // выход в главное меню: всё, чт
   for (int k = 0; k < NMODEL; k++) if (model[k].m) { skinFree(model[k].m); model[k].m = 0; model[k].name[0] = 0; }
   for (int q = 0; q < NPRE; q++) if (pre[q].p) { skinPreCancel(pre[q].p); pre[q].p = 0; pre[q].name[0] = 0; }   // фоновые чтения моделей — отменить
   nNpcPend = 0;
-  msnartReset(); uiMessage(NULL, -1, 0.f); uiPauseMenuHide(0); raceOff(); cfxReset();
+  msnartReset(); uiMessage(NULL, -1, 0.f); iconNote("shutdown"); uiPauseMenuHide(0); raceOff(); cfxReset();
   H.levelDone = 0; H.fmvWait = 0; H.levelEnd = 0;
   active = 0;
 }
@@ -1442,6 +1475,30 @@ static int msLv, msArrL, msArrR, msOld, msDev, msWantLv, msWantRow = -1;   // п
 static int (*msOpen)(int);
 static unsigned (*msRows)(int);   // облако 05.10 (карьера): строки другого уровня по записи прогресса
 #define MS_ARROW_FR 12   // ~0,2 с при 60 к/с
+// №943 (Роб 24.10 вечер: «в зависимости от того, как перемещаемся по уровням, остаётся миссия "приехать домой" — первая миссия Гомера, где показывают дом Симпсонов; её не
+// переставить, даже если поменять миссию»). Правило: выбранная/активная миссия главнее стартовой цели. Три места, где это ломалось:
+//  1) смена миссии выбором (MISSION SELECT, служебное msnsel) снимала цель только событием CLEANUP — маркер цели и реестр прежней миссии жили до следующего этапа
+//     (msn_abort чистил, выбор — нет); теперь одна дорога mvSwitchTo: цель HUD, маркер, реестр — снять, потом старт;
+//  2) ◄ ► на экране MISSION SELECT оставляли курсор на той же строке, а не на текущей миссии выбранного уровня: ✕ сразу после перелистывания стартовал строку 0 —
+//     у L1 это m1 «S-M-R-T» с облётом дома Симпсонов, а текущей была m7 (курсор теперь на текущую строку уровня);
+//  3) смена уровня выбором строки сперва ставила стартовую цель уровня (msn_level_start: первая непройденная сюжетная — у L1 «домой»), и только потом выбранную:
+//     двойной старт (спавн NPC, чтение моделей, перенос игрока) под газетой; теперь стартовая цель при выбранной строке не ставится (rt->defer_first).
+// Прежнее — MSN_SWITCH_OLD / MS_CURSOR_OLD / LVDEFER_OLD (=1) или служебно flag msnswitchold / mscursorold / lvdeferold 1 (красный контроль tests/msnhome/accept60.sh)
+#ifndef MS_CURSOR_OLD
+#define MS_CURSOR_OLD 0
+#endif
+static int msCursorOld = MS_CURSOR_OLD;
+void mvServiceSwitchOld(const char *what, int on) {
+  if (!strcmp(what, "msnswitchold")) msnSwitchOld = on; else if (!strcmp(what, "mscursorold")) msCursorOld = on;
+}
+static void mvSwitchTo(int mi, const char *why) {   // смена миссии из меню / сценария: прежняя цель и её маркер уходят, новая стартует с начала вступления
+  const char *from = M.rt.cur >= 0 && (unsigned)M.rt.cur < M.f.nmissions ? msn_str(&M.f, M.f.missions[M.rt.cur].id) : "-";
+  if (!msnSwitchOld) msn_switch_clear(&M.rt);
+  else { MsnEvent e; memset(&e, 0, sizeof e); e.type = MSN_EV_CLEANUP; M.rt.host.event(M.rt.host.user, &e); }   // прежнее: только CLEANUP
+  logf_("MSNSWITCH why=%s from=%s to=%s marker=%d gmarker=%d reg=%d obj=\"%.40s\" talk=%d briefing=%d t=%.1f\n", why, from, msn_str(&M.f, M.f.missions[mi].id), H.markerOn,
+        M.mg.marker_on, msn_reg_mission_count(&M.rt), M.mg.hud.objective ? M.mg.hud.objective : "", H.talk[0] != 0, H.briefing, clock_);
+  msn_start_mission(&M.rt, mi, 0);
+}
 static int msnSelStatus(int i) { return i < 0 ? 0 : (M.rt.completed >> i & 1u) ? 2 : i == M.rt.story ? 1 : 0; }
 static int msCur(void) { return M.f.hdr ? (int)M.f.hdr->level : 1; }
 static int msRowStatus(int k) {   // строка k экрана: 0 закрыта, 1 текущая, 2 пройдена
@@ -1486,9 +1543,8 @@ int mvMissionSelectStartRow(int row) {   // правка 348: после сме�
   }
   int mi = ns - 7 + row >= 0 ? story[ns - 7 + row] : -1;
   if (mi < 0) return 0;
-  MsnEvent e; memset(&e, 0, sizeof e); e.type = MSN_EV_CLEANUP; M.rt.host.event(M.rt.host.user, &e);   // старт уровня уходит
   logf_("MSN select %s level=%d row=%d t=%.1f\n", msn_str(&M.f, M.f.missions[mi].id), msCur(), row, clock_);
-  msn_start_mission(&M.rt, mi, 0);
+  mvSwitchTo(mi, "row");   // старт уровня уходит (№943: цель, маркер и реестр — тоже)
   return 1;
 }
 int mvMissionSelectOn(void) { return selOn; }
@@ -1537,10 +1593,15 @@ int mvMissionSelect(int on, unsigned hit) {
     int moved = to != msLv;
     if (moved) {
       msLv = to; msRefresh(); if (d < 0) msArrL = MS_ARROW_FR; else msArrR = MS_ARROW_FR;
+      if (!msCursorOld) {   // №943: курсор — на текущую миссию выбранного уровня (иначе последнюю пройденную), не на строку 0 по инерции
+        int cur = -1, last = -1; for (int k = 0; k < 7; k++) { int st = msRowStatus(k); if (st == 1) cur = k; if (st > 0) last = k; }
+        selIdx = cur >= 0 ? cur : last >= 0 ? last : selIdx;
+      } else
       if (msRowStatus(selIdx) <= 0) for (int k = 0; k < 7; k++) if (msRowStatus(k) > 0) { selIdx = k; break; }
       uiPopHookFire(UI_EV_SCROLL);
     } else uiPopHookFire(UI_EV_LOCKED);   // других открытых уровней нет
-    logf_("MSNSEL level=%d dir=%d moved=%d sel=%d t=%.1f\n", msLv, d, moved, selIdx, clock_);
+    { int top = -1; for (int k = 0; k < 7; k++) if (msRowStatus(k) > 0) top = k;   // №943: верхняя открытая строка уровня = его текущая миссия (дальше — закрытые)
+      logf_("MSNSEL level=%d dir=%d moved=%d sel=%d st=%d top=%d t=%.1f\n", msLv, d, moved, selIdx, msRowStatus(selIdx), top, clock_); }
   }
   for (int d = (hit & PSP_CTRL_UP) ? -1 : (hit & PSP_CTRL_DOWN) ? 1 : 0, k = 0; d && k < selN; k++) {   // закрытые строки пропускаются
     if (uiPadRepeated && (selIdx + d < 0 || selIdx + d >= selN)) { selIdx = was; break; }   // правка 202: повтор у края встаёт
@@ -1558,9 +1619,8 @@ int mvMissionSelect(int on, unsigned hit) {
   if ((hit & PSP_CTRL_CROSS) && selList[selIdx] >= 0 && (!selRows || msnSelStatus(selList[selIdx]))) {
     uiPopHookFire(UI_EV_ACCEPT);
     int mi = selList[selIdx]; selOn = 0; uiPauseMenuHide(0);
-    MsnEvent e; memset(&e, 0, sizeof e); e.type = MSN_EV_CLEANUP; M.rt.host.event(M.rt.host.user, &e);   // прошлая миссия уходит
     logf_("MSN select %s t=%.1f\n", msn_str(&M.f, M.f.missions[mi].id), clock_);
-    msn_start_mission(&M.rt, mi, 0);
+    mvSwitchTo(mi, "pause");   // прошлая миссия уходит (№943: цель, маркер и реестр — тоже)
     return 2;
   }
   return 1;
@@ -1671,13 +1731,27 @@ void mvServiceMainAt(int code) {   // служебное (правка 302): о�
   M.rt.cp_phase = ph0 ? 0 : 1; M.rt.cp_stage = st; msn_start_mission(&M.rt, mi, 1);
   if (ph0) M.rt.story = mi;   // прогулка — у сюжетной миссии (как в игре; правка 330: SAVE GAME проверяет story)
 }
+void mvServiceHud(void) {   // №943: что миссия считает целью сейчас (stage — этап рантайма), что держит HUD (obj — текст цели) и маркер; строки сверяет tests/msnhome/check.py
+  { int ic, px; const char *t, *l; uiObjDebug(&ic, &px, &t, &l); logf_("MSNICON want=\"%s\" field=%d pix=%d msg=\"%.30s\" last=\"%.30s\" active=%d t=%.1f\n", msnartWantIcon(), ic, px, t, l, active, clock_); }   // №958б
+  if (!active) { logf_("MSNHUD active=0\n"); return; }
+  int cur = M.rt.cur >= 0 && (unsigned)M.rt.cur < M.f.nmissions;
+  logf_("MSNHUD cur=%s story=%s phase=%d stage=%d status=%d stagetext=\"%.40s\" obj=\"%.40s\" marker=%d gmarker=%d mpos=%.1f,%.1f briefing=%d t=%.1f\n",
+        cur ? msn_str(&M.f, M.f.missions[M.rt.cur].id) : "-",
+        M.rt.story >= 0 && (unsigned)M.rt.story < M.f.nmissions ? msn_str(&M.f, M.f.missions[M.rt.story].id) : "-", M.rt.phase, M.rt.stage, M.rt.status,
+        cur && M.rt.st ? msn_str(&M.f, M.rt.st->text) : "", M.mg.hud.objective ? M.mg.hud.objective : "", H.markerOn, M.mg.marker_on,
+        H.markerOn ? H.marker.pos.x : 0.f, H.markerOn ? H.marker.pos.z : 0.f, H.briefing, clock_);
+}
+void mvStartFirstIfIdle(void) {   // №943: стартовая цель уровня была отложена под выбранную строку, а строка не стартовала — миссия уровня всё же нужна
+  if (!active || M.rt.cur >= 0 || M.rt.status == MSN_LEVEL_DONE) return;
+  logf_("MSN start-first (строка не стартовала: стартует отложенная первая непройденная) t=%.1f\n", clock_);
+  msn_start_first(&M.rt);
+}
 void mvServiceSelect(int mi) {
   if (!active || mi < 0 || (unsigned)mi >= M.f.nmissions) return;
   const MsnMission *ms = &M.f.missions[mi];
   logf_("MSN select %s t=%.1f\n", msn_str(&M.f, ms->id), clock_);
   if (ms->flags & MSN_MF_BONUS) { if (!msn_start_bonus(&M.rt, mi)) logf_("MSN select-refused %s\n", msn_str(&M.f, ms->id)); return; }
-  MsnEvent e; memset(&e, 0, sizeof e); e.type = MSN_EV_CLEANUP; M.rt.host.event(M.rt.host.user, &e);
-  msn_start_mission(&M.rt, mi, 0);
+  mvSwitchTo(mi, "service");
 }
 
 // ------------------------------------------------------------------ правка Роба 40: камеры из данных миссий

@@ -1,0 +1,32 @@
+# №958б путь B: L1 с активной целью «домой» -> «уровень пройден» (flag lvwin) -> следующий уровень; снимки угла через 3, 10, 30 с и MSNHUD
+flag menu
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+shot b_l1_home
+flag lvwin
+wait 40
+shot b_after_win
+press cross
+wait 5
+press cross
+wait 40
+flag msnhud 1
+wait 3
+shot b_next_t3
+flag msnhud 1
+wait 7
+shot b_next_t10
+flag msnhud 1
+wait 20
+shot b_next_t30
+flag msnhud 1
+press start
+wait 1
+shot b_pause_new
+flag msnhud 1
+wait 1
+end

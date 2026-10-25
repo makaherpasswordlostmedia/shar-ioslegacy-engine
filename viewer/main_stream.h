@@ -22,9 +22,10 @@ static void cellFinish(int i, void *m) {
   sceKernelDcacheWritebackRange(m, c->size);
   for (unsigned k = c->first; k < c->first + c->n; k++) {
     Piece *d = &pc[k]; char *b = (char *)m + d->r.off;
-    d->v = (Vert *)b;
+    d->v = (Vert *)b; if (smkOn && flatDump && (d->r.flags & F_STRIP)) fdPiece(d, 0);
     if (d->r.flags & F_STRIP) {   // К4: полосы (stripdraw.h); STRIPS_OLD=1 — развернуть в список при загрузке
       const StripHdr *h = (const StripHdr *)b; const unsigned vs_ = (d->r.flags & F_V12) ? 12u : 16u, po_ = (d->r.flags & F_V12) ? 6u : 8u;
+      if (flatVNoise && flatOn && d->r.owner == 0) flatVertexNoise(d, (unsigned char *)b + 16, h->nsvN);
       d->v = (Vert *)(b + 16); d->idx = (unsigned short *)(b + 16 + (size_t)h->nsvN * vs_); d->fidx = (unsigned short *)((const unsigned char *)d->idx + ((h->nsN * 2u + 3u) & ~3u) + (size_t)h->nsvF * vs_);
       d->unr = 0; d->ggBatch = 0;
       if (STRIPS_OLD) {   // список в куче (unr), как до полос
@@ -47,7 +48,8 @@ static void cellFinish(int i, void *m) {
       }
     }
     if (d->r.flags & F_NOIDX) {
-      d->idx = d->fidx = 0;
+      d->idx = d->fidx = 0; if (smkOn && flatDump) fdPiece(d, (const unsigned char *)b);
+      if (flatVNoise && flatOn && d->r.owner == 0) flatVertexNoise(d, (unsigned char *)b, (unsigned)d->r.ni);
       if (!GG_BATCH_OLD && d->r.owner == 0 && d->r.ni <= 65535) {
         unsigned nn=ggBatchStorage(d->r.ni),nf=ggBatchStorage(d->r.nf),vs=(d->r.flags&F_V12)?12:16,po=(d->r.flags&F_V12)?6:8;
         d->ggBatch=cpAlloc((nn+nf)*sizeof(GgBatch));
@@ -55,12 +57,14 @@ static void cellFinish(int i, void *m) {
         pieceBigMark(i, d, (const unsigned char *)b, (unsigned)d->r.ni, vs, po);   // №840
       }
       continue; }   // без индексов: дальняя версия = v + ni вершин
+    if (smkOn && flatDump) fdPiece(d, 0);
     d->idx = (unsigned short *)(b + ((d->r.nv * sizeof(Vert) + 15) & ~15));
     d->fidx = (unsigned short *)((char *)d->idx + ((d->r.ni * 2 + 15) & ~15));
   }
+  marksCellLoad((unsigned)i);   // №912: разметка клетки (flat912/marks912)
   c->mem = m; loadedBytes += c->size;
   __asm__ volatile("" ::: "memory");      // указатели кусков записаны раньше, чем state = 2
-  c->state = 2;
+  c->state = 2; cgDirty++;   // №924: перебор клеток камеры (camgrid.h) увидит новую клетку сразу
 }
 static void loadCell(SceUID fd, int i) {
   Cell *c = &cl[i];
@@ -149,6 +153,13 @@ static short ringIdx[RING_MAX]; static volatile int ringN, ringState, ringDone;
 #define TAILBG_OLD 0
 #endif
 static volatile int tailState; static unsigned tailColOff, tailColSz, tailPropOff, tailPropSz; static void *tailCol, *tailProp;
+// №962б (тур TEST62 на PSP: запас lva берёт 1,2 МБ из 2,6, softmiss +1 на каждой смене уровня; в эмуляторе softmiss стоит): место под COL1/PRP2 загрузчик занимает в участке сразу, а tailCol/tailProp
+// выставляет только по окончании чтения. Эмулятор читает мгновенно (к разбору PVS оба уже готовы, резерв 0), на PSP чтение с карты идёт ещё в этот момент — резерв считал уже занятое место второй раз и запрос
+// PV2S/PVS1 уходил в кучу. Теперь резерв считается по факту занятия места (tailColAl/tailPropAl), а не по готовности чтения. LVATAIL962B_OLD=1 / файл lvatail962bold рядом с EBOOT — по готовности, как было
+#ifndef LVATAIL962B_OLD
+#define LVATAIL962B_OLD 0
+#endif
+static volatile int tailColAl, tailPropAl; static int lvaTail962bOld = LVATAIL962B_OLD;
 // №775/№776 (TEST33 и TEST27 на PSP: смена уровня после долгой игры встаёт на загрузке, L4 без столкновений — «только машина»): уровню нужны три цельных куска —
 // резидентная часть level.shr (8,0–10,4 МБ), COL1 (3,7–5,8 МБ) и PRP2 (1,0–1,7 МБ), вместе до 17,7 МБ (L1, L4). Ящик с PSP перед загрузкой: свободно 39 МБ, но
 // наибольший кусок 11,4 / 9,5 МБ — куча раздроблена долгоживущими выделениями долгой игры, а игрок, интерфейс и звук уровня (≈3,5 МБ) выделяются раньше:
@@ -159,7 +170,13 @@ static volatile int tailState; static unsigned tailColOff, tailColSz, tailPropOf
 #ifndef LVA_OLD
 #define LVA_OLD 0
 #endif
-#define LVA_BYTES ((17u << 20) + (832u << 10))   // 17,81 МБ: max(рез. + COL1 + PRP2) по уровням 1–7 = 17,71 МБ (L4) + выравнивание и запас
+// Хвост резидентной части level.shr (таблица кусков 80 Б × npc и таблица клеток 48 Б × ncell: 0,43–0,69 МБ) нужен только пока levelLoad копирует его в pc[] и cl[]. Раньше он лежал
+// в участке lva до выгрузки уровня и участок был на эти 0,7 МБ больше. Теперь резидентная часть = [0, tableOff), хвост читается отдельно: в запас участка (уровни, где он есть) или во временный буфер кучи
+// (L1, L4), освобождается после таблицы клеток. LEVEL_TAIL_OLD=1 — как было (весь кусок в участке, LVA_BYTES прежний)
+#ifndef LEVEL_TAIL_OLD
+#define LEVEL_TAIL_OLD 0
+#endif
+#define LVA_BYTES ((17u << 20) + ((LEVEL_TAIL_OLD ? 832u : 128u) << 10))   // 17,13 МБ: max(рез. до таблицы кусков + COL1 + PRP2) по уровням 1–7 = 17,04 МБ (L1); с LEVEL_TAIL_OLD=1 прежние 17,81 МБ (max рез. + COL1 + PRP2 = 17,71 МБ, L4)
 static unsigned char *lvaBase; static unsigned lvaUsed, lvaLast, lvaMiss; static SceUID lvaSema = -1;
 static int lvaOwns(const void *p) { return lvaBase && (const unsigned char *)p >= lvaBase && (const unsigned char *)p < lvaBase + LVA_BYTES; }
 static void lvaInit(void) {
@@ -184,7 +201,32 @@ static void lvaFree(void *p) {   // кусок участка: последни�
   if ((unsigned)((unsigned char *)p - lvaBase) == lvaLast) lvaUsed = lvaLast;
   if (lvaSema >= 0) sceKernelSignalSema(lvaSema, 1);
 }
+static int lvaRoom(unsigned n) { return !LVA_OLD && lvaBase && ((lvaUsed + 63u) & ~63u) + n <= LVA_BYTES; }   // влезет ли n байт (запас под ещё не выделенное считает вызывающий)
 static void lvaReset(void) { lvaUsed = lvaLast = 0; }   // уровень выгружен целиком (levelUnload): участок снова пуст
+// №962 (куча TEST61 на L2, L3, L5–L7 меньше на 1,5–2,5 МБ): участок lva рассчитан на L1/L4 (17,9 МБ), а на остальных уровнях COL1+PRP2+резидентная часть занимают 13,7–14,6 МБ — 3–4 МБ участка пусты
+// всю игру. Куски уровня, живущие ровно до его выгрузки (PVS1 1,3 МБ, PV2S 0,6 МБ, …), кладём в этот запас (lvaAllocSoft), а не в кучу: куча получает их размер назад. Резерв reserve — сколько ещё должен
+// получить загрузчик (COL1/PRP2), чтобы мы не заняли их место (иначе они уйдут в кучу, как до №775). Не влезло — куча, как раньше. LVAMEM962_OLD=1 / файл lvamem962old рядом с EBOOT — всё в куче
+#ifndef LVAMEM962_OLD
+#define LVAMEM962_OLD 0
+#endif
+static int lvaMem962Old = LVAMEM962_OLD; static unsigned lvaSoftBytes, lvaSoftMiss;   // служебно: сколько байт легло в запас, сколько раз не влезло
+static unsigned lvaTailReserve(int tailBg) {   // сколько ещё должен занять загрузчик в участке под COL1/PRP2, пока главный поток кладёт PVS1/PV2S в запас
+  if (!tailBg) return 8u << 20;
+  if (lvaTail962bOld) return (tailCol ? 0u : tailColSz) + (tailProp ? 0u : (2u << 20)) + (64u << 10);
+  return (tailColAl ? 0u : tailColSz) + (tailPropAl ? 0u : (2u << 20)) + (64u << 10);
+}
+typedef struct { unsigned n, res, used; int ts, al, hit; } LvaSoftRec;   // служебно (№962б): каждый запрос в запас — размер, резерв, занято, состояние хвоста, занял ли загрузчик COL1/PRP2, попал ли
+static LvaSoftRec lvaSoftRec[8]; static int lvaSoftRecN;
+static void *lvaAllocSoft(unsigned n, unsigned reserve, int tailBg) {   // tailBg >= 0: резерв считается здесь, в момент запроса (загрузчик мог занять COL1/PRP2 после того, как вызывающий его прикинул), иначе заданный reserve
+#ifdef TAILSLOW_MS
+  for (int w_ = 0; w_ < 100 && tailState == 1 && !tailColAl; w_++) sceKernelDelayThread(2000);   // только стенд №962б: на PSP загрузчик успевает занять место под COL1 раньше разбора PVS, в эмуляторе нет
+#endif
+  if (tailBg >= 0) reserve = lvaTailReserve(tailBg);
+  LvaSoftRec *rc_ = lvaSoftRecN < 8 ? &lvaSoftRec[lvaSoftRecN++] : 0; if (rc_) { rc_->n = n; rc_->res = reserve; rc_->used = lvaUsed; rc_->ts = tailState; rc_->al = tailColAl * 2 + tailPropAl; rc_->hit = 0; }
+  if (!lvaMem962Old && lvaBase && lvaRoom(n + reserve)) { void *p = lvaAlloc(n); if (p && lvaOwns(p)) { lvaSoftBytes += n; if (rc_) rc_->hit = 1; return p; } if (p) return p; }
+  if (!lvaMem962Old) lvaSoftMiss++;
+  return memalign(64, n);
+}
 // №PFETCH (аудит времени загрузки 16.10): целые файлы traffic.shr (1,4 МБ) и fx.shr (0,5 МБ) читает загрузчик следом за COL1/PRP2, пока главный поток считает; трафик и частицы берут готовый буфер
 // (pfTake в main_levels.h) и разбирают на прежнем месте — данные те же байты, порядок разбора прежний. PFETCH_OLD=1 / файл pfetchold рядом с EBOOT — читают сами, как раньше
 #ifndef PFETCH_OLD
@@ -223,12 +265,21 @@ static int loaderThread(SceSize a, void *b) {
       if (tailState == 1) {                          // загрузка 2 п.6: COL1 и PRP2 уровня (задание главного потока)
         loaderBusy = 1; SceUID tf = sceIoOpen(levelShr, PSP_O_RDONLY, 0);
         if (tf >= 0) {
-          if (tailColSz) { void *m = lvaAlloc(tailColSz); sceIoLseek32(tf, tailColOff, PSP_SEEK_SET);
+          if (tailColSz) { void *m = lvaAlloc(tailColSz); tailColAl = 1;
+#ifdef TAILSLOW_MS
+            sceKernelDelayThread(TAILSLOW_MS * 1000);   // только стенд №962б: чтение карты на PSP идёт дольше разбора PVS; эмулятор читает мгновенно
+#endif
+            sceIoLseek32(tf, tailColOff, PSP_SEEK_SET);
             if (m && sceIoRead(tf, m, tailColSz) == (int)tailColSz) tailCol = m; else lvaFree(m); }
+          tailColAl = 1;
           if (tailPropOff) { unsigned char ph[64]; sceIoLseek32(tf, tailPropOff, PSP_SEEK_SET); int pn = sceIoRead(tf, ph, 64); unsigned sz = levelPropSize(ph, pn);
-            if (sz) { void *m = lvaAlloc(sz); sceIoLseek32(tf, tailPropOff, PSP_SEEK_SET); if (m && sceIoRead(tf, m, sz) == (int)sz) { tailProp = m; tailPropSz = sz; } else lvaFree(m); } }
-          sceIoClose(tf);
+            if (sz) { void *m = lvaAlloc(sz); tailPropAl = 1; sceIoLseek32(tf, tailPropOff, PSP_SEEK_SET); if (m && sceIoRead(tf, m, sz) == (int)sz) { tailProp = m; tailPropSz = sz; } else lvaFree(m); } }
+#ifdef TAILSLOW_MS
+          sceKernelDelayThread(TAILSLOW_MS * 1000);
+#endif
+          tailPropAl = 1; sceIoClose(tf);
         }
+        tailColAl = tailPropAl = 1;
         __asm__ volatile("" ::: "memory"); tailState = 2; loaderBusy = 0;
       }
       for (int ps = 0; ps < PF_MAX; ps++) if (pf[ps].state == 1) {   // №PFETCH: целый файл (после хвоста COL1/PRP2, до круга клеток)
@@ -242,6 +293,7 @@ static int loaderThread(SceSize a, void *b) {
                        stLoadUs += sceKernelGetSystemTimeLow() - t0; stLoads += (unsigned)ringN; }
         __asm__ volatile("" ::: "memory"); ringState = 2; loaderBusy = 0;
       }
+      if (marksReqTail != marksReqHead) marksServe();   // №912: мелочь разметки ближних клеток
       int n = lqn, i = -1;
       for (int k = 0; k < n && k < LQ_N; k++) { int j = lq[k]; if (j >= 0 && j < (int)ncell && cl[j].state == 0) { i = j; break; } }
       if (i >= 0 && (gen != lvGen || (!loaderFixOld && (loaderFdLost || (loaderErrRun >= 2 && loaderReopenN < 16))))) {   // новый уровень,
@@ -293,7 +345,7 @@ static int loaderWaitStep(LdWait *w, const char *what, unsigned prog, int canGiv
   return !(w->n < 3 || !canGiveUp);
 }
 static void unloadCell(Cell *c) {
-  dlFree((unsigned)(c - cl));   // правка 275: лист клетки ссылается на её память — уходит вместе с ней
+  dlFree((unsigned)(c - cl)); marksCellFree((unsigned)(c - cl));   // правка 275: лист клетки ссылается на её память — уходит вместе с ней
   if (c->state == 2) {
     for(unsigned k=c->first;k<c->first+c->n;k++){cpFree(pc[k].ggBatch);pc[k].ggBatch=0;cpFree(pc[k].unr);pc[k].unr=0;}
     loadedBytes -= c->size; cpFree(c->cg); c->cg = 0; c->cgs = 0; cgGen++; cpFree(c->mem); c->mem = 0; }
@@ -359,6 +411,7 @@ static int gatePreOn = !GATE_PRE_OLD;   // «flag gatepre 0/1» в сценар�
 #endif
 static int regPreHyst = !REGPRE_HYST_OLD;
 #include "regpre.h"
+static int regPreMemOld = REGPRE_MEM_OLD;   // Б TEST57: «flag regprememold 1» / файл regprememold рядом с EBOOT — прежнее условие по памяти
 #ifndef GATE_PRE_M
 #define GATE_PRE_M 90.f
 #endif
@@ -394,6 +447,34 @@ static void jumpRush(float x, float y, float z, float moved, unsigned now) {
   ringN = n; ringDone = 0; __asm__ volatile("" ::: "memory"); ringState = 1; ldSignal();
   jumpN = (unsigned)n;
   if (smkOn) { char s[112]; snprintf(s, sizeof s, "JUMPRUSH moved=%.0f n=%d kb=%u look=%.2f,%.2f t=%.2f\n", moved, n, bytes >> 10, stFx, stFz, smkT); smkWrite(s); }
+}
+// №864 пропечка 2 «загрузка вдоль дороги» (окно «Оптимизация», как у Crash Bandicoot: кто едет по дороге, тот уже на 2-3 с вперёд знает, какие куски уровня ему нужны).
+// tools/roadq864.py: по дорожному графу traffic.shr для каждой клетки и каждого из 8 направлений хода (0 = +Z, дальше по 45 градусов к +X) до RQ_M клеток впереди по дороге в пределах 260 м,
+// ближние первыми (roadq864.bin рядом с level.shr, формат RQ1). Движение быстрее 4 м/с по такой клетке: клетки списка идут в очередь загрузчика раньше остальных (бонус RQ_BONUS_M м)
+// и берутся дальше обычного радиуса загрузки (до 260 м). Не при нехватке памяти (memTight) и без запаса кучи (memRoom). Нет файла, не сошлось число клеток или ROADQ_OLD=1 / «flag roadqold 1» — как раньше.
+// ПО УМОЛЧАНИЮ ВЫКЛЮЧЕНО (ROADQ_OLD=1): замер езды (тур по 7 уровням, автопилот ≈10 м/с, и с медленной картой 2 МБ/с) пропусков видимых клеток не показал ни с таблицей, ни без (0 и 0);
+// счёт загрузок от прогона к прогону гуляет на 20-40 % и на одном и том же коде, различия не доказывает. Включить: -DROADQ_OLD=0 (тогда «flag roadqold 1/0» в сценарии переключает на лету), файл roadq864.bin едет по ship_rules
+#ifndef ROADQ_OLD
+#define ROADQ_OLD 1
+#endif
+#define RQ_BONUS_M 70.f
+#define RQ_REACH_M 260.f
+static int roadqOld = ROADQ_OLD;
+static unsigned *rqOff; static unsigned short *rqEnt; static unsigned rqN, rqTot;   // таблица RQ1 текущего уровня (rqOff — (ncell * 8 + 1) смещений)
+static unsigned char *rqMk;   // отметка клетки «впереди по дороге» на этот кадр (ncell байт)
+static unsigned rqFrames, rqMarked, rqQueued;   // кадров с курсом по дороге, отмеченных клеток, из них реально поставлено в очередь (state 0)
+static int rqCur = -1;
+static void roadqFree(void) { free(rqOff); free(rqEnt); free(rqMk); rqOff = 0; rqEnt = 0; rqMk = 0; rqN = rqTot = 0; rqCur = -1; }
+static void roadqLoad(const char *fn, unsigned ncell_) {
+  roadqFree(); if (ROADQ_OLD || roadqOld || !ncell_) return;
+  SceUID f = sceIoOpen(fn, PSP_O_RDONLY, 0); if (f < 0) return;
+  unsigned hd[4]; int ok = sceIoRead(f, hd, 16) == 16 && hd[0] == 0x00315152u && hd[1] == ncell_ && hd[2] == 8;   // 'RQ1\0'
+  unsigned n = ok ? ncell_ * 8u + 1u : 0;
+  rqOff = ok ? (unsigned *)malloc(n * 4u) : 0; rqEnt = ok && hd[3] ? (unsigned short *)malloc(hd[3] * 2u) : 0;
+  if (!rqOff || !rqEnt || sceIoRead(f, rqOff, (int)(n * 4u)) != (int)(n * 4u) || sceIoRead(f, rqEnt, (int)(hd[3] * 2u)) != (int)(hd[3] * 2u) || rqOff[n - 1] != hd[3]) { sceIoClose(f); roadqFree(); return; }
+  sceIoClose(f); rqMk = (unsigned char *)calloc(ncell_, 1); if (!rqMk) { roadqFree(); return; }
+  rqN = ncell_; rqTot = hd[3]; rqFrames = rqMarked = rqQueued = 0;
+  if (smkOn) { char s[96]; snprintf(s, sizeof s, "ROADQ level=%d ncell=%u entries=%u kb=%u\n", gameLevel, ncell_, hd[3], (n * 4u + hd[3] * 2u) >> 10); smkWrite(s); }
 }
 static int stream(float x, float y, float z) {
   unsigned now = sceKernelGetSystemTimeLow();
@@ -448,14 +529,28 @@ static int stream(float x, float y, float z) {
     cellRetries++;
     if (smkOn) { char s[112]; snprintf(s, sizeof s, "CELLRETRY %s freed=%d again=%d heap=%.2f t=%.1f\n", oom ? "mem" : "read", freed, again, heapFreeBytes() / 1048576.f, smkT); smkWrite(s); }
   }
-  regPre = 0;
-  if (gatePreOn && zgOn && !memTight && zg && (memFreeNow == ~0u || memFreeNow >= MEM_RESERVE + (4u << 20))) {   // и кучи с запасом: регионы впрок — это МБ
+  static unsigned regPreLockT; unsigned regPreWas = regPre; regPre = 0;   // Б TEST57: что было взято в прошлом кадре — для зазора по памяти (regpre.h)
+  if (gatePreOn && zgOn && !memTight && zg && regPreMemOk(memFreeNow, MEM_RESERVE, regPreWas != 0, now, &regPreLockT, regPreMemOld)) {   // и кучи с запасом: регионы впрок — это МБ
     for (int i = 0; i < nzg; i++) { float dx = zg[i].c[0] - x, dz = zg[i].c[2] - z;
       int yes = regPreYes(i, dx, dz, dirx, dirz, spd, now, regPreHyst);   // viewer/regpre.h: вход как раньше, выход с удержанием
       if (yes) regPre |= zg[i].load; }
   }
   { static unsigned rpPrev; if (smkOn && regPre != rpPrev) { char s_[96]; snprintf(s_, sizeof s_, "REGPRE %04x->%04x res=%04x at %.0f,%.0f t=%.1f\n", rpPrev, (unsigned)regPre, (unsigned)regRes, x, z, smkT); smkWrite(s_); rpPrev = regPre; } }
   short best[LQ_N]; float bs[LQ_N]; int nb = 0; stCand = 0;
+  int rqOn = 0; unsigned rqE0 = 0, rqE1 = 0;   // №864: список клеток впереди по дороге для клетки под игроком и курса хода
+  if (rqN == ncell && rqMk && !roadqOld && !oldStream && !memTight && memRoom && spd > 4.f) {
+    int cur = -1;
+    if (rqCur >= 0 && rqCur < (int)ncell) { const Cell *c = &cl[rqCur]; if (!c->owner && x >= c->bb[0] && x <= c->bb[3] && z >= c->bb[2] && z <= c->bb[5] && y >= c->bb[1] - 6.f && y <= c->bb[4] + 6.f) cur = rqCur; }
+    for (unsigned i = 0; cur < 0 && i < ncell; i++) { const Cell *c = &cl[i]; if (c->owner) continue;
+      if (x >= c->bb[0] && x <= c->bb[3] && z >= c->bb[2] && z <= c->bb[5] && y >= c->bb[1] - 6.f && y <= c->bb[4] + 6.f) cur = (int)i; }
+    rqCur = cur;
+    if (cur >= 0) {
+      int b = (int)lrintf(atan2f(dirx, dirz) * 1.27323954f); b &= 7;   // 4 / pi: сектора по 45 градусов, 0 = +Z
+      unsigned k = (unsigned)cur * 8u + (unsigned)b; rqE0 = rqOff[k]; rqE1 = rqOff[k + 1];
+      for (unsigned e = rqE0; e < rqE1; e++) { rqMk[rqEnt[e]] = 1; rqOn++; }
+      if (rqOn) { rqFrames++; rqMarked += (unsigned)rqOn; }
+    }
+  }
   for (unsigned i = 0; i < ncell; i++) {
     Cell *c = &cl[i]; if (c->owner) continue;
     if (zgOn && CELL_REG(c) && CELL_REG(c) <= 16 && !(((regRes | regPre) >> (CELL_REG(c) - 1)) & 1u)) {   // правка 181: регион не в наборе ворот — не держим
@@ -468,10 +563,12 @@ static int stream(float x, float y, float z) {
       float lim = dropD + c->rad + (!STREAM_AHEAD_OLD && !STREAM_AHEAD15_OLD && memRoom && !oldStream ? 40.f : 0.f);
       if (d2 > lim * lim && q2 > lim * lim) unloadCell(c);
     } else if (c->state == 0) {
-      float lim = loadD + c->rad;
+      float lim = loadD + c->rad; int rqm = rqOn && rqMk[i];
+      if (rqm && lim < RQ_REACH_M + c->rad) lim = RQ_REACH_M + c->rad;   // №864: клетка впереди по дороге — берём дальше обычного радиуса
       if (d2 >= lim * lim && q2 >= lim * lim) { c->reqT = 0; continue; }   // П2: ушла из радиуса — запрос снят
       stCand++;
       float d = sqrtf(d2) - c->rad, q = sqrtf(q2) - c->rad + 15.f, sc = d < q ? d : q;
+      if (rqm) { sc -= RQ_BONUS_M; rqQueued++; }
       if (!oldStream && d < drawDist && visBox(c->bb, 0, 0, 0)) sc -= 60.f;   // уже должна быть видна — первой
       if (!STREAM_AHEAD_OLD && spd > 4.f) { float al_ = (c->cx - x) * dirx + (c->cz - z) * dirz; sc += al_ > -c->rad ? -STREAM_FWD_M : (al_ < -c->rad - 20.f ? STREAM_FWD_M : 0.f); }   // впереди по ходу — раньше, сзади — позже
       if (nb == qmax && sc >= bs[nb - 1]) continue;
@@ -480,6 +577,7 @@ static int stream(float x, float y, float z) {
       bs[j] = sc; best[j] = (short)i;
     }
   }
+  for (unsigned e = rqE0; e < rqE1; e++) rqMk[rqEnt[e]] = 0;
   lqn = 0; __asm__ volatile("" ::: "memory");
   for (int k = 0; k < nb; k++) { lq[k] = best[k]; if (!cl[best[k]].reqT) cl[best[k]].reqT = sceKernelGetSystemTimeLow() | 1u; }   // П2
   __asm__ volatile("" ::: "memory");

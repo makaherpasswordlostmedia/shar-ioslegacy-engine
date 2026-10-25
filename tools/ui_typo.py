@@ -306,6 +306,12 @@ def load(path=None):
     if hp and 'hints_wardrobe' not in cfg['groups'] and os.environ.get('WARDROBE_TYPO_OLD') != '1':   # №695: гардероб берёт подписи кнопок будки (кроме сдвига dx)
         cfg['groups']['hints_wardrobe'] = {k: v for k, v in hp.items() if k != 'dx'}
         if 'dy' in cfg['groups']['hints_wardrobe']: cfg['groups']['hints_wardrobe']['dy'] -= 5   # нижняя строка гардероба стоит на 5 px ниже, чем у будки при той же дельте
+    # №925 (Роб 24.10: «текст в меню паузы по-прежнему крупнее, чем я просил: размер как в Options, расстановку — как сейчас»): пункты паузы — грань пунктов
+    # Options меню (U.ITEM_FACE, boulder_16 1:1, заглавная 11 px), а не boulder_16 x2 (12 px, на снимке 12 против 11); шаг строк (pitch) и низ букв прежние.
+    # Только если в панели стоит прежнее значение (другое значение руки Роба не трогаем). UI_TYPO_PAUSE925_OLD=1 — boulder_16*2, как было
+    pi = (cfg.get('groups') or {}).get('pause_items')
+    if pi and pi.get('face') == 'boulder_16*2' and os.environ.get('UI_TYPO_PAUSE925_OLD') != '1':
+        pi['face'] = 'boulder_16@1'
     pn = (cfg.get('groups') or {}).get('phone_name')
     if pn and 'wardrobe_name' not in cfg['groups'] and os.environ.get('WARDROBE_TYPO_OLD') != '1':
         cfg['groups']['wardrobe_name'] = {k: v for k, v in pn.items() if k not in ('dx', 'dy')}

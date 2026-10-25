@@ -1,0 +1,35 @@
+scene P_load
+flag golevel 7
+wait 20
+flag cfgdefaults 1
+flag repair
+flag camlog
+flag carcamlog
+scene P_up
+goto 90.54 269.39 0.0000
+wait 2.5
+flag autostraight 3.4
+wait 3.2
+flag propstat 133
+goto 210.05 131.05 1.5708
+wait 2.5
+flag autostraight 3.4
+wait 3.2
+flag propstat 164
+goto 445.18 8.62 0.0000
+wait 2.5
+scene P_cross
+goto 90.54 269.39 0.0000
+wait 2.5
+flag autostraight 3.4 2.6
+wait 3.2
+flag propstat 133
+goto 210.05 131.05 1.5708
+wait 2.5
+flag autostraight 3.4 2.6
+wait 3.2
+flag propstat 164
+goto 445.18 8.62 0.0000
+wait 2.5
+wait 1
+end

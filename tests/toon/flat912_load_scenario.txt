@@ -1,0 +1,24 @@
+# Гейт №912 п.А/А2: L1 → L4 → L5 с настройками по умолчанию (Cartoon, заливка). Цвет: кадр через 32 с после golevel против кадра после «flag flatdbg 0»
+# (полная пересборка заливки: тона, разметка, листы клеток) — после смены уровня они обязаны совпасть; c — второй кадр после пересборки (шум движущихся людей и машин)
+scene F_L1
+flag cfgdefaults 1
+wait 14
+scene F_GO1_L4
+flag golevel 4
+wait 32
+shot col_l4_a
+flag flatdbg 0
+wait 3
+shot col_l4_b
+wait 1
+shot col_l4_c
+scene F_GO2_L5
+flag golevel 5
+wait 32
+shot col_l5_a
+flag flatdbg 0
+wait 3
+shot col_l5_b
+wait 1
+shot col_l5_c
+end

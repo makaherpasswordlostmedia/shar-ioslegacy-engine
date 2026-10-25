@@ -143,7 +143,7 @@ int spInitResident(StateProps *sp, const void *section, unsigned size, int detac
 
 int spInit(StateProps *sp, const void *section, unsigned size) { return spInitResident(sp, section, size, 0); }
 
-void spFree(StateProps *sp) { free(sp->mem); memset(sp, 0, sizeof *sp); }
+void spFree(StateProps *sp) { if (sp->run) for (unsigned i = 0; i < sp->ninst; i++) free(sp->run[i].jm0); free(sp->mem); memset(sp, 0, sizeof *sp); }   // №923: jm0 — отдельные выделения
 
 static const SpType *TY(const StateProps *sp, unsigned i) { return &sp->type[sp->inst[i].type]; }
 static const SpState *ST(const StateProps *sp, unsigned i) { return &sp->state[TY(sp, i)->firstState + sp->run[i].state]; }
@@ -287,7 +287,40 @@ int spBreakOf(const StateProps *sp, unsigned prpType) {
   return sp->dynBreak[prpType];
 }
 
-int spBreak(StateProps *sp, unsigned spType, const float pos[3], const float q[4]) {
+int spBreak(StateProps *sp, unsigned spType, const float pos[3], const float q[4]) { return spBreakDir(sp, spType, pos, q, NULL); }
+
+// №923: средний горизонтальный ход кусков обломка за весь клип (мир): суставы в последнем кадре минус кадр 0; jm0 — суставы кадра 0 (выделяет spBreakDir)
+#ifndef BREAK_DIR923_OLD
+#define BREAK_DIR923_OLD 0
+#endif
+static int breakDirSetup(StateProps *sp, unsigned i, const float v[2]) {
+  SpRun *r = &sp->run[i]; const SpType *T = TY(sp, i);
+  free(r->jm0); r->jm0 = NULL; r->dirC = 1.f; r->dirS = 0.f;
+  float vl = v ? sqrtf(v[0] * v[0] + v[1] * v[1]) : 0.f;
+  unsigned nfr = T->frames & 0xFFFF;
+  if (BREAK_DIR923_OLD || vl < .5f || !T->nPiece || nfr < 2 || !T->nJoint) return 0;
+  float *j0 = (float *)malloc((size_t)T->nJoint * 12 * sizeof(float)); if (!j0) return 0;
+  float keep = r->poseF;
+  float S0[3] = {0, 0, 0}, S1[3] = {0, 0, 0}; unsigned n = 0;
+  for (int pass = 0; pass < 2; pass++) {   // положения кусков (начало в мире, как в spPieceMatrix) в покое и в последнем кадре клипа; сумма по кускам
+    r->poseF = pass ? (float)(nfr - 1) : 0.f; r->poseValid = 0; spPose(sp, i);
+    if (!pass) memcpy(j0, r->jm, (size_t)T->nJoint * 12 * sizeof(float));
+    for (unsigned k = 0; k < T->nPiece; k++) {
+      const SpPiece *P = &sp->piece[T->firstPiece + k]; unsigned jn = (P->flags >> 8) & 0xFF; if (jn >= T->nJoint) continue;
+      const float *J = r->jm + jn * 12; float o[3] = {P->ox, P->oy, P->oz}, jo[3], w[3];
+      mulRv(J, o, jo); jo[0] += J[9]; jo[1] += J[10]; jo[2] += J[11]; mulRv(r->R, jo, w);
+      float *S = pass ? S1 : S0; S[0] += w[0]; S[1] += w[1]; S[2] += w[2]; if (pass) n++;
+    }
+  }
+  r->poseF = keep; r->poseValid = 0; spPose(sp, i);
+  float dx = n ? (S1[0] - S0[0]) / (float)n : 0.f, dz = n ? (S1[2] - S0[2]) / (float)n : 0.f, dl = sqrtf(dx * dx + dz * dz);
+  if (dl < .3f) { free(j0); return 0; }   // куски не уходят вбок (падают на месте / вверх): повернуть нечего
+  float th = atan2f(v[0], v[1]) - atan2f(dx, dz);
+  r->dirC = cosf(th); r->dirS = sinf(th); r->jm0 = j0;
+  return 1;
+}
+
+int spBreakDir(StateProps *sp, unsigned spType, const float pos[3], const float q[4], const float v[2]) {
   if (spType >= sp->ntype) return 0;
   int best = -1; float bt = -1.f;
   for (unsigned i = 0; i < sp->ninst; i++) {
@@ -300,6 +333,7 @@ int spBreak(StateProps *sp, unsigned spType, const float pos[3], const float q[4
   SpRun *r = &sp->run[best];
   r->x = pos[0]; r->y = pos[1]; r->z = pos[2]; quatR(q, r->R); r->alive = 1;
   enter(sp, best, 1);
+  breakDirSetup(sp, (unsigned)best, v);
   return sp->type[spType].nPiece > 0;
 }
 
@@ -358,7 +392,7 @@ static void doCall(StateProps *sp, unsigned i, const SpCall *C, const ColWorld *
       int broken = 0;
       for (unsigned t = 0; t < sp->ntype; t++)
         if (sp->type[t].kind == 1 && sp->type[t].bindex == C->arg) {
-          broken = spBreak(sp, t, p, sp->inst[i].q);
+          broken = spBreakDir(sp, t, p, sp->inst[i].q, r->hv);   // №923: осколки по ходу машины (hv — ноль, если машина предмет не била)
           sp->breaks++;
           break;
         }
@@ -541,6 +575,25 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
       if (d > bd) { bd = d; bn[0] = nx; bn[1] = nz; touched = 1; }
     }
   }
+  // №902 (Роб 23.10: «разбивание стекла иногда отстаёт от удара — то вовремя, то поздно; с деревьями так же; всегда в тот же кадр, что удар»):
+  // стекло витрины, будка, забор часто стоят в стене мира (COL1): заезд, где стена касается раньше объёма предмета, гасит машину о стену —
+  // предмет бился позже (дожим, 2–40 кадров) или никогда (L1: 188 и 32 из 251 таких заездов, tests/smash902). Удар машины о твёрдое в этом
+  // кадре (hardV ≥ SP_HIT_SPEED) засчитывается и предмету, если его объём в SP_WALL_PAD от кузова; машину он не выталкивает (уже стена).
+  // SP_WALL902_OLD=1 — как было
+#ifndef SP_WALL902_OLD
+#define SP_WALL902_OLD 0
+#endif
+#define SP_WALL_PAD .35f
+  int viaWall = 0;
+  if (!touched && !SP_WALL902_OLD && car->hardV >= SP_HIT_SPEED) {
+    CarBox big = *cb; big.hl += SP_WALL_PAD; big.hw += SP_WALL_PAD;
+    for (unsigned k = 0; k < T->nCol && !touched; k++) {
+      const SpCol *C = &sp->col[T->firstCol + k];
+      if (C->second && !r->col2On) continue;
+      float nx, nz, d, imp = 0.f;
+      if (hitVolume(r, C, &big, car->vel, &nx, &nz, &d, &imp)) { bn[0] = nx; bn[1] = nz; bd = 0.f; bimp = car->hardV; touched = viaWall = 1; }
+    }
+  }
   if (!touched) return;
   float vn = car->vel[0] * bn[0] + car->vel[2] * bn[1];   // < 0 — едем в проп
 #if SP_HIT_MINAXIS
@@ -565,6 +618,7 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
 #endif
   if (r->cool <= 0.f && closing >= SP_HIT_SPEED && (SP_HARDFENCE_OLD || T->cls != 11 || car->p.mass >= SP_FENCE_MASS)) {
     // событие машины: первое, что обрабатывает текущее состояние (гипотеза §6: VEHICLE_HIT -> HIT -> DESTROYED)
+    r->hv[0] = car->velPre[0]; r->hv[1] = car->velPre[2];   // №923: куда ехала машина к удару (до стены кадра) — туда летят осколки
     if (spEvent(sp, i, SP_EV_VEHICLE_HIT) || spEvent(sp, i, SP_EV_HIT) || spEvent(sp, i, SP_EV_DESTROYED)) {
       sp->hits++;
       runCalls(sp, i, world, coins);   // вызовы с временем 0 — сразу (коллизия уходит в этом же кадре)
@@ -578,6 +632,7 @@ static void carContact(StateProps *sp, unsigned i, const ColWorld *world, Car *c
     }
   }
   r->cool = SP_COOL;
+  if (viaWall) return;   // №902: машину остановила стена мира, предмет не выталкивает
   // Правка «несбиваемое должно сбиваться» (10.10, боты L1–L7: фонари/автоматы/гидранты L7 400 из 428 заездов на 50 км/ч — объект
   // ответил (state != 0), но коллизия на время падения/тряски оставалась и гасила 12.6 из 13.9 м/с, как стена). Объект, уже
   // ответивший на удар (состояние не начальное), машину больше не выталкивает: бьём один раз, проезжаем. Прежнее: -DSP_REACT_PASS_OLD=1
@@ -688,6 +743,13 @@ void spPieceMatrix(const StateProps *sp, unsigned i, unsigned k, float m[16]) {
   mulRR(r->R, J, A);
   mulRv(J, o, jo); jo[0] += J[9]; jo[1] += J[10]; jo[2] += J[11];
   mulRv(r->R, jo, b);
+  if (r->jm0) {   // №923: смещение куска от места покоя поворачивается вокруг вертикали (по ходу машины); место покоя и поворот куска — прежние
+    const float *J0 = r->jm0 + ((P->flags >> 8) & 0xFF) * 12; float j0[3], b0[3];
+    mulRv(J0, o, j0); j0[0] += J0[9]; j0[1] += J0[10]; j0[2] += J0[11];
+    mulRv(r->R, j0, b0);
+    float dx = b[0] - b0[0], dz = b[2] - b0[2];
+    b[0] = b0[0] + r->dirC * dx + r->dirS * dz; b[2] = b0[2] + r->dirC * dz - r->dirS * dx;   // b[1] (высота) прежняя: b0[1] + (b[1] - b0[1])
+  }
   float s = P->sc;
   m[0] = A[0] * s; m[1] = A[1] * s; m[2] = A[2] * s; m[3] = 0;
   m[4] = A[3] * s; m[5] = A[4] * s; m[6] = A[5] * s; m[7] = 0;

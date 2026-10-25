@@ -179,6 +179,9 @@ int colHumpRiding(uint32_t *idx, int max);
 // земли и стен (с обеих сторон), ящики, цилиндры/капсулы/сферы, заборы (вертикальная стена по отрезку). 1 = свободно.
 // Объём, внутри которого начинается луч, не мешает; кусты (материал FOLIAGE) — только при foliage != 0.
 float colRayFrac(const ColWorld *w, const float a[3], const float b[3], int foliage);
+// CAMPERF: n лучей за один обход клеток (out[i] == colRayFrac(w, a[i], b[i], 0) для каждого; куски вне коробки лучей отсеиваются ящиком). n <= COL_RAYS_MAX
+#define COL_RAYS_MAX 24
+void colRaysFrac(const ColWorld *w, int n, const float (*a)[3], const float (*b)[3], float *out);
 
 // Путь точки (x0,z0) -> (x1,z1) пересекает забор с лицевой стороны на изнанку? 1 = да (нормаль забора в *nX, *nZ).
 int colCrossFence(const ColWorld *w, float x0, float z0, float x1, float z1, float *nX, float *nZ);

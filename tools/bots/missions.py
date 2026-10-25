@@ -45,7 +45,7 @@ def main():
         print(f"гейт Б2: sr1 с таймером 1 с -> «{imp and imp['result']}»; m0 -> «{m0 and m0['result']}» ({m0 and m0['why']}; место {m0 and m0['place']}, {m0 and wall(m0['wall'])}) -> {'PASS' if ok else 'FAIL'}")
         return 0 if ok else 1
     with concurrent.futures.ThreadPoolExecutor(a.procs) as ex:
-        rows = [r for r in ex.map(lambda m: run(m, a.secs, out), a.only if a.only else range(13)) if r]
+        rows = [r for r in ex.map(lambda m: run(m, a.secs, out, ('--coins', '99') if m == 11 else ()), a.only if a.only else range(13)) if r]   # 24.10: гонка на ставку (gr1) без кошелька стоит на этапе coins, «застрял» каждую ночь; с --coins 99 этап проходится (проверено, этап race достигнут)
     for r in rows: r['object'] = wall(r['wall'])
     (out / 'missions.json').write_text(json.dumps(rows, ensure_ascii=False, indent=1))
     L = [f'# Миссионер {stamp}', '', 'Итог: пройдена / провал / не покрыто (нет в движке) / застрял. Класс (Т1.5): игра — два независимых водителя не доехали; '

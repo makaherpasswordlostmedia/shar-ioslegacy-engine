@@ -1,0 +1,17 @@
+### №944 разведка: L1 двор Симпсонов и Kwik-E-Mart, пешком
+scene H0
+flag gaglist
+wait 4
+foot 228.0 190.0 0.0
+wait 3
+shot h0_a
+foot 228.567 201.097 0.0
+wait 2
+shot h0_b
+foot 215.0 205.0 1.5
+wait 2
+shot h0_c
+foot 235.0 195.0 -1.5
+wait 2
+shot h0_d
+end

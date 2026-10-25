@@ -1,0 +1,22 @@
+# №928 ориентиры: L6, пирс C7-6, взгляд на холм с обсерваторией (−388;228) с высоты 36 м над пирсом; кадры с ориентирами (hzlm 1) и без (hzlm 0)
+wait 12
+scene LOAD
+flag golevel 6
+wait 40
+flag cfgdefaults 1
+scene FOOT
+wait 6
+flag stop
+scene PIER
+foot -417 -50 0.1
+waitload 25
+wait 3
+cam -417 -30 -50 0.104 0.10 0.995
+wait 3
+flag hzlm 1
+wait 3
+shot lm_on
+flag hzlm 0
+wait 3
+shot lm_off
+end

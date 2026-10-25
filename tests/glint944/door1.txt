@@ -1,0 +1,28 @@
+### №944 разведка: рисунки входа L1 без миссии
+scene m0
+wait 3
+flag msn
+wait 3
+flag g944art
+wait 8
+flag g944doors
+flag g944list
+flag g944draw 0
+wait 1.2
+flag g944draw 1
+wait 1.2
+flag g944draw 2
+wait 1.2
+flag g944draw 3
+wait 1.2
+flag g944draw 4
+wait 1.2
+flag g944draw 5
+wait 1.2
+flag g944draw 6
+wait 1.2
+flag g944draw 7
+wait 1.2
+flag g944draw 8
+wait 1.2
+end

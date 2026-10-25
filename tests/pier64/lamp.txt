@@ -1,0 +1,22 @@
+# №935в (Небо): фонарь причала L6 вблизи, ночью
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -417 -50 0.1
+wait 10
+camrel 6 0.5 8 -1 0.35 -1
+wait 4
+shot e_a
+camrel -10 0.5 4 0.5 0.35 -0.5
+wait 3
+shot e_b
+camrel 0 3 -10 -0.2 0.3 1
+wait 3
+shot e_c
+cam off
+wait 1
+end

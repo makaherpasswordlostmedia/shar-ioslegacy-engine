@@ -1,0 +1,17 @@
+flag level 5
+wait 12
+flag cfgdefaults 1
+flag repair
+wait 4
+scene S5_STAND
+wait 11
+shot stand
+wait 1
+scene S5_DRIVE
+flag drive 20
+wait 16
+flag stop
+wait 3
+shot drive
+wait 1
+end

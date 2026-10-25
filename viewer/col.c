@@ -1845,13 +1845,64 @@ static float rayCapsule(const ColCyl *C, const float o[3], const float d[3]) {
   float pb[3] = {pa[0] + ba[0], pa[1] + ba[1], pa[2] + ba[2]}; float e1 = raySphere(pb, r, o, d); if (e1 < best) best = e1;
   return best;
 }
+// №922 (Роб, TEST58: «при появлении в машине перед домом камера в гараже, всё коричневое»): стена фасада гаража в коллизии кончается на 6,36 м, а крыша гаража есть только в картинке (без
+// коллизии); глаз камеры за машиной (9,5 м назад, 4,5 вверх) проходил над стеной и оказывался под видимой крышей. Для луча «опора -> глаз» (маска 128 в csRayFrac) высокие стены (верх не ниже
+// COL_TALL, то есть здания) продолжены вверх на colSegUp. Пешеходам и машинам — как было (colSegUp = 0 вне луча камеры). CAM_WALLUP_OLD=1 / flag camwallupold 1 — как было
+#define COL_TALL 4.f
+float colSegUp;
 static float raySeg(const ColSeg *G, const float o[3], const float d[3]) {   // забор: вертикальная стена по отрезку, обе стороны
   float s0 = (o[0] - G->a[0]) * G->n[0] + (o[2] - G->a[1]) * G->n[1], sd = d[0] * G->n[0] + d[2] * G->n[1];
   if (fabsf(sd) < 1e-9f) return 2.f;
   float t = -s0 / sd; if (t < 0.f || t > 1.f) return 2.f;
-  float y = o[1] + d[1] * t; if (y < G->y0 || y > G->y1) return 2.f;
+  float y = o[1] + d[1] * t; if (y < G->y0 || y > G->y1 + (G->y1 >= COL_TALL ? colSegUp : 0.f)) return 2.f;
   float px = o[0] + d[0] * t - G->a[0], pz = o[2] + d[2] * t - G->a[1], dx = G->b[0] - G->a[0], dz = G->b[1] - G->a[1];
   float u = px * dx + pz * dz; return (u < 0.f || u > dx * dx + dz * dz) ? 2.f : t;
+}
+// CAMPERF (ускорение камеры, дирижёр 23.10): 21 луч ближней плоскости камеры (csNearFree) лежат в одной пирамиде в 1–3 м. colRayFrac гнал каждый по своим клеткам
+// и считал rayTri (деление) для каждого треугольника клетки — ~10 мкс на луч. Пакет: клетки коробки всех лучей обходятся один раз (штамп — как в colRayFrac), треугольник
+// проверяется ящиком против коробки пакета и только потом лучами, чьи коробки его касаются (запас COL_RAYS_EPS на округление). Ответ каждого луча тот же, что у
+// colRayFrac: тот же набор задетых кусков (кусок лежит во всех клетках, которые покрывает), те же rayTri/rayBox/rayCapsule/raySeg. CAM_RAYS_OLD=1 / flag camraysold 1 — по одному лучу
+#ifndef COL_RAYS_EPS
+#define COL_RAYS_EPS 1e-3f   // красный контроль tests/camera/camperf_host.c: -DCOL_RAYS_EPS=-0.5f (ящик слишком тесный — лучи теряют куски)
+#endif
+void colRaysFrac(const ColWorld *w, int n, const float (*a)[3], const float (*b)[3], float *out) {
+  for (int i = 0; i < n; i++) out[i] = 1.f;
+  if (!w || !w->scr || n <= 0 || n > COL_RAYS_MAX) return;
+  ColScratch *S = w->scr; float d[COL_RAYS_MAX][3], lo[COL_RAYS_MAX][3], hi[COL_RAYS_MAX][3], ulo[3], uhi[3];
+  int gx0 = 1 << 30, gx1 = -(1 << 30), gz0 = 1 << 30, gz1 = -(1 << 30);
+  for (int i = 0; i < n; i++) {
+    for (int k = 0; k < 3; k++) { d[i][k] = b[i][k] - a[i][k]; lo[i][k] = fminf_(a[i][k], b[i][k]) - COL_RAYS_EPS; hi[i][k] = fmaxf_(a[i][k], b[i][k]) + COL_RAYS_EPS;
+      if (i == 0 || lo[i][k] < ulo[k]) ulo[k] = lo[i][k]; if (i == 0 || hi[i][k] > uhi[k]) uhi[k] = hi[i][k]; }
+    int x0 = (int)floorf((fminf_(a[i][0], b[i][0]) - 0.1f - w->ox) * w->inv), x1 = (int)floorf((fmaxf_(a[i][0], b[i][0]) + 0.1f - w->ox) * w->inv);
+    int z0 = (int)floorf((fminf_(a[i][2], b[i][2]) - 0.1f - w->oz) * w->inv), z1 = (int)floorf((fmaxf_(a[i][2], b[i][2]) + 0.1f - w->oz) * w->inv);
+    if (x0 < gx0) gx0 = x0; if (x1 > gx1) gx1 = x1; if (z0 < gz0) gz0 = z0; if (z1 > gz1) gz1 = z1;
+  }
+  if (gx0 < 0) gx0 = 0; if (gz0 < 0) gz0 = 0; if (gx1 >= w->W) gx1 = w->W - 1; if (gz1 >= w->H) gz1 = w->H - 1;
+  if (gx0 > gx1 || gz0 > gz1) return;
+  uint32_t o1 = w->ntri, o2 = o1 + w->nbox, o3 = o2 + w->ncyl, nprim = o3 + w->nseg;
+  uint16_t st = nextStamp(S, nprim);
+  for (int gz = gz0; gz <= gz1; gz++)
+    for (int gx = gx0; gx <= gx1; gx++) {
+      uint32_t c = (uint32_t)gz * (uint32_t)w->W + (uint32_t)gx;
+      for (uint32_t k = w->cellStart[c]; k < w->cellStart[c + 1]; k++) {
+        uint32_t t = w->refs[k] >> 29, i = w->refs[k] & 0x1fffffffu, gid = t == COL_TRI ? i : t == COL_BOX ? o1 + i : t == COL_CYL ? o2 + i : o3 + i;
+        if (S->stamp[gid] == st) continue;
+        S->stamp[gid] = st;
+        if (t == COL_TRI) {
+          const ColTri *T = &w->tri[i]; float tl[3], th[3];
+          for (int q = 0; q < 3; q++) { tl[q] = fminf_(T->a[q], fminf_(T->b[q], T->c[q])); th[q] = fmaxf_(T->a[q], fmaxf_(T->b[q], T->c[q])); }
+          if (tl[0] > uhi[0] || th[0] < ulo[0] || tl[1] > uhi[1] || th[1] < ulo[1] || tl[2] > uhi[2] || th[2] < ulo[2]) continue;
+          for (int r = 0; r < n; r++) {
+            if (tl[0] > hi[r][0] || th[0] < lo[r][0] || tl[1] > hi[r][1] || th[1] < lo[r][1] || tl[2] > hi[r][2] || th[2] < lo[r][2]) continue;
+            float h = rayTri(T, a[r], d[r]); if (h < out[r]) out[r] = h; }
+        } else for (int r = 0; r < n; r++) {
+          float h = 2.f;
+          if (t == COL_BOX) { if (w->box[i].pad != 1.f) h = rayBox(&w->box[i], a[r], d[r]); }
+          else if (t == COL_CYL) { if (w->cyl[i].pad[0] != 1.f) h = rayCapsule(&w->cyl[i], a[r], d[r]); }
+          else h = raySeg(&w->seg[i], a[r], d[r]);
+          if (h < out[r]) out[r] = h; }
+      }
+    }
 }
 float colRayFrac(const ColWorld *w, const float a[3], const float b[3], int foliage) {
   if (!w || !w->scr) return 1.f;

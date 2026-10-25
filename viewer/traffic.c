@@ -161,6 +161,7 @@ static int pedModel(Traffic *t, int i) {   // CHR1 внутри блоба пе�
   SkinModel *m = &t->peds[i];
   m->base = d; m->h = h; m->j = (const SkinJoint *)(d + h->offJoints); m->b = b; m->tex = x; m->c = c;
   m->blink = (const SkinBlinkKey *)(d + h->offBlink);
+  skinSlotOpt(m);   // №914
   static const char *cn[TRC_N] = {"npd_loco_walk", "npd_loco_run", "npd_loco_idle_rest", "npd_flail", "npd_get_up", "npd_dodge",
                                   "npd_cringe", "npd_fall_land"};
   for (int k = 0; k < TRC_N; k++) t->clip[i][k] = (signed char)skinFindClip(m, cn[k]);
@@ -248,6 +249,8 @@ int trafficInitMem(Traffic *t, void *data, unsigned size, int own) {
 
 #include "pfetch.h"
 __attribute__((weak)) void *(*pfTakeHook)(const char *path, unsigned *size);   // pfetch.h; слабый — хост-гейты линкуются без движка
+__attribute__((weak)) void *(*trAllocHook)(unsigned n); __attribute__((weak)) void (*trFreeHook)(void *p);   // №962: буфер traffic.shr (1,3 МБ) — в запас участка lva (main_levels.h); нет хука — куча, как раньше
+#define TR_FREE(p) do { if (trFreeHook) trFreeHook(p); else free(p); } while (0)
 // №875 (Роб 23.10: «NPC-машины встают прямо на пешеходном переходе»): трафик тормозит передним бампером у конца полосы (stopLine), а плитка с зеброй
 // и надписью STOP лежит перед концом полосы (L1: tex 106, задний край в 2–2,7 м). Бот на Маке (tools/scout/zebra.py) пишет рядом с traffic.shr
 // stop875.bin: 'STP1', n, {u16 дорога, u16 полоса, f32 отступ м}. Машина тормозит на линии, отодвинутой за задний край плитки (brakeLine); уже
@@ -295,19 +298,19 @@ int trafficLoad(Traffic *t, const char *path) {
   if (!d) {
   SceUID fd = sceIoOpen(path, PSP_O_RDONLY, 0); if (fd < 0) return -1;
   size = (unsigned)sceIoLseek32(fd, 0, PSP_SEEK_END); sceIoLseek32(fd, 0, PSP_SEEK_SET);
-  d = memalign(64, size);
-  if (!d || sceIoRead(fd, d, size) != (int)size) { sceIoClose(fd); free(d); return -1; }
+  d = trAllocHook ? (unsigned char *)trAllocHook(size) : (unsigned char *)memalign(64, size);
+  if (!d || sceIoRead(fd, d, size) != (int)size) { sceIoClose(fd); TR_FREE(d); return -1; }
   sceIoClose(fd); }
 #endif
   int r = trafficInitMem(t, d, size, 1);
-  if (r) { free(d); t->base = 0; t->own = 0; free(t->park); t->park = 0; }
+  if (r) { TR_FREE(d); t->base = 0; t->own = 0; free(t->park); t->park = 0; }
   else trStopLoad(path, t->hd->nRoad);   // №875: стоп-линии до зебр (бот tools/scout/zebra.py)
   return r;
 }
 static void trFarWheelsFree(void);
 void trafficFree(Traffic *t) {
   free(t->park); t->park = 0; t->npark = 0; trFarWheelsFree();   // №877: сетки дальних колёс — по моделям этого уровня
-  if (t->own) free(t->base);
+  if (t->own) TR_FREE(t->base);
   t->base = 0; t->hd = 0;
 }
 
@@ -1698,6 +1701,8 @@ void trafficDrawCars(Traffic *t, const float eye[3], int (*vis)(const float bb[6
 #endif
 #ifndef SKIN_HOST
 extern int trafficFrameGov;   // main_state.h frameGovStep: 1 — перегрузка кадра, дальние позы реже
+extern int sceGuCheckList(void);
+unsigned trfProf, trfPoseUs, trfDrawUs, trfPoseN, trfWords;   // №914 служебно: разложение цены пешеходов (смоук: main_loop.h ставит trfProf = smkOn)
 void trafficDrawPeds(Traffic *t, const float eye[3], int (*vis)(const float bb[6])) {
   t->drawnPeds = 0;
   if (!t->hd) return;
@@ -1712,10 +1717,14 @@ void trafficDrawPeds(Traffic *t, const float eye[3], int (*vis)(const float bb[6
 #else
     // Правка Роба 500: три яруса — до 25 м каждый кадр, 25..45 м через кадр, дальше 45 м (на экране ~10 px высотой) каждый 4-й;
     // B7 потолок кадра: при trafficFrameGov средний ярус тоже каждый 4-й
-    if (d2 < 25.f * 25.f || (d2 < 45.f * 45.f ? !(e->poseTick++ & (trafficFrameGov ? 3 : 1)) : !(e->poseTick++ & 3))) skinPose(&e->sp);
+    unsigned pu0_ = trfProf ? sceKernelGetSystemTimeLow() : 0;
+    if (d2 < 25.f * 25.f || (d2 < 45.f * 45.f ? !(e->poseTick++ & (trafficFrameGov ? 3 : 1)) : !(e->poseTick++ & 3))) { skinPose(&e->sp); trfPoseN++; }
 #endif
+    unsigned pu1_ = trfProf ? sceKernelGetSystemTimeLow() : 0; trfPoseUs += pu1_ - pu0_;
     ScePspFMatrix4 m; skinPlace(&m, e->x, e->y + skinFootLift(e->sp.m, e->sp.clip), e->z, e->h);   // №510: стопы на полу
-    skinDraw(&e->sp, &m); t->drawnPeds++;
+    unsigned pw0_ = trfProf ? (unsigned)sceGuCheckList() : 0;
+    skinToonNpc(1); skinDraw(&e->sp, &m); skinToonNpc(0); t->drawnPeds++;   // №931: контур прохожего тоньше с расстоянием (skin.c)
+    if (trfProf) { trfDrawUs += sceKernelGetSystemTimeLow() - pu1_; trfWords += ((unsigned)sceGuCheckList() - pw0_) / 4u; }
   }
 }
 #endif

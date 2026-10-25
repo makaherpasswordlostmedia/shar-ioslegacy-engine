@@ -1,0 +1,35 @@
+# №957б (Небо): где три арки причала L6 — снимки с двух сторон у каждого кандидата
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -414 -20 3.14
+wait 8
+cam -414 -62 -18 0 0.12 -1
+wait 4
+shot a35_n
+cam -414 -62 -76 0 0.12 1
+wait 3
+shot a35_s
+foot -484 120 3.14
+wait 8
+cam -484 -62 128 0 0.15 1
+wait 4
+shot a36_n
+cam -484 -58 178 0 0.15 -1
+wait 3
+shot a36_s
+foot -316 -245 0
+wait 8
+cam -316 -50 -245 0 0.15 -1
+wait 4
+shot a48_n
+cam -316 -50 -300 0 0.15 1
+wait 3
+shot a48_s
+cam off
+wait 1
+end

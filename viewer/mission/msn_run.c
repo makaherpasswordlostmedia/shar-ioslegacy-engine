@@ -153,11 +153,15 @@ void msn_level_start(MsnRuntime *rt)
             if (rt->host.event) rt->host.event(rt->host.user, &e);
         }
     }
-    {
-        int s = next_story(rt, -1);
-        if (s >= 0) msn_start_mission(rt, s, 0);
-        else { rt->status = MSN_LEVEL_DONE; ev(rt, MSN_EV_LEVEL_COMPLETE, 0, 0, NULL, NULL); }
-    }
+    if (rt->defer_first) { rt->defer_first = 0; return; }   /* №943: стартовую цель уровня не ставим — выбранная миссия стартует сама (msn_start_first, если не вышло) */
+    msn_start_first(rt);
+}
+
+void msn_start_first(MsnRuntime *rt)
+{
+    int s = next_story(rt, -1);
+    if (s >= 0) msn_start_mission(rt, s, 0);
+    else { rt->status = MSN_LEVEL_DONE; ev(rt, MSN_EV_LEVEL_COMPLETE, 0, 0, NULL, NULL); }
 }
 
 /* ------------------------------------------------------------------ stage entry */
@@ -546,6 +550,20 @@ void msn_abort(MsnRuntime *rt)
     reg_clear_mission(rt);
     if ((m->flags & MSN_MF_BONUS) && rt->story >= 0) { msn_start_mission(rt, rt->story, 0); return; }
     msn_start_mission(rt, rt->cur, 0);           /* back to free roam: the mission's intro phase from the start */
+}
+
+void msn_switch_clear(MsnRuntime *rt)
+{
+    ev(rt, MSN_EV_MARKER_CLEAR, 0, 0, NULL, NULL);
+    ev(rt, MSN_EV_CLEANUP, 0, 0, NULL, NULL);
+    reg_clear_mission(rt);
+}
+
+int msn_reg_mission_count(const MsnRuntime *rt)
+{
+    int i, n = 0;
+    for (i = 0; i < rt->nreg; i++) if (!rt->reg[i].level) n++;
+    return n;
 }
 
 int msn_start_bonus(MsnRuntime *rt, int mission)

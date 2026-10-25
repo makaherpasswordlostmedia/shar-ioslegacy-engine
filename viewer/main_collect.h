@@ -233,19 +233,20 @@ static void gagSound(int g) {
 // (0 Off / 1 On; по умолчанию On — Роб просил этот вид; действует в режиме мультика). В старых файлах короче — по умолчанию
 // ver 8 (№830, Роб 18.10: «виньетка нравится, но слишком мощная — в настройках сила Old TV»): oldTv — сила 0..10 (Off, 10 %..100 %; 100 % — как ver 7 On),
 // по умолчанию 5 (50 %, до слова Роба о своём числе); в файле ver 7 On (1) — 5, Off (0) — 0
+// ver 10 (№951): + ink — строка Ink на странице CARTOON: 0 Indigo / 1 Black / 2 Tone (skin.h skinInkAbgr); в старых файлах короче — INK951_DEF
 // №794 (Роб 18.10, настройки по умолчанию из меню на PSP): Cartoon On, Line Width 4, Eye Lines Soft, Texture Detail 45 %, Tree Shadows Off — для нового файла;
 // у кого settings.bin уже есть — его значения. DEFAULTS794_OLD=1 — прежние значения по умолчанию
 #ifndef DEFAULTS794_OLD
 #define DEFAULTS794_OLD 0
 #endif
 typedef struct { char magic[4]; int ver, music, effects, vehicle, voice, radar, tutorial; unsigned tutSeen, movies; int colour, invertCam, toon, treeShadow;
-                 int contrast, lineWidth, eyeLines, toonTex, drawDist, oldTv; } Settings;
+                 int contrast, lineWidth, eyeLines, toonTex, drawDist, oldTv, texturesOn, ink; } Settings;   // ver 9 (№912): texturesOn — строка Textures на PICTURE: 0 Off — мир без текстур (заливка, мультик), 1 On — родные текстуры
 // №794 (сверено 19.10 с settings.bin Роба на PSP: насыщенность 1,56, контраст 1,50): значения по умолчанию для нового файла. DEFAULTS794B_OLD=1 — 1,36/1,00
 #ifndef DEFAULTS794B_OLD
 #define DEFAULTS794B_OLD 0
 #endif
-static Settings cfg = {{'S', 'H', 'S', 'T'}, 8, 1000, 1000, 1000, 1000, 1, 1, 0, 1, DEFAULTS794B_OLD ? TONE_SAT_DEF : 156, 1, DEFAULTS794_OLD ? 0 : 1, 0, DEFAULTS794B_OLD ? 100 : 150,
-                       DEFAULTS794_OLD ? 5 : 4, 1, DEFAULTS794_OLD ? 35 : 45, 1, 5};
+static Settings cfg = {{'S', 'H', 'S', 'T'}, 10, 1000, 1000, 1000, 1000, 1, 1, 0, 1, DEFAULTS794B_OLD ? TONE_SAT_DEF : 156, 1, DEFAULTS794_OLD ? 0 : 1, 0, DEFAULTS794B_OLD ? 100 : 150,
+                       DEFAULTS794_OLD ? 5 : 4, 1, DEFAULTS794_OLD ? 35 : 45, 1, 5, 0, INK951_DEF};
 static int toonDevFile;   // №428: служебный файл toon рядом с EBOOT — режим включён поверх настройки игрока
 static int camTurnOld, boomCamOld;   // правки 362 / 361: служебное, прежнее — L/R без инверсии / камера держит горящую машину (красный контроль)
 static void cfgSave(void);
@@ -445,10 +446,70 @@ static int grandpaGlassesOld = GRANDPA_GLASSES_OLD;  // №518: отрицате
 #ifndef FX_GLINT846_OLD
 #define FX_GLINT846_OLD 0
 #endif
+static const char *gq944Site;   // №957б служебно: кто поставил квад в очередь бликов (spritelight.h)
+#ifndef NEONARCH957_OLD
+#define NEONARCH957_OLD 0
+#endif
+#define NEONARCH957_MAX 3.f   // м: свечение предмета со сложением крупнее — арка, вывеска (монета 2 м, карточка и приколы мельче); не рисуется и бликом не становится
+static int neonArch957 = !NEONARCH957_OLD;
+// №957б (Роб 25.10: «арки причала L6 — въезд, выезд, центр «Спрингфилд»: на неоне стоит блик «блинк-блинк» (№944), убрать»): неон арки — объект набора предметов (collNear*), и его квад-свечение
+// шёл в блик как свечение предмета (№839) без предела по размеру (у стейтпропов уровня предел с №885: 2 м). Теперь у предметов тот же приём: крупный квад со сложением (не огни заграждений PVIS,
+// не эффекты героя) — без свечения вовсе, сама вывеска — куски города. NEONARCH957_OLD=1 / «flag neonarch957 0» / файл neonarch957old — как было
+static int neonArchBig957(const float *v, unsigned bfl) {
+  if (!neonArch957 || ((bfl >> 8) & 0xFF) != 2 || (bfl & SP_BILL_PVIS)) return 0;
+  float w = (v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]), h = (v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]);
+  return (w > h ? w : h) > NEONARCH957_MAX * NEONARCH957_MAX;
+}
 static void glowQuadQ(const float *v, unsigned abgr, float ph);   // №839: spritelight.h (подключается ниже)
 static void glowGlintFlush(float ex, float ey, float ez);
+static void g944Bill(const char *site, int blm, int bt, const float *v, unsigned col, unsigned inst, unsigned b);   // №944 служебно: перепись картинок-квадов (spritelight.h)
+// Разбор L3/L5 (журнал тура TEST55, COLLPROF inst 0,69 мс PSP на причале L3 при 111 экземплярах, на L5 0,11): collDraw два раза за кадр (тела и билборды) перебирает ВСЕ экземпляры набора коллекции
+// (комната, живость, дальность) — рисуется из них единицы. Теперь список экземпляров в дальности + COLL_NEAR_MARGIN м от глаза строится раз в COLL_NEAR_AGE кадров или при сдвиге глаза на
+// COLL_NEAR_MOVE м, сменой комнаты и дальности (отдельный список на каждую из двух: maxD и 60 м); экземпляры, что движутся сами (взмах ноги, удар током, молнии), в список входят всегда; порядок —
+// по номеру, как в полном переборе. Рисуется тот же набор: условия room/spDrawable проверяются у каждого кандидата каждый кадр. «flag collverify 1» — сверка с полным перебором (строка COLLVER, гейт
+// tests/collnear913). COLLNEAR913_OLD=1 — как было
+#ifndef COLLNEAR913_OLD
+#define COLLNEAR913_OLD 0
+#endif
+#ifndef COLL_NEAR_MARGIN
+#define COLL_NEAR_MARGIN 14.f
+#endif
+#ifndef COLL_NEAR_MOVE
+#define COLL_NEAR_MOVE 6.f
+#endif
+#ifndef COLL_NEAR_AGE
+#define COLL_NEAR_AGE 10
+#endif
+#define COLL_NEAR_MAX 1024
+typedef struct { const StateProps *sp; unsigned ninst, n, age; int room; float maxD, ex, ez; unsigned short idx[COLL_NEAR_MAX]; int valid; } CollNear;
+static CollNear collNear[2]; static CollNear *collNearCur; static int collVerify; static unsigned collVerFrames, collVerMiss, collNearBuilds, collNearHits;
+static void collNearVerify(const StateProps *sp, int room, float maxD, float ex, float ez, const CollNear *c) {   // служебное: все экземпляры, что рисует полный перебор, обязаны быть в списке
+  static unsigned char in_[COLL_NEAR_MAX]; if (sp->ninst > COLL_NEAR_MAX) return; memset(in_, 0, sp->ninst);
+  if (c->valid) for (unsigned k = 0; k < c->n; k++) in_[c->idx[k]] = 1; else memset(in_, 1, sp->ninst);
+  unsigned miss = 0; for (unsigned i = 0; i < sp->ninst; i++) if (!in_[i] && collectInstRoom(&coll, i) == room && spDrawable(sp, i, ex, ez, maxD)) miss++;
+  collVerFrames++; collVerMiss += miss;
+}
+static void collNearBuild0(const StateProps *sp, int room, float maxD, float ex, float ez, CollNear *c);
+static void collNearBuild(const StateProps *sp, int room, float maxD, float ex, float ez) {
+  CollNear *c = &collNear[maxD > 60.5f ? 0 : 1]; collNearCur = c;
+  collNearBuild0(sp, room, maxD, ex, ez, c);
+  if (collVerify) collNearVerify(sp, room, maxD, ex, ez, c);
+}
+static void collNearBuild0(const StateProps *sp, int room, float maxD, float ex, float ez, CollNear *c) {
+  if (COLLNEAR913_OLD || sp->ninst > COLL_NEAR_MAX) { c->valid = 0; return; }
+  float dx = ex - c->ex, dz = ez - c->ez;
+  if (c->valid && c->sp == sp && c->ninst == sp->ninst && c->room == room && c->maxD == maxD && c->age < COLL_NEAR_AGE && dx * dx + dz * dz <= COLL_NEAR_MOVE * COLL_NEAR_MOVE) { c->age++; collNearHits++; return; }
+  float lim = maxD + COLL_NEAR_MARGIN; lim *= lim; unsigned n = 0;
+  for (unsigned i = 0; i < sp->ninst; i++) {
+    int fx_ = (int)i == coll.kickFx || (int)i == coll.shockFx || (coll.bolt0 >= 0 && i >= (unsigned)coll.bolt0 && i < (unsigned)coll.bolt0 + coll.nbolt);
+    const SpRun *r = &sp->run[i]; float ax = r->x - ex, az = r->z - ez;
+    if (fx_ || ax * ax + az * az <= lim) c->idx[n++] = (unsigned short)i; }
+  c->n = n; c->sp = sp; c->ninst = sp->ninst; c->room = room; c->maxD = maxD; c->ex = ex; c->ez = ez; c->age = 0; c->valid = 1; collNearBuilds++;
+}
+static unsigned collNearN(const StateProps *sp) { return !collNearCur->valid ? sp->ninst : collNearCur->n; }
+static unsigned collNearAt(const StateProps *sp, unsigned k) { (void)sp; return !collNearCur->valid ? k : collNearCur->idx[k]; }
 static void collDraw(float ex, float ey, float ez, int inR, float t) {
-  if (!haveColl || !coll.haveSp) return;
+  if (!haveColl || !coll.haveSp) return; gloSite = 3;
   static unsigned cpN; static double cpA[4]; unsigned cp0 = smkOn ? sceKernelGetSystemTimeLow() : 0, cp1 = 0, cp2 = 0;   // COLLPROF: гэг-скины / карточки-осы-сцены / билборды, мс на кадр
   StateProps *sp = &coll.sp; int room = inR ? collectRoomId(roomName()) : -1;
   float maxD = inR ? 80.f : drawDist * .92f;
@@ -463,7 +524,8 @@ static void collDraw(float ex, float ey, float ez, int inR, float t) {
   if (gagSkinDraw(&coll, room, ex, ez, maxD)) resetState();
   #endif
   if (smkOn) cp1 = sceKernelGetSystemTimeLow();
-  for (unsigned i = 0; i < sp->ninst; i++) {
+  collNearBuild(sp, room, maxD, ex, ez);   // разбор L3/L5: список близких экземпляров (раз в несколько кадров)
+  for (unsigned ii_ = 0; ii_ < collNearN(sp); ii_++) { unsigned i = collNearAt(sp, ii_);
     if (collectInstRoom(&coll, i) != room || !spDrawable(sp, i, ex, ez, maxD)) continue;
 #ifndef GAG_SKIN_OLD
     int gag = collectGagOf(&coll, i);
@@ -491,7 +553,8 @@ static void collDraw(float ex, float ey, float ez, int inR, float t) {
   }
   if (smkOn) cp2 = sceKernelGetSystemTimeLow();
   int nb = 0;   // билборды (свечение карточки, лучи осы, огонь/свет сцен): как у стейтпропов уровня
-  for (unsigned i = 0; i < sp->ninst; i++) {
+  collNearBuild(sp, room, 60.f, ex, ez);
+  for (unsigned ii_ = 0; ii_ < collNearN(sp); ii_++) { unsigned i = collNearAt(sp, ii_);
     if (collectInstRoom(&coll, i) != room || !spDrawable(sp, i, ex, ez, 60.f)) continue;
 #ifndef GAG_SKIN_OLD
     int gag = collectGagOf(&coll, i);
@@ -504,13 +567,14 @@ static void collDraw(float ex, float ey, float ez, int inR, float t) {
       // №846 (Роб 19.10, TEST39: «при ударе у героя блик, как будто удар магический — вместо взмаха подгрузился блик»): в этом же наборе живут
       // эффекты героя — взмах ноги (kickFx, 14 кадров диска), удар током (shockFx) и молнии (bolt) — их квады сложением остаются картинкой, бликом — только свечения предметов
       int fx_ = (int)i == coll.kickFx || (int)i == coll.shockFx || (coll.bolt0 >= 0 && i >= (unsigned)coll.bolt0 && i < (unsigned)coll.bolt0 + coll.nbolt);
-      if (!GLOW_GLINT_OLD && ((bfl >> 8) & 0xFF) == 2 && (FX_GLINT846_OLD || !fx_)) { glowQuadQ(v, col, (float)i * .41f + (float)b); continue; }   // №839: свечение предмета — бликом
+      if (!fx_ && neonArchBig957(v, bfl)) continue;   // №957б: арка, вывеска — без свечения
+      if (!GLOW_GLINT_OLD && ((bfl >> 8) & 0xFF) == 2 && (FX_GLINT846_OLD || !fx_)) { gq944Site = "coll"; glowQuadQ(v, col, (float)i * .41f + (float)b); continue; }   // №839: свечение предмета — бликом
       if (!nb++) {
         ScePspFMatrix4 I; memset(&I, 0, sizeof I); I.x.x = I.y.y = I.z.z = I.w.w = 1.f;
         sceGuSetMatrix(GU_MODEL, &I); sceGuTexScale(1.f, 1.f);
         sceGuDisable(GU_ALPHA_TEST); sceGuEnable(GU_BLEND); sceGuDepthMask(GU_TRUE); curFlags = -1; setCull(0);
       }
-      int blm = (bfl >> 8) & 0xFF;
+      int blm = (bfl >> 8) & 0xFF; g944Bill("coll_bill", blm, bt, v, col, i, b);   // №944
       if (blm == 2) sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xffffffff);
       else if (blm == 3) sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_SRC_ALPHA, GU_FIX, 0, 0xffffffff);
       else sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);

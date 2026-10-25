@@ -567,6 +567,8 @@ static void steer(Homer *H, const HomerInput *in, float dt, int allowMove) {
   float mx = in ? in->mx : 0.f, my = in ? in->my : 0.f;
   float mag = sqrtf(mx * mx + my * my); if (mag > 1.f) { mx /= mag; my /= mag; mag = 1.f; }
   if (!allowMove) mag = 0.f;
+  if (H->steerGap > .1f) H->neutralT = 9.f;   // №920: steer не звали (машина, пинок, падение) — стик «в нуле давно», как до правки
+  H->steerGap = 0.f;
   // направление: курс камеры в момент, когда стик изменился (как в оригинале: держишь — мир не крутится с камерой)
   // №836 (Роб 18.10: «после перебивки камеры — выход из будки, из дома — начинаешь бежать, а направление уезжает за камерой; управление должно
   // остаться таким, как было начато относительно вида, а когда камера выровнялась и меняешь направление — уже от вида»): курс вида берётся,
@@ -576,16 +578,33 @@ static void steer(Homer *H, const HomerInput *in, float dt, int allowMove) {
 #define STEER836_OLD 0
 #endif
 #define STEER_RECAP_A .61f   // рад ≈ 35°
+#define STEER_SWEEP_T 1.f     // №947б: окно серии смен угла стика
   if (in && STEER836_OLD && (fabsf(mx - H->heldX) > .25f || fabsf(my - H->heldY) > .25f || (mag > 0.f && H->heldX == 0.f && H->heldY == 0.f))) {
     H->frame = in->camYaw; H->heldX = mx; H->heldY = my;
   }
   if (in && !STEER836_OLD && mag > 0.f) {
     int start_ = H->heldX == 0.f && H->heldY == 0.f;
     float da_ = start_ ? 0.f : fabsf(wrapPi(atan2f(mx, my) - atan2f(H->heldX, H->heldY)));
-    if (start_ || (da_ > STEER_RECAP_A && mag > .3f && !homerCamBusy)) { H->frame = in->camYaw; H->heldX = mx; H->heldY = my; }
-    else if (da_ > STEER_RECAP_A && mag > .3f) { H->heldX = mx; H->heldY = my; }   // переход камеры: новое направление стика — от прежнего вида
+    // №916 (Роб: «подходим к машине или к двери — камера мечется, и от этого меняется управление; как шли, так и идём, просто меняется point of view»):
+    // пока стик не отпущен, кадр управления остаётся тем, с которого начато движение; смена угла стика поворачивает ход внутри этого кадра, а не берёт вид
+    // заново (вид к тому времени уже ушёл за курсом ходьбы, обошёл кузов, встал у двери). Новый кадр — только когда стик отпущен и тронут заново.
+    // CTRL916_OLD=1 / flag ctrl916old 1 — прежнее правило №836 (смена угла стика > 35° берёт текущий вид)
+    // №947б: стик, ведомый дугой через центр (разворот бегом), даёт серию «смен угла» подряд; каждая брала бы вид, уже ушедший за курсом Гомера (камера идёт за ним), и ход уходил боком.
+    // Вид берётся один раз на серию: пока с прошлого взятия не прошло STEER_SWEEP_T, новый угол только запоминается
+    H->sweepT = fmaxf(0.f, H->sweepT - dt);
+    if (start_) { if (!homerFlipHold) H->frame = in->camYaw; H->heldX = mx; H->heldY = my; }   // №947б: перескок камеры у стены (игра) — кадр прежний
+    else if (homerCtrl916Old && mag > .3f) {
+      if (H->sweepT > 0.f) { H->heldX = mx; H->heldY = my; }   // серия: угол стика только запоминается
+      else if (da_ > STEER_RECAP_A) { if (!homerCamBusy) { H->frame = in->camYaw; H->sweepT = STEER_SWEEP_T; } H->heldX = mx; H->heldY = my; }   // камера игры (homerCamBusy) — вид не берём
+    }
   }
-  if (mag == 0.f) { H->heldX = H->heldY = 0.f; }
+  // №920 (друг Роба: «прыжки по платформам у стены, камера уходит от стены, и направление стика смещается, особенно если держать стик непрерывно»): стик, который
+  // «держат непрерывно», на деле на 0,05–0,15 с уходит в ноль (палец на ✕, дрожь ниппеля в мёртвой зоне); кадр управления сбрасывался, и ход брался от нынешнего вида,
+  // а вид у стены как раз ушёл за курсом (проверка: перерыв 0,1 с на 1-й секунде отхода камеры — курс 180° -> −146° за кадр). Кадр держится ещё STEER_NEUTRAL_T после того,
+  // как стик ушёл в ноль; настоящее «отпустил и тронул заново» (дольше) берёт вид, как раньше. CTRL916_OLD=1 / flag ctrl916old 1 — сброс сразу
+#define STEER_NEUTRAL_T .3f
+  if (mag == 0.f) { if (homerCtrl916Old || (H->neutralT += dt) > STEER_NEUTRAL_T) { H->heldX = H->heldY = 0.f; } }
+  else H->neutralT = 0.f;
   float dir = H->frame - atan2f(mx, my);
   float top = H->grounded ? ((in && in->dash) ? HOMER_RUN : HOMER_WALK) : HOMER_AIR_SPEED;   // ○ зажат — бег (ControllerPS2.pag)
   float target = mag * top;
@@ -904,7 +923,7 @@ static void homerUpdateBody(Homer *H, const ColWorld *w, const HomerCar *car, co
   }
   const HomerCar *solid = (car && car->ok && homerOnFoot(H)) ? car : NULL;
   if (car && car->ok) H->camCar = *car; else H->camCar.ok = 0;   // для камеры пешком
-  H->st += dt;
+  H->st += dt; H->steerGap += dt;
   int wantsMove = in && (in->mx * in->mx + in->my * in->my) > .01f;
 
   if (H->carHitCool > 0.f) H->carHitCool -= dt;
@@ -1160,6 +1179,12 @@ static float carClear(const HomerCar *c, float x, float y, float z) {   // ра�
 #define CAM_WALL_PS2_OLD 0
 #endif
 int homerCamPs2Old = CAM_WALL_PS2_OLD;
+// №916в (рывок глаза пешком, L6 x 73 z −22: перескок камеры у стены по записи PS2 шёл в два кадра, глаз прыгал дважды, 3,5 и 5,3 м; на PS2 перескок один): курс глаза в кадре перескока уже новый,
+// камера безопасного глаза (camSafeEye) по счётчику homerCamFlipN режет перелёт и идёт к желаемому глазу сразу. CAM_FLIP1_OLD=1 / flag camflip1old 1 — как было (красный контроль)
+#ifndef CAM_FLIP1_OLD
+#define CAM_FLIP1_OLD 0
+#endif
+int homerCamFlipOld = CAM_FLIP1_OLD, homerCamFlipN;
 #ifndef HOMER_FLIP_STAND_OLD
 #define HOMER_FLIP_STAND_OLD 0
 #endif
@@ -1170,6 +1195,14 @@ int homerFlipStandOld = HOMER_FLIP_STAND_OLD;
 #ifndef HOMER_EXITYAW_OLD
 #define HOMER_EXITYAW_OLD 0
 #endif
+#ifndef CTRL916_OLD
+#define CTRL916_OLD 1   // №947б (Роб 25.10): пешком управление как до №916/№920 — стик относительно ТЕКУЩЕГО вида, разворот назад бежит назад. 0 / flag ctrl947old 1 — кадр держится, пока стик не отпущен (№916/№920)
+#endif
+int homerCtrl916Old = CTRL916_OLD;   // №916; с №947б 1 по умолчанию
+#ifndef HOMER_FLIPBUSY_OLD
+#define HOMER_FLIPBUSY_OLD 0
+#endif
+int homerFlipHold, homerFlipBusyOld = HOMER_FLIPBUSY_OLD;   // №947б: 1 — перескок камеры у стены не замораживает курс управления
 int homerExitYawOld = HOMER_EXITYAW_OLD; int homerCtrlFreezeOld = HOMER_CTRL_FREEZE_OLD; float homerCtrlYaw; int homerCtrlOn, homerCamBusy;
 int homerCamWallOff;   // служебное (красный контроль tests/camera): камера пешком без обхода стен
 float homerCamDist = HOMER_CAM_DIST, homerCamEyeH = HOMER_CAM_EYE_H, homerCamLookH = HOMER_CAM_LOOK_H;   // красный контроль правки 167: прежние 4.2 / 1.9 / 1.2
@@ -1268,7 +1301,8 @@ static void homerCameraAt(Homer *H, const ColWorld *w, float dt, float eye[3], f
         // камера +14° -> +159° за 0,2 с). Перескок только при ходьбе (скорость > 0,5 м/с). HOMER_FLIP_STAND_OLD=1 / flag homerflipstandold 1 — как было
         if (fr < 1.f && d < 1.0f && H->camFlipT > 2.f && (homerFlipStandOld || H->speed > .5f)) {   // упор: другая сторона свободна на 4 м — перескок (курс камеры +180°)
           float Eo[3] = {H->x + fx * 4.f, ey + .9f, H->z + fz * 4.f}; float fo = colRayFrac(w, T, Eo, 0);
-          if (fo >= 1.f) { H->camYaw = wrapPi(H->camYaw + 3.14159265f); H->camPullD = 4.f; H->camRise = .9f; H->camFlipT = 0.f; d = 4.f; fr = 1.f; }
+          if (fo >= 1.f) { H->camYaw = wrapPi(H->camYaw + 3.14159265f); H->camPullD = 4.f; H->camRise = .9f; H->camFlipT = 0.f; d = 4.f; fr = 1.f;
+            homerCamFlipN++; if (!homerCamFlipOld) { fx = -fx; fz = -fz; } }   // №916в: перескок целиком в этом кадре (раньше глаз шёл по старому курсу ещё кадр: два рывка 3,5 и 5,3 м вместо одного)
         }
         if (d < 1.0f) d = 1.0f;
         hits = hk; rise = 0.f; got = d; break;

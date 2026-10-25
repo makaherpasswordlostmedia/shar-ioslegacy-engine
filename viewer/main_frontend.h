@@ -35,6 +35,37 @@ static int toLevel;         // уровень пройден: следующий
 // (mvMissionSelectStartRow); msPendDev — запись-перенос с меткой DEV (правка 335: сюжетные уровня, кроме последней, пройдены);
 // msDevSession — игра загружена из DEV SAVE (уровни MISSION SELECT открыты все, чьи наборы лежат рядом с EBOOT)
 static int msPendRow = -1, msPendDev, msDevSession;
+// №893 (Роб 23.10, Барт L6: «при переключении миссий один раз не было загрузки с газетой»): MISSION SELECT внутри уровня стартовал миссию без загрузки, газета шла
+// только если старт переносил игрока дальше 80 м от камеры (msnTeleport) — «плавающее» поведение: близкие миссии, текущая и соседние шли без неё. Правило: выбор миссии
+// в MISSION SELECT — всегда газета (перенос ближе 80 м и отсутствие переноса — тоже). msNewsPend — кадры ожидания переноса от миссии (0 — нет выбора), по ним же
+// запасной вариант без переноса. MS_NEWS_OLD=1 — прежнее (газета только при переносе дальше 80 м)
+#ifndef MS_NEWS_OLD
+#define MS_NEWS_OLD 0
+#endif
+#define MS_NEWS_WAIT 6   // кадров ждём перенос миссии (он приходит в кадре выбора или следующем), потом газета на месте игрока
+static int msNewsPend;
+// №894 (Роб 23.10: «Mission Select в паузе открылся в чужой рамке: листать ◄ ► нельзя, виден только текущий уровень, шрифт чужой и кривой»): это запасной список
+// (msn_view.c mvMissionSelect: нет пакета экрана — selRows 0): пакет pextra.shr не открылся (чтение / память после череды загрузок и переносов), результат uiScrOpen
+// не проверялся, повторов не было. Теперь: до 3 повторов с освобождением (готовый пакет будки, ожидание загрузчика, пауза), каждая неудача — строка в журнал и
+// чёрный ящик (op fail) с кодом и памятью. MS_OPEN_OLD=1 — прежнее (одна попытка без проверки)
+#ifndef MS_OPEN_OLD
+#define MS_OPEN_OLD 0
+#endif
+static int msOpenFail;   // служебное «flag msopenfail N»: следующие N попыток открыть пакет MISSION SELECT отказывают (-3) — проверка повторов и запасного списка (гейт tests/menu896)
+static int msOpenTry(const char *fn) { if (msOpenFail > 0) { msOpenFail--; uiScrClose(); return -3; } return uiScrOpen(fn); }
+static int msPackOpen(const char *fn) {
+  int rc = msOpenTry(fn);
+  for (int t = 0; rc && !MS_OPEN_OLD && t < 3; t++) {
+    char s_[112]; snprintf(s_, sizeof s_, "mssel_open_rc=%d_try=%d_lv=%d_free=%.1fM", rc, t, gameLevel, smokeHeapFree());
+    bbOp("fail", s_, 1);
+    if (smkOn) { snprintf(s_, sizeof s_, "MSNSEL openfail rc=%d try=%d level=%d free=%.2f t=%.1f\n", rc, t, gameLevel, smokeHeapFree(), smkT); smkWrite(s_); }
+    if (t == 0) uiScrWarmClear();                                             // пакет будки в куче — первым
+    { LdWait lw_ = {0}; lqn = 0; __asm__ volatile("" ::: "memory"); while (loaderBusy) { loaderWaitStep(&lw_, "busy", 0, 0); sceKernelDelayThread(1000); } }   // загрузчик — на месте
+    if (t == 2) sceKernelDelayThread(100000);
+    rc = msOpenTry(fn);
+  }
+  return rc;
+}
 static int saveBlocked;   // «flag nosave» среди первых flag сценария (или flag nosave 1): тур не пишет settings.bin и сохранения (савы Роба не трогать)
 static int playerFirst;   // №автотур «ИГРОК»: сценарий начинается с «flag player» — режим игрока с загрузки (титул, меню, RESUME как у игрока); press/wait/shot работают
 #define svcStartP() (svcStart() && !playerFirst)
@@ -752,7 +783,10 @@ static void phoneSummonCar(int k, const char *name) {
 // возраст (с), кадров с концом списка GE за бюджетом. Разбор — tests/crash_school/check.py, формат — tools/bb_check.py
 #define BB_PERIOD 1.f
 #define BB_N 40
-#define BB_LINE 448   // 04.10: поля io/gg (259) и fpe (252) — строка ящика подошла к 320; + mus (279) — до 430
+#ifndef BBICON958_OLD
+#define BBICON958_OLD 0   // №958б: 1 — без поля ico в строке ящика и без строк ICON (прежнее)
+#endif
+#define BB_LINE (BBICON958_OLD ? 448 : 512)   // 04.10: поля io/gg (259) и fpe (252) — строка ящика подошла к 320; + mus (279) — до 430
 #define BB_EVERY 2.f    // запись на карту не реже раза в 2 с (фоном): при вылете в файле последние секунды до него
 #define BB_FILE (BB_N * BB_LINE + 1024)   // длина файла на карте: шапка (до 1 КБ) + кольцо, хвост — пробелы (без усечения)
 static char bbRing[BB_N][BB_LINE]; static unsigned bbHead, bbCnt, bbN; static float bbT, bbClock, bbLastW = -1e9f;   // правка 139: строка 200 -> 240 Б (поля трафика); 103: -> 320 (самописец)
@@ -766,6 +800,12 @@ static void bbNote(const char *line) {   // правка 238: строка со�
   char *s = bbRing[bbHead]; bbHead = (bbHead + 1) % BB_N; if (bbCnt < BB_N) bbCnt++;
   snprintf(s, sizeof bbRing[0], "%6.0f NOTE    %s", bbClock, line);
   size_t n = strlen(s); if (n && s[n - 1] != '\n' && n + 1 < sizeof bbRing[0]) { s[n] = '\n'; s[n + 1] = 0; }
+}
+static char bbIconLog[4][124]; static unsigned bbIconN;   // №958б: последние 4 события значка цели — в хвост файла ящика (кольцо в 40 строк их вытесняет за ~40 с)
+void bbNoteIcon(const char *line) {   // №958б: blackbox.h
+  if (BBICON958_OLD) return;
+  bbNote(line); snprintf(bbIconLog[bbIconN++ & 3], sizeof bbIconLog[0], "%.0f %s\n", bbClock, line);
+  if (smkOn) { char t[160]; snprintf(t, sizeof t, "%s t=%.1f\n", line, smkT); smkWrite(t); }
 }
 static void svLog(const char *line) { smkWrite(line); bbNote(line); }
 // Исследование 03.10 (docs/ИССЛЕДОВАНИЕ_ПАМЯТЬ_ME_ПОДГРУЗКА_2026-10-03.md, П1–П3): замеры без риска строкой в ящик, чтобы решать
@@ -855,10 +895,11 @@ static void bbSample(const char *ev) {
   int ncar = 0; for (int k = 0; k < MCR_MAX; k++) ncar += mcr[k].blob != 0;
   char fe[24]; fpuTag(fe, sizeof fe);   // правка 252
   float opAge = bbOpAt >= 0.f ? bbNow() - bbOpAt : -1.f; if (opAge > 999.f) opAge = 999.f;
+  char ico[64] = ""; if (!BBICON958_OLD) { char t_[56]; mvIconState(t_, sizeof t_); snprintf(ico, sizeof ico, " ico %s", t_); }   // №958б: значок цели в углу: имя/поле/картинка/уровень цели/текст
   snprintf(s, sizeof bbRing[0], "%6.0f %-7s L%d %-7s %5.0f %4.0f %5.0f  heap %5.2f blk %5.2f  cells %3d bad %d  ge %2u%% skip %u ptr %u  mem %u rd %u  "
-           "trf %d park %d/%d ped %d  msn %s mdl %d car %d art %u over %u  op %s %.1f  cpu %u/%u/%u/%u/%u  cell %u %ums >100:%u miss %u  io %u/%u %ums gg %u fpe %s  %s  %s%s%s%s%s\n",
+           "trf %d park %d/%d ped %d  msn %s%s mdl %d car %d art %u over %u  op %s %.1f  cpu %u/%u/%u/%u/%u  cell %u %ums >100:%u miss %u  io %u/%u %ums gg %u fpe %s  %s  %s%s%s%s%s\n",
            bbClock, ev, gameLevel, pc, x, y, z, heapFreeBytes() / 1048576.f, memMaxBlockMB(), in, bad, gePeakShown * 100u / GE_BUDGET,
-           smkGeSkip, smkGeBad, memFailsNow(), smkReadErr, trC, trPD, trPA, trP, bbMsn, mvModels(), ncar, msnartBytes() >> 10, geOverBudget,
+           smkGeSkip, smkGeBad, memFailsNow(), smkReadErr, trC, trPD, trPA, trP, bbMsn, ico, mvModels(), ncar, msnartBytes() >> 10, geOverBudget,
            bbOpS, opAge, bbThPct[0], bbThPct[1], bbThPct[2], bbThPct[3], bbThPct[4], bbCellN, bbCellMax, bbCellSlow, bbMissSec,
            msioReads - bbIoR0, msioWaits - bbIoW0, msioMaxWaitUs / 1000u, geGuardHits, fe, bbMus(),
            foot ? "foot " : "", inRoom() ? "room " : "", phoneViewOn() ? "phone " : "", shopViewOn() ? "shop " : "", mvCars() ? "msncars" : "");
@@ -877,6 +918,10 @@ static int bbCompose(const char *head) {   // шапка + кольцо -> bbOut
     const char *s = bbRing[(bbHead + BB_N - bbCnt + k) % BB_N]; int l = (int)strlen(s);
     if (n + l > BB_FILE - 1) break;
     memcpy(bbOut + n, s, l); n += l;
+  }
+  if (!BBICON958_OLD) for (unsigned k = bbIconN > 4 ? bbIconN - 4 : 0; k < bbIconN; k++) {   // №958б: события значка цели — после кольца, если есть место
+    char t[140]; int l = snprintf(t, sizeof t, "# ICON %s", bbIconLog[k & 3]); if (l < 0 || n + l > BB_FILE - 1) break;
+    memcpy(bbOut + n, t, l); n += l;
   }
   memset(bbOut + n, ' ', BB_FILE - 1 - n); bbOut[BB_FILE - 1] = '\n';
   return BB_FILE;
@@ -1584,15 +1629,41 @@ static void csPull(float e[3], const float P[3]) {   // глаз — на луч
 #define CAMERA_SUBJECT_HANDOFF_OLD 0
 #endif
 static float csPrev[3], csPrevRel[3], csPrevP[3]; static int csPrevOn, csPrevCar;
+#ifndef CAM_XFER_OLD
+#define CAM_XFER_OLD 0
+#endif
+#define CAM_XFER_M 100.f   // м: опора ушла от прошлой дальше — перенос
+static int camXferOld = CAM_XFER_OLD;
+static float camKickD, camKickY;   // служебное: flag camkick D dy
+static int csGeomBlocked; unsigned camJumpN; float camJumpMax;   // №916б: csGeomBlocked — сколько кадров подряд итоговый луч «опора → глаз» упирается в геометрию; camJump* — рывки глаза > CAM_JUMP_M за кадр (строка CAMJUMP)
 static void csHeldEye(const float P[3],const float previous[3],const float relative[3],int sameSubject,float hold[3]) {
   for(int k=0;k<3;k++)hold[k]=(CAMERA_SUBJECT_HANDOFF_OLD || sameSubject)?P[k]+relative[k]:previous[k];
 }
 static int csWhyPick, csWhyGlide, csDesiredOk = 1, csDesiredN; static float csWhyEd[3];   // csDesiredOk — №872: желаемый глаз этого кадра свободен; csDesiredN — номер кадра проверки   // служебное (строка CAMJUMP): откуда глаз этого кадра
+// №916в (рывок глаза при ходьбе, L1 x 223 z 168, t 73 с: человек шёл в 1,2 м за Гомером, ровно на линии «опора → глаз»; перелёт к желаемому глазу на 2,7 м
+// шёл ~1 с, каждый промежуточный глаз упёрся в человека, перелёт сорвался и глаз прыгнул на 2,6 м за кадр). Правило для всего семейства: луч «опора → промежуточный
+// глаз» перелёта не считает людей (цилиндры, маска 64): человек сам идёт мимо, оригинал от него не уворачивается; стены, геометрия, кузова и ближняя плоскость
+// (в том числе человек у края кадра) — как были, желаемый и выбранный глаз тоже проверяются целиком. CAM_SOFT_PPL_OLD=1 / «flag camsoftpplold 1» — как было
+#ifndef CAM_SOFT_PPL_OLD
+#define CAM_SOFT_PPL_OLD 0
+#endif
+static int camSoftPplOld = CAM_SOFT_PPL_OLD, csSoftMask = -1;   // csSoftMask < 0 — маска луча по умолчанию (CS_PE); перелёт камеры ставит свою
+// №924 (цена камеры в езде, тур TEST58 F_L4_CR/F_L7_CR: за кадр до трёх обсчётов ближней плоскости, 110 мкс на Маке каждый): промежуточный глаз перелёта, ставший глазом кадра, уже проверен csSoftOk —
+// ответ (свободная глубина) запоминается, и camSafeFrame берёт его вместо повторного обсчёта (глаз, взгляд и угол те же, как у кэша csEyeOk; кадр правила глаза тот же). CAM_NFREUSE_OLD=1 / flag camnfreuseold 1 — как было
+#ifndef CAM_NFREUSE_OLD
+#define CAM_NFREUSE_OLD 0
+#endif
+#ifndef CAM_NFREUSE_RED
+#define CAM_NFREUSE_RED 0   // красный контроль гейта camf924: запомненная глубина вдвое меньше — near в CAMF расходится
+#endif
+static int camNfReuseOld = CAM_NFREUSE_OLD, csSfOn; static float csSfE[3], csSfF[3], csSfTan, csSfV;
 static int csSoftOk(const float q[3], const float P[3], const float lk[3], float tanV, float tanH) {   // промежуточный глаз перелёта
   float gy, f[3] = {lk[0] - q[0], lk[1] - q[1], lk[2] - q[2]}, l = sqrtf(f[0] * f[0] + f[1] * f[1] + f[2] * f[2]);
-  if (l < 1e-3f || csInBody(&csScene, q, .15f) || (csFloorY(q, P, &gy) && q[1] < gy + CS_FLOOR - .01f) || csRayFrac(&csScene, P, q, CS_PE) < .999f) return 0;
+  if (l < 1e-3f || csInBody(&csScene, q, .15f) || (csFloorY(q, P, &gy) && q[1] < gy + CS_FLOOR - .01f) || csRayFrac(&csScene, P, q, csSoftMask < 0 ? CS_PE : csSoftMask) < .999f) return 0;
   for (int k = 0; k < 3; k++) f[k] /= l;
-  return csNearFree(&csScene, q, f, tanV, tanH, NEAR_Z) >= csNearMinCur;
+  float nf_ = csNearFree(&csScene, q, f, tanV, tanH, NEAR_Z);
+  if (!camNfReuseOld) { memcpy(csSfE, q, 12); memcpy(csSfF, f, 12); csSfTan = tanV; csSfV = CAM_NFREUSE_RED ? nf_ * .5f : nf_; csSfOn = 1; }
+  return nf_ >= csNearMinCur;
 }
 // A clear destination can be separated from the last eye by a wall or a
 // road edge. Walk around it in small clear steps instead of timing out into
@@ -1617,19 +1688,43 @@ static int csGlideAround(const float hold[3], const float end[3], const float P[
   }
   return found;
 }
+#ifndef CAM_JUMP_M
+#define CAM_JUMP_M 1.5f   // глаз сместился больше этого за кадр на одной опоре — «рывок»
+#endif
 static void camSafeEye(float cp[3], const float lk[3], float fovy, float dt) {
   float P[3] = {camPivot[0], camPivot[1], camPivot[2]}, ed[3] = {cp[0], cp[1], cp[2]}, tanV = tanf(fovy * (GU_PI / 360.f)), tanH = tanV * ASPECT;
+  csSfOn = 0;
   camSafeScene(ed, 14.f); memcpy(csSceneE, ed, 12); csSceneOk = 1;
 #if CAMERA_SUBJECT_HANDOFF_OLD
   if ((csOfsOn || csPrevOn) && (fabsf(ed[0] - csLastEd[0]) > 8.f || fabsf(ed[1] - csLastEd[1]) > 8.f || fabsf(ed[2] - csLastEd[2]) > 8.f ||
                                 fabsf(P[0] - csPrevP[0]) > 4.f || fabsf(P[1] - csPrevP[1]) > 4.f || fabsf(P[2] - csPrevP[2]) > 4.f)) csOfsOn = csPrevOn = 0;
 #else
   if ((csOfsOn || csPrevOn) && csPrevCar==camPivotCar && (fabsf(P[0] - csPrevP[0]) > 4.f || fabsf(P[1] - csPrevP[1]) > 4.f || fabsf(P[2] - csPrevP[2]) > 4.f)) csOfsOn = csPrevOn = 0;
+  // №923 (перенос героя/машины на 700 м и дальше — RESET CAR, респавн, старт миссии: кадр 330 мс, из них 316 мс — перелёт от прошлого глаза; при смене опоры герой <-> машина прошлый
+  // глаз не сбрасывался, перелёт мерил лучи «опора -> промежуточный глаз» длиной в сотни метров через незагруженный город и всё равно кончался прыжком к желаемому глазу).
+  // Опора ушла от прошлой больше чем на CAM_XFER_M — это перенос, а не смена героя на машину: прошлый глаз забыт, камера сразу на новом месте (результат тот же, что давал перелёт).
+  // CAM_XFER_OLD=1 / flag camxferold 1 — как было
+  if (!camXferOld && (csOfsOn || csPrevOn) && (fabsf(P[0] - csPrevP[0]) > CAM_XFER_M || fabsf(P[1] - csPrevP[1]) > CAM_XFER_M || fabsf(P[2] - csPrevP[2]) > CAM_XFER_M)) csOfsOn = csPrevOn = 0;
 #endif
+  if (camKickD != 0.f) {   // служебное (гейт tests/eyejump, flag camkick D dy): прошлый глаз сдвинут от желаемого на D м вбок и на dy вверх — начало перелёта в известном месте
+    float dx = ed[0] - P[0], dz = ed[2] - P[2], l = sqrtf(dx * dx + dz * dz); if (l < 1e-3f) { dx = 0.f; dz = 1.f; l = 1.f; }
+    csPrev[0] = ed[0] - dz / l * camKickD; csPrev[1] = ed[1] + camKickY; csPrev[2] = ed[2] + dx / l * camKickD; memcpy(csPrevP, P, 12); for (int i = 0; i < 3; i++) csPrevRel[i] = csPrev[i] - P[i];
+    csPrevCar = camPivotCar; csPrevOn = 1; csOfsOn = 1; for (int i = 0; i < 3; i++) csOfs[i] = csPrev[i] - ed[i]; camKickD = 0.f; }
+  { static int flipSeen; if (homerCamFlipN != flipSeen) { flipSeen = homerCamFlipN; if (!homerCamFlipOld) csOfsOn = csPrevOn = 0; } }   // №916в: перескок камеры пешком (PS2) — одна смена места, без перелёта от старого глаза
   memcpy(csLastEd, ed, 12);
   float e[3] = {ed[0], ed[1], ed[2]}, hold[3];   // hold — прошлый глаз, сдвинутый вместе с опорой
   csWhyPick = -2; csWhyGlide = 0; memcpy(csWhyEd, ed, 12);
   if (csPrevOn) csHeldEye(P,csPrev,csPrevRel,csPrevCar==camPivotCar,hold);
+  if (!camCrossOld) {   // №916б: опора прошла сквозь поверхность без коллизии — её воксель в CG_CROSS_R больше не «стена» для глаза
+    if (!csPrevOn || csPrevCar != camPivotCar) cgCrossN = 0;
+    else {
+      for (int i = 0; i < cgCrossN;) { float dx = P[0] - cgCross[i][0], dy = P[1] - cgCross[i][1], dz = P[2] - cgCross[i][2]; if (dx * dx + dy * dy + dz * dz > 30.f * 30.f) { memcpy(cgCross[i], cgCross[--cgCrossN], 12); cgCrossNew = 1; } else i++; }
+      if (csGeomBlocked <= 3) {   // луч был свободен до 3 кадров назад (ответ сетки может быть кэшем прошлого кадра)
+        float fh = csRayFrac(&csScene, P, hold, 8), L_ = sqrtf((hold[0] - P[0]) * (hold[0] - P[0]) + (hold[1] - P[1]) * (hold[1] - P[1]) + (hold[2] - P[2]) * (hold[2] - P[2]));
+        if (fh < .999f && fh * L_ <= 2.6f && csRayFrac(&csScene, P, hold, 5) >= .999f) {   // мир и тела не мешают, мешает только видимая геометрия рядом с опорой
+          float *h_ = cgCross[cgCrossN < CG_CROSS_N ? cgCrossN++ : 0]; for (int k = 0; k < 3; k++) h_[k] = P[k] + (hold[k] - P[k]) * (fh + .02f); cgCrossNew = 1;
+          if (smkOn && camLogOn) { char s_[160]; snprintf(s_, sizeof s_, "CAMCROSS t=%.3f at=%.2f,%.2f,%.2f d=%.2f n=%d\n", smkT, h_[0], h_[1], h_[2], fh * L_, cgCrossN); smkWrite(s_); } } } }
+  }
   CPT0; int ok0_ = csEyeOk(e, P, lk, tanV, tanH); CPT(2); csDesiredOk = ok0_; csDesiredN++;
   if (!ok0_) {
     enum { NC = CAMERA_SUBJECT_HANDOFF_OLD ? 17 : 37 }; float c[NC][3], cost[NC]; int n = 0;
@@ -1693,13 +1788,18 @@ static void camSafeEye(float cp[3], const float lk[3], float fovy, float dt) {
     if (on2 < pn2) step = fminf(step, fmaxf(dl * (1.f - expf(-CS_RELAX * dt)), .02f));   // поправка тает — плавно
     if (dl > 1e-3f && step < dl - 1e-3f) {
       float q[3]; for (int i = 0; i < 3; i++) q[i] = ed[i] + op[i] + d[i] * (step / dl);
+      csSoftMask = CS_PE | (camSoftPplOld ? 0 : 64);   // №916в: перелёт не обрывается из-за человека на луче
       if (csSoftOk(q, P, lk, tanV, tanH)) { memcpy(e, q, 12); csWhyGlide = 1; }
       else if (csPrevOn && csGlideAround(hold,e,P,lk,tanV,tanH,step,q)) { memcpy(e,q,12);csWhyGlide=4; }
       else if (csPrevOn && csSoftOk(hold, P, lk, tanV, tanH)) { memcpy(e, hold, 12); csWhyGlide = 2; }   // безопасный глаз продолжает ехать с опорой
       else { csWhyGlide = 3; }
     }
+    csSoftMask = -1;
     for (int i = 0; i < 3; i++) o[i] = e[i] - ed[i];
   }
+  if (csPrevOn && csPrevCar == camPivotCar) { float jd_ = sqrtf((e[0] - csPrev[0]) * (e[0] - csPrev[0]) + (e[1] - csPrev[1]) * (e[1] - csPrev[1]) + (e[2] - csPrev[2]) * (e[2] - csPrev[2]));   // рывок глаза за кадр (гейт tests/eyejump, поиск по уровням)
+    if (jd_ > CAM_JUMP_M) { camJumpN++; if (jd_ > camJumpMax) camJumpMax = jd_; if (smkOn && camLogOn) { char s_[200]; snprintf(s_, sizeof s_, "CAMJUMP t=%.3f d=%.2f P=%.2f,%.2f,%.2f prev=%.2f,%.2f,%.2f e=%.2f,%.2f,%.2f pick=%d glide=%d\n", smkT, jd_, P[0], P[1], P[2], csPrev[0], csPrev[1], csPrev[2], e[0], e[1], e[2], csWhyPick, csWhyGlide); smkWrite(s_); } } }
+  if (!camCrossOld) csGeomBlocked = csRayFrac(&csScene, P, e, 8) >= .999f ? 0 : csGeomBlocked + 1;
   CPT(4); memcpy(csOfs, o, 12); csOfsOn = o[0] * o[0] + o[1] * o[1] + o[2] * o[2] > 1e-6f;
   memcpy(cp, e, 12); memcpy(csPrev, e, 12); memcpy(csPrevP, P, 12); for (int i = 0; i < 3; i++) csPrevRel[i] = e[i] - P[i]; csPrevCar=camPivotCar;csPrevOn = 1;
 }
@@ -1746,9 +1846,12 @@ static void camSafeFrame(int inR, int fly, float fovy, float ex, float ey, float
   if (follow && !camSafeOld) { unsigned t0_ = sceKernelGetSystemTimeLow(); int same = csNfTan == tanV && fabsf(csNfE[0] - ex) + fabsf(csNfE[1] - ey) + fabsf(csNfE[2] - ez) < 1e-3f &&
       fabsf(csNfF[0] - fx) + fabsf(csNfF[1] - fy) + fabsf(csNfF[2] - fz) < 1e-3f;   // глаз и взгляд те же, что проверило правило глаза
     // TEST24 (цена, Роб №639): впереди было совсем свободно (NEAR_Z), глаз и взгляд почти не сдвинулись — ответ прошлых кадров, пересчёт раз в 4-й кадр. CAM_NEAR_CACHE_OLD=1 / flag camnearcacheold 1 — каждый кадр
-    int hit_ = !camNearCacheOld && !same && nfV >= NEAR_Z - 1e-3f && nfAge < 3 && fabsf(nfE[0] - ex) + fabsf(nfE[1] - ey) + fabsf(nfE[2] - ez) < .5f &&
+    int sameS = !same && csSfOn && csSfTan == tanV && fabsf(csSfE[0] - ex) + fabsf(csSfE[1] - ey) + fabsf(csSfE[2] - ez) < 1e-3f &&
+      fabsf(csSfF[0] - fx) + fabsf(csSfF[1] - fy) + fabsf(csSfF[2] - fz) < 1e-3f;   // №924: глаз кадра — промежуточный глаз перелёта, его глубину уже посчитал csSoftOk
+    csSfOn = 0;
+    int hit_ = !camNearCacheOld && !same && !sameS && nfV >= NEAR_Z - 1e-3f && nfAge < 3 && fabsf(nfE[0] - ex) + fabsf(nfE[1] - ey) + fabsf(nfE[2] - ez) < .5f &&
                fabsf(nfF[0] - fx) + fabsf(nfF[1] - fy) + fabsf(nfF[2] - fz) < .08f;
-    float nv_ = same ? csNfV : hit_ ? nfV : csNearFree(&csScene, e, f, tanV, tanH, NEAR_Z);
+    float nv_ = same ? csNfV : sameS ? csSfV : hit_ ? nfV : csNearFree(&csScene, e, f, tanV, tanH, NEAR_Z);
     if (hit_) nfAge++; else { nfAge = 0; nfV = nv_; memcpy(nfE, e, 12); memcpy(nfF, f, 12); }
     csDbgNv = nv_; csDbgHit = hit_; csDbgSame = same;
     camSafeNearV = fmaxf(CS_NEAR_MIN, nv_); if (cgProf) cpT[5] += sceKernelGetSystemTimeLow() - t0_;
@@ -1864,6 +1967,7 @@ static void worldCarsPlace(void) {
 // правка 334: разовые предметы с монетами (stateprops.h spOnce) всех уровней этой игры — из загруженной записи; текущий уровень
 // снимается с sprops при записи (saveCapture). NEW GAME — пусто
 static SvOnce onceKeep[SV_LEVELS];
+static int propKickLog946(void *u, unsigned i, float dx, float dz);   // №946: main_levels.h
 static void newGame(void) {
   ldStep("ng-enter");
 #if !TICKET_CONTENT_C3_OLD
@@ -1875,7 +1979,7 @@ static void newGame(void) {
   if (haveCol) carInit(&car, lvlCarOk == 1 ? &lvlCar : NULL, &world, spawnP[0], spawnP[1], spawnP[2], spawnP[3]);
   if (haveCarVis) carVisReset(&cv);
   ldStep("ng-car");
-  if (haveProps) { propsFree(&props); haveProps = propsInit(&props, propSec, propSecN) == 0; props.onKick = gamePropKick; props.kickUser = &G; }
+  if (haveProps) { propsFree(&props); haveProps = propsInit(&props, propSec, propSecN) == 0; props.onKick = propKickLog946; props.kickUser = &G; }
   ldStep("ng-props");
   if (haveCoins) { coinsFree(&coins); haveCoins = haveProps && props.coinType >= 0 && props.ncoin && coinsInit(&coins, props.coinPos, props.ncoin) == 0; coins.dropAuto = 1; }
   ldStep("ng-coins");

@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_DIR = Path('/private/tmp/claude-501/-Users-robertvagin-Downloads-shar-psp/'
+DEFAULT_DIR = Path('/private/tmp/claude-501/-Users-USER-Downloads-shar-psp/'
                    '3f2ce002-62fd-4bf8-9553-98f95067c719/scratchpad/streams/levels')
 PREFIX = 'st_lv{N}_'   # временные файлы конвертера (N — номер уровня)
 INTERIOR_NAMES = {0: 'SpringfieldElementary', 1: 'KwikEMart', 2: 'SimpsonsHouse', 3: 'DMV', 4: 'Moes',

@@ -78,6 +78,9 @@ typedef struct {
   float fxAcc[4];
   float x, y, z, R[9];             // положение и поворот экземпляра (R по столбцам: мир = R*v + T)
   float *jm;                       // мировые (в осях объекта) матрицы суставов: 9 (R по столбцам) + 3 (t) на сустав
+  float *jm0;                      // №923: матрицы суставов в кадре 0 обломка (rest) и поворот сдвига кусков (dirC, dirS) — осколки летят по ходу машины; NULL — как в клипе
+  float dirC, dirS;
+  float hv[2];                     // №923: горизонтальная скорость машины (до стен кадра) при её ударе по этому предмету; обломок по вызову с задержкой берёт её отсюда
 } SpRun;
 
 typedef struct { uint8_t preset, first; int16_t sys; float x, y, z, dx, dz, t0; } SpFxOut;   // t0 — кадр начала окна EFX (правка 80)   // sys >= 0: родная система fx.shr (один раз), иначе пресет
@@ -150,6 +153,9 @@ int spActivateTag(StateProps *sp, int tag);
 int spBreakOf(const StateProps *sp, unsigned prpType);
 // проиграть обломок spType в точке pos с ориентацией q (w,x,y,z). 1 = у обломка есть меши (сбитый проп надо спрятать)
 int spBreak(StateProps *sp, unsigned spType, const float pos[3], const float q[4]);
+// №923 (Роб 24.10: «бью вперёд, а разбивается влево»): то же, но ход кусков поворачивается вокруг вертикали так, чтобы средний ход осколков шёл по горизонтальной
+// скорости машины v (vx, vz) в кадре удара; куски остаются на местах покоя, поворачивается только их смещение. v == NULL или почти ноль — как spBreak
+int spBreakDir(StateProps *sp, unsigned spType, const float pos[3], const float q[4], const float v[2]);
 
 // ---- отрисовка (main.c)
 // экземпляр надо рисовать (жив, что-то видно) и он ближе maxD к (ex, ez)

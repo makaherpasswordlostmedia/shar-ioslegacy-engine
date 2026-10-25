@@ -4,6 +4,8 @@
 // [главный рисует отложенное полупрозрачное, main.c tqFlush] -> fxDrawEnd (итог: с ME или счёт на главном; команды GE)
 #include "fx.h"
 #include "fxdsp.h"
+#include "sparkle937.h"
+#include "glintshape941.h"   // №941
 #include <pspgu.h>
 #include <pspkernel.h>
 #include <pspiofilemgr.h>
@@ -48,7 +50,12 @@ typedef FxSpr Spr;
 static Spr spr[MAXSPR]; static int nspr;   // спрайты кадра копируются в задание в fxDrawBegin
 
 float fxVel = 30.f;
-static int ready, sysCar = -1, sysSpark = -1, sysPaint = -1, sysDust = -1, texScratch = -1, texGlow = -1, texDust1 = -1, texCloud = -1;   // texDust1/texCloud — №847
+#ifndef FX_STAR923_OLD
+#define FX_STAR923_OLD 0
+#endif
+static unsigned char texVec[64];   // №899: 1 — картинка блика (звезда), 2 — искра-штрих (fxVecGroup); №923: 3 — цветная звезда-царапина (scratch2_blue / _red)
+static unsigned texTint[64];       // №923: цвет картинки (множитель ABGR) у texVec 3: у родной картинки он свой, в векторе был белый
+static int ready, sysCar = -1, sysSpark = -1, sysPaint = -1, sysDust = -1, texScratch = -1, texGlow = -1, texDust1 = -1, texCloud = -1, texSmoke953[4] = {-1, -1, -1, -1};   // texDust1/texCloud — №847; texSmoke953 — smoke1/2/3/3alph (№953)
 #ifndef FX_SOFTDUST847_OLD
 #define FX_SOFTDUST847_OLD 0
 #endif
@@ -84,6 +91,17 @@ int fxLoad(const char *path) {
   sysCar = fxFindInst(14); if (sysCar < 0) sysCar = fxFind("car_damage3SysShape");
   sysSpark = fxFind("code_spark"); sysPaint = fxFind("code_paint"); sysDust = fxFind("code_dust");
   texScratch = fxTexFind("scratch2.bmp"); texGlow = fxTexFind("glow2.bmp"); texDust1 = fxTexFind("dust1.bmp"); texCloud = fxTexFind("cloud.tga");   // №847
+  texSmoke953[0] = fxTexFind("smoke1.bmp"); texSmoke953[1] = fxTexFind("smoke2.bmp"); texSmoke953[2] = fxTexFind("smoke3.bmp"); texSmoke953[3] = fxTexFind("smoke3alph.bmp");   // №953
+  memset(texVec, 0, sizeof texVec);   // №899: картинки бликов и искр — векторно (ниже fxVecGroup)
+  for (unsigned i = 0; i < H->nTex && i < 64; i++) { const char *n = T[i].name;
+    if (!FX_STAR923_OLD && !strncmp(n, "scratch2_blue", 13)) { texVec[i] = 3; texTint[i] = 0xffffc740u; }   // картинка: центр белый, тело (R .25 G .78 B 1) — по весу видимости пикселей tools/fx_export.py --png
+    else if (!FX_STAR923_OLD && !strncmp(n, "scratch2_red", 12)) { texVec[i] = 3; texTint[i] = 0xff4080ffu; }   // (R 1 G .5 B .25)
+    else if (!strncmp(n, "scratch2", 8) || !strncmp(n, "glow", 4) || !strncmp(n, "bluestarglow", 12) || !strncmp(n, "halo", 4) || !strncmp(n, "spark4", 6)) texVec[i] = 1;
+    else if (!strncmp(n, "spark3", 6)) texVec[i] = 2; }
+  if (!FX_SPARKLE937_OLD) {   // №937: эмиттеры со звездой-sparkle — флаг попа (fxdsp.h fxdPop)
+    for (unsigned e = 0; e < H->nEmit; e++) if (E[e].tex < 64 && texVec[E[e].tex] == 3) E[e].flags |= 0x40;
+    sceKernelDcacheWritebackRange(b, sz);
+  }
   return 1;
 }
 
@@ -102,7 +120,7 @@ void fxFree(void) {
   FJ.np = 0; nspr = 0; memset(in_, 0, sizeof in_); memset(ambH, 0, sizeof ambH);
   if (blob) free(blob);
   blob = 0; H = 0; ready = 0;
-  sysCar = sysSpark = sysPaint = sysDust = texScratch = texGlow = texDust1 = texCloud = -1;
+  sysCar = sysSpark = sysPaint = sysDust = texScratch = texGlow = texDust1 = texCloud = -1; texSmoke953[0] = texSmoke953[1] = texSmoke953[2] = texSmoke953[3] = -1;
 }
 
 int fxFind(const char *name) {
@@ -235,6 +253,27 @@ int fxBurstBreakable(int type, const float pos[3], const float dir[3]) {
   }
   return 0;
 }
+// №923 (Роб 24.10: «бью вперёд, а разбивается влево»): родные системы обломка (осколки стекла, щепа) заданы в осях предмета и летят вдоль его нормали; порт ставил их
+// по осям мира (dir NULL) — у стекла витрины, повёрнутого на 90°, осколки шли вдоль стекла. Система ставится с поворотом вокруг вертикали: её локальная +Z — по
+// направлению yaw (atan2(vx, vz) скорости машины). FXB_YAW_OFS — поправка знака оси разлёта эмиттеров
+#ifndef FXB_YAW_OFS
+#define FXB_YAW_OFS 0.f
+#endif
+int fxBurstBreakableYaw(int type, const float pos[3], float yaw) {
+  if (!ready) return 0;
+  float c = cosf(yaw + FXB_YAW_OFS), s = sinf(yaw + FXB_YAW_OFS);
+  for (unsigned i = 0; i < H->nBrk; i++) if (BR[i].type == type) {
+    int h = 0;
+    for (int k = 0; k < BR[i].nSys && k < 4; k++) {
+      int x = start(BR[i].sys[k], pos, NULL, 1);
+      Inst *in = x ? fromHandle(x) : NULL;
+      if (in) { in->m[0] = c; in->m[1] = 0.f; in->m[2] = -s; in->m[3] = 0.f; in->m[4] = 1.f; in->m[5] = 0.f; in->m[6] = s; in->m[7] = 0.f; in->m[8] = c; }
+      if (!h) h = x;
+    }
+    return h;
+  }
+  return 0;
+}
 void fxMove(int h, const float pos[3], const float dir[3]) {
   Inst *s = fromHandle(h); if (!s) return;
   s->pos[0] = pos[0]; s->pos[1] = pos[1]; s->pos[2] = pos[2]; if (dir) basis(dir, s->m);
@@ -334,14 +373,22 @@ int fxCount(void) { return FJ.np; }
 #define FX_CUT_REF 0x58
 #endif
 int fxCutout = !FX_CUTOUT_OLD;
+// №953 (Роб 25.10, TEST59: «дым, машина слегка разбита: в уголках чёрные заливки; в мультике на дым контур не применять, взять дым как в оригинале PS2»): дым машины и
+// трубы (smoke1/smoke2/smoke3/smoke3alph) резался альфа-тестом №731 — на краях клубов темнели RGB-пиксели с альфой чуть выше порога: чёрная кайма и трещины между клубами.
+// Дым — мягким смешиванием, как в оригинале и как пыль №847. SMOKE953_OLD=1 / «flag smoke953 0» — вырезка
+#ifndef SMOKE953_OLD
+#define SMOKE953_OLD 0
+#endif
+int fxSoftSmoke953 = !SMOKE953_OLD;
 void (*fxGlowGlint)(float, float, float, float, unsigned, float, float);   // №839 (fx.h)
+static inline int isSmoke953(int tex) { return tex >= 0 && (tex == texSmoke953[0] || tex == texSmoke953[1] || tex == texSmoke953[2] || tex == texSmoke953[3]); }
 void fxSprite(int tex, float x, float y, float z, float w, float h, float rot, unsigned abgr, int blend, int flat) {
   if (!ready || tex < 0 || tex >= (int)H->nTex || nspr >= MAXSPR) return;
   Spr *s = &spr[nspr++]; s->x = x; s->y = y; s->z = z; s->w = w; s->h = h; s->rot = rot; s->c = abgr;
   s->tex = tex; s->blend = blend; s->flat = flat;
 }
-void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abgr) {
-  if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(x, y, z, size * 1.3f, abgr, 1.f, phase); return; }   // №839: искра — векторным бликом (пульс свой)
+void fxSparkleCA(float x, float y, float z, float size, float phase, unsigned abgr, float alpha) {   // №910: alpha — доля прозрачности блика (монеты)
+  if (fxGlowGlint && !GLOW_GLINT_OLD) { fxGlowGlint(x, y, z, size * 1.3f, abgr, alpha, phase); return; }   // №839: искра — векторным бликом (пульс свой)
   float pu = .75f + .25f * sinf(phase * 6.2831853f);
   unsigned c = abgr, o = 0;
   for (int k = 0; k < 24; k += 8) o |= ((unsigned)(((c >> k) & 255) * pu) & 255) << k;
@@ -349,7 +396,32 @@ void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abg
   if (texGlow >= 0) fxSprite(texGlow, x, y, z, size * .6f, size * .6f, 0.f, (o >> 2) & 0xff3f3f3f, 1, 0);
   if (texScratch >= 0) fxSprite(texScratch, x, y, z, size * 1.3f * pu, size * 1.3f * pu, phase * 1.5707963f, o, 1, 0);
 }
+void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abgr) { fxSparkleCA(x, y, z, size, phase, abgr, 1.f); }
 void fxSparkle(float x, float y, float z, float size, float phase) { fxSparkleC(x, y, z, size, phase, 0xffc8f0ff); }
+// №910 (Роб 23.10: «блики у монеток жёсткие, перегнули — в несколько раз прозрачнее»): блёстки монет — векторный блик с долей COIN_GLINT_A. COIN_GLINT910_OLD=1 — как было (1)
+#ifndef COIN_GLINT910_OLD
+#define COIN_GLINT910_OLD 0
+#endif
+#define COIN_GLINT_A (COIN_GLINT910_OLD ? 1.f : .3f)
+// №965 (Роб 25.10, TEST62: «блик у монеток слишком большой, размером с саму монетку; вдвое меньше и строго в центре монетки»): 1) размер блика монет — COIN_GLINT_S от прежнего
+// (радиус главной звезды 0,72 м при монете в 0,69 м шириной -> 0,36 м); 2) блик стоял в плоскости, перпендикулярной взгляду, а монета-спрайт — в вертикальной: они пересекались
+// по глубине, верхняя половина блика пряталась за монетой, нижняя светила поверх («блик внизу, не в центре», полоса поперёк монеты). Теперь блик сдвинут к глазу на COIN_GLINT_LIFT м
+// ВДОЛЬ луча (на экране центр тот же, размер выравнивается по расстоянию) — целиком перед монетой. COIN_GLINT965_OLD=1 — как было
+#ifndef COIN_GLINT965_OLD
+#define COIN_GLINT965_OLD 0
+#endif
+#ifndef COIN_GLINT_S
+#define COIN_GLINT_S (COIN_GLINT965_OLD ? 1.f : .5f)
+#endif
+#ifndef COIN_GLINT_LIFT
+#define COIN_GLINT_LIFT .3f
+#endif
+void fxSparkleCoin(float x, float y, float z, float size, float phase, float ex, float ey, float ez) {
+  float k = 1.f;
+  if (!COIN_GLINT965_OLD) { float dx = ex - x, dy = ey - y, dz = ez - z, d = sqrtf(dx * dx + dy * dy + dz * dz), o = COIN_GLINT_LIFT;
+    if (d > o + .3f) { k = (d - o) / d; x += dx * (o / d); y += dy * (o / d); z += dz * (o / d); } }   // ближе — монета у самых глаз, сдвиг не нужен
+  fxSparkleCA(x, y, z, size * COIN_GLINT_S * k, phase, 0xffc8f0ff, COIN_GLINT_A);
+}
 
 // ---------- рисование ----------
 // правка 313: сборка биллбордов — viewer/fxdsp.h fxdBuild (на главном или на ME); здесь индексы, буфер вершин и команды GE
@@ -471,6 +543,175 @@ int fxMeStateStr(char *out, int n) { return snprintf(out, n, "-"); }
 #endif
 
 // Кадр частиц, часть 1: список элементов (биллборды систем, спрайты), камера; задание уходит на ME (если включено)
+// №899 (Роб 23.10: «пройтись по всем источникам света, бликов и искр — где ещё старые растровые эффекты (подбор монеты, починка машины и т.д.) —
+// всё в чистые векторные эффекты»): частицы родных систем сложением с картинкой блика (scratch2*, glow*, bluestarglow, halo, spark4 — появление и
+// подбор монет и ключа, вспышки Burst, звёзды значков и карточек) — векторной четырёхлучевой звездой (два ромба крестом: длинные лучи по осям квада,
+// перехват 0,16), искры-штрихи spark3 (щитки, взрывы) — векторным ромбом по длинной оси; цвет, размер, поворот и жизнь — те же (из вершин квада),
+// без текстуры, сложением. Огонь, дым, обломки, дуги ос — прежние. FX_VEC899_OLD=1 — картинками
+#ifndef FX_VEC899_OLD
+#define FX_VEC899_OLD 0
+#endif
+#ifndef FX_GLINT908_OLD
+#define FX_GLINT908_OLD 0
+#endif
+#define FX_VEC_K (FX_GLINT908_OLD ? .8f : .5f)   // доля цвета частицы без картинки (картинка блика темнее к краю); №908 (Роб 23.10: блики у «!» и у цели слишком яркие — прозрачнее) .8 -> .5
+#ifndef FX_VEC_ROOM_OLD
+#define FX_VEC_ROOM_OLD 0
+#endif
+#define FX_VEC_WAIST .16f // перехват луча звезды (доля полуоси)
+// №923 (Роб 24.10: «разбивание стекла выглядит совсем по-другому; сделай как было, но в векторе»): звезда-царапина осколков стекла (scratch2_blue, у «ключа»
+// scratch2_red) после №899 стала белой четырёхлучевой, а картинка — синяя (центр белый, тело голубое) с восемью неровными лучами. Теперь — вектором: цвет картинки
+// (texTint), восемь лучей (четыре длинных по осям квада и четыре короче по диагоналям), ровный цвет, один вызов; доля цвета частицы FX_STAR_K (у картинки без затухания
+// к краю). FX_STAR923_OLD=1 — как после №899
+// №937 (Роб 24.10, слово 17:35: звезда №923 с восемью лучами — «снежинка»; нужен «блинг-блинг», классический sparkle ✨): четыре луча (вверх, вниз, влево, вправо),
+// бока между лучами — вогнутые плавные дуги (суперэллипс |x|^p + |y|^p = 1, p .55), пухлое тело и острые тонкие кончики; вертикальный луч 1,0, горизонтальный .85;
+// главная звезда + две малых той же формы по диагонали (слева сверху и справа снизу, .35 главной); цвет картинки (texTint), светлая сердцевина, ровная заливка,
+// один вызов (треугольники от центра); без вращения частицы — всегда стоит прямо. FX_SPARKLE937_OLD=1 — восемь лучей №923
+#ifndef FX_SPARKLE937_OLD
+#define FX_SPARKLE937_OLD 0
+#endif
+#define FX_STAR_K .7f
+#define FX_STAR_LONG .72f   // длина осевых лучей (доля полуоси квада): у картинки звезда не доходит до края квада
+#define FX_STAR_DIAG .354f  // диагональные лучи: .5 полуоси / sqrt(2) от суммы осей
+#define FX_STAR_WAIST .26f
+#define FX_STAR_CORE .28f   // сердцевина — белая у картинки
+typedef struct { unsigned c; float x, y, z; } FxVV;
+static unsigned fxVecCol(unsigned c) { unsigned o = c & 0xff000000u; for (int k = 0; k < 24; k += 8) o |= (unsigned)(((c >> k) & 255u) * FX_VEC_K) << k; return o; }
+// №937 v3: звёзды-sparkle одним вызовом с индексами. Версия 2 писала по 240 вершин на звезду (пик списка GE в сцене стекла 123 -> 207 КБ, предел частиц 205 КБ); теперь вершины
+// контура общие у соседних треугольников (центр + 4n точек на звезду) и индексы 16 бит: главная (n = FX_SPK_N), сердцевина и две малые (n = FX_SPK_N2) — 60 вершин и 168 индексов
+// на звезду (1,3 КБ вместо 3,8). Сверх FX_SPK_MAXQ звёзд на группу кадра остальные — только главная с n = FX_SPK_N2 (без сердцевины и спутников), картинкой не заменяются
+// №941: контур — общий шейп viewer/glintshape941.h (GS_SPARK4: вогнутые гладкие бока, острые кончики, пухлое тело); вершин столько же (4n + 1). GLINT_SHAPE941_OLD=1 — суперэллипс №937
+static int fxSpkRing(FxVV *o, unsigned short *ix, int base, int *nix, const float c[3], const float R[3], const float U[3], float sx, float sy, int n, unsigned col) {   // -> число вершин
+  static float cpx[2][4 * SPK_MAXN + 1], cpy[2][4 * SPK_MAXN + 1]; static int cm[2], cn[2];   // контур считается один раз на n (тригонометрия на каждый квад стоила бы x_fx ×2,5)
+  int ci = n == FX_SPK_N ? 0 : 1; if (cn[ci] != n) { cm[ci] = GLINT_SHAPE941_OLD ? spkOutline(cpx[ci], cpy[ci], n) : gsOutline(&GS_SPARK4, n, 1.f, cpx[ci], cpy[ci]) + 1; cn[ci] = n; }
+  if (!GLINT_SHAPE941_OLD) sx /= FX_SPK_HX;   // горизонтальный луч .85 уже в шейпе GS_SPARK4; вызывающий передаёт rs * FX_SPK_HX
+  const float *px = cpx[ci], *py = cpy[ci]; int m = cm[ci] - 1;
+  o[0].c = col; o[0].x = c[0]; o[0].y = c[1]; o[0].z = c[2];
+  for (int i = 0; i < m; i++) {
+    float a = px[i] * sx, b = py[i] * sy;
+    o[1 + i].c = col; o[1 + i].x = c[0] + R[0] * a + U[0] * b; o[1 + i].y = c[1] + R[1] * a + U[1] * b; o[1 + i].z = c[2] + R[2] * a + U[2] * b;
+    ix[*nix] = (unsigned short)base; ix[*nix + 1] = (unsigned short)(base + 1 + i); ix[*nix + 2] = (unsigned short)(base + 1 + (i + 1) % m); *nix += 3;
+  }
+  return m + 1;
+}
+static int fxVecSparkles(const FxV *q, int nq, unsigned tint) {
+  int nfull = nq < FX_SPK_MAXQ ? nq : FX_SPK_MAXQ, nlite = nq - nfull;
+  unsigned vmax = (unsigned)(nfull * (1 + 4 * FX_SPK_N + 3 * (1 + 4 * FX_SPK_N2)) + nlite * (1 + 4 * FX_SPK_N2)), imax = (unsigned)(nfull * (12 * FX_SPK_N + 36 * FX_SPK_N2) + nlite * 12 * FX_SPK_N2);
+  unsigned bytes = vmax * (unsigned)sizeof(FxVV) + ((imax * 2 + 3) & ~3u);
+  if (!FX_VEC_ROOM_OLD && geRoomFn && !geRoomFn(bytes + 512)) return 0;   // места нет — картинкой (как у прочих звёзд)
+  FxVV *o = (FxVV *)sceGuGetMemory((int)(vmax * sizeof(FxVV))); unsigned short *ix = (unsigned short *)sceGuGetMemory((int)((imax * 2 + 3) & ~3u)); if (!o || !ix) return 0;
+  int nv = 0, ni = 0;
+  for (int i = 0; i < nq; i++, q += 4) {
+    float cx = (q[0].x + q[2].x) * .5f, cy = (q[0].y + q[2].y) * .5f, cz = (q[0].z + q[2].z) * .5f;
+    float A[3] = {(q[1].x - q[0].x) * .5f, (q[1].y - q[0].y) * .5f, (q[1].z - q[0].z) * .5f}, B[3] = {(q[3].x - q[0].x) * .5f, (q[3].y - q[0].y) * .5f, (q[3].z - q[0].z) * .5f};
+    unsigned c = q[0].c & 0xff000000u, cc = c;   // цвет тела: цвет частицы × FX_STAR_K × цвет картинки; сердцевина светлее
+    for (int k = 0; k < 24; k += 8) { float cp = (float)((q[0].c >> k) & 255u), tn = (tint >> k & 255u) * (1.f / 255.f);
+      c |= (unsigned)(cp * FX_STAR_K * tn) << k; cc |= (unsigned)(cp * FX_STAR_K * (.55f + .45f * tn)) << k; }
+    // sparkle ✨ стоит прямо, без вращения частицы; оси экрана — из плоскости квада
+    float nx = A[1] * B[2] - A[2] * B[1], ny = A[2] * B[0] - A[0] * B[2], nz = A[0] * B[1] - A[1] * B[0], nl = sqrtf(nx * nx + ny * ny + nz * nz);
+    float s = sqrtf(A[0] * A[0] + A[1] * A[1] + A[2] * A[2]), R[3], U[3], ctr[3] = {cx, cy, cz}; int ok = 0;
+    if (nl > 1e-6f) {
+      nx /= nl; ny /= nl; nz /= nl;
+      U[0] = -nx * ny; U[1] = 1.f - ny * ny; U[2] = -nz * ny;                      // вверх мира без составляющей по нормали квада
+      float ul = sqrtf(U[0] * U[0] + U[1] * U[1] + U[2] * U[2]);
+      if (ul > .2f) { U[0] /= ul; U[1] /= ul; U[2] /= ul; R[0] = U[1] * nz - U[2] * ny; R[1] = U[2] * nx - U[0] * nz; R[2] = U[0] * ny - U[1] * nx;
+                      float rl = sqrtf(R[0] * R[0] + R[1] * R[1] + R[2] * R[2]); R[0] /= rl; R[1] /= rl; R[2] /= rl; ok = 1; }
+    }
+    if (!ok) { float is = s > 1e-6f ? 1.f / s : 1.f; for (int j = 0; j < 3; j++) { R[j] = A[j] * is; U[j] = B[j] * is; } }   // квад смотрит вдоль вертикали: его же оси
+    float rs = s * FX_SPK_R;
+    if (i < nfull) {
+      nv += fxSpkRing(o + nv, ix, nv, &ni, ctr, R, U, rs * FX_SPK_HX, rs, FX_SPK_N, c);
+      nv += fxSpkRing(o + nv, ix, nv, &ni, ctr, R, U, rs * FX_SPK_HX * FX_SPK_CORE, rs * FX_SPK_CORE, FX_SPK_N2, cc);
+      float sat = rs * FX_SPK_SAT, off[3];
+      for (int k = 0; k < 2; k++) {
+        for (int j = 0; j < 3; j++) off[j] = ctr[j] + (k ? (.62f * R[j] - .62f * U[j]) : (-.62f * R[j] + .66f * U[j])) * s;
+        nv += fxSpkRing(o + nv, ix, nv, &ni, off, R, U, sat * FX_SPK_HX, sat, FX_SPK_N2, c);
+      }
+    } else nv += fxSpkRing(o + nv, ix, nv, &ni, ctr, R, U, rs * FX_SPK_HX, rs, FX_SPK_N2, c);
+  }
+  sceKernelDcacheWritebackRange(ix, (unsigned)ni * 2u);
+  sceGuDisable(GU_TEXTURE_2D);
+  sceGuDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, ni, ix, o);
+  sceGuEnable(GU_TEXTURE_2D);
+  return 1;
+}
+// №941: звёзды частиц (kind 1: scratch2*, glow*, bluestarglow, halo, spark4 — подбор, вспышки, значки) — тот же шейп, симметричный крест GS_CROSS4 по осям квада (вращается вместе
+// с частицей, кончики на осях A и B, как были у ромбов-креста №899), сторона — FX_CROSS_SEG отрезков, веер от центра с индексами 16 бит: 1 + 4 * 3 = 13 вершин и 36 индексов на звезду
+#define FX_CROSS_SEG 3
+static int fxVecCross(const FxV *q, int nq) {
+  static float cpx[GS_MAXPTS], cpy[GS_MAXPTS]; static int cm; if (!cm) cm = gsOutline(&GS_CROSS4, FX_CROSS_SEG, 1.f, cpx, cpy);
+  unsigned vmax = (unsigned)nq * (unsigned)(1 + cm), imax = (unsigned)nq * (unsigned)(3 * cm), bytes = vmax * (unsigned)sizeof(FxVV) + ((imax * 2 + 3) & ~3u);
+  if (!FX_VEC_ROOM_OLD && geRoomFn && !geRoomFn(bytes + 256)) return 0;
+  FxVV *o = (FxVV *)sceGuGetMemory((int)(vmax * sizeof(FxVV))); unsigned short *ix = (unsigned short *)sceGuGetMemory((int)((imax * 2 + 3) & ~3u)); if (!o || !ix) return 0;
+  int nv = 0, ni = 0;
+  for (int i = 0; i < nq; i++, q += 4) {
+    float cx = (q[0].x + q[2].x) * .5f, cy = (q[0].y + q[2].y) * .5f, cz = (q[0].z + q[2].z) * .5f;
+    float A[3] = {(q[1].x - q[0].x) * .5f, (q[1].y - q[0].y) * .5f, (q[1].z - q[0].z) * .5f}, B[3] = {(q[3].x - q[0].x) * .5f, (q[3].y - q[0].y) * .5f, (q[3].z - q[0].z) * .5f};
+    unsigned c = fxVecCol(q[0].c); int base = nv;
+    o[nv].c = c; o[nv].x = cx; o[nv].y = cy; o[nv].z = cz; nv++;
+    for (int k = 0; k < cm; k++, nv++) { o[nv].c = c; o[nv].x = cx + A[0] * cpx[k] + B[0] * cpy[k]; o[nv].y = cy + A[1] * cpx[k] + B[1] * cpy[k]; o[nv].z = cz + A[2] * cpx[k] + B[2] * cpy[k]; }
+    for (int k = 0; k < cm; k++) { ix[ni] = (unsigned short)base; ix[ni + 1] = (unsigned short)(base + 1 + k); ix[ni + 2] = (unsigned short)(base + 1 + (k + 1) % cm); ni += 3; }
+  }
+  sceKernelDcacheWritebackRange(ix, (unsigned)ni * 2u);
+  sceGuDisable(GU_TEXTURE_2D);
+  sceGuDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, ni, ix, o);
+  sceGuEnable(GU_TEXTURE_2D);
+  return 1;
+}
+static int fxVecGroup(const FxV *q, int nq, int kind, unsigned tint) {   // q — вершины группы (по 4 на квад); 0 — нечего рисовать
+  if (kind == 3 && !FX_SPARKLE937_OLD) return fxVecSparkles(q, nq, tint);   // №937
+  if (kind == 1 && !GLINT_SHAPE941_OLD) return fxVecCross(q, nq);   // №941
+  int per = kind == 3 ? 36 : kind == 1 ? 12 : 6; unsigned bytes = (unsigned)(nq * per) * sizeof(FxVV);
+  if (!FX_VEC_ROOM_OLD && geRoomFn && !geRoomFn(bytes + 256)) return 0;   // надзор 23.10: вершины звёзд — в списке GE (до ~114 КБ/кадр); места нет — картинкой (своему пути хватает 256 Б)
+  FxVV *o = (FxVV *)sceGuGetMemory((int)bytes); if (!o) return 0;
+  FxVV *w = o;
+  for (int i = 0; i < nq; i++, q += 4) {
+    float cx = (q[0].x + q[2].x) * .5f, cy = (q[0].y + q[2].y) * .5f, cz = (q[0].z + q[2].z) * .5f;
+    float A[3] = {(q[1].x - q[0].x) * .5f, (q[1].y - q[0].y) * .5f, (q[1].z - q[0].z) * .5f}, B[3] = {(q[3].x - q[0].x) * .5f, (q[3].y - q[0].y) * .5f, (q[3].z - q[0].z) * .5f};
+    unsigned c = fxVecCol(q[0].c);
+    unsigned cc = c;   // цвет сердцевины (kind 3): светлее тела, почти белый с оттенком картинки
+    if (kind == 3) {
+      unsigned o = q[0].c & 0xff000000u, oc = o;
+      for (int k = 0; k < 24; k += 8) { float cp = (float)((q[0].c >> k) & 255u), tn = (tint >> k & 255u) * (1.f / 255.f);
+        o |= (unsigned)(cp * FX_STAR_K * tn) << k; oc |= (unsigned)(cp * FX_STAR_K * (.55f + .45f * tn)) << k; }
+      c = o; cc = oc;
+    }
+    float D1[3], D2[3], AL[3], BL[3], AC[3], BC[3];
+    if (kind == 3) for (int j = 0; j < 3; j++) { AL[j] = A[j] * FX_STAR_LONG; BL[j] = B[j] * FX_STAR_LONG; D1[j] = (A[j] + B[j]) * FX_STAR_DIAG; D2[j] = (A[j] - B[j]) * FX_STAR_DIAG; AC[j] = A[j] * FX_STAR_CORE; BC[j] = B[j] * FX_STAR_CORE; }
+    for (int d = 0; d < (kind == 3 ? 6 : kind == 1 ? 2 : 1); d++) {   // ромб: кончики по L, перехват по S
+      const float *L, *S;
+      float wk = kind == 1 ? FX_VEC_WAIST : .3f;
+      if (kind == 3) {
+        switch (d) { case 0: L = AL; S = BL; break; case 1: L = BL; S = AL; break; case 2: L = D1; S = D2; break; case 3: L = D2; S = D1; break; case 4: L = AC; S = BC; break; default: L = BC; S = AC; break; }
+        wk = d >= 4 ? .45f : FX_STAR_WAIST; c = d >= 4 ? cc : c;
+      } else { L = d ? B : A; S = d ? A : B; }
+      if (kind == 2 && A[0] * A[0] + A[1] * A[1] + A[2] * A[2] < B[0] * B[0] + B[1] * B[1] + B[2] * B[2]) { L = B; S = A; }   // штрих — по длинной оси
+      float P[4][3]; for (int j = 0; j < 3; j++) { P[0][j] = L[j]; P[1][j] = S[j] * wk; P[2][j] = -L[j]; P[3][j] = -S[j] * wk; }
+      static const unsigned char tri[6] = {0, 1, 2, 0, 2, 3};   // ромб — два треугольника по длинной диагонали
+      for (int t = 0; t < 6; t++) { const float *a = P[tri[t]]; w->c = c; w->x = cx + a[0]; w->y = cy + a[1]; w->z = cz + a[2]; w++; }
+    }
+  }
+  sceGuDisable(GU_TEXTURE_2D);
+  sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)(w - o), 0, o);
+  sceGuEnable(GU_TEXTURE_2D);
+  return 1;
+}
+// №941 (служебно, flag glintlab 1): лист форм — звезда частиц (kind 1) или стекла (kind 3) через настоящий путь рисования (fxVecCross / fxVecSparkles) на квадах c ± R·s ± U·s
+void fxLab941(const float c[3], const float R[3], const float U[3], float s, int kind) {
+  FxV q[4]; float A[3], B[3]; for (int j = 0; j < 3; j++) { A[j] = R[j] * s; B[j] = U[j] * s; }
+  for (int k = 0; k < 4; k++) { float sa = (k == 1 || k == 2) ? 1.f : -1.f, sb = (k >= 2) ? 1.f : -1.f; q[k].u = q[k].v = 0.f; q[k].c = 0xFFFFFFFFu;
+    q[k].x = c[0] + A[0] * sa + B[0] * sb; q[k].y = c[1] + A[1] * sa + B[1] * sb; q[k].z = c[2] + A[2] * sa + B[2] * sb; }
+  ScePspFMatrix4 Id; memset(&Id, 0, sizeof Id); Id.x.x = Id.y.y = Id.z.z = Id.w.w = 1.f; sceGuSetMatrix(GU_MODEL, &Id);
+  sceGuDisable(GU_FOG); sceGuDisable(GU_ALPHA_TEST); sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0xffffffff, 0xffffffff); sceGuDepthMask(GU_TRUE); sceGuDisable(GU_CULL_FACE); sceGuDisable(GU_DEPTH_TEST);
+  fxVecGroup(q, 1, kind == 3 ? 3 : 1, 0xFFFFFFFFu);   // тот же выбор формы, что у частиц (GLINT_SHAPE941_OLD — прежние)
+}
+// №899 (служебно, flag fxtex 1): какие картинки частиц сколько квадов рисуют, по смешиванию (0 обычное/вырезка, 1 сложение, 2 вычитание) — fxTexStat
+int fxAddStatOn; static unsigned fxAddStat[3][64];
+void fxTexStat(char *out, int n) {
+  int l = 0; out[0] = 0;
+  for (int b = 0; b < 3; b++) for (int t = 0; t < 64 && ready && t < (int)H->nTex; t++) if (fxAddStat[b][t] && l < n - 40) l += snprintf(out + l, n - l, " %d:%.15s=%u", b, T[t].name, fxAddStat[b][t]);
+  memset(fxAddStat, 0, sizeof fxAddStat);
+}
 void fxDrawBegin(float ex, float ey, float ez, float fx, float fy, float fz) {
   eye[0] = ex; eye[1] = ey; eye[2] = ez; haveEye = 1;
   fxFill = 0.f; fxSkipped = 0; fjOn = 0;
@@ -553,7 +794,7 @@ void fxDrawEnd(void) {
     int blend = k / nt, tex = k % nt;
     // №847 (Роб 19.10: «из-под ног при беге летит мультяшная пыль»): у пыли (dust1.bmp: бег dashShape, обломки dustShape…) альфа по жизни не выше
     // 55 из 255 — порог вырезки №731 (0x58) резал её целиком, пыли не было видно; пыль — мягким смешиванием, как в оригинале. FX_SOFTDUST847_OLD=1 — вырезка
-    if (fxCutout && blend == 0 && (FX_SOFTDUST847_OLD || (tex != texDust1 && tex != texCloud))) { sceGuDisable(GU_BLEND); sceGuEnable(GU_ALPHA_TEST); sceGuAlphaFunc(GU_GREATER, FX_CUT_REF, 0xff); }   // №731: вырезка
+    if (fxCutout && blend == 0 && (FX_SOFTDUST847_OLD || (tex != texDust1 && tex != texCloud)) && !(fxSoftSmoke953 && isSmoke953(tex))) { sceGuDisable(GU_BLEND); sceGuEnable(GU_ALPHA_TEST); sceGuAlphaFunc(GU_GREATER, FX_CUT_REF, 0xff); }   // №731: вырезка
     else {
       if (fxCutout) { sceGuEnable(GU_BLEND); sceGuDisable(GU_ALPHA_TEST); }
       if (blend == 1) sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0xffffffff, 0xffffffff);
@@ -561,6 +802,14 @@ void fxDrawEnd(void) {
       else sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
     }
     if (geRoomFn && !geRoomFn(256)) { fxSkipped += nq; continue; }   // правка 103: список GE полон (вершины — в своём буфере)
+    if (fxAddStatOn && tex < 64) fxAddStat[blend > 2 ? 2 : blend][tex] += (unsigned)nq;   // №899 (служебно): квадов по картинке и смешиванию — строка FXTEX
+    if (!FX_VEC899_OLD && blend == 1 && tex < 64 && texVec[tex]) {   // №899: блик / искра — вектором (вершины квадов уже посчитаны этим кадром)
+#ifdef __psp__
+      { unsigned a0 = (unsigned)(vbuf + 4 * FJ.qs[k]) & ~63u, a1 = ((unsigned)(vbuf + 4 * FJ.qs[k] + 4 * nq) + 63u) & ~63u;   // строки целиком: грязных строк в vbuf нет (главный сбросил, ME пишет мимо)
+        sceKernelDcacheInvalidateRange((void *)a0, a1 - a0); }   // читаем то, что записали в память задание или ME
+#endif
+      if (fxVecGroup(vbuf + 4 * FJ.qs[k], nq, texVec[tex], texTint[tex])) continue;
+    }
     bindTex(tex);
     sceGuDrawArray(GU_TRIANGLES, GU_INDEX_16BIT | GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D,
                    nq * 6, qidx, vbuf + 4 * FJ.qs[k]);

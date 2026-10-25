@@ -1,0 +1,71 @@
+# №958б путь C: открыто 6 уровней (lvset 6, NEW GAME на L6) -> MISSION SELECT на L1 (активная цель L1) -> снимок угла -> MISSION SELECT на L6; снимки через 3, 10, 30 с, MSNHUD, пауза
+flag menu
+flag lvset 6
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+shot c_l6_start
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+press left
+wait 0.5
+shot c_pick_l1
+press cross
+wait 50
+flag uimsndone 15
+wait 1
+flag msnhud 1
+wait 3
+shot c_l1_t3
+flag msnhud 1
+wait 5
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.5
+shot c_pick_l6
+press cross
+wait 50
+flag msnhud 1
+wait 3
+shot c_l6_t3
+flag msnhud 1
+wait 7
+shot c_l6_t10
+flag msnhud 1
+wait 20
+shot c_l6_t30
+flag msnhud 1
+press start
+wait 1
+shot c_pause_l6
+flag msnhud 1
+wait 1
+end

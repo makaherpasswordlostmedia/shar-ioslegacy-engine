@@ -35,6 +35,7 @@ static void putHomer(Game *g, const MsnPlace *at) {
 #endif
 static int gmResumeStart;
 void gameMsnResumeStart(int on) { gmResumeStart = on; }
+int gameMsnDeferStart;   // №943: 1 — msn_level_start (resumeAt) не стартует первую сюжетную: ждёт выбранную строку MISSION SELECT (main_levels.h menuStartGame)
 static void carNearHomer(Game *g) {
   Car *c = g->pCar; Homer *H = g->pHomer; ColWorld *w = g->pWorld;
   float ox = c->x, oy = c->y, oz = c->z, oh = c->h, dx = ox - H->x, dz = oz - H->z;
@@ -1276,8 +1277,10 @@ int gameMsnOpenAt(GameMsn *m, Game *g, const void *pack, size_t size, const MsnG
   }
   msn_game_init(&m->mg, &m->rt, &m->f, &api);
   if (*g->pHaveHomer) { g->pHomer->solid = gameMsnSolid; g->pHomer->solidUser = m; }   // персонажи миссий твёрдые для Гомера (поверх стейтпропов)
+  m->rt.defer_first = gameMsnDeferStart && resume;   // №943: выбранная строка MISSION SELECT стартует сама — стартовая цель уровня не ставится
   if (resume) resumeAt(&m->rt, &m->f, resume);   // загрузка: игрока ставит сценарий, как при старте миссии (MSN_EV_MISSION_START)
   else msn_level_start(&m->rt);
+  m->rt.defer_first = 0;
   return 0;
 }
 void gameMsnWorld(const GameMsn *m, MsnWorld *w) {

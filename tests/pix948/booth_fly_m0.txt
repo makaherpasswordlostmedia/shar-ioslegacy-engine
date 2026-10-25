@@ -1,0 +1,35 @@
+scene start
+wait 3
+scene L7_load
+flag golevel 7
+wait 40
+flag cfgdefaults 1
+flag diaglog 1
+flag dropfix921 0
+scene L7_booth
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 0.4
+shot f00
+wait 0.4
+shot f01
+wait 0.4
+shot f02
+wait 0.4
+shot f03
+wait 0.4
+shot f04
+wait 0.4
+shot f05
+wait 0.4
+shot f06
+wait 0.4
+shot f07
+wait 0.4
+shot f08
+wait 0.4
+shot f09
+wait 2.5
+shot menu
+end

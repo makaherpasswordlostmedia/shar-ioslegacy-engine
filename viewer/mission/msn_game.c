@@ -324,6 +324,11 @@ static const char *scriptedBitmapName(const MsnFile *f,const MsnMission *m) {
 static int hasScriptedBitmap(const MsnFile *f,const MsnMission *m) { return scriptedBitmapName(f,m)!=NULL; }
 #endif
 
+#ifndef MSN_SWITCH_OLD
+#define MSN_SWITCH_OLD 0   /* №943: 1 — прежнее (смена миссии без снятия маркера и реестра, цель HUD живёт до следующего этапа); служебно flag msnswitchold 1 */
+#endif
+int msnSwitchOld = MSN_SWITCH_OLD;
+
 static void on_event(void *user, const MsnEvent *e)
 {
     MsnGame *g = (MsnGame *)user;
@@ -447,6 +452,8 @@ static void on_event(void *user, const MsnEvent *e)
     case MSN_EV_CLEANUP:
         CALL0(props, items_clear);
         if (g->marker_on) { g->marker_on = 0; CALL(nav, marker, NULL); }
+        /* №943: цель прежней миссии (текст, значок, счётчики) не живёт до следующего этапа — отсюда её брал ✕ Continue брифинга и служебные чтения */
+        if (!msnSwitchOld) { g->hud.objective = g->hud.icon = ""; g->hud.objective_msg = -1; g->hud.items_done = g->hud.items_total = g->hud.lap = g->hud.laps = 0; }
         timer_hide(g);
         CALL(ui, counter, 0, 0);
         g->swap_mask = 0; g->wait_dialogue = g->wait_fmv = 0;

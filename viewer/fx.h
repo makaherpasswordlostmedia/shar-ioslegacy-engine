@@ -36,6 +36,7 @@ void fxDraw(float ex, float ey, float ez, float fx, float fy, float fz);
 // Между Begin и End — никаких вызовов fx* (задание в работе)
 void fxDrawBegin(float ex, float ey, float ez, float fx, float fy, float fz);
 void fxDrawEnd(void);
+void fxLab941(const float c[3], const float R[3], const float U[3], float s, int kind);   // №941 служебно: лист форм (flag glintlab)
 void fxSetMeMax(int n);                       // ME-доля B: предел элементов задания частиц на ME (8..400)
 int  fxMeAttach(void);                       // viewer/me/meprobe.c (флаг-файл mefx): служба ME поставлена — частицы на ME
 int  fxMeStateStr(char *out, int n);         // для журнала: «on…» / «off:…» / «-»
@@ -46,6 +47,7 @@ int  fxCount(void);                          // живых частиц
 extern float fxFill;       // заливка частиц прошлого кадра, пикселей экрана (для замеров)
 extern int fxSkipped;      // ближних частиц, не нарисованных из-за бюджета заливки
 extern int fxCutout;       // №731 (Роб 17.10): полупрозрачные частицы (дым, вода гидранта) — вырезкой по краю альфа-тестом, как спрайты Doom; 0 — смешиванием, как раньше
+extern int fxSoftSmoke953;   // №953: дым (smoke1/2/3/3alph) мягким смешиванием, без вырезки (SMOKE953_OLD=1 — вырезка)
 
 // Системы. id — номер системы в fx.shr; dir — куда смотрит ось +Y системы (NULL = вверх).
 int  fxFind(const char *name);               // по имени фабрики ("car_damage3SysShape"), -1 = нет
@@ -62,10 +64,12 @@ int  fxAlive(int h);
 // 3 гидрант, 14 ель, 15 дуб, 19 витрина Krusty, 20 кипарис, 8 томако).
 int  fxBurst(int id, const float pos[3], const float dir[3]);
 int  fxBurstBreakable(int type, const float pos[3], const float dir[3]);
+int  fxBurstBreakableYaw(int type, const float pos[3], float yaw);   // №923: то же, система повёрнута вокруг вертикали (осколки по ходу машины); yaw = atan2(vx, vz)
 void fxExplosionOld(int on);                // №391: отрицательный контроль ориентации кольца по старому ROT
 
 // Блёстки/свечение (аддитивно, к камере, только на этот кадр). phase 0..1 — пульс и поворот.
 void fxSparkle(float x, float y, float z, float size, float phase);
+void fxSparkleCoin(float x, float y, float z, float size, float phase, float ex, float ey, float ez);   // №910: блёстки монет прозрачнее
 void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abgr);
 // №839 (Роб 19.10: «все блюрные свечения — нашим векторным бликом, везде по тому же принципу»): блик вместо размытой картинки — ставит main
 // (spritelight.h glowGlintQ_: очередь кадра, сброс после частиц). x, y, z — центр, size — размер блика (м), abgr — цвет, a — альфа 0..1, phase — фаза пульса
@@ -77,6 +81,7 @@ int  fxTexFind(const char *name);            // "scratch2.bmp", "glowsolid.bmp",
 // правка 249: привязать текстуру пакета (CLUT 8888 + индексы) для своего рисования (следы шин viewer/skid.c); 0 — нет пакета/номера
 int  fxTexBind(int tex);
 // Произвольный спрайт на этот кадр: blend 0 alpha, 1 add, 2 subtract; flat=1 — лежит на земле (XZ)
+extern int fxAddStatOn; void fxTexStat(char *out, int n);   // №899 (служебно): строка FXTEX
 void fxSprite(int tex, float x, float y, float z, float w, float h, float rot, unsigned abgr, int blend, int flat);
 
 #endif

@@ -129,4 +129,4 @@ python3 tools/ps2ref/golden_analyze.py --video build/ps2ref/golden/m0.mp4 --inpu
 
 ## Передано игровой сессии · 29.09 10:38
 
-По слову Роба все отличия порта от оригинала L1 переданы сессии robertvagin-77 сообщением: `tools/ps2ref/GAPS_L1.md` (главный список), `CATALOG_L1.md`, `knowledge/facts/ps2-iris-transition.yaml`, пары кадров `build/ps2ref/compare_l1/`. Игровой код правит она. Открыто у наблюдателя: гонка («1/2», соперники) и титры без снимков порта; Н2.5 (своя сборка PCSX2 без перехвата окон)
+По слову Роба все отличия порта от оригинала L1 переданы сессии USER-77 сообщением: `tools/ps2ref/GAPS_L1.md` (главный список), `CATALOG_L1.md`, `knowledge/facts/ps2-iris-transition.yaml`, пары кадров `build/ps2ref/compare_l1/`. Игровой код правит она. Открыто у наблюдателя: гонка («1/2», соперники) и титры без снимков порта; Н2.5 (своя сборка PCSX2 без перехвата окон)

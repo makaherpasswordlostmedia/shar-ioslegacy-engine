@@ -14,3 +14,14 @@ hit-and-run-web/
 # baked sprites and other disc-derived files are never committed
 *.bin
 game/
+# binaries are built by the scripts (build_level.sh, tests) and never committed
+tools/pvs
+tools/wind
+tools/winid_pid
+tools/missions/dryrun/dryrun
+tests/*/host/*_host
+*.bak
+*.bak_*
+*.dylib
+*.log
+!tests/savegame/fixtures/*.bin

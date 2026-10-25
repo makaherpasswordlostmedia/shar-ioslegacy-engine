@@ -1,0 +1,24 @@
+# №942: подвисший кадр во время появления пузыря (загрузка миссии). Часы HUD стоят; uiclkadv 0.3 = кадр, который длился 0,3 с (часы HUD режут шаг до 0,1 с, возраст пузыря — до 0,04 с)
+scene g646
+flag msn
+wait 1.5
+flag uiclk 1
+wait 0.3
+flag uipopmsgh 0
+wait 0.4
+flag uiclkadv 0.02
+wait 0.3
+flag uiclkadv 0.3
+wait 0.3
+flag uiclkadv 0.02
+wait 0.3
+flag uiclkadv 0.02
+wait 0.3
+flag uiclkadv 0.02
+wait 0.3
+flag uiclkadv 0.02
+wait 0.3
+flag uiclkadv 0.02
+wait 0.3
+flag uiclk 0
+end

@@ -1,0 +1,81 @@
+scene T_L3S
+flag golevel 3
+wait 40
+flag flat912 1
+foot 180.2 64.2 -1.571
+wait 2
+flag trfmodel 2
+flag trfgo 0.7
+wait 3
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+scene T_L5
+flag golevel 5
+wait 40
+flag flat912 1
+foot -154.9 -482.05 0.024
+wait 2
+flag trfmodel 2
+flag trfgo 0.7
+wait 3
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+scene T_L7
+flag golevel 7
+wait 40
+flag repair
+wait 2
+flag trfmodel 2
+flag trfgo 0.7
+wait 3
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+flag carfill930 1
+wait 2
+wait 7
+flag carfill930 0
+wait 2
+wait 7
+end

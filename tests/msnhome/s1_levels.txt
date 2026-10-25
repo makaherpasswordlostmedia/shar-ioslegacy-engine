@@ -1,0 +1,44 @@
+# №943 (Роб 24.10): смена уровней через MISSION SELECT настоящим интерфейсом. NEW GAME на уровне 3, пауза -> MISSION SELECT -> ► (L3 -> L1) -> ✕ сразу, потом то же L1 -> L2.
+# Курсор после ◄ ► должен стоять на текущей миссии выбранного уровня (не на строке 0 по инерции: у L1 это m1 «S-M-R-T» с домом Симпсонов), стартовая цель уровня
+# («домой») не ставится перед выбранной миссией, цель HUD и маркер принадлежат одной миссии (строки MSNSEL / MSN mission / MSN stage / MSNHUD, разбор tests/msnhome/check.py)
+flag menu
+flag lvset 3
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+shot hop1_ms_open
+press right
+wait 0.6
+shot hop1_ms_level
+press cross
+wait 45
+shot hop1_arrive
+flag msnhud 1
+wait 4
+shot hop1_after4s
+flag msnhud 1
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+press right
+wait 0.6
+shot hop2_ms_level
+press cross
+wait 45
+shot hop2_arrive
+flag msnhud 1
+wait 4
+flag msnhud 1
+end

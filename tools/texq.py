@@ -591,7 +591,7 @@ def crop_sheet(url, out, cap_hi=256, zoom_to=256, box=None):
 if __name__ == '__main__':
     ap = argparse.ArgumentParser()
     ap.add_argument('--level', type=int, action='append', help='level(s) to analyze (needs levelN.json from level_sweep)')
-    ap.add_argument('--sweep', default=str(Path('/private/tmp/claude-501/-Users-robertvagin-Downloads-shar-psp/'
+    ap.add_argument('--sweep', default=str(Path('/private/tmp/claude-501/-Users-USER-Downloads-shar-psp/'
                                                  '3f2ce002-62fd-4bf8-9553-98f95067c719/scratchpad/streams/levels')))
     ap.add_argument('--report-only', action='store_true')
     ap.add_argument('--memory', action='store_true', help='per-level texture memory table (all levels found in --sweep)')

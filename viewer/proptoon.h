@@ -27,6 +27,9 @@
 #define PROP_TOON_MIN .2f
 #define PROP_TOON_POLE .3f
 #define PROP_TOON_MAXP (PROP_TOON_LITE_OLD ? 64 : 24)
+#define PROP_TOON_H_TONE 16.f   // №951б: потолок высоты экземпляра при Ink Tone (пальма, фонарь)
+#define PROP_TOON_R_TONE 7.f
+#define PROP_TOON_MAXP_TONE 48
 typedef struct { const void *v; unsigned nv; float lo[3], hi[3]; } PtBox;
 static PtBox ptBox[256]; static unsigned ptDraws, ptInst, ptVerts, ptUs, ptFrames; static int ptLogLv = -1, ptLogN; static unsigned ptLogK[24];
 static void ptLog(int kind, unsigned i, float x, float y, float z, float h, float r, int got) {   // журнал смоука: первые 24 обведённых экземпляра уровня (где они, какого размера)
@@ -44,6 +47,11 @@ static const PtBox *ptBoxOf(const void *v, unsigned nv, int flags) {
   b->v = v; b->nv = nv; return b;
 }
 // оболочка куска с матрицей m: раздута на W м по каждой оси (плоскую ось не трогаем); 0 — кусок по правилу без контура
+static int ptPoles, ptTone951; static unsigned ptToneN, ptToneTall;   // ptTone951 — служебное: Tone в кадре; ptToneTall — обведено высоких экземпляров (строка PROPTOON)
+static int ptPolesDummy;   // №951б: Tone — обводятся и тонкие высокие (стволы пальм, столбы)
+static unsigned ptPieceInk(int t, unsigned dflt) {   // №951б: Tone — тон среднего цвета текстуры куска (tstat); нет статистики — прежнее перо
+  if ((unsigned)t >= ntex || !tex[t].tstatOk || (!tex[t].tstat[0] && !tex[t].tstat[1] && !tex[t].tstat[2])) return dflt;
+  return skinInkTone(tex[t].tstat[0], tex[t].tstat[1], tex[t].tstat[2]); }
 static int ptHull(const void *v, const unsigned short *idx, int ni, unsigned nv, int flags, const float *m, float W, unsigned ink) {
   if (ni <= 0 || !v) return 0;
   const PtBox *b = ptBoxOf(v, nv ? nv : (unsigned)ni, flags);
@@ -55,7 +63,7 @@ static int ptHull(const void *v, const unsigned short *idx, int ni, unsigned nv,
     float sc = half > W ? 1.f + W / half : 1.f; A[a * 5] = sc; A[12 + a] = c * (1.f - sc);
   }
   float mx = fmaxf(ext[0], fmaxf(ext[1], ext[2]));
-  if (mx < PROP_TOON_MIN || (ext[1] > 1.2f && fmaxf(ext[0], ext[2]) < PROP_TOON_POLE)) return 0;   // мелочь и ножки знаков — без линий
+  if (mx < PROP_TOON_MIN || (!ptPoles && ext[1] > 1.2f && fmaxf(ext[0], ext[2]) < PROP_TOON_POLE)) return 0;   // мелочь и ножки знаков — без линий
   float M[16];
   for (int c = 0; c < 4; c++) for (int r = 0; r < 4; r++) {   // M = m · A (столбцы подряд, как ScePspFMatrix4)
     float x = 0.f; for (int k = 0; k < 4; k++) x += m[k * 4 + r] * A[c * 4 + k]; M[c * 4 + r] = x; }
@@ -83,47 +91,50 @@ static int wrSprOn(void); static int wrSprInst(unsigned i);   // spritelight.h (
 static void propToonPass(float ex, float ey, float ez) {
   if (PROP_TOON_OLD || !skinToonEnabled() || geOver(GE_SOFT) || (!PROP_TOON_LITE_OLD && trafficFrameGov)) return;   // №838: перегрузка кадра — без обводки пропов
   unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; int np = 0, on = 0; const float e3[3] = {ex, ey, ez}, D2 = PROP_TOON_D * PROP_TOON_D;
+  const int tone = skinInkToneOn(); ptPoles = tone;   // №951б: Tone — и высокие предметы (деревья, пальмы, столбы), перо по тону текстуры куска
+  const float tH = tone ? PROP_TOON_H_TONE : PROP_TOON_H, tR = tone ? PROP_TOON_R_TONE : PROP_TOON_R; const int tMaxP = tone ? PROP_TOON_MAXP_TONE : PROP_TOON_MAXP;
   // №845 (тур TEST38: обводка 0,2–0,4 мс кадра даже без обведённых — каждый кадр обход ВСЕХ пропов уровня): пропы ближе PROP_TOON_D + 12 м —
   // список, пересчёт раз в 8 кадров или после сдвига глаза на 6 м; стейтпропы — из сетки (spGridCollect). PT_NEAR845_OLD=1 — полный обход
   unsigned npi_ = haveProps ? props.ninst : 0; const unsigned *pi_ = 0;
   if (!PT_NEAR845_OLD && haveProps) {
-    static unsigned *near_, nearN_, nearCap_, nearFr_, nearNi_; static float nearE_[3]; static const void *nearKey_;
+    static unsigned *near_, nearN_, nearCap_, nearFr_, nearNi_; static float nearE_[3]; static const void *nearKey_; static int nearTone_;
     float mx_ = ex - nearE_[0], mz_ = ez - nearE_[2];
-    if (nearKey_ != (const void *)props.st || nearNi_ != props.ninst || nearCap_ < props.ninst || !(nearFr_++ & 7) || mx_ * mx_ + mz_ * mz_ > 36.f) {
+    if (nearKey_ != (const void *)props.st || nearNi_ != props.ninst || nearCap_ < props.ninst || nearTone_ != tone || !(nearFr_++ & 7) || mx_ * mx_ + mz_ * mz_ > 36.f) {
+      nearTone_ = tone;
       if (nearCap_ < props.ninst) { free(near_); near_ = (unsigned *)malloc(props.ninst * sizeof(unsigned)); nearCap_ = near_ ? props.ninst : 0; }
       nearN_ = 0; nearKey_ = props.st; nearNi_ = props.ninst; nearE_[0] = ex; nearE_[2] = ez; const float R2_ = (PROP_TOON_D + 12.f) * (PROP_TOON_D + 12.f);
       for (unsigned i = 0; near_ && i < props.ninst; i++) { const PropState *st = &props.st[i]; float x = pbP.on ? pbP.px[i] : st->x, z = pbP.on ? pbP.pz[i] : st->z;
         if ((x - ex) * (x - ex) + (z - ez) * (z - ez) > R2_) continue;
-        if (!PT_TYPE852_OLD) { const PropType *ty_ = &props.types[props.def[i].type]; if (2.f * ty_->halfH > PROP_TOON_H || ty_->radius > PROP_TOON_R) continue; }   // №852: крупные не обводятся — не в список
+        if (!PT_TYPE852_OLD) { const PropType *ty_ = &props.types[props.def[i].type]; if (2.f * ty_->halfH > tH || ty_->radius > tR) continue; }   // №852: крупные не обводятся — не в список
         near_[nearN_++] = i; } }
     if (near_) { pi_ = near_; npi_ = nearN_; } }
-  if (haveProps) for (unsigned j_ = 0; j_ < npi_ && np < PROP_TOON_MAXP; j_++) { unsigned i = pi_ ? pi_[j_] : j_; if (i >= props.ninst) continue;   // №845: индекс из списка — в пределах текущих пропов
+  if (haveProps) for (unsigned j_ = 0; j_ < npi_ && np < tMaxP; j_++) { unsigned i = pi_ ? pi_[j_] : j_; if (i >= props.ninst) continue;   // №845: индекс из списка — в пределах текущих пропов
     const PropState *st = &props.st[i];
     float x = pbP.on ? pbP.px[i] : st->x, z = pbP.on ? pbP.pz[i] : st->z, dx = x - ex, dz = z - ez;   // B1: положения подряд (кэш), иначе — состояние
     if (dx * dx + dz * dz > D2 || st->hidden) continue;
     const PropType *ty = &props.types[props.def[i].type];
-    if (2.f * ty->halfH > PROP_TOON_H || ty->radius > PROP_TOON_R) continue;
+    if (2.f * ty->halfH > tH || ty->radius > tR) continue;
     { float c[3] = {st->x, st->y, st->z}; if (rfSphereOut((const float (*)[3])pl, e3, c, ty->radius + 2.f * ty->halfH)) continue; }
     if (clipGuardProp(ex, ey, ez, st->x, st->y, st->z, ty->radius, ty->halfH, ty->radius <= 1.5f && camNearSphere(ex, ey, ez, st->x, st->y, st->z, ty->radius))) continue;   // тела у глаза нет — и оболочки
     float dy = st->y - ey, dist = sqrtf(dx * dx + dy * dy + dz * dz), W = PROP_TOON_K * skinToonWorldW(dist); if (W <= 0.f) continue;
-    unsigned ink = skinToonAirMix(TOON_LINE_ABGR, dist) & 0xffffffu; int got = 0;
+    unsigned ink = skinToonAirMix(skinInkAbgr(INK_PROP), dist) & 0xffffffu; int got = 0;
     if (!on) { texEnable(0); bound = -2; sceGuEnable(GU_FOG); fogK = -1.f; on = 1; }
-    for (unsigned k = 0; k < ty->nPiece && np < PROP_TOON_MAXP; k++) {
+    for (unsigned k = 0; k < ty->nPiece && np < tMaxP; k++) {
       const PropPiece *pp = &props.pieces[ty->firstPiece + k];
       if (pp->ni <= 0 || (pp->flags & (2 | F_ADDITIVE))) continue;
       float m[16]; propPieceMatrix(st, pp->ox, pp->oy, pp->oz, pp->sc, m);
-      if (ptHull((const char *)props.vertBase + pp->vOff, (const unsigned short *)((const char *)props.idxBase + pp->iOff), pp->ni, pp->nv, pp->flags, m, W, ink)) { np++; got = 1; }
+      if (ptHull((const char *)props.vertBase + pp->vOff, (const unsigned short *)((const char *)props.idxBase + pp->iOff), pp->ni, pp->nv, pp->flags, m, W, tone ? (skinToonAirMix(ptPieceInk(pp->tex, skinInkAbgr(INK_PROP)), dist) & 0xffffffu) : ink)) { np++; got = 1; }
     }
-    ptInst += (unsigned)got; ptLog(0, i, st->x, st->y, st->z, 2.f * ty->halfH, ty->radius, got);
+    ptInst += (unsigned)got; if (tone && got && (2.f * ty->halfH > PROP_TOON_H || ty->radius > PROP_TOON_R)) ptToneTall++; ptLog(0, i, st->x, st->y, st->z, 2.f * ty->halfH, ty->radius, got);
   }
-  unsigned *cs_ = 0; unsigned ncs_ = haveSP ? (PT_NEAR845_OLD ? sprops.ninst : spGridCollect(PROP_TOON_D, e3, 0, &cs_)) : 0;   // №845: стейтпропы у глаза — из сетки
-  if (haveSP) for (unsigned j_ = 0; j_ < ncs_ && np < PROP_TOON_MAXP; j_++) { unsigned i = cs_ ? cs_[j_] : j_;
+  ptTone951 = tone; unsigned *cs_ = 0; unsigned ncs_ = haveSP ? (PT_NEAR845_OLD ? sprops.ninst : spGridCollect(PROP_TOON_D, e3, 0, &cs_)) : 0;   // №845: стейтпропы у глаза — из сетки
+  if (haveSP) for (unsigned j_ = 0; j_ < ncs_ && np < tMaxP; j_++) { unsigned i = cs_ ? cs_[j_] : j_;
     SpRun *r = &sprops.run[i];
     if (!PT_WRSPR844_OLD && wrSprOn() && wrSprInst(i)) continue;   // №844: ключ рисуется спрайтом (кадры модели) — оболочка 3D-модели (крутится плавно) отставала от кадров спрайта бледным следом
     float x = pbS.on ? pbS.px[i] : r->x, z = pbS.on ? pbS.pz[i] : r->z, dx = x - ex, dz = z - ez;
     if (dx * dx + dz * dz > D2 || !r->alive) continue;
     const SpType *T = &sprops.type[sprops.inst[i].type];
-    if (T->kind != 0 || 2.f * T->h[1] > PROP_TOON_H || fmaxf(T->h[0], T->h[2]) > PROP_TOON_R) continue;
+    if (T->kind != 0 || 2.f * T->h[1] > tH || fmaxf(T->h[0], T->h[2]) > tR) continue;
     if (!spDrawable(&sprops, i, ex, ez, PROP_TOON_D)) continue;
     float c[3], rr; spBounds(&sprops, i, c, &rr);
     if (rfSphereOut((const float (*)[3])pl, e3, c, rr)) continue;
@@ -131,21 +142,21 @@ static void propToonPass(float ex, float ey, float ez) {
     if (rr <= 2.5f && clipGuardSphere(ex, ey, ez, c[0], c[1], c[2], rr, camNearSphere(ex, ey, ez, c[0], c[1], c[2], rr))) continue;   // тела у глаза нет — и оболочки
     { float r_ = rfSpRadius(sprops.inst[i].type), k_ = r_ * SP_FOCAL_PX; if (spMinPx > 0.f && r_ >= 0.f && k_ * k_ < spMinPx * spMinPx * d2) continue; }   // мелочь, которую не рисуем
     float dist = sqrtf(d2), W = PROP_TOON_K * skinToonWorldW(dist); if (W <= 0.f) continue;
-    unsigned ink = skinToonAirMix(TOON_LINE_ABGR, dist) & 0xffffffu; int got = 0;
+    unsigned ink = skinToonAirMix(skinInkAbgr(INK_PROP), dist) & 0xffffffu; int got = 0;
     if (T->nJoint) { spPose(&sprops, i); if (!r->poseValid) continue; }
     if (!on) { texEnable(0); bound = -2; sceGuEnable(GU_FOG); fogK = -1.f; on = 1; }
-    for (unsigned k = 0; k < T->nPiece && np < PROP_TOON_MAXP; k++) {
+    for (unsigned k = 0; k < T->nPiece && np < tMaxP; k++) {
       if (!spPieceOn(&sprops, i, k)) continue;
       const SpPiece *pp = &sprops.piece[T->firstPiece + k];
       if (!pp->ni || (pp->flags & (2 | F_ADDITIVE))) continue;
       float m[16]; spPieceMatrix(&sprops, i, k, m);
-      if (ptHull((const char *)sprops.vertBase + pp->vOff, (const unsigned short *)((const char *)sprops.idxBase + pp->iOff), (int)pp->ni, pp->nv, pp->flags & (0xFF | F_ADDITIVE), m, W, ink)) { np++; got = 1; }
+      if (ptHull((const char *)sprops.vertBase + pp->vOff, (const unsigned short *)((const char *)sprops.idxBase + pp->iOff), (int)pp->ni, pp->nv, pp->flags & (0xFF | F_ADDITIVE), m, W, tone ? (skinToonAirMix(ptPieceInk(pp->tex, skinInkAbgr(INK_PROP)), dist) & 0xffffffu) : ink)) { np++; got = 1; }
     }
-    ptInst += (unsigned)got; ptLog(1, i, c[0], c[1], c[2], 2.f * T->h[1], fmaxf(T->h[0], T->h[2]), got);
+    ptInst += (unsigned)got; if (tone && got && (2.f * T->h[1] > PROP_TOON_H || fmaxf(T->h[0], T->h[2]) > PROP_TOON_R)) ptToneTall++; ptLog(1, i, c[0], c[1], c[2], 2.f * T->h[1], fmaxf(T->h[0], T->h[2]), got);
   }
   if (on) { curFlags = -1; fogBase(); if (!groundCoverFog(&groundCover) && !fogCityOld) sceGuDisable(GU_FOG); resetState(); }   // параметры дымки — обратно, как после carToonHull
   ptDraws += (unsigned)np; ptFrames++;
   if (smkOn) { ptUs += sceKernelGetSystemTimeLow() - t0; static unsigned tl_; unsigned now_ = sceKernelGetSystemTimeLow();
-    if (now_ - tl_ > 1000000u && ptFrames) { tl_ = now_; char l_[160]; snprintf(l_, sizeof l_, "PROPTOON t=%.1f inst=%.1f pieces=%.1f verts=%.0f us=%.0f (на кадр)\n", smkT, (float)ptInst / ptFrames, (float)ptDraws / ptFrames, (float)ptVerts / ptFrames, (float)ptUs / ptFrames); smkWrite(l_);
-      ptInst = ptDraws = ptVerts = ptUs = ptFrames = 0; } }
+    if (now_ - tl_ > 1000000u && ptFrames) { tl_ = now_; char l_[160]; snprintf(l_, sizeof l_, "PROPTOON t=%.1f inst=%.1f pieces=%.1f verts=%.0f us=%.0f tone=%d tall=%.1f (на кадр)\n", smkT, (float)ptInst / ptFrames, (float)ptDraws / ptFrames, (float)ptVerts / ptFrames, (float)ptUs / ptFrames, ptTone951, (float)ptToneTall / ptFrames); smkWrite(l_);
+      ptInst = ptDraws = ptVerts = ptUs = ptFrames = 0; ptToneTall = 0; } }
 }

@@ -1,0 +1,56 @@
+# №918 гейт: тонкая разметка земли L1 (жёлтые штрихи, текстура 249) видна и с заливкой. Шесть мест на дорогах с этой текстурой: кадр с текстурами (flag flat912 0) и с заливкой (flag flat912 1)
+scene S_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+flag toon 1
+wait 8
+scene T0
+flag flat912 0
+foot 424.5 -500.1 1.571
+wait 5
+shot t0_tex
+flag flat912 1
+wait 4
+shot t0_fill
+scene T1
+flag flat912 0
+foot 223.6 -423.5 0.0
+wait 5
+shot t1_tex
+flag flat912 1
+wait 4
+shot t1_fill
+scene T2
+flag flat912 0
+foot 426.2 -374.4 -1.571
+wait 5
+shot t2_tex
+flag flat912 1
+wait 4
+shot t2_fill
+scene T3
+flag flat912 0
+foot 139.5 -337.3 3.14
+wait 5
+shot t3_tex
+flag flat912 1
+wait 4
+shot t3_fill
+scene T4
+flag flat912 0
+foot 379.4 -344.5 0.0
+wait 5
+shot t4_tex
+flag flat912 1
+wait 4
+shot t4_fill
+scene T5
+flag flat912 0
+foot 301.8 -574.1 1.571
+wait 5
+shot t5_tex
+flag flat912 1
+wait 4
+shot t5_fill
+end

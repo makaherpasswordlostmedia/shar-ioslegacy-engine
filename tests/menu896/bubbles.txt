@@ -1,0 +1,30 @@
+flag uipopdest 1
+wait 1.2
+shot BB_b_dest
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 2
+wait 1
+shot BB_c_m2
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 3
+wait 1
+shot BB_d_m3
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 5
+wait 1
+shot BB_e_m5
+flag uipopmsg 0
+wait 2.5
+flag uipopmsg 6
+wait 1
+shot BB_f_m6
+flag uipopmsg 0
+wait 2.5
+flag uipopmsgl 1
+wait 1
+shot BB_g_long
+flag uipopmsg 0
+wait 2.5

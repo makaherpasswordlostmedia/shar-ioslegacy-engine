@@ -12,6 +12,7 @@
 extern "C" {
 #endif
 
+extern int propsTallFallOld;   // №946: 1 — высокий предмет падает медленно, как было (flag tallfall946old)
 typedef struct { float ox, oy, oz, sc; int tex, flags; unsigned nv, ni, vOff, iOff; } PropPiece;  // кусок типа (файл psp_export.py)
 typedef struct { float radius, halfH, mass; unsigned firstPiece, nPiece; } PropType;               // тип пропа
 typedef struct { float x, y, z, q[4]; unsigned type; } PropDef;                                     // как расставлено на уровне

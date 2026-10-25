@@ -81,6 +81,7 @@ float carRollGain = 0.f;   // добавка к плечу крена боков
 //      машину через 2 с ставит на колёса на месте.
 // Урон: удар о стену быстрее 2 м/с (о землю — 6 м/с) добавляет (v - порог) * 0.85 / 100 / (HitPoints / 3).
 #include "car.h"
+#include "xsub.h"
 #include "carparams.h"
 #include "car_inertia.h"
 #include "car_wheel_collision.h"
@@ -224,6 +225,20 @@ static void quatYaw(float *q, float h) { q[0] = cosf(h * .5f); q[1] = 0; q[2] = 
 #ifndef CAR_REST_SKIP_STEPS
 #define CAR_REST_SKIP_STEPS 240
 #endif
+// ПРОТОТИП (окно «Разбор x_car3d», 24.10): пустая машина игрока на ручнике (водитель вышел, gameCarLimits: газ, тормоз, руль 0, ручник 1) 4 подшага на кадр считала нулевой результат:
+// стоящая на опоре с ручником она не попадает в quietSupport (там «!hb», и один из четырёх склонов опоры мягче .9975), значит CAR_REST_SKIP не включается (причал L3: x_car 0,8 мс эмулятора, 1,2-1,4 мс PSP).
+// Правило: ввод тот же (ручник, ничего больше), не разбита, не на опоре-крыше, за CAR_PARK_N посчитанных кадров поза сдвинулась меньше CAR_PARK_EPS (метр, угол) и скорости < CAR_PARK_V — дальше
+// считаем один кадр из CAR_PARK_EVERY, остальные как CAR_REST_SKIP (время идёт, подшаги нет). Любой толчок (скорость), смена ввода, телепорт (поза не равна последней посчитанной) — обычный счёт.
+// CAR_PARK_SKIP_OLD=1 — прежнее
+#ifndef CAR_PARK_SKIP_OLD
+#define CAR_PARK_SKIP_OLD 0
+#endif
+#define CAR_PARK_N 30
+#define CAR_PARK_EVERY 8
+#ifndef CAR_PARK_EPS
+#define CAR_PARK_EPS 1e-3f
+#endif
+#define CAR_PARK_V .02f
 #ifndef CAR_WHEEL_RADIUS_MESH_OLD
 #define CAR_WHEEL_RADIUS_MESH_OLD 0
 #endif
@@ -1964,10 +1979,10 @@ static int carFinite(const Car *c) {
 // на верху стены, шаг не вытесняется (1)): после DEADEND32_N отменённых подшагов подряд при скорости ~0 машину выдавливает на ближайшую допустимую
 // точку вокруг (кольца 0,5…8 м, сначала назад по кузову, не выше шага вверх и до 10 м вниз; сначала — только вниз с опоры (верх стены/крыши)): земля твёрдая и не купол куста, вне мягкого куста,
 // кузов без проникновения. Поворот (курс) тот же, скорость 0. У PS2 машину из такого положения выталкивает. DEADEND32_OLD=1 — прежнее
-static int escapeOutEx(Car *c, const ColWorld *w, int pass0, int nRing, int rMin, float *tgt) {   // pass0 1 — без прохода «только вниз с опоры»; nRing — сколько колец (0,5…8 м) пробовать
+static int escapeOutEx0(Car *c, const ColWorld *w, int pass0, int nRing, int rMin, float *tgt) {   // pass0 1 — без прохода «только вниз с опоры»; nRing — сколько колец (0,5…8 м) пробовать
   float fq[4]; orientQ(fq, c->h, 0.f, 0.f); M3 M = quatM(fq);
   float fx = sinf(c->h), fz = cosf(c->h), lim0 = c->y + fmaxf(c->p.step, .6f) + .3f;
-  static const float RR[9] = {.5f, 1.f, 1.5f, 2.f, 3.f, 4.f, 5.f, 6.5f, 8.f};
+  static const float RR[14] = {.5f, 1.f, 1.5f, 2.f, 3.f, 4.f, 5.f, 6.5f, 8.f, 12.f, 16.f, 24.f, 32.f, 40.f};   // кольца 9…13 — только широкий поиск зажатой (WEDGE738_WIDE)
   for (int pass = pass0; pass < 2; pass++) for (int ri = rMin; ri < nRing; ri++) for (int k = 0; k < 16; k++) {   // проход 0 — только вниз с опоры (машина на верху стены/крыши), 1 — любая допустимая точка
     float a = 3.14159265f + (k & 1 ? 1 : -1) * ((k + 1) >> 1) * 0.3926991f, ca = cosf(a), sa = sinf(a);   // от «назад» по кузову, поочерёдно влево/вправо
     float dx = fx * ca - fz * sa, dz = fx * sa + fz * ca, qx = c->x + dx * RR[ri], qz = c->z + dz * RR[ri], gq, nq[3]; int mq = 0; uint32_t rq = 0;
@@ -1984,7 +1999,22 @@ static int escapeOutEx(Car *c, const ColWorld *w, int pass0, int nRing, int rMin
   }
   return 0;
 }
+static int escapeOutEx(Car *c, const ColWorld *w, int pass0, int nRing, int rMin, float *tgt);
 static int escapeOut(Car *c, const ColWorld *w) { return escapeOutEx(c, w, 0, 9, 0, 0); }
+// L6 (-157,-32,55) seg#116 (бот-рой 24.10, трасса seed 2971948 кадры 2904–2922): поиск выхода (перч, №738, тупик 32) идёт внутри шага машины, где забор держит только с лица
+// (colSetFenceBack(1), память заборов bkeep), поэтому точка с центром НА линии забора проходит проверку «без проникновения»; а плавный выход кончается carPlace → settle уже
+// вне шага, где забор твёрд с обеих сторон, и settle выдавливает машину на ближайшую сторону забора (3,5 м, на изнанку: «проезд сквозь забор» при v=0).
+// Теперь точки выхода проверяются так же, как их потом поставит carPlace: забор твёрд с обеих сторон. ESCAPE_FENCE_OLD=1 — как было
+#ifndef ESCAPE_FENCE_OLD
+#define ESCAPE_FENCE_OLD 0
+#endif
+static int escapeOutEx(Car *c, const ColWorld *w, int pass0, int nRing, int rMin, float *tgt) {
+  if (ESCAPE_FENCE_OLD) return escapeOutEx0(c, w, pass0, nRing, rMin, tgt);
+  colSetFenceBack(0); colBackKeep(0, 0);
+  int r = escapeOutEx0(c, w, pass0, nRing, rMin, tgt);
+  colSetFenceBack(1); colBackKeep(c->bkeep, c->nbkeep);   // вызовы только из carUpdate: там забор держит только с лица
+  return r;
+}
 
 // Зависание на кромке (№339 остаток, J10-6 (193,1; 248,2) y 6,5: машина стоит носом вниз 17° на краю скоса, носом упёрта в угол забора, назад не выехать,
 // ни одна из 8 проб не отъезжает больше 1,6 м; подшаги не отменяются, поэтому общий выход из тупика (DEADEND32) молчит; 17.10): газ или тормоз нажаты, машина
@@ -2024,6 +2054,19 @@ static int perchGlide(Car *c, const ColWorld *w, float dt) {
 #ifndef WEDGE738_OLD
 #define WEDGE738_OLD 0
 #endif
+// №738, остаток (бот-рой 24.10, берег L7 (109,−4,442), L4 (116,−7,429), L1): зажата на склоне 39° у пустоты, зависание № 738 срабатывает (газ и назад, ≥ 3 с, круг 1,5 м),
+// но поиск выхода находит 0 ровных точек (n.y ≥ 0,9) в кольцах до 8 м: все 46 точек земли там с уклоном 39°; ближайшая ровная — 15 м (L7) и 32 м (L4, L1). Если за WEDGE_WIDE_T с зажатости
+// обычный поиск не нашёл точки, ищем в кольцах 12…40 м (то же условие: ровно, на уровне, без проникновения). WEDGE738_WIDE_OLD=1 — как было
+#ifndef WEDGE738_WIDE_OLD
+#define WEDGE738_WIDE_OLD 0
+#endif
+#define WEDGE_WIDE_T 6.f
+// Яма глубже всей ровной земли вокруг (L4 (125,−9,409): ложбина −10 м, ровное только выше шага вверх, в окне поиска [y−10, y+0,9] ровных 0 и в 40 м): выхода «рядом на том же уровне»
+// нет, поэтому если и широкий поиск молчит ещё WEDGE_RECOVER_T − WEDGE_WIDE_T с — возврат на надёжное место, как сторож застревания (recover). WEDGE738_RECOVER_OLD=1 — как было
+#ifndef WEDGE738_RECOVER_OLD
+#define WEDGE738_RECOVER_OLD 0
+#endif
+#define WEDGE_RECOVER_T 9.f
 #define WEDGE_T 3.f
 #define WEDGE_TURN 0.35f  // рад (20°): разворот в тесноте меняет курс, зажатая машина — нет
 #define WEDGE_MOVE 1.5f   // м: в тесноте машина качается туда-сюда, но из круга не выходит
@@ -2038,7 +2081,8 @@ static void wedgeEscape(Car *c, const ColWorld *w, const CarInput *in, float dt)
   if (c->wedgeTried != 3 || c->wedgeT < WEDGE_T) return;
   if ((int)(c->wedgeT * 4.f) == (int)((c->wedgeT - dt) * 4.f)) return;   // неудачный поиск — повтор раз в 0,25 с
   float t3[3]; int rMin = c->wedgeEsc >= 2 ? 2 : 0;
-  if (escapeOutEx(c, w, 1, 5, rMin, t3) || escapeOutEx(c, w, 0, 9, 0, t3)) { c->wedgeEsc++; c->wedgeT = 0.f; c->wedgeTried = 0; perchGo(c, w, t3); }
+  if (escapeOutEx(c, w, 1, 5, rMin, t3) || escapeOutEx(c, w, 0, 9, 0, t3) || (!WEDGE738_WIDE_OLD && c->wedgeT >= WEDGE_WIDE_T && escapeOutEx(c, w, 1, 14, 9, t3))) { c->wedgeEsc++; c->wedgeT = 0.f; c->wedgeTried = 0; perchGo(c, w, t3); return; }
+  if (!WEDGE738_RECOVER_OLD && c->wedgeT >= WEDGE_RECOVER_T) { c->wedgeEsc++; c->wedgeT = 0.f; c->wedgeTried = 0; recover(c, w, c->t - 1.f); }
 }
 static void perchEscape(Car *c, const ColWorld *w, const CarInput *in, float dt) {
   // №377 (L7 jumpzone9: после прыжка машина садится днищем на верх тонкой стены (ящик 234, 0,58 м) колёсами 0 и ползёт/стоит до сброса сторожем застревания, который телепортирует её на
@@ -2066,10 +2110,12 @@ static void perchEscape(Car *c, const ColWorld *w, const CarInput *in, float dt)
 }
 
 void carUpdate(Car *c, const ColWorld *w, const CarInput *in, float dt) {
+  unsigned xt_ = XS_T(), xw_ = XS_W();
   if (dt > 0.1f) dt = 0.1f;
   if (dt < 0.f) dt = 0.f;
   c->hitEpAge += dt;
-  if (!PERCH_ESCAPE_OLD && perchGlide(c, w, dt)) return;
+  c->velPre[0] = c->vel[0]; c->velPre[1] = c->vel[1]; c->velPre[2] = c->vel[2];   // №923
+  if (!PERCH_ESCAPE_OLD && perchGlide(c, w, dt)) { XS_LAP(14, xt_, xw_); return; }
   // правка 199: разбитая машина не слушает руль и газ (оригинал: после смертельного удара стоит), часы до взрыва
   static const CarInput none;
   CarInput husk;
@@ -2096,7 +2142,15 @@ void carUpdate(Car *c, const ColWorld *w, const CarInput *in, float dt) {
       c->vel[0] == 0.f && c->vel[1] == 0.f && c->vel[2] == 0.f && c->w[0] == 0.f && c->w[1] == 0.f && c->w[2] == 0.f && c->supOn == 0) {
     skip = c->x == c->restPose[0] && c->y == c->restPose[1] && c->z == c->restPose[2] && !memcmp(c->restPose + 3, c->q, sizeof c->q);
   }
+  int parkIn = !CAR_PARK_SKIP_OLD && !c->destroyed && in->handbrake > .5f && in->throttle == 0.f && in->brake == 0.f && in->steer == 0.f && c->supOn == 0;
+  int parkSkip = 0;
+  if (!skip) {
+    if (!parkIn) c->parkN = 0;
+    else if (c->parkN >= CAR_PARK_N && c->x == c->parkPose[0] && c->y == c->parkPose[1] && c->z == c->parkPose[2] && !memcmp(c->parkPose + 3, c->q, sizeof c->q) &&
+             fabsf(c->vel[0]) + fabsf(c->vel[1]) + fabsf(c->vel[2]) < CAR_PARK_V && fabsf(c->w[0]) + fabsf(c->w[1]) + fabsf(c->w[2]) < CAR_PARK_V && ++c->parkTick % CAR_PARK_EVERY) parkSkip = 1;
+  }
   if (skip) { c->t += dt; c->acc = 0.f; c->quietSteps += (int)(dt / c->p.sub + .5f); }
+  else if (parkSkip) { c->t += dt; c->acc = 0.f; }
   else while (c->acc >= c->p.sub * 0.999f && n < 16) {
     int r0 = c->reverts; substep(c, w, in, c->p.sub); c->acc -= c->p.sub; n++;
     if (!DEADEND32_OLD) {
@@ -2105,6 +2159,12 @@ void carUpdate(Car *c, const ColWorld *w, const CarInput *in, float dt) {
     }
   }
   if (c->acc < 0.f) c->acc = 0.f;
+  XS_LAP(1, xt_, xw_); XS_ADD(3, n); XS_ADD(16, skip); XS_ADD(17, parkSkip);   // подшаги: время и счёт; пропуск покоя и сна (CAR_PARK)
+  if (parkIn && !skip && !parkSkip) {   // посчитанный кадр покоя: сдвинулась ли поза против прошлого посчитанного
+    float d_ = fabsf(c->x - c->parkPose[0]) + fabsf(c->y - c->parkPose[1]) + fabsf(c->z - c->parkPose[2]) + fabsf(c->q[0] - c->parkPose[3]) + fabsf(c->q[1] - c->parkPose[4]) + fabsf(c->q[2] - c->parkPose[5]) + fabsf(c->q[3] - c->parkPose[6]);
+    if (d_ < CAR_PARK_EPS && fabsf(c->vel[0]) + fabsf(c->vel[1]) + fabsf(c->vel[2]) < CAR_PARK_V && fabsf(c->w[0]) + fabsf(c->w[1]) + fabsf(c->w[2]) < CAR_PARK_V && !c->contacts && !c->bodyHit) { if (c->parkN < 1 << 20) c->parkN++; } else c->parkN = 0;
+        c->parkPose[0] = c->x; c->parkPose[1] = c->y; c->parkPose[2] = c->z; memcpy(c->parkPose + 3, c->q, sizeof c->q);
+  }
   if (!PERCH_ESCAPE_OLD) perchEscape(c, w, in, dt);
 #ifndef CAR_NAN_OLD   // -DCAR_NAN_OLD — прежнее (без проверки): красный контроль tests/crash_f10/nan.sh
   if (!carFinite(c)) { carNanFixes++; recover(c, w, c->t); }   // правка 252: NaN/inf — на надёжное место (выше)
@@ -2123,6 +2183,7 @@ void carUpdate(Car *c, const ColWorld *w, const CarInput *in, float dt) {
   colHumpKeep(0, 0);      // правка 200: вне шага машины памяти горбов нет
   colFolKeep(0, 0);       // правка 304: и пропущенных заборов
   colSetFenceBack(0); colBackKeep(0, 0);   // сверка PS2 09.10: вне шага машины забор — как был (Гомер)
+  XS_LAP(15, xt_, xw_);
 }
 
 // ------------------------------------------------------------------------------------------------ машина о машину

@@ -1,0 +1,21 @@
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -400 -100 3.14
+wait 10
+camrel 0 2.5 8 0 0.08 -1
+wait 4
+shot f_a
+camrel 0 2.5 8 -1 0.08 0
+wait 3
+shot f_b
+camrel 0 2.5 8 1 0.08 0
+wait 3
+shot f_c
+cam off
+wait 1
+end

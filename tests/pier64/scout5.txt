@@ -1,0 +1,19 @@
+# №957б (Небо): какие квады пропов превращаются в блики на причале L6
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -417 -50 0.1
+wait 6
+foot -484 125 3.14
+wait 6
+foot -320 -240 0
+wait 6
+foot -350 -355 0
+wait 6
+foot -300 -285 0
+wait 6
+end

@@ -1,0 +1,33 @@
+flag level 5
+wait 12
+flag cfgdefaults 1
+flag lspnear MODE
+scene S5_STAND
+goto -330 -180 0.0000
+wait 3.5
+shot l0
+goto -330 -180 1.5708
+wait 3.5
+shot l1
+goto -330 -180 3.1416
+wait 3.5
+shot l2
+goto -355 -212 0.0000
+wait 3.5
+shot l3
+goto -355 -212 1.5708
+wait 3.5
+shot l4
+goto -355 -212 3.1416
+wait 3.5
+shot l5
+goto -300 -150 0.0000
+wait 3.5
+shot l6
+goto -300 -150 1.5708
+wait 3.5
+shot l7
+goto -300 -150 3.1416
+wait 3.5
+shot l8
+end

@@ -1,0 +1,69 @@
+scene A_BOOT
+flag cfgdefaults 1
+flag repair
+wait 6
+scene A_GO4
+flag golevel 4
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO5
+flag golevel 5
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO6
+flag golevel 6
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO5
+flag golevel 5
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO4
+flag golevel 4
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO7
+flag golevel 7
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO2
+flag golevel 2
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO3
+flag golevel 3
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene A_GO1
+flag golevel 1
+wait 40
+press triangle 0.2
+wait 3
+flag stop
+wait 4
+scene Z_END
+end

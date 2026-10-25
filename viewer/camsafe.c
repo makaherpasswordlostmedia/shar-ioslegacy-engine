@@ -1,5 +1,6 @@
 // Правка Роба 331: камера никогда не внутри геометрии — замер и свободная ближняя плоскость (см. camsafe.h)
 #include <math.h>
+#include <string.h>
 #include "camsafe.h"
 
 // отрезок a -> b против кузова (раздутого на pad): 1 — пересекает; *tin — вход (0, если начало внутри), *in — начало внутри
@@ -77,9 +78,22 @@ static float csTriFracN(const CsScene *s, const float a[3], const float b[3], fl
   }
   return best;
 }
-float csRayFrac(const CsScene *s, const float a[3], const float b[3], int bodies) {
-  float f = 1.f, t; int in;
-  if ((bodies & 1) && s->w) f = colRayFrac(s->w, a, b, 0);
+unsigned csRayCalls, csNfCalls, csRaysMismatch;
+// CAMPERF (ускорение камеры, 23.10): лучи ближней плоскости — одним пакетом к коллизии (colRaysFrac), остальное (сетка, тела) по одному; ответ тот же. CAM_RAYS_OLD=1 / flag camraysold 1 — как было
+#ifndef CAM_RAYS_OLD
+#define CAM_RAYS_OLD 0
+#endif
+int camRaysOld = CAM_RAYS_OLD, camRaysVerify;
+static float csRayFracC(const CsScene *s, const float a[3], const float b[3], int bodies, float colf) {   // colf >= 0 — ответ коллизии уже посчитан пакетом
+  float f = 1.f, t; int in; csRayCalls++;
+  if ((bodies & 1) && s->w) {
+    if ((bodies & 128) && colf < 0.f) {   // №922: высокие стены продолжены вверх (глаз не над фасадом, за которым крыша без коллизии), если над верхом стены в CAM_WALL_UP есть видимая геометрия
+      colSegUp = CAM_WALL_UP; float f1 = colRayFrac(s->w, a, b, 0); colSegUp = 0.f;   // свободный луч с продлением свободен и без него — один обход клеток
+      f = f1;
+      if (f1 < 1.f) { f = colRayFrac(s->w, a, b, 0);
+        if (f1 < f) { float h[3] = {a[0] + (b[0] - a[0]) * f1, a[1] + (b[1] - a[1]) * f1, a[2] + (b[2] - a[2]) * f1}; if (!s->roofAbove || s->roofAbove(h)) f = f1; } } }
+    else f = colf >= 0.f ? colf : colRayFrac(s->w, a, b, 0);
+  }
   if (bodies & 8) {   // видимая геометрия города: треугольники (медленно) или сетка занятости (CAM_GEOM_FAST)
     if (s->ntri && s->useTri) { float g = csTriFrac(s, a, b); if (g < f) f = g; }
     if (s->geomRay) { float g = s->geomRay(a, b, (bodies & 16) ? 0.f : CS_GEOM_SKIP); if (g < f) f = g; } }
@@ -87,10 +101,12 @@ float csRayFrac(const CsScene *s, const float a[3], const float b[3], int bodies
     for (int i = 0; i < s->nbox; i++) { int o = s->box[i].own;
       if (o == 2 ? !(bodies & 32) : !((bodies & 6) && ((bodies & 2) || !o))) continue;   // own 2 — стейтпроп (№727), только маска 32
       if (segBox(&s->box[i], a, b, 0.f, &t, &in) && !in && t < f) f = t; }
-    if (bodies & 6) for (int i = 0; i < s->ncyl; i++) if (segCyl(&s->cyl[i], a, b, 0.f, &t, &in) && !in && t < f) f = t;
+    if ((bodies & 6) && !(bodies & 64)) for (int i = 0; i < s->ncyl; i++)   // 64 — №916в: луч промежуточного глаза не считает людей (идущий рядом с Гомером не обрывает перелёт рывком)
+       if (segCyl(&s->cyl[i], a, b, 0.f, &t, &in) && !in && t < f) f = t;
   }
   return f;
 }
+float csRayFrac(const CsScene *s, const float a[3], const float b[3], int bodies) { return csRayFracC(s, a, b, bodies, -1.f); }
 int csInBody(const CsScene *s, const float p[3], float pad) {
   float t; int in;
   for (int i = 0; i < s->nbox; i++) { if (s->box[i].own == 2) continue; segBox(&s->box[i], p, p, pad, &t, &in); if (in) return 1; }
@@ -119,6 +135,7 @@ float csDbgVf[4];   // №791 замер: точка видимого пола, 
 int camNearDenseOld = CAM_NEAR_DENSE_OLD;
 #define CS_NEARMASK (camNearGeomOld ? (3 | 32) : (3 | 8 | 16 | 32))   // 32 — стейтпропы у глаза (№727)
 float csNearFree(const CsScene *s, const float eye[3], const float f[3], float tanV, float tanH, float nmax) {
+  csNfCalls++;
   float r[3], u[3], D = nmax / CS_NEAR_K, free = D, p[3];   // лучи — на глубину nmax / CS_NEAR_K: свободно — ближняя плоскость прежняя
   csBasis(f, r, u);
   // №727 (Роб 17.10: «ничего не должно обрезаться по краям кадра»): 3 × 3 луча пропускали предмет, входящий в кадр сбоку между ними (ящик внизу справа,
@@ -128,6 +145,17 @@ float csNearFree(const CsScene *s, const float eye[3], const float f[3], float t
     for (int sy = -1; sy <= 1; sy++) for (int sx = -1; sx <= 1; sx++) {   // 3 × 3 луча: углы, середины сторон, центр
       nearPt(eye, f, r, u, D, sx * tanH, sy * tanV, p);
       float fr = csRayFrac(s, eye, p, CS_NEARMASK) * D; if (fr < free) free = fr;
+    }
+  } else if (!camRaysOld && s->w) {   // CAMPERF: 17 лучей к коллизии одним обходом клеток
+    float A[17][3], B[17][3], cf[17]; int m = 0;
+    for (int sy = -2; sy <= 2; sy++) for (int sx = -2; sx <= 2; sx++) {
+      if (sx > -2 && sx < 2 && sy > -2 && sy < 2 && (sx || sy)) continue;   // край кадра (16) и центр
+      nearPt(eye, f, r, u, D, sx * .5f * tanH, sy * .5f * tanV, B[m]); memcpy(A[m], eye, 12); m++;
+    }
+    colRaysFrac(s->w, m, (const float (*)[3])A, (const float (*)[3])B, cf);
+    for (int i = 0; i < m; i++) {
+      float fr = csRayFracC(s, eye, B[i], CS_NEARMASK, cf[i]) * D; if (fr < free) free = fr;
+      if (camRaysVerify) { float g = csRayFrac(s, eye, B[i], CS_NEARMASK) * D; if (fabsf(g - fr) > 1e-6f) csRaysMismatch++; }
     }
   } else for (int sy = -2; sy <= 2; sy++) for (int sx = -2; sx <= 2; sx++) {
     if (sx > -2 && sx < 2 && sy > -2 && sy < 2 && (sx || sy)) continue;   // край кадра (16) и центр
@@ -139,6 +167,12 @@ float csNearFree(const CsScene *s, const float eye[3], const float f[3], float t
     float c[4][3]; int bad = 0;
     nearPt(eye, f, r, u, n, -tanH, -tanV, c[0]); nearPt(eye, f, r, u, n, tanH, -tanV, c[1]);
     nearPt(eye, f, r, u, n, tanH, tanV, c[2]); nearPt(eye, f, r, u, n, -tanH, tanV, c[3]);
+    if (!camRaysOld && s->w && !camNearDenseOld) {   // CAMPERF: 4 стороны — тоже пакетом
+      float A[4][3], B[4][3], cf[4]; for (int i = 0; i < 4; i++) { memcpy(A[i], c[i], 12); memcpy(B[i], c[(i + 1) & 3], 12); }
+      colRaysFrac(s->w, 4, (const float (*)[3])A, (const float (*)[3])B, cf);
+      for (int i = 0; i < 4 && !bad; i++) { bad = csRayFracC(s, A[i], B[i], CS_NEARMASK, cf[i]) < 1.f;
+        if (camRaysVerify) { int g = csRayFrac(s, A[i], B[i], CS_NEARMASK) < 1.f; if (g != bad) csRaysMismatch++; } }
+    } else
     for (int i = 0; i < 4 && !bad; i++) bad = csRayFrac(s, c[i], c[(i + 1) & 3], CS_NEARMASK) < 1.f;
     if (!bad) return n;
     n *= .7f;

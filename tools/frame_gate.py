@@ -61,7 +61,8 @@ def main():
         put('г', pp >= 5, f'предметы у дороги: {pp:.0f} кусков на кадр (порог 5)')
         cty = sum(r['city'] / r['fr'] for r in street) / len(street) if street else 0
         newr = gatecat(N, {'FG_new_start'}) if os.path.exists(os.path.join(N, 'smoke.txt')) else []
-        newend = os.path.exists(os.path.join(N, 'smoke.txt')) and 'END' in open(os.path.join(N, 'smoke.txt'), errors='replace').read()[-400:]
+        # 19.10 (TEST37): после END пишутся строки кадра выхода (RFAST, DCITY, HOMER, EXIT739) — длиннее 400 знаков, END выпадал из окна хвоста; теперь — строка END в журнале
+        newend = os.path.exists(os.path.join(N, 'smoke.txt')) and any(l.startswith('END') for l in open(os.path.join(N, 'smoke.txt'), errors='replace'))
         nc = sum(r['city'] for r in newr); npp = sum(r['props'] for r in newr)
         fps = []
         for ln in open(os.path.join(R, 'smoke.txt'), errors='replace'):

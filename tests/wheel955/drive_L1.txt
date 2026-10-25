@@ -1,0 +1,85 @@
+scene S_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+flag warmhere
+wait 3
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+wait 0.5
+flag trfang
+flag stop
+wait 1
+end

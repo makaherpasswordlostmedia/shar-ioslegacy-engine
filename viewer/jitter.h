@@ -88,7 +88,9 @@ static void jitterUse(int j) {
   sceGuSetMatrix(GU_PROJECTION, j ? &jitPmJ : &jitPm0); jitCur = j;
 }
 // клетка города: ближе порога — несдвинутая проекция (вызывать перед каждым листом клетки), иначе сдвинутая
+static int zfHold;   // №932б: идёт дальний проход города (своя проекция) — клетки проекцию не переставляют
 static void jitterCell(const float bb[6], float ex, float ey, float ez) {
+  if (zfHold) return;
   if (!jitActive || JITTER_NEAR_OLD || JITTER_CAR_OLD) return;
   float dx = ex < bb[0] ? bb[0] - ex : ex > bb[3] ? ex - bb[3] : 0.f, dy = ey < bb[1] ? bb[1] - ey : ey > bb[4] ? ey - bb[4] : 0.f, dz = ez < bb[2] ? bb[2] - ez : ez > bb[5] ? ez - bb[5] : 0.f;
   int sh = dx * dx + dy * dy + dz * dz >= JITTER_NEAR_M * JITTER_NEAR_M;

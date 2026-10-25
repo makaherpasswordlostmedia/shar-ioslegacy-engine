@@ -159,6 +159,8 @@ typedef struct {
 
 int skinBatchValid(const SkinModel *m, const SkinBatch *b);
 SkinModel *skinLoad(const char *path);
+void skinSlotOpt(const SkinModel *m);   // №914: переставить слоты костей пачек для общих слотов (skin.c)
+void skinSetSlotOpt(int on); extern unsigned skinSlotModels, skinSlotBefore, skinSlotAfter;
 extern int skinLoadErr; extern unsigned skinLoadGot;   // №775: причина последнего отказа skinLoad (skin.c)
 typedef struct SkinPre SkinPre;                 // предзагрузка модели: чтение файла в фоне (PSP: sceIoReadAsync), без остановки кадра
 #ifndef SKINPRE_ERR_OLD
@@ -248,6 +250,9 @@ extern int skinToonLineW, skinToonEyeMode;
 void skinToonAir(unsigned abgr);                 // №779: цвет дали (туман неба, main_camera.h skyFogColor): к нему светлеет тушь вдали
 unsigned skinToonAirMix(unsigned ink, float d);
 unsigned skinToonAirColor(void);
+float skinToonWorldWNpc(float d);                // №931: то же для NPC-машин (тоньше с расстоянием, дальше TOON_NPC_N — 0)
+unsigned skinToonAirMixNpc(unsigned ink, float d); // №931: тушь NPC вдали светлее
+void skinToonNpc(int on);                          // №931: следующие skinDraw — прохожий NPC (контур тоньше с расстоянием), 0 — герой
 float skinToonWorldW(float d);                   // №779: вытяжка контура машины на расстоянии d, м (0 — без контура)                 // №779: сам цвет дали (ABGR)  // №779: тушь на расстоянии d, м (0 до 5 м, к 40 м — 0,6 цвета дали)
 #ifndef TOON_EYE_SOFT_OLD
 #define TOON_EYE_SOFT_OLD 0
@@ -303,15 +308,56 @@ static inline int skinToonShadeOn(void) { return SHAR_TOON_AVAILABLE && skinToon
 #define TOON_RANGE823_OLD 0   // №823: ровнее толщина контура (skin.c toonPxAt, main_render.h carToonHull)
 #endif
 #define TOON_LINE_ABGR (TOON_LINE796_OLD ? TOON_INK_ABGR : TOON_INK821_OLD ? 0xff360e1du : 0xff2c0516u)
+// №951 (Роб 25.10, игра TEST59: «варианты контура в настройках»): строка Ink на странице CARTOON. 0 Indigo — фиолетовое перо №821, как TEST59; 1 Black — перо везде
+// контрастный чёрный без фиолетового отлива (линии, тени); 2 Tone — герои, машины и тени чёрным, второстепенное (линии зданий, край асфальта, мелкие пропы) — тёмный
+// насыщенный тон своего цвета: асфальт — приглушённый изумрудный, здания и пропы — умбра. Цвет линий мира один на уровень (в файле линий цвета поверхности нет).
+// INK951_OLD=1 — перо только индиго, строка не влияет
+#ifndef INK951_OLD
+#define INK951_OLD 0
+#endif
+#ifndef INK951_DEF
+#define INK951_DEF 1   // стиль нового файла настроек: 1 Black
+#endif
+enum { INK_CHAR, INK_WORLD, INK_ROAD, INK_PROP, INK_SHADOW };
+#define INK_BLACK_ABGR 0xff0a0a0au
+#define INK_ROAD_ABGR 0xff32401au   // RGB 26,64,50 — приглушённый изумруд
+#define INK_WORLD_ABGR 0xff0e2042u  // RGB 66,32,14 — умбра
+// №951б (Роб 25.10, вариант 2 Tone, слово дирижёра): самое важное (герои, их машины, персонажи, тени) — чёрным; второстепенное — близким насыщенным тоном СВОЕГО цвета: здания и пропы — тёмный
+// насыщенный тон среднего цвета своей текстуры, деревья и пальмы (зелёные текстуры) — насыщенно-коричневые, асфальт — приглушённый изумруд. Среднее по текстуре — tstat (texToonStat), без нового формата.
+// Линии мира — один тон на уровень (среднее по не-земле и не-зелени текстур уровня, skinInkWorldAbgr). Tone берёт в обводку и высокие предметы (столбы, деревья) — только при Ink 2.
+// INK951B_OLD=1 / «flag ink951bold 1» — Tone как №951 (умбра для мира и пропов, деревья без контура)
+#ifndef INK951B_OLD
+#define INK951B_OLD 0
+#endif
+#define INK_TREE_ABGR 0xff0e2c5cu   // RGB 92,44,14 — насыщенно-коричневый (стволы, пальмы, кроны)
+extern int skinInkStyle, skinInk951bOld; extern unsigned skinInkWorldAbgr;
+static inline int skinInkToneOn(void) { return !INK951_OLD && skinInkStyle == 2 && !skinInk951bOld; }
+// средний цвет текстуры (0..255) -> тёмный насыщенный тон того же оттенка; зелень — коричневый; почти серое — тёмный нейтральный
+static inline unsigned skinInkTone(unsigned r, unsigned g, unsigned b) {
+  unsigned mx = r > g ? (r > b ? r : b) : (g > b ? g : b), mn = r < g ? (r < b ? r : b) : (g < b ? g : b);
+  if (g * 100u > r * 105u && g * 100u > b * 112u && mx - mn > 10u) return INK_TREE_ABGR;   // зелёное (листва, трава) — коричневое перо
+  float v = mx / 255.f, sat = mx ? (float)(mx - mn) / (float)mx : 0.f, v2 = v * .5f; v2 = v2 < .2f ? .2f : v2 > .34f ? .34f : v2;
+  if (sat < .08f) { unsigned c = (unsigned)(v2 * 255.f * .8f); return 0xff000000u | c << 16 | c << 8 | c; }
+  float s2 = sat * 1.4f + .2f; s2 = s2 > 1.f ? 1.f : s2; float hi = v2, lo = v2 * (1.f - s2), span = (float)(mx - mn);
+  float c3[3] = {(float)r, (float)g, (float)b}, o[3];
+  for (int i = 0; i < 3; i++) o[i] = c3[i] == (float)mx ? hi : c3[i] == (float)mn ? lo : lo + (hi - lo) * (c3[i] - (float)mn) / span;
+  return 0xff000000u | (unsigned)(o[2] * 255.f + .5f) << 16 | (unsigned)(o[1] * 255.f + .5f) << 8 | (unsigned)(o[0] * 255.f + .5f);
+}
+static inline unsigned skinInkAbgr(int kind) {
+  if (INK951_OLD || skinInkStyle <= 0) return kind == INK_SHADOW ? TOON_INK_ABGR : TOON_LINE_ABGR;
+  if (skinInkStyle == 1 || kind == INK_CHAR || kind == INK_SHADOW) return INK_BLACK_ABGR;
+  if (kind == INK_WORLD && skinInkToneOn() && skinInkWorldAbgr) return skinInkWorldAbgr;
+  return kind == INK_ROAD ? INK_ROAD_ABGR : INK_WORLD_ABGR;
+}
 #ifndef TOON_HULL_ABGR
-#define TOON_HULL_ABGR (TOON_INK_OLD ? 0xff4d4d4du : TOON_LINE_ABGR)   // цвет контура персонажей (было: ровный тёмно-серый 30 % яркости). Правило порта (вкус)
+#define TOON_HULL_ABGR (TOON_INK_OLD ? 0xff4d4d4du : skinInkAbgr(INK_CHAR))   // цвет контура персонажей (было: ровный тёмно-серый 30 % яркости). Правило порта (вкус)
 #endif
 #ifndef TOON_HULL_BLEND_OLD
 #define TOON_HULL_BLEND_OLD 0   // 1 — контур через смешивание «фон × 30 %» как WIP c535cd20
 #endif
 static inline float skinToonShadowK(void) { return (SHAR_TOON_AVAILABLE && skinToon && !SKIN_TOON_V675_OLD) ? (float)TOON_SHADOW_PCT / 100.f : 1.f; }
 void skinSetToon(int on);
-extern unsigned skinToonHullCalls;
+extern unsigned skinToonHullCalls, skinToonSeamFixed;
 #ifndef SKIN_HOST
 void skinSunDirXZ(float *x, float *z);   // 16.10: живое направление на солнце (x, z): по нему пятно Гомера смещается от солнца уровня, не L1
 void skinLight(float dx, float dy, float dz, unsigned sunAbgr, unsigned ambientAbgr);  // direction TO the sun

@@ -39,7 +39,7 @@ static int shrDevName(const char *n) {
     "bench.txt", "goto.txt", "opts.txt", "camang.txt", "carseq.txt", "testdmg", "testboom", "clearchk", "flypath", "fpeprobe", "fputrap",
     "gagskinstreamold", "mefxmax", "mepeak", "near07", "nolayer", "toonworld", "oldfog", "oldstream", "pcold", "seamchk", "seamsold", "streamlog", "stream.txt",
     "smokelog", "scenario.txt", "ballast", "jitter", "nojitter", "smoke.txt", "intro.txt", "sfxlog", "sfxlog.txt", "trace.txt",
-    "acct", "acctoff", "acct.txt", "loadacc", "bisect", "groundbias", "pausecellold", "startnoloadold", "uifit.txt"};   // 16.10 аудит диагностики; файлы-выключатели игрока (hudon, mecityoff, startnewsold, newsiris, coneold, homerspotold, homerlitold, loadsilent, regprehyst) сюда не входят
+    "flatdump", "flatrescanold", "flatrebuildold", "acct", "acctoff", "acct.txt", "loadacc", "bisect", "groundbias", "pausecellold", "startnoloadold", "uifit.txt"};   // 16.10 аудит диагностики; файлы-выключатели игрока (hudon, mecityoff, startnewsold, newsiris, coneold, homerspotold, homerlitold, loadsilent, regprehyst) сюда не входят
   static const char *diag[] = {"blackbox.txt", "blackbox_prev.txt", "crash.txt", "crash_prev.txt", "sharexc.prx"};
   if (SHR_KEEP_SMOKE && (!strcmp(n, "smokelog") || !strcmp(n, "scenario.txt") || !strcmp(n, "smoke.txt") || !strcmp(n, "trace.txt"))) return 0;
   for (unsigned i = 0; i < sizeof dev / sizeof *dev; i++) if (!strcmp(n, dev[i])) return 1;

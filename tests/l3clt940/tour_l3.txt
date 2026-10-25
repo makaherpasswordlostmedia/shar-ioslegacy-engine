@@ -1,0 +1,46 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene F_GO8_L3
+flag golevel 3
+wait 40
+shot f09_l3_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f09_l3_b
+flag stop
+press triangle 0.2
+wait 4
+shot f09_l3_c
+scene F_FLAT_L3S
+flag flat912 1
+foot 180.2 64.2 -1.571
+wait 4
+shot f58_l3_street_off
+flag flat912 0
+wait 4
+shot f58_l3_street_on
+flag flat912 1
+wait 1
+scene F_FLAT_L3B
+flag flat912 1
+foot -525.6 -40.7 0.28
+wait 4
+shot f58_l3_boards_off
+flag flat912 0
+wait 4
+shot f58_l3_boards_on
+flag flat912 1
+wait 1
+# TEST53 №887: панорама дали (город до 150 м + силуэты) вкл/выкл; было — таблица дали бота (dal877.bin) — на набережной L3 (C7-6) и в начале L2: та же камера с таблицей и без; цена по RFAST/DAL877 сцен
+scene F_L3_FAR1
+flag far150 1
+wait 7
+shot f09_l3_far1
+scene F_L3_FAR0
+flag far150 0
+wait 7
+end

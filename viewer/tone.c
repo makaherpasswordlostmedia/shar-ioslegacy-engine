@@ -50,6 +50,31 @@ void toneSetStat(const unsigned char *st) { toneSt = st; }
 #define TONE_TEX_UNIFORM_OLD 0
 #endif
 static int toonTexPct = 35;
+// №865 (Роб 22.10: «однотонные текстуры — шум, пара кирпичей — в мультике не так необходимы: заливками, оптимизированнее; дороги, асфальт, траву —
+// оставить с текстурами»): к общей доле рисунка (toonTexPct) — два правила по самой текстуре: земля (метка ground экспорта, tstat[4] бит 4) — рисунок не
+// меньше TOON_GROUND_K; почти однотонная (разброс яркости ≤ ~16 из 255: tstat[3] ≤ TOON_FLAT_ST, texToonStat) — ровная заливка средним цветом. TOON_FILL865_OLD=1 — как было
+#ifndef TOON_FILL865_OLD
+#define TOON_FILL865_OLD 0
+#endif
+#define TOON_GROUND_K .70f
+#define TOON_FLAT_ST 46   // tstat[3] = (0,10 + 0,5·(sd−10)/40)·255: 46 — sd ≈ 15
+// №892 (Роб 23.10: «окна зданий вдалеке слишком светлые, странное сглаживание»; замер L1, дальний дом ~100 м, эмулятор: тёмная панель окна без Cartoon — яркость 64 из 255,
+// стена 188 (контраст 123, у PS2 тёмные окна 50–58 при стене 150–170); в Cartoon панель 118, контраст 73: общая доля рисунка toonTex (45 %) стягивает ВСЕ записи палитры к
+// среднему цвету текстуры, и тёмное стекло на светлой стене теряет 55 % глубины (окно — светлый размытый прямоугольник). Правило: запись, темнее среднего текстуры по яркости больше
+// TOON_WIN_D0 (из 255; исходные цвета, до кривой), держит рисунок сильнее — доля растёт от общей к TOON_WIN_K на отрезке TOON_WIN_RAMP; земля и листва (tstat[4] биты 4, 2) и ровные
+// текстуры (k = 0) не меняются; без Cartoon шаг не работает. Палитра мультика №825 (оттенки) не тронута. TONE_WIN892_OLD=1 — как до правки
+#ifndef TONE_WIN892_OLD
+#define TONE_WIN892_OLD 0
+#endif
+#ifndef TOON_WIN_D0
+#define TOON_WIN_D0 55.f
+#endif
+#ifndef TOON_WIN_RAMP
+#define TOON_WIN_RAMP 45.f
+#endif
+#ifndef TOON_WIN_K
+#define TOON_WIN_K .90f
+#endif
 void toneToonTex(int pct) { toonTexPct = pct < 0 ? 0 : pct > 100 ? 100 : pct; }
 int toneToonTexPct(void) { return toonTexPct; }
 // №777 (Роб: «настроить насыщенность, контрастность»): контраст палитр вокруг середины (128) последним шагом кривой, в обоих режимах; 100 — как есть, 50..200
@@ -240,14 +265,23 @@ static void toneLutInit(void) {
   lutReady = 1;
 }
 void toneColorRGB(unsigned char *c) { if (!c) return; toneLutInit(); entryNoToon = 0; entryFoliage = 0; toneEntry(c); }
-unsigned toneKey(void) { return (unsigned)toonOn | (unsigned)satPct << 1 | (unsigned)gammaPct << 10 | (unsigned)contrastPct << 19 | (TONE_TOON90_OLD ? 1u << 28 : 0u); }
+void toneColorRGBNT(unsigned char *c) { if (!c) return; toneLutInit(); entryNoToon = 1; entryFoliage = 0; toneEntry(c); entryNoToon = 0; }   // №954: как toneColorRGB, но без шагов мультика — так красится палитра текстуры неба (бит 1 tstat[4], №786)
+unsigned toneKey(void) { return (unsigned)toonOn | (unsigned)satPct << 1 | (unsigned)gammaPct << 10 | (unsigned)contrastPct << 19 | (TONE_TOON90_OLD ? 1u << 28 : 0u) | (TONE_WIN892_OLD ? 1u << 29 : 0u); }
 void tonePal(unsigned char *c) {
   if (!c) return;
   toneLutInit();
   entryNoToon = toneSt && (toneSt[4] & 1); entryFoliage = toneSt && (toneSt[4] & 2) && !entryNoToon;   // №786: облака неба и вывески — без шагов мультика (бит 1); №825: листва (бит 2)
   if (toonOn && !entryNoToon && !TONE_TOON90_OLD && !TONE_FLAT_OLD && toneSt && toneSt[3]) {   // №754: рисунок текстуры отступает, цвет доминирует (исходные цвета, до кривой)
     float k = TONE_TEX_UNIFORM_OLD ? toneSt[3] / 255.f : toonTexPct / 100.f; unsigned char *q = c;
-    for (int i = 0; i < 256; i++, q += 4) for (int j = 0; j < 3; j++) q[j] = clamp8(toneSt[j] + (q[j] - (float)toneSt[j]) * k);
+    if (!TOON_FILL865_OLD && !TONE_TEX_UNIFORM_OLD) {   // №865: земля (дорога, асфальт, трава) — с рисунком; почти однотонные стены — заливкой
+      if (toneSt[4] & 4) { if (k < TOON_GROUND_K) k = TOON_GROUND_K; }
+      else if (toneSt[3] <= TOON_FLAT_ST) k = 0.f; }
+    float lm = .299f * toneSt[0] + .587f * toneSt[1] + .114f * toneSt[2]; int keepDark = !TONE_WIN892_OLD && k > 0.f && !(toneSt[4] & (2 | 4));   // №892: не земля и не листва
+    for (int i = 0; i < 256; i++, q += 4) {
+      float kk = k;
+      if (keepDark) { float dd = lm - (.299f * q[0] + .587f * q[1] + .114f * q[2]); if (dd > TOON_WIN_D0) kk = k + (TOON_WIN_K - k) * clamp01((dd - TOON_WIN_D0) / TOON_WIN_RAMP); }   // глубокое тёмное (стекло окон, двери) — рисунок держится сильнее общей доли
+      for (int j = 0; j < 3; j++) q[j] = clamp8(toneSt[j] + (q[j] - (float)toneSt[j]) * kk);
+    }
   }
   for (int i = 0; i < 256; i++, c += 4) toneEntry(c);
 }

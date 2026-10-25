@@ -120,6 +120,22 @@ void carVisSetCar(CarVis *v, const char *name) {
   }
 }
 
+// №955б (Роб 25.10, TEST59: «колёса не крутятся у NPC и у многих других»; кадры: у машины трафика колёса крутятся, а у угнанной/машины миссии под игроком угол качения стоял — carVisUpdate
+// для неё не вызывается (mvForcedCar), cv.spin оставался нулевым при любой скорости). Качение колёс одно: угол по пройденному пути, радиус — у машины под игроком (c->p.wheelRad).
+// FORCEDSPIN955_OLD=1 — как было
+#ifndef FORCEDSPIN955_OLD
+#define FORCEDSPIN955_OLD 0
+#endif
+void carVisSpin(CarVis *v, const Car *c, float dt) {
+  if (FORCEDSPIN955_OLD || dt <= 0.f) return;
+  float rad = c->p.wheelRad > .05f ? c->p.wheelRad : v->wheelRad, w = rad > .05f ? c->v / rad : 0.f;
+  for (int i = 0; i < 4; i++) {
+    float wi = w;
+    if (i >= 2 && c->slip == 2) wi = 0.f;
+    if (i >= 2 && c->slip == 1) wi = (c->v >= 0.f ? 1.f : -1.f) * fmaxf(fabsf(w), 25.f);
+    v->spin[i] = fmodf(v->spin[i] + wi * dt, 2.f * GU_PI * 64.f);
+  }
+}
 void carVisUpdate(CarVis *v, const Car *c, const CarInput *in, float dt) {
   if (!v->ok || dt <= 0.f) return;
   // ремонт (START) или новая машина

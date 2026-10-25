@@ -257,6 +257,7 @@ typedef struct MsnGame {
     uint32_t n_typed, n_pass, n_none, n_events;
 } MsnGame;
 
+extern int msnSwitchOld;   /* №943: 1 — прежнее поведение смены миссии (см. msn_game.c) */
 /* installs itself as the runtime's host (calls msn_init(rt, f, host)) */
 void msn_game_init(MsnGame *g, MsnRuntime *rt, const MsnFile *f, const MsnGameApi *api);
 /* msn_tick + marker tracking + HUD timer/prompt + auto-finish of dialogue/FMV without a module */

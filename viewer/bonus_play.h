@@ -452,13 +452,14 @@ static void bnsSprops(float ex, float ey, float ez, float maxD) {
     for (unsigned b = 0; b < T->nBill; b++) {
       float v[12]; uint32_t col, bfl; int bt;
       if (!spBillQuad(&sprops, i, b, ex, ey, ez, v, &col, &bt, &bfl) || !(col >> 24)) continue;
-      if (!GLOW_GLINT_OLD && ((bfl >> 8) & 0xFF) == 2) { glowQuadQ(v, col, (float)i * .41f + (float)b); continue; }   // №839: свечение — бликом
+      if (neonArchBig957(v, bfl)) continue;   // №957б: арка, вывеска — без свечения
+      if (!GLOW_GLINT_OLD && ((bfl >> 8) & 0xFF) == 2) { gq944Site = "bonus"; glowQuadQ(v, col, (float)i * .41f + (float)b); continue; }   // №839: свечение — бликом
       if (!nb++) {
         ScePspFMatrix4 I; memset(&I, 0, sizeof I); I.x.x = I.y.y = I.z.z = I.w.w = 1.f;
         sceGuSetMatrix(GU_MODEL, &I); sceGuTexScale(1.f, 1.f);
         sceGuDisable(GU_ALPHA_TEST); sceGuEnable(GU_BLEND); sceGuDepthMask(GU_TRUE); curFlags = -1; setCull(0);
       }
-      int blm = (bfl >> 8) & 0xFF;   // как viewer/main.c: 2 — сложение, 3 — вычитание, иначе прозрачность; у свечения тумана нет (правка 76)
+      int blm = (bfl >> 8) & 0xFF; g944Bill("bonus_bill", blm, bt, v, col, i, b);   // №944; как viewer/main.c: 2 — сложение, 3 — вычитание, иначе прозрачность; у свечения тумана нет (правка 76)
       if (blm == 2) sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_FIX, 0, 0xffffffff);
       else if (blm == 3) sceGuBlendFunc(GU_REVERSE_SUBTRACT, GU_SRC_ALPHA, GU_FIX, 0, 0xffffffff);
       else sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);

@@ -1,0 +1,38 @@
+# №948: будка с разбитой целиком машиной на L7, L4, L2 (машина уровня: homer_v, marge_v, honor_v)
+scene start
+wait 3
+scene L7_load
+flag golevel 7
+wait 40
+scene L7_booth
+flag testdmg 1.0
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2.5
+shot L7_wreck
+scene L4_load
+press circle
+wait 2
+flag golevel 4
+wait 40
+scene L4_booth
+flag testdmg 1.0
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2.5
+shot L4_wreck
+scene L2_load
+press circle
+wait 2
+flag golevel 2
+wait 40
+scene L2_booth
+flag testdmg 1.0
+foot 11.85 86.95 3.1416
+wait 1.5
+press triangle
+wait 2.5
+shot L2_wreck
+end

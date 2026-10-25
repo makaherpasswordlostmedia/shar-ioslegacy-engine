@@ -50,6 +50,7 @@ void mvServiceMark(int mission);             // служебное (гейт с�
 void mvShutdown(void);                       // выход в главное меню: миссии выгружаются (модели, маркеры)
 void mvFree(void);                           // смена уровня: mvShutdown + пакет миссий + msnart.shr уровня
 void mvFreePack(void);                       // только пакет миссий (mvInit сам зовёт перед чтением нового)
+void mvIconState(char *o, unsigned n);          // №958б: значок цели в углу одной строкой: имя/поле/картинка/уровень цели/текст (чёрный ящик)
 int  mvPackLevel(void);                      // номер уровня в заголовке пакета MSN1 (0 — пакета нет): сверка набора уровня
 int  mvLevelDone(void);                      // 1 — уровень пройден, 2 — игра пройдена (MSN_EV_LEVEL_COMPLETE после вспышки), один раз
 const char *mvFmvPending(void);              // цель «fmv»: имя ролика ("fmv3.rmv"), пока main.c его не сыграл; NULL — нет
@@ -153,6 +154,10 @@ void mvTalkCamPlant(int how);            // служебное, отрицате
 // служебное (сценарий смоука): msngo — игрок к текущей цели как «goto» (посадка — к двери машины; комнаты — нет);
 // far > 0 — отрицательный контроль: встать на far м дальше от цели (цель обязана НЕ засчитаться)
 void mvServiceGo(float far);
+int  mvServiceBot(void);   // flag msnbot: 1 — этап ждёт △ пешком, 2 — этап машинный, а Гомер пешком (0 — ничего)
+void mvServiceSwitchOld(const char *what, int on);   // №943: msnswitchold / mscursorold — прежняя смена миссии / курсор MISSION SELECT (красный контроль)
+void mvServiceHud(void);                     // №943: строка MSNHUD (цель рантайма, цель HUD, маркер, пузырь); служебное flag msnhud
+void mvStartFirstIfIdle(void);               // №943: миссий нет (стартовая цель уровня отложена, выбранная строка не стартовала) — стартовать отложенную
 void mvServiceSelect(int mission);          // служебное: миссия по номеру пакета (бонус — как разговор с персонажем)
 void mvServiceUi(const char *flag, float a);  // служебное: uistack N, uiov (рамки оверлеев), uifit / uifitplant (тексты в рамке)
 #endif

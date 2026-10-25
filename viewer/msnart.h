@@ -9,6 +9,7 @@ int  msnartInit(const char *dir);                 // открыть таблиц
 void msnartReset(void);                           // выгрузить всё (NEW GAME)
 void msnartShutdown(void);                        // закрыть msnart.shr уровня (смена уровня): таблица, файл, записи
 void msnartLoad(const char *p3dPath, int level);  // LoadP3DFile("art\...\x.p3d"): подгрузить запись, если есть
+const char *msnartWantIcon(void);                     // №958б: имя значка задания, которого ждёт угол (диагностика)
 void msnartMissionStart(void);                    // новая миссия: записи прошлой выгружаются (уровня — остаются)
 extern int (*msnartRoom)(unsigned);              // №637: освободить далёкие клетки под запись; 1 — цельный кусок нужного размера есть
 void msnartPump(void);                            // раз в кадр: асинхронное чтение очереди записей (sceIoReadAsync)
@@ -47,5 +48,10 @@ extern int (*msnartVecBeam)(const float p[3], const float X[3], const float Y[3]
 // №839: размытые свечения значков и предметов (квады сложением) — нашим векторным бликом (ставит main: spritelight.h glowGlintHook); p — центр
 // самого крупного квада свечения, w — его ширина, c1/c2 — цвет двух крупных (ABGR кадра), a — альфа кадра. 0 — картинкой, как было
 extern int (*msnartGlowGlint)(const char *name, const float p[3], float w, unsigned c1, unsigned c2, float a, float ex, float ey, float ez);
+// №944 (служебно): перепись путей бликов взаимодействия — звёзды входа за кадры (старое кольцо / общий шейп) и журнал первого появления картинки со сложением/прозрачностью (name, blend, tex)
+void msnartList944(void (*out)(const char *name, int nbill, int nmesh));
+void msnartDoorLab944(const float *p, const float *X, const float *Y, unsigned col, float tsec);   // служебно: звезда входа на листе (flag glintlab 2)
+extern unsigned g944DoorOld, g944DoorNew;
+extern void (*msnartNote944)(const char *site, const char *what, const float *p, int a, int b);
 #endif
 extern unsigned msaCallN, msaFindUs, msaDrawUs;   // №849 служебно: вызовы msnartDraw и мкс поиска по имени

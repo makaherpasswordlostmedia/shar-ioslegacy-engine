@@ -1,0 +1,16 @@
+# рывок глаза при заходе в двор Симпсонов (L1): Гомер идёт от x 215, z 195 на юг (к машине); журнал CAMJUMP — глаз сместился > 1,5 м за кадр
+wait 12
+flag cfgdefaults 1
+flag player
+flag camlog
+flag camin 1
+flag camcrossold 0
+scene YARD
+foot 215 195 3.1416
+wait 3
+press up 6
+wait 7
+flag camin
+scene Z_END
+wait 1
+end

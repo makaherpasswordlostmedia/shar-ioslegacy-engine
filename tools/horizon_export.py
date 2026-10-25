@@ -70,7 +70,10 @@ def contour(V, ex, ez, near, far, eps, ey=None, Vs=None):
     pts = np.stack([np.arange(NB) / NB * 2 * np.pi, sk], 1); e = eps
     ids = rdp(pts, e)
     while len(ids) > MAXNV: e *= 1.3; ids = rdp(pts, e)   # потолок вершин на клетку: буфер ленты движка (horizon.h HZ_MAXV / 4)
-    return ey, sk, ids, (~np.isnan(top)).mean()
+    dd = dist.copy(); okd = dd > 0   # №934 (HOR2): расстояние до точки контура по бинам (skyline), пустые азимуты — по соседям (как и высота)
+    if okd.any(): x_ = np.arange(NB); dd = np.interp(x_, np.concatenate([x_[okd] - NB, x_[okd], x_[okd] + NB]), np.concatenate([dd[okd]] * 3))
+    else: dd = np.full(NB, float(far))
+    return ey, sk, ids, (~np.isnan(top)).mean(), dd
 
 
 def extract_landmark(V, x, z, r):
@@ -83,35 +86,80 @@ def extract_landmark(V, x, z, r):
     mid = W[(W[:, 1] > y0 + 0.3 * H) & (W[:, 1] < y0 + 0.9 * H)]
     cx, cz = (float(mid[:, 0].mean()), float(mid[:, 2].mean())) if len(mid) else (x, z)
     rad = np.hypot(W[:, 0] - cx, W[:, 2] - cz); h = W[:, 1] - y0
-    nb = int(np.ceil(H)) + 1; prof = np.zeros(nb)
-    np.maximum.at(prof, np.clip(h.astype(int), 0, nb - 1), rad)
+    # №928: профиль по шагу 2 м (не 1 м: ступеньки по метру давали полосатый силуэт), потолок 14 точек: цена ориентира в кадре — вершины.
+    # №928 приёмка «Контур» (кадры бота на семи уровнях): радиус от оси до самой дальней вершины раздувал вытянутые дома (карточка шире настоящего здания в 1,5–2 раза у
+    # 58 % ориентиров по среднему азимуту, у 83 % по худшему): карточка смотрит на камеру и рисуется одной шириной со всех сторон. Теперь ширина на каждой высоте — среднее
+    # геометрическое наименьшей и наибольшей видимой ширины объекта по азимутам (окно ±1 шаг по высоте): против настоящего ≤ 1,5× на 100 % по среднему азимуту и на 91 % по худшему.
+    # LM_PROF928_OLD=1 в окружении — прежний профиль (радиус до дальней вершины)
+    import os
+    STEP = 2.0; nb = int(np.ceil(H / STEP)) + 1; prof = np.zeros(nb); rel = np.stack([W[:, 0] - cx, W[:, 2] - cz], 1)
+    if os.environ.get('LM_PROF928_OLD'):
+        np.maximum.at(prof, np.clip((h / STEP).astype(int), 0, nb - 1), rad)
+        prof = np.maximum(np.maximum(prof, np.r_[prof[1:], prof[-1]]), np.r_[prof[0], prof[:-1]])
+    else:
+        az = np.radians(np.arange(0, 180, 15)); U = np.stack([np.cos(az), -np.sin(az)], 1)
+        for i in range(nb):
+            s_ = (h >= i * STEP - STEP) & (h < i * STEP + STEP)
+            if s_.sum() < 2: continue
+            pr = rel[s_] @ U.T; w = np.maximum(pr.max(0) - pr.min(0), 0.6); prof[i] = np.sqrt(w.min() * w.max()) / 2
+        have = np.where(prof > 0)[0]
+        if len(have): prof = np.where(prof > 0, prof, np.interp(np.arange(nb), have, prof[have]))   # высоты без вершин — по соседям
     prof = np.maximum(prof, 0.3)
-    pts = np.stack([np.arange(nb, dtype=float), prof], 1)
-    ids = rdp(pts, 0.4)   # ошибка профиля по радиусу 0,4 м
-    return cx, cz, y0, H, [(float(prof[i]), float(i)) for i in ids]
+    pts = np.stack([np.arange(nb, dtype=float) * STEP, prof], 1)
+    e = 0.8; ids = rdp(pts, e)
+    while len(ids) > 14: e *= 1.3; ids = rdp(pts, e)
+    return cx, cz, y0, H, [(float(prof[i]), float(i) * STEP) for i in ids]
 
 
-def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None):
+DQ_BASE = 130.; DQ_STEP = 1.19   # шкала расстояний DST2: 130 · 1,19^k
+def dq(d):
+    return np.clip(np.round(np.log(np.maximum(np.asarray(d, float), DQ_BASE) / DQ_BASE) / np.log(DQ_STEP)), 0, 15).astype(np.uint8)
+def pack4(a):
+    a = np.asarray(a, np.uint8)
+    if len(a) % 2: a = np.r_[a, 0].astype(np.uint8)
+    return bytes((a[0::2] | (a[1::2] << 4)).astype(np.uint8).tobytes())
+
+
+def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None, near2=None):
     """HOR1: 'HOR1', ncells u32, radius f32, nlm u32, смещение таблицы ориентиров u32, 12 нулей | ячейки по 32 Б: cx, cz, ey f32, nv u32, off u32, 12 нулей | вершины контура 4 Б: az u16 (0..65535 = 0..360°), tan s16 (/16384)"""
-    tab = []; blob = bytearray()
+    tab = []; blob = bytearray(); dst = []   # dst: по две записи на клетку (основной контур, второй) — расстояния для DST1
     for (cx, cz) in cells:
-        ey, sk, ids, cov = contour(V, cx, cz, near, far, eps, Vs=Vs)
+        ey, sk, ids, cov, dd = contour(V, cx, cz, near, far, eps, Vs=Vs)
         if cov < 0.05: continue
+        dst.append(dq(dd[np.minimum(ids, NB - 1)])); dst2 = None
         off = len(blob)
         for i in ids:
             az = int(round(i / NB * 65536)) & 0xffff if i < NB else 65535
             blob += struct.pack('<Hh', az, int(np.clip(round(sk[i] * 16384), -32768, 32767)))
-        tab.append((cx, cz, ey, len(ids), off, gfn(cx, cz) if gfn else 0))
+        off2 = nv2 = 0
+        if near2:   # №913: второй контур клетки (от near2 м) — для зон, где город держится дальше; p1 = смещение, p2 = число вершин
+            _, sk2, ids2, _, dd2 = contour(V, cx, cz, near2, far, eps, Vs=Vs, ey=ey)
+            dst2 = dq(dd2[np.minimum(ids2, NB - 1)])
+            off2 = len(blob); nv2 = len(ids2)
+            for i in ids2:
+                az = int(round(i / NB * 65536)) & 0xffff if i < NB else 65535
+                blob += struct.pack('<Hh', az, int(np.clip(round(sk2[i] * 16384), -32768, 32767)))
+        tab.append((cx, cz, ey, len(ids), off, gfn(cx, cz) if gfn else 0, off2, nv2)); dst.append(dst2 if dst2 is not None else np.zeros(0, np.uint8))
     base = 32 + 32 * len(tab)
     out = bytearray(struct.pack('<4sIfII', b'HOR1', len(tab), radius, len(lms), base + len(blob)) + b'\0' * 12)   # +16: смещение таблицы ориентиров
-    for (cx, cz, ey, nv, off, g) in tab: out += struct.pack('<3fIII8x', cx, cz, ey, nv, base + off, g)   # p0 = цвет дальней земли 0x00BBGGRR (0 — нет данных): земля ленты неотличима от земли рядом
+    for (cx, cz, ey, nv, off, g, off2, nv2) in tab: out += struct.pack('<3fIIIII', cx, cz, ey, nv, base + off, g, (base + off2) if nv2 else 0, nv2)   # p0 = цвет дальней земли 0x00BBGGRR (0 — нет данных): земля ленты неотличима от земли рядом
     out += blob
     # ориентиры: таблица по 32 Б (cx, cz, y0, H f32, npts u32, off u32, 8 нулей), затем профили: (радиус см u16, высота см u16)
     lbase = len(out) + 32 * len(lms); lblob = bytearray(); ltab = bytearray()
     for (cx, cz, y0, H, prof) in lms:
         ltab += struct.pack('<4fII8x', cx, cz, y0, H, len(prof), lbase + len(lblob))
         for (rr, hh) in prof: lblob += struct.pack('<HH', min(65535, int(round(rr * 100))), min(65535, int(round(hh * 100))))
-    out += ltab + lblob; Path(path).write_bytes(bytes(out))
+    out += ltab + lblob
+    # №934 HOR2: хвост DST2 — расстояние до точки контура на каждой вершине, 4 бита на вершину (шкала 130 м × 1,19^k, k = 0…15, до 1,77 км; ошибка расстояния ≤ 8,6 %: на клетке 60 м уводит точку с глаза не больше чем на 0,7°, а в центре клетки контур точный).
+    # Движок ставит вершину в мировых координатах (cx + D sin a, ey + tan·D, cz − D cos a) и проецирует на цилиндр дальности с настоящего глаза (лента не прыгает при смене клетки на склоне: поправка высоты шла на радиусе 154 м, а дом стоит на D ≥ 300 м).
+    # Четыре бита, а не байт: хвост 8 бит на вершину давал +21…60 КБ к horizon.shr (куча уровня хуже TEST59 на 0,04 МБ), 4 бита — вдвое меньше.
+    # Формат: 'DST2', ncell u32, 8 нулей | u32 смещение массива клетки от начала хвоста × ncell | массивы (на клетку: ceil(nv/2) байт основного контура, затем ceil(p2/2) байт второго; младшая тетрада — чётная вершина) | добивка до 4 | подвал 16 Б 'DSTF', u32 смещение хвоста, 8 нулей
+    t0 = len(out); n_ = len(tab); hdr = bytearray(b'DST2' + struct.pack('<I', n_) + b'\0' * 8); arrs = bytearray(); cur = 16 + 4 * n_
+    for i in range(n_):
+        a0 = pack4(dst[2 * i]); a1 = pack4(dst[2 * i + 1]); hdr += struct.pack('<I', cur); arrs += a0 + a1; cur += len(a0) + len(a1)
+    arrs += b'\0' * (-len(arrs) % 4)   # подвал 'DSTF' + смещение читаются как u32: хвост выровнен на 4 (PSP падает на невыровненном чтении, эмулятор прощает)
+    out += hdr + arrs + b'DSTF' + struct.pack('<I', t0) + b'\0' * 8
+    Path(path).write_bytes(bytes(out))
     print('HOR1: ячеек', len(tab), 'ориентиров', len(lms), 'байт', len(out)); return tab
 
 
@@ -135,6 +183,7 @@ def ground_fn(level, d, keep):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('level')
     ap.add_argument('--view'); ap.add_argument('--out', help='записать horizon.shr (HOR1) по сетке клеток'); ap.add_argument('--cell', type=float, default=150.); ap.add_argument('--lvl', type=int, default=0); ap.add_argument('--lmfile', default=str(Path(__file__).resolve().parent / 'horizon_landmarks.json')); ap.add_argument('--radius', type=float, default=260.); ap.add_argument('--ey', type=float, default=None, help='высота глаза, м; по умолчанию земля под точкой (медиана вершин в 15 м) + 2')
+    ap.add_argument('--near2', type=float, default=0., help='второй контур клетки от этого радиуса (p1/p2 клетки HOR1): зоны 150 м при основном --near 130');
     ap.add_argument('--near', type=float, default=200.); ap.add_argument('--far', type=float, default=1500.)
     ap.add_argument('--eps', type=float, default=0.004); ap.add_argument('--png'); ap.add_argument('--nosky', action='store_true', help='без учёта мешей неба (прежнее: лента поверх неба)')
     a = ap.parse_args()
@@ -155,7 +204,7 @@ def main():
         mn = V.min(0); mx = V.max(0)
         xs = np.arange(np.floor(mn[0] / a.cell) * a.cell + a.cell / 2, mx[0], a.cell); zs = np.arange(np.floor(mn[2] / a.cell) * a.cell + a.cell / 2, mx[2], a.cell)
         gfn = ground_fn(a.level, d, keep)
-        write_hor1(a.out, V, [(float(x), float(z)) for x in xs for z in zs], a.near, a.far, a.eps, a.radius, lms, Vs, gfn); return
+        write_hor1(a.out, V, [(float(x), float(z)) for x in xs for z in zs], a.near, a.far, a.eps, a.radius, lms, Vs, gfn, a.near2 or None); return
     ex, ez = [float(s) for s in a.view.split(',')]
     if a.ey is None:
         nb = V[np.hypot(V[:, 0] - ex, V[:, 2] - ez) < 15]

@@ -101,6 +101,49 @@ int propsInit(Props *p, const void *section, unsigned size) {
         }
         if (!pass && !cnt) break;
       }
+      // №903 (Роб 23.10: «деревья сбиваются, даже если проезжаешь в метре от них — слишком большие зоны; коллизия по стволу, как в оригинале»):
+      // у ствола-цилиндра вершины только внизу и у кроны — в полосе бампера их нет (L1 тип 8, 20 деревьев: ствол не найден, удар по радиусу
+      // всей кроны 3,5 м). Тогда ствол — по срезам треугольников плоскостями на высоте бампера и выше (рёбра, пересёкшие их): центр и радиус
+      // плотного кольца точек, наименьший из трёх срезов, те же пороги тонкости. PROP_TRUNK_SLICE_OLD=1 — без среза
+#ifndef PROP_TRUNK_SLICE_OLD
+#define PROP_TRUNK_SLICE_OLD 0
+#endif
+#define PROP_SLICE_MAX 256
+      if (!PROP_TRUNK_SLICE_OLD && p->trunk[t * 3 + 2] <= 0.f) {
+        float ylo = bb[t * 6 + 1] - bb[t * 6 + 4], H = 2.f * bb[t * 6 + 4], bestR = 1e9f, bx = 0.f, bz = 0.f;
+        static float sp_[PROP_SLICE_MAX][2];
+        for (int hi = 0; hi < 3; hi++) {   // срезы на 0,8 / 1,2 / 1,6 м (не выше середины): у корней комель шире, у кроны — ветки
+          float ys = ylo + fminf(0.8f + 0.4f * hi, H * 0.5f); int n = 0, over = 0;
+          for (unsigned k = 0; k < p->types[t].nPiece && !over; k++) {
+            const PropPiece *pp = &p->pieces[p->types[t].firstPiece + k];
+            if (pp->ni != pp->nv || (uint64_t)pp->vOff + (uint64_t)pp->nv * 16 > vertBytes) continue;   // пропы без индексов: тройки вершин подряд
+            const short *v = (const short *)((const char *)p->vertBase + pp->vOff); float kk = pp->sc * (1.f / 32768.f);
+            for (unsigned j = 0; j + 2 < pp->nv && !over; j += 3, v += 24)
+              for (int e = 0; e < 3; e++) {
+                const short *a = v + 8 * e, *b2 = v + 8 * ((e + 1) % 3);
+                float ay = pp->oy + kk * a[5], by = pp->oy + kk * b2[5];
+                if ((ay - ys) * (by - ys) >= 0.f) continue;
+                if (n >= PROP_SLICE_MAX) { over = 1; break; }
+                float s = (ys - ay) / (by - ay);
+                sp_[n][0] = pp->ox + kk * (a[4] + s * (b2[4] - a[4])); sp_[n][1] = pp->oz + kk * (a[6] + s * (b2[6] - a[6])); n++;
+              }
+          }
+          if (over || n < 3) continue;
+          // ствол — самое плотное кольцо точек среза (соседи в 0,6 м), кольцо — точки в 0,9 м от его середины; ствол один: в кольце ≥ 3/4 среза
+          // (щит на нескольких столбах, куст и широкое у земли стволом не считаются)
+          int seed = 0, bestCnt = -1;
+          for (int i = 0; i < n; i++) { int c = 0; for (int j = 0; j < n; j++) { float dx = sp_[i][0] - sp_[j][0], dz = sp_[i][1] - sp_[j][1]; c += dx * dx + dz * dz < .36f; } if (c > bestCnt) { bestCnt = c; seed = i; } }
+          double sx = 0, sz = 0; int m = 0;
+          for (int j = 0; j < n; j++) { float dx = sp_[seed][0] - sp_[j][0], dz = sp_[seed][1] - sp_[j][1]; if (dx * dx + dz * dz < .81f) { sx += sp_[j][0]; sz += sp_[j][1]; m++; } }
+          if (m < 3 || 4 * m < 3 * n) continue;
+          float cx = (float)(sx / m), cz = (float)(sz / m), r2 = 0.f;
+          for (int j = 0; j < n; j++) { float dx = sp_[seed][0] - sp_[j][0], dz = sp_[seed][1] - sp_[j][1]; if (dx * dx + dz * dz >= .81f) continue;
+            float ex = sp_[j][0] - cx, ez = sp_[j][1] - cz; if (ex * ex + ez * ez > r2) r2 = ex * ex + ez * ez; }
+          if (sqrtf(r2) < bestR) { bestR = sqrtf(r2); bx = cx; bz = cz; }
+        }
+        float full = p->types[t].radius;
+        if (bestR <= PROP_TRUNK_MAXR && full > PROP_TRUNK_RATIO * fmaxf(bestR, 0.05f)) { p->trunk[t * 3] = bx; p->trunk[t * 3 + 1] = bz; p->trunk[t * 3 + 2] = fmaxf(bestR, 0.08f); }
+      }
     }
   }
   for (unsigned i = 0; i < ninst; i++) {
@@ -340,6 +383,11 @@ void propsRespawnStep(Props *p, float ex, float ez, float dt,
   }
 }
 
+#ifndef PROP_TALL_FALL_OLD
+#define PROP_TALL_FALL_OLD 0
+#endif
+#define PROP_TALL_HY 2.f
+int propsTallFallOld = PROP_TALL_FALL_OLD;
 void propsAdvance(Props *p, const ColWorld *world, float dt) {
   if (dt <= 0.f) return;
   if (dt > 0.05f) dt = 0.05f;
@@ -453,6 +501,10 @@ void propsHitCar(Props *p, const ColWorld *world, Car *car, const CarBox *previo
     st->vel[2] = dirz * kick + raz * side * kick * 0.3f;
     st->vel[1] = fminf(kick * 0.25f, 4.f);
     float ang = kick * 0.8f / fmaxf(2.f * st->hy, 0.6f);
+    // №946 (Роб 25.10, TEST59: «очень много столбов не сбивается»; L7 тематические, уровень Барта): у высокого предмета (столб, фонарь, hy >= PROP_TALL_HY) угол падения рос бы как 1/высота —
+    // столб 10 м валился со скоростью 1 рад/с, а машина («бульдозер» выше) гнала его перед собой стоймя 1,5–2 с, 25–70 м. Столб ломается у земли и падает за ~0,8 с: темп падения не ниже
+    // min(0,6·kick, 3) рад/с. PROP_TALL_FALL_OLD=1 / flag tallfall946old 1 — как было
+    if (!propsTallFallOld && st->hy >= PROP_TALL_HY) ang = fmaxf(ang, fminf(kick * 0.6f, 3.f));
     st->w[0] = dirz * ang; st->w[1] = -side * 3.f; st->w[2] = -dirx * ang;
     st->asleep = 0; st->sleepT = 0.f; st->fresh = 1;
 #ifndef PROP_HEAVY_OLD

@@ -35,7 +35,7 @@ ovl() {   # D: папка игры; наложения поверх пакета
   cp $CEIL/interiors-l1-gfx.bin $CEIL/interiors-l1.bin $D/
   if [ "${FINAL:-0}" != 1 ]; then : > $D/hudon; printf 8 > $D/horizon; : > $D/prereadold; fi   # тест: счётчик, горизонт включён (слово Роба: на причале силуэтов не видно), PREREAD выкл до разбора L6 (STALL TEST27); финал решает дирижёр
   W695=${W695_SRC:-$HOME/Downloads/shar-psp-w695/build/w695/out}; [ -d $W695 ] || { echo "нет $W695"; exit 1; }; A=$(cd $D && pwd); ( cd $W695 && find . -type f ! -name EBOOT.PBP | while read f; do [ -e "$A/$f" ] && cp "$f" "$A/$f" || echo "  w695: в наборе нет $f"; done )   # №695 гардероб: wardrobe.shr и skins.txt L1–L7
-  TOON=${TOON_SRC:-/private/tmp/claude-501/-Users-robertvagin-Downloads-shar-psp-urovni-w/f4fa8a30-81ff-4dc2-ae18-3dc426462abc/scratchpad/packB}; [ -f $TOON/level_toon.shr ] && [ -f $TOON/toonlines.shr ] || { echo "нет $TOON/level_toon.shr, toonlines.shr"; exit 1; }; cp $TOON/level_toon.shr $TOON/toonlines.shr $D/   # №679 мультик L1 (Уровни a84216b1): мир level_toon.shr + контуры toonlines.shr
+  TOON=${TOON_SRC:-/private/tmp/claude-501/-Users-USER-Downloads-shar-psp-urovni-w/f4fa8a30-81ff-4dc2-ae18-3dc426462abc/scratchpad/packB}; [ -f $TOON/level_toon.shr ] && [ -f $TOON/toonlines.shr ] || { echo "нет $TOON/level_toon.shr, toonlines.shr"; exit 1; }; cp $TOON/level_toon.shr $TOON/toonlines.shr $D/   # №679 мультик L1 (Уровни a84216b1): мир level_toon.shr + контуры toonlines.shr
   : > $D/pfetchold   # финал: счётчика нет (hudon только у теста)
 }
 mkset() {   # имя_набора, build_dir, подпись флагов, smokelog(0/1)

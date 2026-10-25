@@ -1,6 +1,7 @@
 #!/bin/bash
 set -eu
 cd "$(dirname "$0")/../.."
+[ -d /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk ] && export SDKROOT=${SDKROOT:-/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk}   # лицензия Xcode: системные заголовки из CLT
 OUT=${OUT_DIR:-build/propbreak};mkdir -p "$OUT"
 for mode in new old;do
  flags="";[ "$mode" != old ] || flags="-DPROP_BREAK_PASS_OLD=1"

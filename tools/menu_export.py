@@ -209,7 +209,9 @@ NEW_ROWS = {
     'Contrast': ('Contrast', ['%.2f' % (0.5 + 0.1 * i) for i in range(16)]),
     'LineWidth': ('Line Width', [str(i) for i in range(11)]),
     'EyeLines': ('Eye Lines', ['Off', 'Soft', 'Full']),
+    'InkStyle': ('Ink', ['Indigo', 'Black', 'Tone']),   # №951: viewer/main_save.h cfgSlot "INK" — цвет контура (skin.h skinInkAbgr)
     'TexDetail': ('Texture Detail', ['%d%%' % (5 * i) for i in range(21)]),
+    'Textures': ('Textures', ['Off', 'On']),   # №912: viewer/main_save.h cfgSlot "TEXTURES" — Off: мир без текстур (заливка), On: родные текстуры
     'DrawDist': ('Draw Distance', ['150 M', '200 M', '250 M']),   # №795: viewer/main_save.h cfgSlot "DRAW"
     'OldTV': ('Old TV', ['Off'] + ['%d%%' % (10 * i) for i in range(1, 11)]),   # №800/№830: сила «старого телевизора» (viewer/main_save.h cfgSlot "OLD", viewer/oldtv.h)
 }
@@ -221,13 +223,23 @@ CARTOON_PAGE_OLD = os.environ.get('CARTOON_PAGE_OLD') == '1'
 # пункты OPTIONS паузы — SOUND / CAMERA / GAME / PICTURE (раздел SETTINGS не нужен; экран 2 в пакете остаётся, движок туда не ходит),
 # на PICTURE последней строкой — переход «Cartoon» (одна подпись, без значения: ✕ открывает страницу CARTOON). MENU_FLAT_OLD=1 — раздел SETTINGS, как TEST34
 MENU_FLAT_OLD = os.environ.get('MENU_FLAT_OLD') == '1'
-OPT_ROWS = [('Sound', 'SOUND'), ('Camera', 'CAMERA'), ('Game', 'GAME'), ('Picture', 'PICTURE')]
+# №890 (Роб 23.10: «Picture поставить первым пунктом в Options») и №891 («внутри Picture пункт Cartoon первым; видно, что это подменю, в которое провалишься — стрелка ›
+# справа, чтобы не путали со строкой-настройкой»): Picture — первый пункт OPTIONS паузы (движок ищет пункты по подписи, порядок ему не важен), Cartoon — первая строка
+# PICTURE, справа у неё постоянная «>» (грань Bart, как значения строк; у настроек справа значения и ◄ ► только у выбранной). OPT_PICTURE_FIRST_OLD=1 /
+# PICTURE_CARTOON_FIRST_OLD=1 — прежние порядки; LINK_CHEV_OLD=1 — без «>»
+OPT_PICTURE_FIRST = os.environ.get('OPT_PICTURE_FIRST_OLD') != '1'
+CARTOON_FIRST = os.environ.get('PICTURE_CARTOON_FIRST_OLD') != '1'
+LINK_CHEV = os.environ.get('LINK_CHEV_OLD') != '1'
+OPT_ROWS = ([('Picture', 'PICTURE')] if OPT_PICTURE_FIRST else []) + [('Sound', 'SOUND'), ('Camera', 'CAMERA'), ('Game', 'GAME')] \
+           + ([] if OPT_PICTURE_FIRST else [('Picture', 'PICTURE')])
+_LINK_ROW = [] if CARTOON_PAGE_OLD or MENU_FLAT_OLD else ['CartoonLink']
 PAGE_ROWS = {
     'pausecamera': ['Camera', 'JumpCamera', 'InvertCamControl'],
     'pausegame': ['IntersectNavSystem', 'Radar', 'Tutorial'],
-    'pausepicture': ['Colour', 'Contrast', 'TreeShadows'] + ([] if os.environ.get('DRAWDIST_ROW_OLD') == '1' else ['DrawDist'])
-                    + (['Cartoon'] if CARTOON_PAGE_OLD else ['CartoonLink'] if not MENU_FLAT_OLD else []),
-    'pausecartoon': ([] if CARTOON_PAGE_OLD else ['Cartoon']) + ['LineWidth', 'EyeLines', 'TexDetail']
+    'pausepicture': (_LINK_ROW if CARTOON_FIRST else []) + (['Textures'] if os.environ.get('TEXTURES_ROW_OLD') != '1' else []) + ['Colour', 'Contrast', 'TreeShadows']
+                    + ([] if os.environ.get('DRAWDIST_ROW_OLD') == '1' else ['DrawDist'])
+                    + (['Cartoon'] if CARTOON_PAGE_OLD else ([] if CARTOON_FIRST else _LINK_ROW)),
+    'pausecartoon': ([] if CARTOON_PAGE_OLD else ['Cartoon']) + ['LineWidth', 'EyeLines'] + ([] if os.environ.get('INK951_ROW_OLD') == '1' else ['InkStyle']) + ['TexDetail']
                     + ([] if os.environ.get('OLDTV_ROW_OLD') == '1' else ['OldTV']),   # №800: строка Old TV
 }
 # пункты раздела SETTINGS (экран 2): копии пункта Sound доски OPTIONS паузы, шаг пунктов из данных (Sound -> Settings)
@@ -289,6 +301,20 @@ def hub_rows(its, rows_=None):
     return out
 
 
+def link_chevron(its):
+    """№891: «>» справа у строки-перехода Cartoon — по центру места правой стрелки строки Colour (там у настроек стоит ►), та же строка и высота, что у подписи"""
+    import copy
+    lab = next(it for it in its if it['type'] == U.T_TEXT and it['name'] == 'CartoonLink')
+    ra = next(it for it in its if it['page'] == 'PauseSettings.pag' and it['name'] == 'Colour_RArrow')
+    c = copy.deepcopy(lab)
+    c['name'] = 'CartoonLink_Chev'; c['strings'] = ['>']
+    cx = ra['rect'][0] + ra['rect'][2] / 2
+    cy = lab['rect'][1] + lab['rect'][3] / 2; hh = 24 / U.S   # грань boulder_16 1:1 (строка 19 px): жирнее и крупнее Bart подписей, «>» читается; по центру строки подписи
+    c['rect'] = [cx - 20, cy - hh / 2, 40, hh]
+    c.update(halign='centre', valign='centre', wrap=False, font=U.ITEM_FACE)
+    return c
+
+
 def items(sc, assets):
     its, _ = U.build_items(sc)
     settings_rows = sc == 'pausesettings' and not SETTINGS_PAGES or sc in SUBPAGES   # страница(ы) со строками значений
@@ -304,6 +330,8 @@ def items(sc, assets):
         if 'CartoonLink' in PAGE_ROWS[sc]:   # №783: переход на страницу CARTOON — только подпись строки (без значения, стрелок и ползунка)
             copy_row(its, 'Colour', 'CartoonLink', 'Cartoon', [''])
             its = [it for it in its if row_key(it) != 'CartoonLink' or (it['type'] == U.T_TEXT and it['name'] == 'CartoonLink')]
+            if LINK_CHEV:
+                its.append(link_chevron(its))
         its = page_rows(its, PAGE_ROWS[sc])
     if sc == 'pausesettings' and SETTINGS_PAGES:
         its = hub_rows(its)
@@ -466,7 +494,7 @@ def pause_fit(sc, its, assets):
         if vpage and os.environ.get('SETTINGS_BART_OLD') != '1':
             for r in rws:
                 for it in r:
-                    if it['type'] == U.T_TEXT:
+                    if it['type'] == U.T_TEXT and not it['name'].endswith('_Chev'):   # №891: «>» перехода — своя грань (link_chevron)
                         it.update(font='bart_16bit@1')
         # правка 163: SOUND — колонка, как OPTIONS: та же постоянная ширина доски, что у семейства паузы (рамка при переходе
         # OPTIONS -> SOUND не прыгает); SETTINGS (две колонки) — по содержимому, поля со всех сторон PAUSE_FIT_PAD_Y: правый край

@@ -1,0 +1,19 @@
+### №941 ключ: блик под гаечным ключом (как tests/p28/wrench_t30d.txt, ключ 7 и 8)
+scene start
+wait 3
+flag repair
+wait 3
+flag wrencheye 5
+flag wrenchgo 7
+wait 8
+scene K7
+wait 1
+shot k7
+wait 0.3
+shot k7b
+flag wrenchgo 8
+wait 8
+scene K8
+wait 1
+shot k8
+end

@@ -171,6 +171,7 @@ typedef struct {
 void gameMsnSetAudio(const MsnAudioBackend *b);
 // дороги и машины трафика уровня (traffic.shr) для машин миссий: путь по полосам, удары о трафик; NULL — едут прямо к точкам
 void gameMsnSetRoads(Traffic *t);
+extern int gameMsnDeferStart;   // №943: см. game_msn.c
 void gameMsnResumeStart(int on);   // RESUME/LOAD: первый старт миссии пешком ставит машину рядом с Гомером (game_msn.c carNearHomer)
 // машины миссии: место игрока в гонке (1 — первый; 0 — не гонка с соперниками), всего соперников
 int gameMsnRacePos(const GameMsn *m, int *racers);

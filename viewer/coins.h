@@ -25,6 +25,8 @@ typedef struct {
                                  // миссий уровня; живёт вместе с кошельком (NEW GAME обнуляет), пишется в сохранение (savegame v2)
   // правка Роба 81: пол под летящей монетой — по её месту (холмы, ямки), не высота точки высыпания; NULL — как раньше
   int (*ground)(void *u, float x, float z, float yTop, float *gy); void *groundU;
+  // разбор L3/L5 (TEST55): монеты мира по сетке клеток COIN_GRID_CELL м и счётчики пула / притягиваемых — шаг и рисунок обходят только близкие (coins.c, COINGRID_OLD)
+  unsigned poolActive, nCollect, recount; int gw, gh; float gx0, gz0; unsigned short *gstart, *gidx;
 } Coins;
 
 // pos: nworld троек x,y,z. 0 = ок
@@ -36,6 +38,8 @@ int coinsUpdate(Coins *cs, float px, float py, float pz, int inCar, float dt);
 void coinsDrop(Coins *cs, int n, float x, float y, float z, float floor);
 // то же, но горизонталь вылета — в конусе ±acos(cone) вокруг направления (dx, dz) (монеты «_Z» торгового автомата)
 void coinsDropDir(Coins *cs, int n, float x, float y, float z, float floor, float dx, float dz, float cone);
+// индексы активных монет в пределах r м от (x, z) по горизонтали (клетки сетки целиком, лишние отсеивает вызывающий) + все активные из пула выпавших; возвращает число (до cap) или 0xFFFFFFFF, если сетки нет (COINGRID_OLD, пустой мир)
+unsigned coinsNear(const Coins *cs, float x, float z, float r, unsigned *out, unsigned cap);
 // прозрачность монеты 0..1 (выпавшие гаснут с 11 до 16 с)
 float coinAlpha(const Coin *c);
 

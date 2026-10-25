@@ -4,7 +4,7 @@
 #   -> ~/Downloads/shar-psp-render-w/build/emu_runs/МЕТКА/{smoke.txt, *.png}
 # Набор данных — TEST30 (клоны APFS, место не тратят), EBOOT подменяется. Очередь эмулятора и снимки окна — tools/ppsspp_run.sh (без звука)
 EB=$1; SCN=$2; LBL=$3; MAXT=${4:?макс. секунд}; shift 4
-W=$HOME/Downloads/shar-psp-render-w; SET=${EMU_SET:-$HOME/Downloads/shar-psp-sonnet-16b-w/build/test30ftour/PSP/GAME/SHARTEST15}   # EMU_SET — другой набор (TEST31: shar-psp-integ/build/test31tour/PSP/GAME/SHARTEST15)
+W=$HOME/Downloads/shar-psp-render-w; SET=${EMU_SET:-$HOME/Downloads/shar-psp-integ/build/test52tour/PSP/GAME/SHARTEST15}   # EMU_SET — другой набор (TEST31: shar-psp-integ/build/test31tour/PSP/GAME/SHARTEST15)
 RUN=$W/build/emu/rr_$LBL; OUT=$W/build/emu_runs/$LBL
 rm -rf "$RUN" "$OUT"; mkdir -p "$RUN" "$OUT"
 cp -c -R "$SET"/. "$RUN"/ || exit 1

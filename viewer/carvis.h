@@ -55,6 +55,7 @@ static inline int carVisJointHidden(const CarVis *v, int joint) { return joint >
 void carVisReset(CarVis *v);
 // шаг кадра после carUpdate: колёса, шарниры, зоны урона, фонари
 void carVisUpdate(CarVis *v, const Car *c, const CarInput *in, float dt);
+void carVisSpin(CarVis *v, const Car *c, float dt);   // №955б: только качение колёс (машина миссии/угнанная под игроком: carVisUpdate для неё не зовётся)
 // матрица куска машины (столбцы, как ScePspFMatrix4): полная ориентация кузова * анимация сустава.
 // variant 1 (остов) рисуется со своим huskLift.
 void carVisPieceMatrix(const CarVis *v, const Car *c, int joint, int variant, float ox, float oy, float oz, float sc, float m[16]);

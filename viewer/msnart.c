@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <math.h>
 #include "msnart.h"
+#include "glintshape941.h"   // №944: общий шейп блика (GLINT944_OLD)
 #include "ui.h"
 #include "blackbox.h"   // правка 103: bbOp — самописец чёрного ящика (main.c)
 
@@ -101,6 +102,7 @@ void msnartShutdown(void) {   // смена уровня: записи, табл
   msnartReset(); if (afd >= 0) sceIoClose(afd); afd = -1; free(rows); rows = 0; nrows = 0; bytesUsed = 0;
 }
 void msnartMissionStart(void) { for (int i = 0; i < MAXE; i++) if (ent[i].b && !ent[i].level) drop(i); wantIcon[0] = 0; uiSetObjIconImage(0, 0, 0, 0, 0); }
+const char *msnartWantIcon(void) { return wantIcon; }   // №958б: диагностика
 unsigned msnartBytes(void) { return bytesUsed; }
 void msnartLoad(const char *p3d, int level) {
   if (!rows) return;
@@ -322,6 +324,46 @@ static void doorStarVec(const float *p, const float *X, const float *Y, unsigned
   sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)n, 0, v);
   sceGuEnable(GU_TEXTURE_2D);
 }
+// №944 (Роб 24.10: «светяшки на домах — тот же блинг-блинг формой бубны»): звезда входа (рисунки *doorstar*: sim_door, kwk_door, sch_door, l1_doors …) — не кольцо с 12 пиками №834,
+// а общий шейп блика №941 (glintshape941.h: звезда A — четыре луча, B — пять, меньше, повёрнута и плывёт; ромб с вогнутыми гладкими боками, острые кончики, без контура),
+// в плоскости квада двери. Размер — кончик большого луча на DS_K от полуоси квада (как пики кольца), цвет и пульс (размер, альфа) — дорожки квада данных, альфа — DS_A
+// (как у кольца), малая звезда светлее (цвет к белому) и плывёт по кругу на 12 % радиуса, пульс обеих — как у блика spritelight.h gvAdd. Вершин 108 (кольцо — 1296). GLINT944_OLD=1 — кольцо №834
+#define DS944_SEG 4   // отрезков на сторону луча (как GV_SEG_RAY)
+unsigned g944DoorOld, g944DoorNew; void (*msnartNote944)(const char *site, const char *what, const float *p, int a, int b);   // служебно: звёзды входа за кадры — строка GLINT944 (spritelight.h)
+static float ds9Sin(float turns) {   // sin(2π · turns) по таблице 256 точек (sinf на PSP медленный; как gvSinT в spritelight.h)
+  static float tab[256]; static int ok; if (!ok) { for (int i = 0; i < 256; i++) tab[i] = sinf(6.2831853f * (float)i / 256.f); ok = 1; }
+  float f = turns - floorf(turns); return tab[(int)(f * 256.f) & 255];
+}
+static void doorStarGlint944(const float *p, const float *X, const float *Y, unsigned col, float tsec) {   // X, Y — полуоси квада в мире
+  static float opx[2][GS_MAXPTS], opy[2][GS_MAXPTS]; static int om[2], ok;
+  if (!ok) { for (int s = 0; s < 2; s++) om[s] = gsOutline(s ? &GS_GLINT_B : &GS_GLINT_A, DS944_SEG, 1.f, opx[s], opy[s]); ok = 1; }
+  float kA = 1.f + .06f * ds9Sin(tsec / 1.3f), kB = 1.f + .12f * ds9Sin(tsec / .85f + .3342254f);
+  float ox = .12f * ds9Sin(tsec / 1.1f), oy = .10f * ds9Sin(tsec / 1.1f + .25f);
+  unsigned a = (unsigned)((float)(col >> 24) * DS_A + .5f), rgb = col & 0xFFFFFFu;
+  unsigned r2 = (((rgb & 255u) + 255u) / 2u) | ((((rgb >> 8 & 255u) + 255u) / 2u) << 8) | ((((rgb >> 16 & 255u) + 255u) / 2u) << 16);
+  unsigned cA = a << 24 | rgb, cB = (unsigned)((float)a * .9f + .5f) << 24 | r2;
+  DsV *v = (DsV *)geVbAlloc((unsigned)(om[0] + om[1]) * 3u * sizeof(DsV), GEVB_MSNART_OLD); if (!v) return; unsigned n = 0;
+  for (int s = 0; s < 2; s++) {
+    float k = (s ? .62f * kB : kA) * DS_K, cx = s ? ox : 0.f, cy = s ? oy : 0.f; unsigned c = s ? cB : cA;
+    #define DP9(x_, y_) do { float xx_ = cx + (x_) * k, yy_ = cy + (y_) * k; v[n].c = c; v[n].x = p[0] + X[0] * xx_ + Y[0] * yy_; v[n].y = p[1] + X[1] * xx_ + Y[1] * yy_; v[n].z = p[2] + X[2] * xx_ + Y[2] * yy_; n++; } while (0)
+    for (int i = 0; i < om[s]; i++) { int j = (i + 1) % om[s]; DP9(0.f, 0.f); DP9(opx[s][i], opy[s][i]); DP9(opx[s][j], opy[s][j]); }
+    #undef DP9
+  }
+  sceGuDisable(GU_TEXTURE_2D);
+  sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)n, 0, v);
+  sceGuEnable(GU_TEXTURE_2D);
+}
+void msnartList944(void (*out)(const char *name, int nbill, int nmesh)) {   // №944 служебно: рисунки загруженных записей
+  for (int i = 0; i < MAXE; i++) { if (!ent[i].b) continue; const MsaHdr *h = (const MsaHdr *)ent[i].b;
+    for (unsigned k = 0; k < h->ndraw; k++) { const MsaDraw *x = (const MsaDraw *)(ent[i].b + h->offDraw) + k; out(x->name, (int)x->nbill, (int)x->nmesh); } }
+}
+static void doorStarDraw944(const float *p, const float *X, const float *Y, unsigned col, float tsec) {   // выбор формы: общий шейп (GLINT944_OLD=1 — кольцо №834)
+  if (GLINT944_OLD) { g944DoorOld++; doorStarVec(p, X, Y, col); } else { g944DoorNew++; doorStarGlint944(p, X, Y, col, tsec); }
+}
+void msnartDoorLab944(const float *p, const float *X, const float *Y, unsigned col, float tsec) {   // служебно (flag glintlab 2): лист на чёрном — тот же выбор формы, что у входа в игре
+  sceGuDisable(GU_CULL_FACE); sceGuDisable(GU_DEPTH_TEST); sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0); sceGuDepthMask(GU_TRUE);
+  doorStarDraw944(p, X, Y, col, tsec);
+}
 int msnartHas(const char *name) {
   for (int i = MAXE - 1; i >= 0; i--) {
     if (!ent[i].b) continue;
@@ -451,8 +493,12 @@ void msnartDraw(const char *name, const float *pos, float ex, float ey, float ez
       v[i].u = uv[2 * i]; v[i].v = uv[2 * i + 1]; v[i].c = col;
       v[i].x = p[0] + sx * X[0] + sy * Y[0]; v[i].y = p[1] + sx * X[1] + sy * Y[1]; v[i].z = p[2] + sx * X[2] + sy * Y[2];
     }
-    if (!DOORSTAR_VEC_OLD && k == 0 && qm == 0 && q->blend == 1 && strstr(d->name, "doorstar")) {   // №834: звезда входа — векторная
-      blendMode(1); sceGuDepthMask(q->zwrite ? GU_FALSE : GU_TRUE); doorStarVec(p, X, Y, col); continue; }
+    // №944: звезда входа — КАЖДЫЙ квад звезды рисунка (у l1_doorstars их три: дом, Kwik-E-Mart, школа — были картинкой, вектор был только у первого); GLINT944_OLD=1 — как №834 (k == 0)
+    if (!DOORSTAR_VEC_OLD && (GLINT944_OLD ? k == 0 : 1) && qm == 0 && q->blend == 1 && strstr(d->name, "doorstar")) {   // №834: звезда входа — векторная
+      blendMode(1); sceGuDepthMask(q->zwrite ? GU_FALSE : GU_TRUE);
+      if (msnartNote944) msnartNote944("doorstar", d->name, p, (int)q->blend, (int)k);
+      doorStarDraw944(p, X, Y, col, tsec); continue; }
+    if (msnartNote944 && q->blend != 3) msnartNote944("msnart_img", d->name, p, (int)q->blend, (int)k);   // №944 (служебно): картинка со сложением/прозрачностью остаётся картинкой
     bindTex(b, q->tex, 0); blendMode(q->blend); sceGuDepthMask(q->zwrite ? GU_FALSE : GU_TRUE);
     sceGuDrawArray(GU_TRIANGLE_STRIP, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, 4, 0, v);
   }

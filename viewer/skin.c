@@ -1,3 +1,5 @@
+#include "xsub.h"
+#define XSK(i, n) XS_ADD_SK(i, n)   // 41 пачек, 42 вершин контура, 43/45/48 загрузок костей в проходах контур/тело/тень, 44/46/47/49 вызовов; слова по проходам — прежний счётчик skinW (flag skinw)
 // skin.c: .chr loader, animation sampling/blending, bone palette, GE hardware-skinned drawing. See skin.h.
 #include <stdlib.h>
 #include <string.h>
@@ -37,6 +39,71 @@ int skinBatchValid(const SkinModel *m, const SkinBatch *b) {
   return 1;
 }
 
+// №914 (оптимизация x_trf: пешеход на L5 — 2200–2600 слов GE за вызов, из них три прохода (оболочки, тело, ступень тени) по ~800 слов — загрузка матриц костей: у пачки 5–8 костей,
+// 13 слов каждая; слот костей k пачки — это k-й вес вершины, а какая кость в каком слоте, экспорт (tools/char_export.py slot) выбирал без оглядки на соседние пачки: соседние пачки
+// делят до половины костей, но в разных слотах, и кэш слотов движка (slotBone) почти не срабатывал). Теперь при создании модели слоты переставляются один раз: пачки идут в порядке
+// рисования, кость, уже лежащая в слоте s < nb в GE от прошлой пачки, остаётся в слоте s; остальные — в свободные слоты по порядку. Перестановка — в весах вершин (первые nb байт 8 бит) и в bones[]
+// пачки: сумма Σ w_k · M(кость k) для вершины та же (порядок слагаемых другой: ошибка округления GE порядка 1e-7). Модель с уже переставленными слотами (метка в заголовке) не трогается.
+// SKIN_SLOTOPT_OLD=1 / файл skinslotold рядом с EBOOT (читается до загрузки уровня; skinSetSlotOpt) — прежние слоты
+#ifndef SKIN_SLOTOPT_OLD
+#define SKIN_SLOTOPT_OLD 0
+#endif
+static int skinSlotOptOn = !SKIN_SLOTOPT_OLD; unsigned skinSlotModels, skinSlotBefore, skinSlotAfter;   // загрузок матриц (костей) по порядку пачек до и после (сумма по моделям)
+void skinSetSlotOpt(int on) { skinSlotOptOn = on; }
+// стоимость (загрузок костей) трёх проходов skinDrawPal при назначении слотов asg: оболочки (тело и глаза, flags&3 равен 0 или 1) с пустых слотов, тело (все пачки), ступень тени (flags&3 равен 0);
+// слоты переходят из прохода в проход, как в GE
+static unsigned slotCost(const SkinModel *m, unsigned n, unsigned char asg[][8], const unsigned char *nbs) {
+  unsigned char st[8]; memset(st, 0, sizeof st); unsigned c = 0;
+  for (int pass = 0; pass < 3; pass++)
+    for (unsigned i = 0; i < n; i++) { unsigned f = m->b[i].flags & 3;
+      if ((pass == 0 && f > 1) || (pass == 2 && f)) continue;
+      for (unsigned k = 0; k < nbs[i]; k++) if (st[k] != asg[i][k] + 1) { st[k] = (unsigned char)(asg[i][k] + 1); c++; } }
+  return c;
+}
+void skinSlotOpt(const SkinModel *mc) {
+  if (!mc || !mc->h || mc->h->nBatches > 64) return; SkinHeader *h = (SkinHeader *)mc->h; SkinModel *m = (SkinModel *)mc;
+  if (!skinSlotOptOn || h->pad[7] == 0x534C4F54u) return;
+  unsigned n = h->nBatches; unsigned char asg[64][8], org[64][8], nbs[64], fix[64]; unsigned char st[8]; memset(st, 0, sizeof st);
+  for (unsigned i = 0; i < n; i++) {
+    const SkinBatch *b = &m->b[i]; unsigned nb = b->nb; nbs[i] = (unsigned char)(nb > 8 ? 8 : nb); memset(asg[i], 0, 8); memset(org[i], 0, 8);
+    for (unsigned k = 0; k < nbs[i]; k++) { org[i][k] = asg[i][k] = b->bones[k]; }
+    int dup = nb < 1 || nb > 8; for (unsigned a = 0; a < nbs[i]; a++) for (unsigned c = a + 1; c < nbs[i]; c++) if (b->bones[a] == b->bones[c]) dup = 1;
+    unsigned sv = skinBatchStoredVerts(b);
+    fix[i] = !(!dup && ((b->vtype >> 9) & 3) == 1 && (int)(((b->vtype >> 14) & 7) + 1) == (int)nb && b->stride >= nb && sv && (uint64_t)b->offVerts + (uint64_t)sv * b->stride <= h->size);
+  }
+  unsigned before = slotCost(m, n, org, nbs);
+  for (unsigned i = 0; i < n; i++) {   // начальное назначение: кость, уже лежащая в слоте от прошлой пачки, остаётся в нём
+    if (fix[i]) { for (unsigned k = 0; k < nbs[i]; k++) st[k] = asg[i][k] + 1; continue; }
+    unsigned nb = nbs[i]; int nw[8], used[8] = {0, 0, 0, 0, 0, 0, 0, 0}; for (unsigned k = 0; k < nb; k++) nw[k] = -1;
+    for (unsigned k = 0; k < nb; k++) for (unsigned sl = 0; sl < nb; sl++) if (nw[sl] < 0 && st[sl] == org[i][k] + 1) { nw[sl] = (int)k; used[k] = 1; break; }
+    for (unsigned k = 0; k < nb; k++) if (!used[k]) for (unsigned sl = 0; sl < nb; sl++) if (nw[sl] < 0) { nw[sl] = (int)k; break; }
+    for (unsigned sl = 0; sl < nb; sl++) asg[i][sl] = org[i][nw[sl]];
+    for (unsigned k = 0; k < nb; k++) st[k] = asg[i][k] + 1;
+  }
+  unsigned best = slotCost(m, n, asg, nbs);
+  for (int round = 0; round < 8; round++) {   // подъём по обменам слотов внутри пачки, пока стоимость трёх проходов падает
+    int imp = 0;
+    for (unsigned i = 0; i < n; i++) { if (fix[i]) continue;
+      for (unsigned a = 0; a < nbs[i]; a++) for (unsigned c = a + 1; c < nbs[i]; c++) {
+        unsigned char t = asg[i][a]; asg[i][a] = asg[i][c]; asg[i][c] = t;
+        unsigned cc = slotCost(m, n, asg, nbs); if (cc < best) { best = cc; imp = 1; } else { t = asg[i][a]; asg[i][a] = asg[i][c]; asg[i][c] = t; } } }
+    if (!imp) break;
+  }
+  for (unsigned i = 0; i < n; i++) { if (fix[i]) continue;
+    SkinBatch *b = (SkinBatch *)&m->b[i]; unsigned nb = nbs[i]; int nw[8], ident = 1;   // nw[слот] = старый номер слота кости
+    for (unsigned sl = 0; sl < nb; sl++) { nw[sl] = -1; for (unsigned k = 0; k < nb; k++) if (org[i][k] == asg[i][sl]) nw[sl] = (int)k; if (nw[sl] != (int)sl) ident = 0; }
+    if (ident) continue;
+    unsigned sv = skinBatchStoredVerts(b); unsigned char *vb = (unsigned char *)m->base + b->offVerts;
+#ifndef SKIN_SLOTOPT_BREAK   // отрицательный контроль хост-гейта tests/skinslot: кости переставлены, веса нет
+    for (unsigned v = 0; v < sv; v++) { unsigned char *w = vb + (size_t)v * b->stride, t[8]; memcpy(t, w, nb); for (unsigned sl = 0; sl < nb; sl++) w[sl] = t[nw[sl]]; }
+#endif
+    for (unsigned sl = 0; sl < nb; sl++) b->bones[sl] = asg[i][sl];
+  }
+  h->pad[7] = 0x534C4F54u; skinSlotModels++; skinSlotBefore += before; skinSlotAfter += best;
+#ifndef SKIN_HOST
+  sceKernelDcacheWritebackRange((void *)m->base, h->size);
+#endif
+}
 static SkinModel *skinFromBuf(unsigned char *d, unsigned size);
 // №775: причина последнего отказа skinLoad (игрок уровня на PSP «только машина»): 1 не открылся, 2 нет памяти, 3 прочитано меньше (skinLoadGot — сколько),
 // 4 разбор (заголовок, границы, батчи). 0 — прочитан
@@ -80,6 +147,7 @@ static SkinModel *skinFromBuf(unsigned char *d, unsigned size) {
     if (!skinBatchValid(m,b)) { free(d); free(m); return 0; }
   }
   for (unsigned i = 0; i < h->nClips; i++) if (!inside(h, m->c[i].offTracks, h->nJoints * 16)) { free(d); free(m); return 0; }
+  skinSlotOpt(m);   // №914
 #ifndef SKIN_HOST
   sceKernelDcacheWritebackRange(d, size);            // the GE reads vertices, CLUTs and texels from RAM
 #endif
@@ -429,7 +497,7 @@ void skinPlaceTilt(ScePspFMatrix4 *w, float x, float y, float z, float heading, 
 
 int skinToon;
 int skinToonEyes = !TOON_EYES_OLD;
-unsigned skinToonDraws, skinToonVerts, skinToonBytesNow, skinToonHullCalls;
+unsigned skinToonDraws, skinToonVerts, skinToonBytesNow, skinToonHullCalls, skinToonSeamFixed;   // №901: skinToonSeamFixed — вершин строчек, слитых с цветом соседей
 void skinSetToon(int on) { skinToon = SHAR_TOON_AVAILABLE ? !!on : 0; }
 
 // ---------------------------------------------------------------- drawing
@@ -498,14 +566,44 @@ static void bindTex(const SkinModel *m, int t) {
 #define SKIN_TOON_W779_OLD 0
 #endif
 #define SKIN_TOON_K 5
+// №931 (Роб 24.10: «машины, которые уезжают вдаль, остаются с такой же толстой обводкой, и не кажется, что они уезжают; у любых NPC-машин, не у нашей, контур вдали должен становиться тоньше; и у NPC-прохожих тоже»):
+// у NPC (трафик, стоящие, машины миссий, прохожие) цель на экране падает с расстоянием: 5 м как у всех (≈1,7 px), 20 м — 0,9 px, до TOON_NPC_N (30 м) — 0,7 px, дальше линии нет (раньше 1,2 px
+// держались до 40 м и пропадали разом). Тушь вдали светлеет вдвое быстрее (TOON_NPC_AIR). Машина игрока и герой — как были. У прохожих свои ступени оболочки (SKIN_TOON_K..2K−1), кэш общий.
+// TOON_NPC931_OLD=1 — прежнее (одинаковый контур у всех до 40 м)
+#ifndef TOON_NPC931_OLD
+#define TOON_NPC931_OLD 0
+#endif
+#ifndef TOON_NPC_N
+#define TOON_NPC_N 30.f
+#endif
+#ifndef TOON_NPC_PX20
+#define TOON_NPC_PX20 .9f
+#endif
+#ifndef TOON_NPC_PXN
+#define TOON_NPC_PXN .7f
+#endif
+#ifndef TOON_NPC_AIR
+#define TOON_NPC_AIR 2.f
+#endif
+#define SKIN_TOON_KN (SKIN_TOON_K * 2)
+static int toonNpcOn;
+void skinToonNpc(int on) { toonNpcOn = on; }
 static const float toonWk754[3] = {SKIN_TOON_W, .06f, .14f}, toonDk754[3] = {7.f, 16.f, 35.f};
 static const float toonDk779[SKIN_TOON_K] = {4.5f, 8.f, 14.f, 24.f, 40.f}, toonDlo779[SKIN_TOON_K] = {3.f, 4.5f, 8.f, 14.f, 24.f};   // ступень 0 — по 3 м (камера у героя)
 int skinToonLineW = 5, skinToonEyeMode = 1;
+int skinInkStyle = INK951_DEF, skinInk951bOld = INK951B_OLD; unsigned skinInkWorldAbgr;   // №951: перо контура (skin.h skinInkAbgr)
 // №823 (Роб 18.10: «слишком большой диапазон толщины: у нас не сильно толстая линия, а вдали видна и не сразу уходит в тонкую»): спад цели с
 // расстоянием мягче — к 74 м, не тоньше ×0,72 (было к 49 м, ×0,45). TOON_RANGE823_OLD=1 — как TEST35
 static float toonPxAt(float d) { float g = 1.f - (d - 4.f) / (TOON_RANGE823_OLD ? 45.f : 70.f), gmin = TOON_RANGE823_OLD ? .45f : .72f; g = g > 1.f ? 1.f : g < gmin ? gmin : g; return (.32f * (float)skinToonLineW + .1f) * g; }   // цель, px на экране
+static float toonPxNpc(float d) {   // №931: цель NPC, px на экране: 5 м — как toonPxAt, 20 м — TOON_NPC_PX20, TOON_NPC_N — TOON_NPC_PXN, линейно между
+  float p5 = toonPxAt(5.f);
+  if (d <= 5.f) return toonPxAt(d);
+  if (d <= 20.f) return p5 + (TOON_NPC_PX20 - p5) * (d - 5.f) / 15.f;
+  float p = TOON_NPC_PX20 + (TOON_NPC_PXN - TOON_NPC_PX20) * (d - 20.f) / (TOON_NPC_N - 20.f); return p < TOON_NPC_PXN ? TOON_NPC_PXN : p;
+}
 static float toonWk(int lv) {   // вытяжка оболочки ступени lv, м: пиксели цели на ближней границе ступени × её расстояние / 226,3 (272 строки, FOVY 62°)
   if (SKIN_TOON_W779_OLD) return toonWk754[lv < 3 ? lv : 2];
+  if (lv >= SKIN_TOON_K) { int k_ = lv - SKIN_TOON_K; return toonPxNpc(toonDlo779[k_]) * toonDlo779[k_] / 226.3f; }   // №931: ступени NPC
   return toonPxAt(toonDlo779[lv]) * toonDlo779[lv] / 226.3f;
 }
 // №779: воздушная перспектива контура — доля цвета дали в туши: 0 до 5 м, к 40 м — 0,7. Цвет дали — skinToonAir (main_camera.h skyFogColor), пока нет — сиренево-серый
@@ -529,6 +627,12 @@ float skinToonWorldW(float d) {
   if (skinToonLineW <= 0 || d > toonDk779[SKIN_TOON_K - 1]) return 0.f;
   float dmin_ = TOON_RANGE823_OLD ? 3.f : 2.f, dd = d < dmin_ ? dmin_ : d; return toonPxAt(dd) * dd / 226.3f;   // №823: вблизи (до 2 м) не толще цели
 }   // №779: то же для линий мира (main_levels.h toonLinesDraw)
+float skinToonWorldWNpc(float d) {   // №931: вытяжка контура NPC-машины на расстоянии d, м; 0 — без контура (дальше TOON_NPC_N, ползунок 0)
+  if (SKIN_TOON_W779_OLD || TOON_NPC931_OLD) return skinToonWorldW(d);
+  if (skinToonLineW <= 0 || d > TOON_NPC_N) return 0.f;
+  float dd = d < 2.f ? 2.f : d; return toonPxNpc(dd) * dd / 226.3f;
+}
+unsigned skinToonAirMixNpc(unsigned ink, float d) { return (SKIN_TOON_W779_OLD || TOON_NPC931_OLD) ? toonAirMix(ink, d) : toonAirMix(ink, d * TOON_NPC_AIR); }   // №931: тушь NPC вдали светлее
 void skinToonLineParams(int width, int eyes) {   // настройки (main_save.h cfgApply): толщина контура и глаза
   width = width < 0 ? 0 : width > 10 ? 10 : width; eyes = eyes < 0 ? 0 : eyes > 2 ? 2 : eyes;
   if (width != skinToonLineW && !SKIN_TOON_W779_OLD) { skinToonLineW = width; skinToonFlush(); }
@@ -541,6 +645,7 @@ static int toonLevel(const ScePspFMatrix4 *w, float *dist) {   // ступень
   if (SKIN_TOON_LEVELS_OLD || !toonEyeOk || !w) return 0;
   float dx = w->w.x - toonEye[0], dy = w->w.y - toonEye[1], dz = w->w.z - toonEye[2], d2 = dx * dx + dy * dy + dz * dz;
   *dist = sqrtf(d2);
+  if (toonNpcOn && !TOON_NPC931_OLD && !SKIN_TOON_W779_OLD) { static const float dkN[SKIN_TOON_K] = {4.5f, 8.f, 14.f, 24.f, TOON_NPC_N}; for (int k = 0; k < SKIN_TOON_K; k++) if (d2 < dkN[k] * dkN[k]) return SKIN_TOON_K + k; return -1; }   // №931: ступени NPC, дальше TOON_NPC_N линии нет
   int nk = SKIN_TOON_W779_OLD ? 3 : SKIN_TOON_K; const float *dk = SKIN_TOON_W779_OLD ? toonDk754 : toonDk779;
   for (int k = 0; k < nk; k++) if (d2 < dk[k] * dk[k]) return k;
   return -1;
@@ -551,7 +656,7 @@ static int toonLevel(const ScePspFMatrix4 *w, float *dist) {   // ступень
 #define SKIN_TOON_V2_OLD 0   // №428: 1 — оболочка как 09.10: копия nverts вершин и рисование без индексов (на CHR1 v2 читает за буфером и рисует не те вершины)
 #endif
 static inline unsigned toonStored(const SkinBatch *b) { return SKIN_TOON_V2_OLD ? b->nverts : skinBatchStoredVerts(b); }
-static struct { const unsigned char *base; unsigned size, verts; unsigned char *hull[SKIN_TOON_K]; unsigned bytes[SKIN_TOON_K]; unsigned char tried; } toonC[SKIN_TOON_N];
+static struct { const unsigned char *base; unsigned size, verts; unsigned char *hull[SKIN_TOON_KN]; unsigned bytes[SKIN_TOON_KN]; unsigned short tried; signed char *sn; unsigned snBytes; unsigned char seams; } toonC[SKIN_TOON_N];   // №901: sn — общие нормали вытяжки (4 байта на вершину)
 static int vfmtOffsets(unsigned vt, unsigned stride, int *nOff, int *pOff) {   // смещения нормали (8 бит) и позиции (float) в вершине GE
   static const int wsz[4] = {0, 1, 2, 4}, tsz[4] = {0, 1, 2, 4}, csz[8] = {0, 0, 0, 0, 2, 2, 2, 4}, nsz[4] = {0, 1, 2, 4}, psz[4] = {0, 1, 2, 4};
   int wf = (vt >> 9) & 3, nw = wf ? (int)((vt >> 14) & 7) + 1 : 0, tf = vt & 3, cf = (vt >> 2) & 7, nf = (vt >> 5) & 3, pf = (vt >> 7) & 3;
@@ -565,7 +670,122 @@ static int vfmtOffsets(unsigned vt, unsigned stride, int *nOff, int *pOff) {   /
   o = (o + al - 1) & ~(al - 1);
   return (unsigned)o == stride;
 }
-void skinToonFlush(void) { for (int i = 0; i < SKIN_TOON_N; i++) { for (int k = 0; k < SKIN_TOON_K; k++) free(toonC[i].hull[k]); memset(&toonC[i], 0, sizeof toonC[i]); } skinToonBytesNow = 0; }
+void skinToonFlush(void) { for (int i = 0; i < SKIN_TOON_N; i++) { for (int k = 0; k < SKIN_TOON_KN; k++) free(toonC[i].hull[k]); free(toonC[i].sn); memset(&toonC[i], 0, sizeof toonC[i]); } skinToonBytesNow = 0; }
+// №901 (Роб 23.10: «Контур: очень важно доработать»; гомер на бегу — у поднятой ноги обводки нет, на стыках рубашка/штаны и у ботинок линия рвётся): оболочка раздувалась
+// по нормали САМОЙ вершины. В модели у острых рёбер (ботинок, подошва, отворот) и на стыках пачек (рубашка/штаны, нога/ботинок) у одной точки несколько вершин с разными
+// нормалями: каждая уезжала в свою сторону, и между кусками оболочки оставалась щель — на силуэте там нет линии. Теперь вершины с одной позицией (по всей модели, все пачки)
+// получают общее направление — сумму нормалей; на остром ребре вытяжка растёт на 1/cos до TOON_SMOOTH_K, чтобы грани не стали тоньше. Если нормали почти противоположны
+// (двойной лист: шип, веко) — своя нормаль, как раньше. Считается один раз на модель (хэш по позиции, O(n)). TOON_SMOOTH901_OLD=1 — как TEST36
+#ifndef TOON_SMOOTH901_OLD
+#define TOON_SMOOTH901_OLD 0
+#endif
+#define TOON_SMOOTH_K 1.6f
+static int toonKey(float v) { return (int)floorf(v * 2000.f + .5f); }   // позиция с точностью 0,5 мм
+static signed char *toonSmooth(const SkinModel *m, unsigned *outBytes) {   // 4 байта на хранимую вершину пачки (по порядку пачек): nx, ny, nz (×127), k ((k-1)/(K-1)×127); 0 — нет памяти
+  unsigned total = 0; for (unsigned i = 0; i < m->h->nBatches; i++) total += toonStored(&m->b[i]);
+  if (!total) return 0;
+  unsigned cap = 16; while (cap < total * 2u) cap <<= 1;
+  signed char *sn = calloc(total, 4u); int *tab = malloc((size_t)cap * sizeof(int)), *grp = malloc((size_t)total * sizeof(int));
+  float *un = malloc((size_t)total * 3u * sizeof(float)), *ps = malloc((size_t)total * 3u * sizeof(float)), *gs = calloc((size_t)total * 5u, sizeof(float));   // un — единичные нормали, ps — позиции, gs — на группу: сумма xyz, число, наименьший косинус
+  if (!sn || !tab || !grp || !un || !ps || !gs) { free(sn); free(tab); free(grp); free(un); free(ps); free(gs); return 0; }
+  memset(tab, 0xff, (size_t)cap * sizeof(int));
+  unsigned vi = 0, ng = 0;
+  for (unsigned i = 0; i < m->h->nBatches; i++) {
+    const SkinBatch *b = &m->b[i]; int no, po; unsigned sv = toonStored(b); int ok = !(b->flags & 2) && vfmtOffsets(b->vtype, b->stride, &no, &po);
+    for (unsigned v = 0; v < sv; v++, vi++) {
+      grp[vi] = -1;
+      if (!ok) continue;
+      const unsigned char *q = m->base + b->offVerts + v * b->stride; const signed char *nn = (const signed char *)(q + no);
+      float nx = nn[0], ny = nn[1], nz = nn[2], l = sqrtf(nx * nx + ny * ny + nz * nz); if (l < 1e-3f) continue;   // нулевая нормаль — не раздуваем (как прежде)
+      un[vi * 3] = nx / l; un[vi * 3 + 1] = ny / l; un[vi * 3 + 2] = nz / l; memcpy(ps + vi * 3, q + po, 12);
+      int kx = toonKey(ps[vi * 3]), ky = toonKey(ps[vi * 3 + 1]), kz = toonKey(ps[vi * 3 + 2]);
+      unsigned h = ((unsigned)kx * 73856093u) ^ ((unsigned)ky * 19349663u) ^ ((unsigned)kz * 83492791u); h ^= h >> 15; h &= cap - 1u;
+      for (;; h = (h + 1u) & (cap - 1u)) {
+        int r = tab[h];
+        if (r < 0) { tab[h] = (int)vi; grp[vi] = (int)ng++; break; }
+        if (toonKey(ps[(unsigned)r * 3]) == kx && toonKey(ps[(unsigned)r * 3 + 1]) == ky && toonKey(ps[(unsigned)r * 3 + 2]) == kz) { grp[vi] = grp[r]; break; }
+      }
+    }
+  }
+  for (unsigned v = 0; v < total; v++) if (grp[v] >= 0) { float *g = gs + (unsigned)grp[v] * 5u; g[0] += un[v * 3]; g[1] += un[v * 3 + 1]; g[2] += un[v * 3 + 2]; g[3] += 1.f; g[4] = 1.f; }
+  for (unsigned g_ = 0; g_ < ng; g_++) { float *g = gs + g_ * 5u, l = sqrtf(g[0] * g[0] + g[1] * g[1] + g[2] * g[2]);
+    if (g[3] > 1.5f && l > .35f * g[3]) { g[0] /= l; g[1] /= l; g[2] /= l; } else { g[3] = 0.f; } }   // g[3] = 0 — у группы нет общей стороны (двойной лист): каждая вершина по своей нормали
+  for (unsigned v = 0; v < total; v++) if (grp[v] >= 0) { float *g = gs + (unsigned)grp[v] * 5u;
+    if (g[3] > 0.f) { float cs = g[0] * un[v * 3] + g[1] * un[v * 3 + 1] + g[2] * un[v * 3 + 2]; if (cs < g[4]) g[4] = cs; } }
+  for (unsigned v = 0; v < total; v++) {
+    if (grp[v] < 0) continue;
+    const float *g = gs + (unsigned)grp[v] * 5u, *d = g[3] > 0.f ? g : un + v * 3; float k = 1.f;
+    if (g[3] > 0.f) { float c = g[4] < 1.f / TOON_SMOOTH_K ? 1.f / TOON_SMOOTH_K : g[4]; k = 1.f / c; }   // острое ребро: вытяжка 1/cos, чтобы грани не стали тоньше
+    signed char *o = sn + (size_t)v * 4u;
+    for (int c = 0; c < 3; c++) o[c] = (signed char)(int)floorf(d[c] * 127.f + (d[c] < 0.f ? -.5f : .5f));
+    o[3] = (signed char)(int)((k - 1.f) / (TOON_SMOOTH_K - 1.f) * 127.f + .5f);
+  }
+  free(tab); free(grp); free(un); free(ps); free(gs);
+  if (outBytes) *outBytes = total * 4u;
+  return sn;
+}
+// №901 (Роб 23.10: «внутри однотонного линий нет»; Гомер: короткие тёмные штрихи на отворотах у щиколоток, тёмная черта у воротника): это не оболочка, а сама модель. Персонажи-«образцы»
+// (атлас char_swatches_lit: цвет вершины = клетка 8×8 текселей) держат тонкие кольца-строчки (ширина 1–3 см) цвета сланца (66,74,82 / 49,49,58): на ногах Гомера их 20 вершин в каждой из двух пачек,
+// у воротника 14; они видны и при выключенном мультике. Чёрные (глаза, рот, брови) и цветные куски не трогаем. В мультике вершина строчки берёт клетку образца ближайшей по позиции вершины
+// другого цвета той же пачки — строчка сливается с отворотом/рубашкой. Один раз на модель, правка прямо в загруженном буфере модели (в мультике она остаётся до перезагрузки модели).
+// TOON_SEAM901_OLD=1 — как TEST36
+// №901, доводка (бледные точки у щиколотки на бегу): кольцо строчки целиком берёт одну клетку. TOON_SEAM_RING901_OLD=1 — по вершине, как TEST54 (2 вершины на кольцо оставались тёмными)
+#ifndef TOON_SEAM901_OLD
+#define TOON_SEAM901_OLD 0
+#endif
+#ifndef TOON_SEAM_RING901_OLD
+#define TOON_SEAM_RING901_OLD 0
+#endif
+#define TOON_SEAM_THIN .035f   // строчка тоньше 3,5 см по одной из осей, длиннее 8 см по другой
+static int toonSwatchRGB(const SkinModel *m, int t, unsigned u16, unsigned v16, int *rgb) {   // цвет клетки образца: u, v — сырые 16 бит вершины (u/256 — доля ширины); 0 — не образец или не T8
+  if (t < 0 || t >= (int)m->h->nTex) return 0;
+  const SkinTex *T = &m->tex[t]; if (!strstr(T->name, "swatch") || T->psm != 5 || !T->swizzled || T->w < 16 || T->h < 8) return 0;
+  int x = (int)((unsigned)((float)u16 / 256.f * (float)T->w)), y = (int)((unsigned)((float)v16 / 256.f * (float)T->h)); if (x >= (int)T->w) x = (int)T->w - 1; if (y >= (int)T->h) y = (int)T->h - 1;
+  unsigned idx = m->base[T->offPix + ((unsigned)(y >> 3) * (T->w >> 4) + (unsigned)(x >> 4)) * 128u + (unsigned)(y & 7) * 16u + (unsigned)(x & 15)];
+  const unsigned char *c = m->base + T->offClut + idx * 4u; rgb[0] = c[0]; rgb[1] = c[1]; rgb[2] = c[2]; return 1;
+}
+static int toonSlate(const int *c) { int mx = c[0] > c[1] ? (c[0] > c[2] ? c[0] : c[2]) : (c[1] > c[2] ? c[1] : c[2]), mn = c[0] < c[1] ? (c[0] < c[2] ? c[0] : c[2]) : (c[1] < c[2] ? c[1] : c[2]); return mx >= 45 && mx <= 120 && mx - mn <= 36; }   // тёмный сланец: не чёрный (глаза), не цветной
+static int toonSeams(SkinModel *m) {   // число исправленных вершин
+  int fixed = 0; unsigned char *base = (unsigned char *)m->base;
+  for (unsigned bi = 0; bi < m->h->nBatches; bi++) {
+    const SkinBatch *b = &m->b[bi]; int no, po; unsigned sv = toonStored(b);
+    if ((b->flags & 3) || !vfmtOffsets(b->vtype, b->stride, &no, &po) || (b->vtype & 3) != 2) continue;   // без глаз и вырезов; координаты текстуры u16
+    static const int wsz[4] = {0, 1, 2, 4}; int wf = (int)((b->vtype >> 9) & 3), nw = wf ? (int)((b->vtype >> 14) & 7) + 1 : 0, to = (nw * wsz[wf] + 1) & ~1;   // смещение u, v в вершине: после весов, по 2 байта
+    if (to + 4 > (int)b->stride) continue;
+    unsigned char *vb = base + b->offVerts; int *key = malloc((size_t)sv * sizeof(int)), cs[3]; if (!key) continue;
+    for (unsigned v = 0; v < sv; v++) { unsigned short uv_[2]; memcpy(uv_, vb + v * b->stride + to, 4); key[v] = toonSwatchRGB(m, b->tex, uv_[0], uv_[1], cs) ? (toonSlate(cs) ? 1 : (cs[0] + cs[1] + cs[2] < 90 ? 3 : 2)) : 0; }   // 1 сланец, 2 цвет, 3 чёрный (глаза, рот, брови — оставляем)
+    for (unsigned v = 0; v < sv; v++) {
+      if (key[v] != 1) continue;
+      unsigned grp_ = 0; float lo[3] = {1e9f, 1e9f, 1e9f}, hi[3] = {-1e9f, -1e9f, -1e9f}; unsigned short uvv[2]; memcpy(uvv, vb + v * b->stride + to, 4);
+      for (unsigned w = 0; w < sv; w++) if (key[w] == 1) { unsigned short uw[2]; memcpy(uw, vb + w * b->stride + to, 4); if (uw[0] != uvv[0] || uw[1] != uvv[1]) continue;
+        float p[3]; memcpy(p, vb + w * b->stride + po, 12); grp_++; for (int k = 0; k < 3; k++) { if (p[k] < lo[k]) lo[k] = p[k]; if (p[k] > hi[k]) hi[k] = p[k]; } }
+      float e0 = hi[0] - lo[0], e1 = hi[1] - lo[1], e2 = hi[2] - lo[2], mn_ = fminf(e0, fminf(e1, e2)), mx_ = fmaxf(e0, fmaxf(e1, e2));
+      if (grp_ > 60 || mn_ >= TOON_SEAM_THIN || mx_ < .08f) continue;   // широкий кусок цвета — это одежда/обувь, не строчка
+      if (hi[1] > m->h->bbox[1] + .72f * (m->h->bbox[4] - m->h->bbox[1])) continue;   // верхняя четверть роста — лицо: рот, брови, подбородок оставляем
+      if (TOON_SEAM_RING901_OLD) {   // как TEST54: клетка у каждой вершины своя — ближайшего соседа другого цвета в 5 см, чёрное рядом (в 5 см) — не трогаем; группа пересчитывается после каждой вершины
+        float pv[3]; memcpy(pv, vb + v * b->stride + po, 12); float best_ = 1e9f, blk_ = 1e9f; int bw_ = -1;
+        for (unsigned w = 0; w < sv; w++) if (key[w] == 3) { float pw[3]; memcpy(pw, vb + w * b->stride + po, 12); float dx = pw[0] - pv[0], dy = pw[1] - pv[1], dz = pw[2] - pv[2], d2 = dx * dx + dy * dy + dz * dz; if (d2 < blk_) blk_ = d2; }
+        if (blk_ < .05f * .05f) continue;
+        for (unsigned w = 0; w < sv; w++) if (key[w] == 2) { float pw[3]; memcpy(pw, vb + w * b->stride + po, 12); float dx = pw[0] - pv[0], dy = pw[1] - pv[1], dz = pw[2] - pv[2], d2 = dx * dx + dy * dy + dz * dz; if (d2 < best_) { best_ = d2; bw_ = (int)w; } }
+        if (bw_ < 0 || best_ > .05f * .05f) continue;
+        memcpy(vb + v * b->stride + to, vb + (unsigned)bw_ * b->stride + to, 4); fixed++; continue;
+      }
+      // №901, доводка: строчка берёт ОДНУ клетку на всё кольцо. Прежде кольцо правили по вершине: после первых исправленных в группе «одна клетка» оставалось меньше длины 8 см, условие строчки переставало
+      // выполняться, и по две вершины на кольцо (Гомер: 2 из 12 в каждой из двух пачек) оставались тёмными; треугольник между исправленной и тёмной вершиной тянет текстурную координату через соседние клетки атласа — бледные точки (белая/жёлтая клетка) у щиколотки на бегу
+      float best = 1e9f; int bw = -1, dark_ = 0;
+      for (unsigned v2 = v; v2 < sv; v2++) { if (key[v2] != 1) continue; unsigned short u2[2]; memcpy(u2, vb + v2 * b->stride + to, 4); if (u2[0] != uvv[0] || u2[1] != uvv[1]) continue;
+        float pv[3]; memcpy(pv, vb + v2 * b->stride + po, 12);
+        for (unsigned w = 0; w < sv; w++) if (key[w] >= 2) { float pw[3]; memcpy(pw, vb + w * b->stride + po, 12); float dx = pw[0] - pv[0], dy = pw[1] - pv[1], dz = pw[2] - pv[2], d2 = dx * dx + dy * dy + dz * dz;
+          if (key[w] == 3) { if (d2 < .05f * .05f) dark_ = 1; } else if (d2 < best) { best = d2; bw = (int)w; } } }
+      if (dark_ || bw < 0 || best > .05f * .05f) continue;   // рядом чёрное (рот, глаз, бровь) — черта лица; соседа другого цвета нет ближе 5 см — не трогаем
+      for (unsigned v2 = v; v2 < sv; v2++) { if (key[v2] != 1) continue; unsigned short u2[2]; memcpy(u2, vb + v2 * b->stride + to, 4); if (u2[0] != uvv[0] || u2[1] != uvv[1]) continue;
+        memcpy(vb + v2 * b->stride + to, vb + (unsigned)bw * b->stride + to, 4); key[v2] = 4; fixed++; }
+    }
+    free(key);
+    sceKernelDcacheWritebackRange(vb, sv * b->stride);
+  }
+  return fixed;
+}
 static unsigned char *toonHull(const SkinModel *m, int lv) {
   skinToonHullCalls++;
   int fr = -1;
@@ -578,21 +798,27 @@ static unsigned char *toonHull(const SkinModel *m, int lv) {
   if (fr < 0) return 0;
   unsigned bytes = 0, bytes2 = 0; for (unsigned i = 0; i < m->h->nBatches; i++) { unsigned sz_ = (toonStored(&m->b[i]) * m->b[i].stride + 15) & ~15u; bytes += sz_;
     if (!EYE_SIL827_OLD && (m->b[i].flags & 3) == 1) bytes2 += sz_; }   // №827: копия глаз толщиной тела — для внешнего силуэта
-  toonC[fr].base = m->base; toonC[fr].size = m->h->size; toonC[fr].verts = m->h->totalVerts; toonC[fr].tried |= (unsigned char)(1u << lv);   // и при отказе: не пробовать каждый кадр
+  toonC[fr].base = m->base; toonC[fr].size = m->h->size; toonC[fr].verts = m->h->totalVerts; toonC[fr].tried |= (unsigned short)(1u << lv);   // и при отказе: не пробовать каждый кадр
   if (!bytes || skinToonBytesNow + bytes + bytes2 > SKIN_TOON_BYTES) return 0;
   unsigned char *h = memalign(16, bytes + bytes2); if (!h) return 0;
+  if (!TOON_SEAM901_OLD && !toonC[fr].seams) { toonC[fr].seams = 1; skinToonSeamFixed += (unsigned)toonSeams((SkinModel *)m); }   // №901: строчки образцов — один раз на модель
+  if (!TOON_SMOOTH901_OLD && !toonC[fr].sn) { unsigned sb_ = 0; toonC[fr].sn = toonSmooth(m, &sb_); toonC[fr].snBytes = toonC[fr].sn ? sb_ : 0; skinToonBytesNow += toonC[fr].snBytes; }   // №901: общие нормали вытяжки — один раз на модель
+  const signed char *sn_ = TOON_SMOOTH901_OLD ? 0 : toonC[fr].sn;
   unsigned o = 0;
   for (int pass = 0; pass < (bytes2 ? 2 : 1); pass++)   // проход 1 (№827) — копии глаз толщиной тела за основными оболочками
   for (unsigned i = 0; i < m->h->nBatches; i++) {
     const SkinBatch *b = &m->b[i]; int no, po; unsigned sv = toonStored(b), n = sv * b->stride;   // CHR1 v2: в файле хранится pad[1] вершин, не nverts
     if (pass && (b->flags & 3) != 1) continue;
+    unsigned sv0_ = 0; for (unsigned j = 0; j < i; j++) sv0_ += toonStored(&m->b[j]);   // №901: номер первой вершины пачки в общих нормалях
     memcpy(h + o, m->base + b->offVerts, n);
     if (vfmtOffsets(b->vtype, b->stride, &no, &po))
       for (unsigned v = 0; v < sv; v++) {
         unsigned char *q = h + o + v * b->stride; const signed char *nn = (const signed char *)(q + no); float p[3];
-        float nx = nn[0] / 127.f, ny = nn[1] / 127.f, nz = nn[2] / 127.f, l = sqrtf(nx * nx + ny * ny + nz * nz);
+        float nx = nn[0] / 127.f, ny = nn[1] / 127.f, nz = nn[2] / 127.f, l = sqrtf(nx * nx + ny * ny + nz * nz), kk_ = 1.f;
         if (l < 1e-3f) continue;
-        memcpy(p, q + po, 12); float w_ = (b->flags & 1) && !pass ? SKIN_TOON_EYE_W : toonWk(lv); p[0] += nx / l * w_; p[1] += ny / l * w_; p[2] += nz / l * w_; memcpy(q + po, p, 12);
+        if (sn_) { const signed char *s_ = sn_ + (size_t)(sv0_ + v) * 4u; float sx = s_[0] / 127.f, sy = s_[1] / 127.f, sz = s_[2] / 127.f, sl = sqrtf(sx * sx + sy * sy + sz * sz);   // №901: общее направление группы вершин одной позиции
+          if (sl > 1e-3f) { nx = sx; ny = sy; nz = sz; l = sl; kk_ = 1.f + s_[3] / 127.f * (TOON_SMOOTH_K - 1.f); } }
+        memcpy(p, q + po, 12); float w_ = ((b->flags & 1) && !pass ? SKIN_TOON_EYE_W : toonWk(lv)) * kk_; p[0] += nx / l * w_; p[1] += ny / l * w_; p[2] += nz / l * w_; memcpy(q + po, p, 12);
       }
     o += (n + 15) & ~15u;
   }
@@ -617,7 +843,11 @@ static void toonRampInit(void) {
 // Те же числа, что считает libgu sceGuDepthRange(near, 0) при нулевом sceGuDepthOffset (у персонажей он 0); контекст libgu не меняется — возврат (65535) совпадает с ним
 static void skinZRange(int nearZ) { float z = (float)((unsigned)nearZ >> 1); sceGuSendCommandf(68, z - (float)nearZ); sceGuSendCommandf(71, z); }
 #endif
+unsigned skinWProf, skinW[5], skinNB[2];   // №914 служебно: слова GE по стадиям skinDrawPal (настройка, оболочки, тело, ступень тени, хвост) и число пачек / оболочек
+#define SKWM(v_) do { if (skinWProf) v_ = (unsigned)sceGuCheckList(); } while (0)
 void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMatrix4 *world, int eyeTex) {
+  XSK(41, m->h->nBatches);
+  unsigned wk0_ = 0, wk1_ = 0, wk2_ = 0, wk3_ = 0, wk4_ = 0; SKWM(wk0_);
   sceGuSetMatrix(GU_MODEL, world);
   sceGuDisable(GU_BLEND); sceGuDisable(GU_ALPHA_TEST); sceGuDepthMask(GU_FALSE);
   sceGuEnable(GU_TEXTURE_2D);
@@ -639,6 +869,7 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
   }
   sceGuModelColor(0, 0xffffffff, 0xffffffff, 0); sceGuAmbientColor(0xffffffff);
   int bound = -1, atest = 0; int slotBone[16]; memset(slotBone, 0, sizeof slotBone);   // слот пуст: в GE чужая матрица
+  SKWM(wk1_);
 #ifndef SKIN_HOST
   float tdist_ = 0.f; int tlv_ = skinToonEnabled() ? toonLevel(world, &tdist_) : -1;   // №754: толщина контура по расстоянию
   unsigned char *hull = tlv_ >= 0 ? toonHull(m, tlv_) : 0; unsigned hullOff = 0;
@@ -672,25 +903,25 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
   int footD_ = (pre_ && !SKIN_TOON_FOOT_OLD && tdist_ > .3f) ? (int)fminf(8000.f, SKIN_TOON_FOOT_M * 65535.f / tdist_) : 0;
   if (pre_) {
     if (footD_) skinZRange(65535 + footD_);
-    unsigned hc_ = TOON_HULL_BLEND_OLD || SKIN_TOON_V675_OLD ? 0xff000000u : toonAirMix(TOON_HULL_ABGR, tdist_);
+    unsigned hc_ = TOON_HULL_BLEND_OLD || SKIN_TOON_V675_OLD ? 0xff000000u : toonAirMix(TOON_HULL_ABGR, tdist_ * (toonNpcOn && !TOON_NPC931_OLD ? TOON_NPC_AIR : 1.f));
     sceGuDisable(GU_TEXTURE_2D); sceGuAmbientColor(hc_); sceGuModelColor(0, hc_, hc_, 0); sceGuDepthMask(GU_TRUE);
     if (TOON_HULL_BLEND_OLD && !SKIN_TOON_V675_OLD) { sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0, TOON_HULL_DST); }
     unsigned ho_ = 0, he_ = 0; if (!EYE_SIL827_OLD) for (unsigned i = 0; i < m->h->nBatches; i++) he_ += (toonStored(&m->b[i]) * m->b[i].stride + 15) & ~15u;   // №827: начало копий глаз
     for (unsigned i = 0; i < m->h->nBatches; i++) {
       const SkinBatch *b = &m->b[i];
-      int eyeSil_ = !EYE_SIL827_OLD && (b->flags & 3) == 1 && (EYE_SIL838_OLD || tlv_ <= 1);   // №827: глаз — во внешний силуэт (копия толщиной тела); вырезы по альфе — нет; №838: только ближе 8 м
+      int eyeSil_ = !EYE_SIL827_OLD && (b->flags & 3) == 1 && (EYE_SIL838_OLD || (tlv_ >= SKIN_TOON_K ? tlv_ - SKIN_TOON_K : tlv_) <= 1);   // №827: глаз — во внешний силуэт (копия толщиной тела); вырезы по альфе — нет; №838: только ближе 8 м
       if (!(b->flags & 3) || eyeSil_) {   // тело: не глаза (1) и не вырезы по альфе (2); №827 — и глаза
         for (int k = 0; k < b->nb; k++) {
 #ifndef SKIN_BONECACHE_OLD
           if (k < 16 && slotBone[k] == b->bones[k] + 1) continue;
           if (k < 16) slotBone[k] = b->bones[k] + 1;
 #endif
-          sceGuBoneMatrix(k, &pal[b->bones[k]]); }
+          sceGuBoneMatrix(k, &pal[b->bones[k]]); XSK(43, 1); }
         const void *hi_ = 0;
 #ifndef CHAR_INDEXED_OLD
         if (!SKIN_TOON_V2_OLD && (b->flags & 4)) hi_ = m->base + b->pad[0];   // CHR1 v2: оболочка теми же индексами, что и пачка
 #endif
-        sceGuDrawArray(b->prim, b->vtype, b->nverts, hi_, hull + (eyeSil_ ? he_ : ho_)); skinToonDraws++; skinToonVerts += b->nverts;
+        sceGuDrawArray(b->prim, b->vtype, b->nverts, hi_, hull + (eyeSil_ ? he_ : ho_)); XSK(44, 1); XSK(42, b->nverts); skinToonDraws++; skinToonVerts += b->nverts;
         if (eyeSil_) he_ += (toonStored(b) * b->stride + 15) & ~15u;
       }
       ho_ += (toonStored(b) * b->stride + 15) & ~15u;
@@ -700,6 +931,7 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
     sceGuDepthMask(GU_FALSE); sceGuEnable(GU_TEXTURE_2D); sceGuAmbientColor(0xffffffff); sceGuModelColor(0, 0xffffffff, 0xffffffff, 0);
   }
 #endif
+  SKWM(wk2_);
   for (unsigned i = 0; i < m->h->nBatches; i++) {
     const SkinBatch *b = &m->b[i];
     int t = (eyeTex >= 0 && (b->flags & 1)) ? eyeTex : b->tex;
@@ -715,16 +947,16 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
       if (k < 16 && slotBone[k] == b->bones[k] + 1) continue;
       if (k < 16) slotBone[k] = b->bones[k] + 1;
 #endif
-      sceGuBoneMatrix(k, &pal[b->bones[k]]); }
+      sceGuBoneMatrix(k, &pal[b->bones[k]]); XSK(45, 1); }
 #ifndef SKIN_HOST
     const void *hullIdx = 0;
 #ifndef CHAR_INDEXED_OLD
     if (!SKIN_TOON_V2_OLD && (b->flags & 4)) hullIdx = m->base + b->pad[0];   // CHR1 v2: оболочка рисуется теми же индексами, что и пачка
 #endif
     int eye_ = (b->flags & 1) != 0, bodyLine_ = SKIN_TOON_W779_OLD || skinToonLineW > 0;   // №779: ползунок 0 — тело без контура (глаза — своей строкой)
-    if (hull && !(b->flags & 2) && (eye_ || bodyLine_) && (SKIN_TOON_V675_OLD || skinToonEyes || !eye_) && !(tlv_ > 0 && eye_) && !(pre_ && !eye_)) {   // №797: тело — уже в первом проходе   // №754: глаза — только вблизи   // №679: глаза (flags 1) — тонкий контур (skinToonEyes), без него — как №675. правка 428: оболочка-контур ДО пачки, без записи глубины: пачка ляжет поверх, снаружи силуэта
+    if (hull && !(b->flags & 2) && (eye_ || bodyLine_) && (SKIN_TOON_V675_OLD || skinToonEyes || !eye_) && !((tlv_ >= SKIN_TOON_K ? tlv_ - SKIN_TOON_K : tlv_) > 0 && eye_) && !(pre_ && !eye_)) {   // №797: тело — уже в первом проходе   // №754: глаза — только вблизи   // №679: глаза (flags 1) — тонкий контур (skinToonEyes), без него — как №675. правка 428: оболочка-контур ДО пачки, без записи глубины: пачка ляжет поверх, снаружи силуэта
       // №675: контур ровным цветом TOON_HULL_ABGR (0x4d4d4d = 30 % яркости, «70 % чёрного»), без смешивания: прежнее (фон × 30 %) на траве и небе читалось чистым чёрным. TOON_HULL_BLEND_OLD=1 — как c535cd20
-      unsigned hc_ = TOON_HULL_BLEND_OLD || SKIN_TOON_V675_OLD ? 0xff000000u : toonAirMix(TOON_HULL_ABGR, tdist_);   // №779: вдали тушь светлеет к цвету дали
+      unsigned hc_ = TOON_HULL_BLEND_OLD || SKIN_TOON_V675_OLD ? 0xff000000u : toonAirMix(TOON_HULL_ABGR, tdist_ * (toonNpcOn && !TOON_NPC931_OLD ? TOON_NPC_AIR : 1.f));   // №779: вдали тушь светлеет к цвету дали
       // №781 (Роб: «обводку глазам жёсткую не надо — мягкий общий контур, не такой контрастный»): глаза мягким кольцом — тушь на TOON_EYE_SOFT_PCT % поверх лица
       // (eyes 1, по умолчанию), полной тушью — eyes 2, без кольца — eyes 0. TOON_EYE_SOFT_OLD=1 — глаза как тело (полная тушь)
       int soft_ = eye_ && !TOON_EYE_SOFT_OLD && skinToonEyeMode == 1, sil_ = !eye_ && silD_ > 0;
@@ -732,7 +964,7 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
       if (TOON_HULL_BLEND_OLD && !SKIN_TOON_V675_OLD) { sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, 0, TOON_HULL_DST); }
       else if (soft_) { unsigned a_ = TOON_EYE_SOFT_PCT * 255u / 100u; sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_FIX, GU_FIX, a_ * 0x010101u, (255u - a_) * 0x010101u); }
       if (sil_) skinZRange(65535 - silD_);   // №779: оболочка на SKIN_TOON_SIL_M дальше — видна только кромка силуэта
-      sceGuDrawArray(b->prim, b->vtype, b->nverts, hullIdx, hull + hullOff);   // останется ободок (вырезы по альфе — без контура)
+      sceGuDrawArray(b->prim, b->vtype, b->nverts, hullIdx, hull + hullOff); XSK(46, 1);   // останется ободок (вырезы по альфе — без контура)
       if (sil_) skinZRange(65535);
       if ((TOON_HULL_BLEND_OLD && !SKIN_TOON_V675_OLD) || soft_) sceGuDisable(GU_BLEND);
       sceGuDepthMask(GU_FALSE); sceGuEnable(GU_TEXTURE_2D); sceGuAmbientColor(0xffffffff); sceGuModelColor(0, 0xffffffff, 0xffffffff, 0);
@@ -746,8 +978,9 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
     if(b->flags&4) indices=m->base+b->pad[0];
 #endif
     gateSkinDraws++; if (t < 0 || t >= (int)m->h->nTex || m->tex[t].w <= 0 || m->tex[t].h <= 0) gateSkinBad++;
-    sceGuDrawArray(b->prim, b->vtype, b->nverts, indices, m->base + b->offVerts);
+    sceGuDrawArray(b->prim, b->vtype, b->nverts, indices, m->base + b->offVerts); XSK(47, 1);
   }
+  SKWM(wk3_);
 #ifndef SKIN_HOST
   if (skinToonShadeOn()) {   // №675: ступень тени вторым проходом (shade mapping), глаза и вырезы по альфе — без неё
     if (atest) { sceGuDisable(GU_ALPHA_TEST); atest = 0; }
@@ -763,20 +996,22 @@ void skinDrawPal(const SkinModel *m, const ScePspFMatrix4 *pal, const ScePspFMat
       for (int k = 0; k < b->nb; k++) {
         if (k < 16 && slotBone[k] == b->bones[k] + 1) continue;
         if (k < 16) slotBone[k] = b->bones[k] + 1;
-        sceGuBoneMatrix(k, &pal[b->bones[k]]); }
+        sceGuBoneMatrix(k, &pal[b->bones[k]]); XSK(48, 1); }
       const void *ix = 0;
 #ifndef CHAR_INDEXED_OLD
       if (b->flags & 4) ix = m->base + b->pad[0];
 #endif
-      sceGuDrawArray(b->prim, b->vtype, b->nverts, ix, m->base + b->offVerts);
+      sceGuDrawArray(b->prim, b->vtype, b->nverts, ix, m->base + b->offVerts); XSK(49, 1);
     }
     sceGuTexMapMode(GU_TEXTURE_COORDS, 0, 0); sceGuTexFilter(GU_LINEAR, GU_LINEAR); sceGuTexWrap(GU_REPEAT, GU_REPEAT);
     sceGuTexFunc(GU_TFX_MODULATE, GU_TCC_RGBA); sceGuDepthFunc(GU_GEQUAL); sceGuDepthMask(GU_FALSE); sceGuDisable(GU_BLEND);
   }
 #endif
+  SKWM(wk4_);
   if (atest) sceGuDisable(GU_ALPHA_TEST);
   for (int i = 0; i < (nLit ? nLit : 1); i++) sceGuDisable(GU_LIGHT0 + i);
   sceGuDisable(GU_LIGHTING);
+  if (skinWProf) { unsigned we_ = (unsigned)sceGuCheckList(); skinW[0] += (wk1_ - wk0_) / 4u; skinW[1] += (wk2_ - wk1_) / 4u; skinW[2] += (wk3_ - wk2_) / 4u; skinW[3] += (wk4_ - wk3_) / 4u; skinW[4] += (we_ - wk4_) / 4u; skinNB[0] += m->h->nBatches; skinNB[1]++; }
 }
 
 // Правка Роба 103 (повтор 01.10): персонажи через skinDraw (фоновые и миссий — msn_view.c, пешеходы — traffic.c, гардероб) —

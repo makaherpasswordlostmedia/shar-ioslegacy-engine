@@ -85,6 +85,7 @@ static void smkSetState(int st) { smkState = st; }
 #define TEST14_TEL_OLD 0   // 1 — без покадровой телеметрии (HIST/HISTG/WORST и поля st= rec= в строке таблицы)
 #endif
 static unsigned smkPress; static float smkPressT;       // press: кнопки сценария и сколько ещё держать
+static unsigned smkTap; static float smkTapT;           // №920: tap — кнопка со своим таймером, не отпускает остальные (прыжок при зажатом стике)
 static unsigned smkPressAt, smkPressN;                  // время (мкс) и номер последней команды press (отклик экранов, правка Роба 24)
 static float smkPose[4];                                 // машина x y z курс (main.c раз в кадр) -> в строку SHOT
 static float smkWorkMax, smkSettleT, smkSettleMax; static int smkSettled, smkCalm, smkSettleTimeout;
@@ -118,6 +119,10 @@ static unsigned smkIoUs; static SceUID smkFd = -1;
 // (3–6 мс), а на границе сцены и на старте миссии их 15–20 подряд (STAT, WORST, «MSN plan …»): 57–89 мс в одном кадре, видно и на видео теста. Теперь строки копятся в буфере и уходят
 // ОДНОЙ записью не чаще раза в 0,25 с (конец кадра, smokeFrame); сразу — SHOT/END и переполнение. Потеря при вылете — не больше строк одного кадра (след вылета — blackbox.txt).
 // SMK_BUF_OLD=1 — прежнее (каждая строка сразу). Счётчики — строка SMKIO в конце журнала
+// №913: ежесекундный блок журнала (≈ 70 строк с форматом float, ≈ 3,9 мс эмулятора ≈ 18–22 мс PSP) идёт сразу после ожидания vblank и сдвигает начало следующего кадра: пропуск раз в секунду, которого нет в игре (там smkOn = 0), а work кадра его не показывает. Теперь семью кусками по кадрам; SMK_SPREAD_OLD=1 — одним кадром, как было
+#ifndef SMK_SPREAD_OLD
+#define SMK_SPREAD_OLD 0
+#endif
 #ifndef SMK_BUF_OLD
 #define SMK_BUF_OLD 0
 #endif
@@ -224,6 +229,56 @@ static int smokeIsEmu(void) {   // PPSSPP отвечает на устройст
   return smkEmu;
 }
 static void smkSettle(void);
+// Диагностика окна «Оптимизация» (№932, 24.10): мерцание — доля пикселей верхней половины кадра (480×136), изменившихся против прошлого кадра; строка FLICK раз в 30 кадров («flag flick 1» в сценарии,
+// только смоук). chg — любое изменение цвета, big — сумма |ΔRGB| ≥ 32 (не шаг квантования 5650); in* — полоса x 40..439, y 64..135 (ниже строк отладочного HUD, там мерцает цифрами). Метод: камера крутится на месте («flag camyaw»), мерцание = то, что сверх
+// сдвига краёв, поэтому сравниваются варианты на одном движении
+static unsigned short flickMap[480 * 136]; static int flickOn; static unsigned *flickPrev, *flickPrev2; static int flickHave; static unsigned flickN; static double flickS[8];
+static double flickB[5][3]; static unsigned flickBN;   // полосы расстояния: 0 <30 м, 1 30–60, 2 60–120, 3 >120, 4 небо (глубины нет): [площадь, туда-обратно видимое, изменилось сильно]
+static void flickStep(const void *fb, int fb16, int bufw, const void *zb, float zn, float zf) {
+  if (SHR_REL_SMK) return;   // релиз: датчика нет (код выбрасывается, сборка байт в байт прежняя)
+  if (!flickOn) { flickHave = 0; return; }
+  if (!flickPrev) { flickPrev = (unsigned *)malloc(480 * 136 * 4); flickPrev2 = (unsigned *)malloc(480 * 136 * 4); if (!flickPrev || !flickPrev2) return; }
+  const unsigned char *base = (const unsigned char *)((unsigned)fb | 0x40000000u); const unsigned short *zbase = (const unsigned short *)((unsigned)zb | 0x40000000u);
+  unsigned bc[5][3] = {{0}}; unsigned c = 0, b = 0, ic = 0, ib = 0, os = 0, ios = 0, ov = 0, iov = 0;
+  for (int y = 0; y < 136; y++) for (int x = 0; x < 480; x++) {
+    unsigned r, g, bl;
+    if (fb16) { unsigned p = ((const unsigned short *)base)[y * bufw + x]; r = (p & 31) << 3; g = ((p >> 5) & 63) << 2; bl = (p >> 11) << 3; }
+    else { unsigned p = ((const unsigned *)base)[y * bufw + x]; r = p & 255; g = (p >> 8) & 255; bl = (p >> 16) & 255; }
+    unsigned v = r | g << 8 | bl << 16, o = flickPrev[y * 480 + x], o2 = flickPrev2[y * 480 + x]; flickPrev2[y * 480 + x] = o; flickPrev[y * 480 + x] = v;
+    if (!flickHave) continue;
+    int d = abs((int)r - (int)(o & 255)) + abs((int)g - (int)((o >> 8) & 255)) + abs((int)bl - (int)((o >> 16) & 255));
+    int inner = x >= 40 && x < 440 && y >= 64;
+    int bnd = 4; { unsigned zv = zbase[y * bufw + x]; if (zv) { float zn_ = 1.f - zv / 32767.5f, dd_ = 2.f * zf * zn / ((zf + zn) - (zf - zn) * zn_); bnd = dd_ < 30.f ? 0 : dd_ < 60.f ? 1 : dd_ < 120.f ? 2 : 3; } }
+    bc[bnd][0]++; if (d >= 32) bc[bnd][2]++;
+    if (d > 0) { c++; ic += inner; } if (d >= 32) { b++; ib += inner; }
+    if (flickHave > 1 && d >= 8) { int d2 = abs((int)r - (int)(o2 & 255)) + abs((int)g - (int)((o2 >> 8) & 255)) + abs((int)bl - (int)((o2 >> 16) & 255)); if (d2 <= 2) { os++; ios += inner; if (d >= 24) { ov++; iov += inner; bc[bnd][1]++; if (flickMap[y * 480 + x] < 65535) flickMap[y * 480 + x]++; } } }   // туда-обратно: кадр t равен t-2, а t-1 другой — мерцание, а не движение
+  }
+  if (flickHave < 2) { flickHave++; if (flickHave < 2) return; }
+  for (int k = 0; k < 5; k++) for (int j = 0; j < 3; j++) flickB[k][j] += bc[k][j]; flickBN++;
+  flickS[0] += c; flickS[1] += b; flickS[2] += ic; flickS[3] += ib; flickS[4] += os; flickS[5] += ios; flickS[6] += ov; flickS[7] += iov; flickN++;
+  if (flickN >= 30) { char l[320]; double n = flickN, all = 480.0 * 136.0, in = 400.0 * 72.0;
+    snprintf(l, sizeof l, "FLICK t=%.1f sc=%s n=%u chg=%.3f big=%.3f inchg=%.3f inbig=%.3f osc=%.3f inosc=%.3f vis=%.3f invis=%.3f (%% пикселей верхней половины за кадр; vis — туда-обратно с шагом цвета ≥ 24, не дизеринг)\n", smkT, smkScene, flickN, 100.0 * flickS[0] / n / all, 100.0 * flickS[1] / n / all, 100.0 * flickS[2] / n / in, 100.0 * flickS[3] / n / in, 100.0 * flickS[4] / n / all, 100.0 * flickS[5] / n / in, 100.0 * flickS[6] / n / all, 100.0 * flickS[7] / n / in);
+    smkWrite(l);
+    { char m[300]; double nn = flickBN ? flickBN : 1; snprintf(m, sizeof m, "FLICKB t=%.1f sc=%s area%%(<30,30-60,60-120,>120,sky)=%.1f/%.1f/%.1f/%.1f/%.1f vis%%=%.3f/%.3f/%.3f/%.3f/%.3f big%%=%.2f/%.2f/%.2f/%.2f/%.2f\n", smkT, smkScene,
+        100.0 * flickB[0][0] / nn / all, 100.0 * flickB[1][0] / nn / all, 100.0 * flickB[2][0] / nn / all, 100.0 * flickB[3][0] / nn / all, 100.0 * flickB[4][0] / nn / all,
+        flickB[0][0] ? 100.0 * flickB[0][1] / flickB[0][0] : 0, flickB[1][0] ? 100.0 * flickB[1][1] / flickB[1][0] : 0, flickB[2][0] ? 100.0 * flickB[2][1] / flickB[2][0] : 0, flickB[3][0] ? 100.0 * flickB[3][1] / flickB[3][0] : 0, flickB[4][0] ? 100.0 * flickB[4][1] / flickB[4][0] : 0,
+        flickB[0][0] ? 100.0 * flickB[0][2] / flickB[0][0] : 0, flickB[1][0] ? 100.0 * flickB[1][2] / flickB[1][0] : 0, flickB[2][0] ? 100.0 * flickB[2][2] / flickB[2][0] : 0, flickB[3][0] ? 100.0 * flickB[3][2] / flickB[3][0] : 0, flickB[4][0] ? 100.0 * flickB[4][2] / flickB[4][0] : 0); smkWrite(m); memset(flickB, 0, sizeof flickB); flickBN = 0; }
+    flickS[0] = flickS[1] = flickS[2] = flickS[3] = flickS[4] = flickS[5] = flickS[6] = flickS[7] = 0; flickN = 0; }
+}
+// карта мерцания за прогон: прошлый кадр верхней половины (тускло) + красным число раз, когда пиксель вернулся к значению двух кадров назад (osc); файл shots/osc_<сцена>.bmp, потом карта обнуляется
+static void flickDump(const char *tag) {
+  if (SHR_REL_SMK || !flickPrev || !smkFile[0]) return;
+  char fn[256]; strcpy(fn, smkFile); char *sl = strrchr(fn, '/'); strcpy(sl ? sl + 1 : fn, "shots"); sceIoMkdir(fn, 0777);
+  size_t l = strlen(fn); snprintf(fn + l, sizeof fn - l, "/osc_%s.bmp", tag);
+  SceUID f = sceIoOpen(fn, PSP_O_WRONLY | PSP_O_CREAT | PSP_O_TRUNC, 0777); if (f < 0) return;
+  int W = 480, H = 136; unsigned rowB = W * 3, size = 54 + rowB * H; unsigned char hd[54] = {'B', 'M'}; unsigned v = 54; memcpy(hd + 2, &size, 4); memcpy(hd + 10, &v, 4); v = 40; memcpy(hd + 14, &v, 4);
+  memcpy(hd + 18, &W, 4); memcpy(hd + 22, &H, 4); hd[26] = 1; hd[28] = 24; v = rowB * H; memcpy(hd + 34, &v, 4); sceIoWrite(f, hd, 54);
+  static unsigned char row[480 * 3];
+  for (int y = H - 1; y >= 0; y--) { for (int x = 0; x < W; x++) { unsigned p = flickPrev[y * 480 + x], c = flickMap[y * 480 + x]; unsigned r = (p & 255) >> 1, g = ((p >> 8) & 255) >> 1, b = ((p >> 16) & 255) >> 1;
+      if (c) { unsigned k = 90 + c * 40; if (k > 255) k = 255; r = k; g >>= 1; b >>= 1; }
+      row[x * 3] = (unsigned char)b; row[x * 3 + 1] = (unsigned char)g; row[x * 3 + 2] = (unsigned char)r; } sceIoWrite(f, row, rowB); }
+  sceIoClose(f); memset(flickMap, 0, sizeof flickMap);
+}
 // кадр готов (после sceGuSync, до смены буферов): fb — адрес буфера в VRAM, fb16 — 5650 или 8888, w — ширина строки буфера
 static void smokeShotDump(const void *fb, int fb16, int bufw, int clearChkOn) {
 #ifndef SMK_NO_DUMP
@@ -257,11 +312,15 @@ static void smokeShotDump(const void *fb, int fb16, int bufw, int clearChkOn) {
 #endif
 }
 static void smokePose(float x, float y, float z, float h) { smkPose[0] = x; smkPose[1] = y; smkPose[2] = z; smkPose[3] = h; }
-static unsigned smokePad(void) { return smkPress; }   // сразу после sceCtrlPeekBufferPositive: pad.Buttons |= smokePad()
+static unsigned smokePad(void) { return smkPress | smkTap; }
+static int smkStickOn; static unsigned char smkLx = 128, smkLy = 128; static float smkStickT;   // №947: команда сценария «stick LX LY сек» — аналоговый стик (-1..1; вверх = LY -1), по истечении отпускается
+static void smokeStick(unsigned char *lx, unsigned char *ly) { if (smkStickOn) { *lx = smkLx; *ly = smkLy; } }   // сразу после sceCtrlPeekBufferPositive: pad.Buttons |= smokePad()
 // раз в кадр (до рисования): 1 = есть команда для main.c в *c (goto/flag); wait/shot/scene/end/longframe — здесь
 static int smokeNext(float dt, SmokeCmd *c) {
   if (!smkScr) return 0;
   smkT += dt; if (smkPressT > 0.f && (smkPressT -= dt) <= 0.f) smkPress = 0;
+  if (smkTapT > 0.f && (smkTapT -= dt) <= 0.f) smkTap = 0;
+  if (smkStickT > 0.f && (smkStickT -= dt) <= 0.f) smkStickOn = 0;
   if (smkWait > 0.f) { smkWait -= dt; return 0; }
   if (smkShot[0]) {                                        // ждём подтверждения снимка
     char fn[256], nm[40]; strcpy(fn, smkFile); char *sl = strrchr(fn, '/'); snprintf(nm, sizeof nm, "shot_%s.ok", smkShot);
@@ -279,6 +338,8 @@ static int smokeNext(float dt, SmokeCmd *c) {
     if (!strcmp(cmd, "press")) { float sec = .15f; sscanf(ln, "%*s %23s %f", arg, &sec); smkPress |= smkBtn(arg); smkPressT = sec;
       smkPressAt = sceKernelGetSystemTimeLow(); smkPressN++;
       snprintf(s, sizeof s, "PRESS %s %.1f\n", arg, smkT); smkWrite(s); continue; }
+    if (!strcmp(cmd, "tap")) { float sec = .15f; sscanf(ln, "%*s %23s %f", arg, &sec); smkTap |= smkBtn(arg); smkTapT = sec; continue; }   // №920: «press» отпускает все кнопки вместе, а прыжок при зажатом стике нужен отдельно
+    if (!strcmp(cmd, "stick")) { float sx = 0, sy = 0, sec = .15f; sscanf(ln, "%*s %f %f %f", &sx, &sy, &sec); smkLx = (unsigned char)(128.f + 127.f * sx); smkLy = (unsigned char)(128.f + 127.f * sy); smkStickOn = 1; smkStickT = sec; continue; }   // №947
     if (!strcmp(cmd, "wait")) { sscanf(ln, "%*s %f", &smkWait); return 0; }
     if (!strcmp(cmd, "scene")) { smkStat(); smkReset(); smkSceneFlash = 3; sscanf(ln, "%*s %23s", smkScene); snprintf(s, sizeof s, "SCENE %s %.1f\n", smkScene, smkT); smkWrite(s); continue; }
     if (!strcmp(cmd, "shot")) { smkWrNow = 1; sscanf(ln, "%*s %23s", arg); char t[128]; snprintf(t, sizeof t, "SHOT %s %.1f pos %.2f %.2f %.2f %.4f\n", arg, smkT,
@@ -391,6 +452,10 @@ static int smokeDropCell(const char *name) { return !strcmp(name, "delaycell") |
 // (SHAR_RELEASE: smokelog не открывается). PHSEC_OLD=1 — без них. Обновляет BBP в main_state.h
 enum { BBP_NONE, BBP_INPUT, BBP_CAR, BBP_WORLD, BBP_ROOMS, BBP_MSN, BBP_TRAFFIC, BBP_STREAM, BBP_CITY, BBP_CAR3D, BBP_NPC3D,
        BBP_TRF3D, BBP_MCR3D, BBP_PROPS3D, BBP_FX3D, BBP_UI, BBP_GESYNC, BBP_VBLANK, BBP_SECOND, BBP_LOAD, BBP_N };
+#ifndef SMK_SETTLE936_OLD
+#define SMK_SETTLE936_OLD 0
+#endif
+static int smkSettle936 = !SMK_SETTLE936_OLD;
 static unsigned smkBbT; static int smkBbPh = -1; static double smkBbSum[BBP_N];
 // и вызовы рисования / треугольники / смены текстуры по тем же фазам (строка PHDRAW): d — вызовы, k — тысячи треугольников, b — привязки текстур
 static double smkBbD[BBP_N], smkBbK[BBP_N], smkBbB[BBP_N], smkBbW[BBP_N]; static long smkBbLd, smkBbLk, smkBbLb; static int smkBbLw;   // W — слов команд, записанных в список GE за фазу
@@ -402,7 +467,7 @@ static inline void smkBbp(int n, int d, long k, int b, int w) {
   smkBbLd = d; smkBbLk = k; smkBbLb = b; smkBbLw = w; smkBbT = t; smkBbPh = n;
 }
 // подфазы x_props (место ТОП-1 тура SHARTEST6): smkSub(k) — начало подфазы k (0 пропы, 1 стейтпропы+пачка, 2 билборды, 3 сборное (collect), 4 монеты); smkSub(-1) — конец
-static unsigned smkGgReplay, smkNearFrames, smkNearLow, smkNearWhy[7], smkNearCarOnly, smkNearPass; static double smkSubSum[5], smkGgMs, smkGgPieces, smkGgTris, smkSpPoseMs, smkSpFlushMs, smkSpLoopMs, smkSpInst, smkSpVis, smkSpPcs, smkCoinAct, smkCoinDrawn, smkCoinPcs, smkCtMask, smkCtRisky, smkCtList, smkCtBuild; static unsigned smkSubT; static int smkSubK = -1;
+static unsigned smkGgReplay, smkNearFrames, smkNearLow, smkNearWhy[7], smkNearCarOnly, smkNearPass; static double smkSubSum[5], smkGgMs, smkGgPieces, smkGgTris, smkSpPoseMs, smkSpFlushMs, smkSpLoopMs, smkSpInst, smkSpCand, smkSpDrawn, smkBbCand, smkBbQuads, smkBbCalls, smkBbLoopMs, smkBbDrawMs, smkBbTailMs, smkBbTm[6], smkSpT[3], smkSpT2[3], smkLspList, smkLspAll, smkLspViol, smkTrfCarMs, smkTrfPedMs, smkTrfN[3], smkTrfPose, smkTrfDraw, smkTrfPoseN, smkTrfWords, smkSkinW[7], smkTrfPc[5], smkPbT[5], smkSpVis, smkSpPcs, smkCoinAct, smkCoinDrawn, smkCoinPcs, smkCtMask, smkCtRisky, smkCtList, smkCtBuild; static unsigned smkSubT; static int smkSubK = -1;
 static inline void smkSub(int k) {
   if (!smkOn || PHSEC_OLD || SHR_REL_SMK) return;
   unsigned t = sceKernelGetSystemTimeLow(); if (smkSubK >= 0) smkSubSum[smkSubK] += (t - smkSubT) / 1000.0; smkSubT = t; smkSubK = k;
@@ -452,6 +517,16 @@ static void smokeFrame(float dt, float work, int missed, int per, int missVis) {
     smkSettleT += dt; if (smkSettleT > smkSettleMax) smkSettleMax = smkSettleT;
     smkCalm = missVis ? 0 : smkCalm + 1;
     if ((smkSettleT >= .5f && smkCalm >= 15) || smkSettleT > 10.f) { smkSettled = 1; if (smkSettleT > 10.f) smkSettleTimeout = 1; }
+    // №936 п.2 (разбор TEST58, F_SET +19,6 с и F_FLAT_L1S +4,7 с: x_props 114 и 44 мс при work 26–31): пока сцена «устаканивается» (после паузы, телепорта, загрузки), фазы BBP (smkBbp, PHDRAW), подфазы PHSUB и таймеры
+    // накапливались, а счётчик кадров smkPhN — нет (он ниже, после return): первая строка PHSEC/PHSUB после этого делила сумму ВСЕХ кадров на число ТОЛЬКО устоявшихся (×15–25 по каждому полю разом).
+    // Теперь кадры устаивания тоже считаются: делитель верный. SMK_SETTLE936_OLD=1 / «flag smksettle936 0» — прежнее
+    if (smkSettle936 && !PHSEC_OLD) {
+      unsigned prv = smkMarkT0;
+      for (int i = 0; i < 8; i++) { unsigned m = smkMarkT[i] ? smkMarkT[i] : prv; smkPhSum[i] += (m - prv) / 1000.0; prv = m; }
+      if (smkXT[0] && smkXT[1] && smkXT[2] && smkMarkT[0]) { smkXSum[0] += (smkXT[0] - smkMarkT[0]) / 1000.0; smkXSum[1] += (smkXT[1] - smkXT[0]) / 1000.0; smkXSum[2] += (smkXT[2] - smkXT[1]) / 1000.0; }
+      smkXT[0] = smkXT[1] = smkXT[2] = 0;
+      smkBuildSum += smkCpuNow - smkLogicNow; smkGeWaitSum += smkGeWaitMs; smkVblSum += smkVblMs; smkPhN++;
+    }
     return;
   }
   int b = (int)(work * 4.f); if (b >= SMK_BINS) b = SMK_BINS - 1; if (b < 0) b = 0;
@@ -483,12 +558,21 @@ static void smokeSecond(float fps, float work, float workMax, float cpu, long tr
   if (!TEST14_TEL_OLD) { size_t n_ = strlen(s); if (n_ > 0 && s[n_ - 1] == '\n') s[--n_] = 0; snprintf(s + n_, sizeof s - n_, " st=%s rec=%u\n", SMK_ST[smkRowSt < 0 ? smkState : smkRowSt], smkRowRec ? 1u : 0u); smkRowSt = -1; smkRowRec = 0; }
   smkSecMissed = smkSecMissVis = 0.f;
   smkWrite(s);
+#if LEAK696_TRACE && defined(LT_ABS)
+  { static int ltN_; if (++ltN_ % 6 == 0) { extern void lt696Dump(void (*)(const char *), const char *); char tg_[40]; snprintf(tg_, sizeof tg_, "%.1f", smkT); lt696Dump(smkWrite, tg_); } }   // №962 (служебно): раз в 6 строк HEAPB все живые группы выделений по вызывающему
+#endif
+  { char hb_[200]; struct mallinfo mi_ = mallinfo(); snprintf(hb_, sizeof hb_, "HEAPB t=%.1f scene=%s bytes=%u blk=%u used=%u arena=%u free=%u\n", smkT, smkScene, heapFreeBytes(), memMaxBlock ? memMaxBlock() : 0u, (unsigned)mi_.uordblks, (unsigned)mi_.arena, (unsigned)mi_.fordblks); smkWrite(hb_); }   // №930 служебно (приёмка кучи)
   if (!PHSEC_OLD && smkPhN) {
-    char p[900]; double k = 1.0 / smkPhN;
+    char p[1800]; double k = 1.0 / smkPhN;
     snprintf(p, sizeof p, "PHSEC t=%.1f scene=%s n=%u ph0=%.2f ph1=%.2f ph2=%.2f ph3=%.2f ph4=%.2f ph5=%.2f ph6=%.2f ph7=%.2f build=%.2f gesync=%.2f vbl=%.2f x_car=%.2f x_vis=%.2f x_homer=%.2f x_city=%.2f x_car3d=%.2f x_npc=%.2f x_trf=%.2f x_mcr=%.2f x_props=%.2f x_fx=%.2f x_ui=%.2f\n", smkT, smkScene, smkPhN,
              smkPhSum[0] * k, smkPhSum[1] * k, smkPhSum[2] * k, smkPhSum[3] * k, smkPhSum[4] * k, smkPhSum[5] * k, smkPhSum[6] * k, smkPhSum[7] * k, smkBuildSum * k, smkGeWaitSum * k, smkVblSum * k, smkXSum[0] * k, smkXSum[1] * k, smkXSum[2] * k,
              smkBbSum[BBP_CITY] * k, smkBbSum[BBP_CAR3D] * k, smkBbSum[BBP_NPC3D] * k, smkBbSum[BBP_TRF3D] * k, smkBbSum[BBP_MCR3D] * k, smkBbSum[BBP_PROPS3D] * k, smkBbSum[BBP_FX3D] * k, smkBbSum[BBP_UI] * k);
     smkWrite(p);
+  }
+}
+static void smokeSecondB(void) {   // №913: PHDRAW отдельным кадром (SMK_SPREAD_OLD — подряд с остальным)
+  if (!smkOn || PHSEC_OLD || !smkPhN) return;
+  char p[1800]; double k = 1.0 / smkPhN;
     snprintf(p, sizeof p, "PHDRAW t=%.1f scene=%s city=%.0f/%.1f/%.0f car3d=%.0f/%.1f/%.0f npc=%.0f/%.1f/%.0f trf=%.0f/%.1f/%.0f mcr=%.0f/%.1f/%.0f props=%.0f/%.1f/%.0f fx=%.0f/%.1f/%.0f ui=%.0f/%.1f/%.0f (вызовы/ктрисы/привязки на кадр) kw: city=%.1f car3d=%.1f npc=%.1f trf=%.1f mcr=%.1f props=%.1f fx=%.1f ui=%.1f (тыс. слов списка GE на кадр)\n", smkT, smkScene,
              smkBbD[BBP_CITY] * k, smkBbK[BBP_CITY] * k, smkBbB[BBP_CITY] * k, smkBbD[BBP_CAR3D] * k, smkBbK[BBP_CAR3D] * k, smkBbB[BBP_CAR3D] * k,
              smkBbD[BBP_NPC3D] * k, smkBbK[BBP_NPC3D] * k, smkBbB[BBP_NPC3D] * k, smkBbD[BBP_TRF3D] * k, smkBbK[BBP_TRF3D] * k, smkBbB[BBP_TRF3D] * k,
@@ -496,10 +580,13 @@ static void smokeSecond(float fps, float work, float workMax, float cpu, long tr
              smkBbD[BBP_FX3D] * k, smkBbK[BBP_FX3D] * k, smkBbB[BBP_FX3D] * k, smkBbD[BBP_UI] * k, smkBbK[BBP_UI] * k, smkBbB[BBP_UI] * k,
              smkBbW[BBP_CITY] * k / 1000.0, smkBbW[BBP_CAR3D] * k / 1000.0, smkBbW[BBP_NPC3D] * k / 1000.0, smkBbW[BBP_TRF3D] * k / 1000.0, smkBbW[BBP_MCR3D] * k / 1000.0, smkBbW[BBP_PROPS3D] * k / 1000.0, smkBbW[BBP_FX3D] * k / 1000.0, smkBbW[BBP_UI] * k / 1000.0);
     smkWrite(p);
-    snprintf(p, sizeof p, "PHSUB t=%.1f scene=%s props=%.2f sprops=%.2f bill=%.2f coll=%.2f coins=%.2f gg_ms=%.2f gg_pieces=%.1f gg_ktris=%.2f (мс на кадр; gg — срез по полосе GE на процессоре внутри x_city, правка 340) sp_loop=%.2f sp_pose=%.2f sp_flush=%.2f sp_inst=%.0f sp_vis=%.0f sp_pieces=%.0f ct_mask=%.2f ct_risky=%.2f ct_list=%.2f ct_build=%.2f gg_replay=%u near_frames=%u near_low=%u near_car_only=%u near_why=%u/%u/%u/%u/%u/%u near_pass=%u coin_active=%.1f coin_drawn=%.1f coin_pieces=%.1f (монеты: активных / реально нарисованных после дальности 60 м и боковых плоскостей / кусков в GE, на кадр)\n", smkT, smkScene, smkSubSum[0] * k, smkSubSum[1] * k, smkSubSum[2] * k, smkSubSum[3] * k, smkSubSum[4] * k, smkGgMs * k, smkGgPieces * k, smkGgTris * k / 1000.0, smkSpLoopMs * k, smkSpPoseMs * k, smkSpFlushMs * k, smkSpInst * k, smkSpVis * k, smkSpPcs * k, smkCtMask * k, smkCtRisky * k, smkCtList * k, smkCtBuild * k, smkGgReplay, smkNearFrames, smkNearLow, smkNearCarOnly, smkNearWhy[1], smkNearWhy[2], smkNearWhy[3], smkNearWhy[4], smkNearWhy[5], smkNearWhy[6], smkNearPass, smkCoinAct * k, smkCoinDrawn * k, smkCoinPcs * k);
-    smkWrite(p); memset(smkSubSum, 0, sizeof smkSubSum); smkGgMs = smkGgPieces = smkGgTris = smkSpPoseMs = smkSpFlushMs = smkSpLoopMs = smkSpInst = smkSpVis = smkSpPcs = smkCoinAct = smkCoinDrawn = smkCoinPcs = smkCtMask = smkCtRisky = smkCtList = smkCtBuild = 0; smkGgReplay = smkNearFrames = smkNearLow = smkNearCarOnly = smkNearPass = 0; memset(smkNearWhy, 0, sizeof smkNearWhy);
+}
+static void smokeSecondC(void) {   // №913: PHSUB и обнуление сумм секунды
+  if (!smkOn || PHSEC_OLD || !smkPhN) return;
+  char p[1800]; double k = 1.0 / smkPhN;
+    snprintf(p, sizeof p, "PHSUB t=%.1f scene=%s props=%.2f sprops=%.2f bill=%.2f coll=%.2f coins=%.2f gg_ms=%.2f gg_pieces=%.1f gg_ktris=%.2f (мс на кадр; gg — срез по полосе GE на процессоре внутри x_city, правка 340) sp_loop=%.2f sp_pose=%.2f sp_flush=%.2f sp_inst=%.0f sp_vis=%.0f sp_pieces=%.0f sp_cand=%.1f sp_drawn=%.1f bb_cand=%.1f bb_quads=%.1f bb_calls=%.1f bb_loop=%.3f bb_draw=%.3f bb_tail=%.3f bb_t=%.3f/%.3f/%.3f/%.3f/%.3f/%.3f sp_t=%.3f/%.3f/%.3f lsp_list=%.1f/%.1f lsp_viol=%.2f trf_cars=%.3f trf_peds=%.3f trf_n=%.1f/%.1f/%.1f ped_pose=%.3f/%.1f ped_draw=%.3f ped_words=%.0f ped_w=%.0f/%.0f/%.0f/%.0f/%.0f pb_t=toon%.3f/frame%.3f/call%.3f words%.0f calls%.1f batches=%.1f/%.1f car_pc=%.1f words(toon/piece)=%.0f/%.0f ms(toon/piece)=%.3f/%.3f sp_t2=%.3f/%.3f/%.1f ct_mask=%.2f ct_risky=%.2f ct_list=%.2f ct_build=%.2f gg_replay=%u near_frames=%u near_low=%u near_car_only=%u near_why=%u/%u/%u/%u/%u/%u near_pass=%u coin_active=%.1f coin_drawn=%.1f coin_pieces=%.1f (монеты: активных / реально нарисованных после дальности 60 м и боковых плоскостей / кусков в GE, на кадр)\n", smkT, smkScene, smkSubSum[0] * k, smkSubSum[1] * k, smkSubSum[2] * k, smkSubSum[3] * k, smkSubSum[4] * k, smkGgMs * k, smkGgPieces * k, smkGgTris * k / 1000.0, smkSpLoopMs * k, smkSpPoseMs * k, smkSpFlushMs * k, smkSpInst * k, smkSpVis * k, smkSpPcs * k, smkSpCand * k, smkSpDrawn * k, smkBbCand * k, smkBbQuads * k, smkBbCalls * k, smkBbLoopMs * k, smkBbDrawMs * k, smkBbTailMs * k, smkBbTm[0] * k, smkBbTm[1] * k, smkBbTm[2] * k, smkBbTm[3] * k, smkBbTm[4] * k, smkBbTm[5] * k, smkSpT[0] * k, smkSpT[1] * k, smkSpT[2] * k, smkLspList * k, smkLspAll * k, smkLspViol * k, smkTrfCarMs * k, smkTrfPedMs * k, smkTrfN[0] * k, smkTrfN[1] * k, smkTrfN[2] * k, smkTrfPose * k, smkTrfPoseN * k, smkTrfDraw * k, smkTrfWords * k, smkSkinW[0] * k, smkSkinW[1] * k, smkSkinW[2] * k, smkSkinW[3] * k, smkSkinW[4] * k, smkPbT[0] * k, smkPbT[1] * k, smkPbT[2] * k, smkPbT[3] * k, smkPbT[4] * k, smkSkinW[5] * k, smkSkinW[6] * k, smkTrfPc[0] * k, smkTrfPc[1] * k, smkTrfPc[2] * k, smkTrfPc[3] * k, smkTrfPc[4] * k, smkSpT2[0] * k, smkSpT2[1] * k, smkSpT2[2] * k, smkCtMask * k, smkCtRisky * k, smkCtList * k, smkCtBuild * k, smkGgReplay, smkNearFrames, smkNearLow, smkNearCarOnly, smkNearWhy[1], smkNearWhy[2], smkNearWhy[3], smkNearWhy[4], smkNearWhy[5], smkNearWhy[6], smkNearPass, smkCoinAct * k, smkCoinDrawn * k, smkCoinPcs * k);
+    smkWrite(p); memset(smkSubSum, 0, sizeof smkSubSum); smkGgMs = smkGgPieces = smkGgTris = smkSpPoseMs = smkSpFlushMs = smkSpLoopMs = smkSpInst = smkSpCand = smkSpDrawn = smkBbCand = smkBbQuads = smkBbCalls = smkBbLoopMs = smkBbDrawMs = smkBbTailMs = smkBbTm[0] = smkBbTm[1] = smkBbTm[2] = smkBbTm[3] = smkBbTm[4] = smkBbTm[5] = smkSpT[0] = smkSpT[1] = smkSpT[2] = smkSpT2[0] = smkSpT2[1] = smkSpT2[2] = smkLspList = smkLspAll = smkLspViol = smkTrfCarMs = smkTrfPedMs = smkTrfN[0] = smkTrfN[1] = smkTrfN[2] = smkTrfPose = smkTrfDraw = smkTrfPoseN = smkTrfWords = smkSkinW[0] = smkSkinW[1] = smkSkinW[2] = smkSkinW[3] = smkSkinW[4] = smkSkinW[5] = smkSkinW[6] = smkTrfPc[0] = smkTrfPc[1] = smkTrfPc[2] = smkTrfPc[3] = smkTrfPc[4] = smkPbT[0] = smkPbT[1] = smkPbT[2] = smkPbT[3] = smkPbT[4] = smkSpVis = smkSpPcs = smkCoinAct = smkCoinDrawn = smkCoinPcs = smkCtMask = smkCtRisky = smkCtList = smkCtBuild = 0; smkGgReplay = smkNearFrames = smkNearLow = smkNearCarOnly = smkNearPass = 0; memset(smkNearWhy, 0, sizeof smkNearWhy);
     memset(smkBbW, 0, sizeof smkBbW); memset(smkBbD, 0, sizeof smkBbD); memset(smkBbK, 0, sizeof smkBbK); memset(smkBbB, 0, sizeof smkBbB);
     memset(smkBbSum, 0, sizeof smkBbSum); memset(smkXSum, 0, sizeof smkXSum); memset(smkPhSum, 0, sizeof smkPhSum); smkBuildSum = smkGeWaitSum = smkVblSum = 0; smkPhN = 0;
-  }
 }
 #endif

@@ -1,0 +1,103 @@
+wait 12
+flag cfgdefaults 1
+scene H6
+foot -49.6 -302.8 0 8
+wait 2.5
+flag eyeon 1
+flag eyex -44.17
+flag eyey 1.60
+flag eyez -302.80
+flag eyedx -0.9895
+flag eyedy -0.1443
+flag eyedz 0.0000
+wait 1.5
+shot o_00
+flag eyex -44.49
+flag eyey 1.60
+flag eyez -301.60
+flag eyedx -0.8570
+flag eyedy -0.1443
+flag eyedz -0.4948
+wait 1.5
+shot o_01
+flag eyex -45.37
+flag eyey 1.60
+flag eyez -300.72
+flag eyedx -0.4948
+flag eyedy -0.1443
+flag eyedz -0.8570
+wait 1.5
+shot o_02
+flag eyex -46.57
+flag eyey 1.60
+flag eyez -300.40
+flag eyedx 0.0000
+flag eyedy -0.1443
+flag eyedz -0.9895
+wait 1.5
+shot o_03
+flag eyex -47.77
+flag eyey 1.60
+flag eyez -300.72
+flag eyedx 0.4948
+flag eyedy -0.1443
+flag eyedz -0.8570
+wait 1.5
+shot o_04
+flag eyex -48.65
+flag eyey 1.60
+flag eyez -301.60
+flag eyedx 0.8570
+flag eyedy -0.1443
+flag eyedz -0.4948
+wait 1.5
+shot o_05
+flag eyex -48.97
+flag eyey 1.60
+flag eyez -302.80
+flag eyedx 0.9895
+flag eyedy -0.1443
+flag eyedz 0.0000
+wait 1.5
+shot o_06
+flag eyex -48.65
+flag eyey 1.60
+flag eyez -304.00
+flag eyedx 0.8570
+flag eyedy -0.1443
+flag eyedz 0.4948
+wait 1.5
+shot o_07
+flag eyex -47.77
+flag eyey 1.60
+flag eyez -304.88
+flag eyedx 0.4948
+flag eyedy -0.1443
+flag eyedz 0.8570
+wait 1.5
+shot o_08
+flag eyex -46.57
+flag eyey 1.60
+flag eyez -305.20
+flag eyedx 0.0000
+flag eyedy -0.1443
+flag eyedz 0.9895
+wait 1.5
+shot o_09
+flag eyex -45.37
+flag eyey 1.60
+flag eyez -304.88
+flag eyedx -0.4948
+flag eyedy -0.1443
+flag eyedz 0.8570
+wait 1.5
+shot o_10
+flag eyex -44.49
+flag eyey 1.60
+flag eyez -304.00
+flag eyedx -0.8570
+flag eyedy -0.1443
+flag eyedz 0.4948
+wait 1.5
+shot o_11
+end

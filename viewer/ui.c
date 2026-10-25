@@ -277,6 +277,18 @@ static float psPulse(float t) {
 #ifndef MENU_PULSE_OLD
 #define MENU_PULSE_OLD 0
 #endif
+// №889 (Роб 23.10: «текст пунктов главного меню рваный по пикселям, размер как в Options, там чёткий»): пульс масштабом 0,83..1,0 пересэмплировал буквы
+// каждый кадр (на смене пункта 0,87, наибольшее 1,0 — на долю секунды), чёткой строка не бывала никогда; у Options паузы пульса нет. Главное меню — строка
+// стоит (как Options), в гостиной по-прежнему светится предмет пункта. MENU_MAIN_PULSE_OLD=1 — прежний пульс главного меню (гейт tests/menu/item_pulse.sh)
+#ifndef MENU_MAIN_PULSE_OLD
+#define MENU_MAIN_PULSE_OLD 0
+#endif
+// №924 (Роб 24.10: «в главном меню пропала анимация RESUME GAME, LOAD GAME и других — пункты прыгали масштабом с приятным изингом; стрелочки починил, теперь всё
+// хорошо, но анимация пропала. Верни»): пульс главного меню, снятый №889, возвращается как был — по числам диска (1,05 + 0,1·sin, период 0,6 с, на смене пункта 1,0 от
+// наибольшего 0,87), стрелки №888 не тронуты. MENU_PULSE924_OLD=1 — строка стоит, как после №889 (красный tests/menu/item_pulse.sh, зелёный tests/menu889)
+#ifndef MENU_PULSE924_OLD
+#define MENU_PULSE924_OLD 0
+#endif
 #define MENU_PULSE_MS 600.f      // 0x1a6f8c / 0x1a7054
 #define MENU_PULSE_MID 1.05f     // 0x1a705c
 #define MENU_PULSE_AMP .1f       // 0x1a7068
@@ -317,9 +329,19 @@ static void uiLogf(const char *fmt, ...) {
   if (!uiLogFn) return;
   char s[160]; va_list a; va_start(a, fmt); vsnprintf(s, sizeof s, fmt, a); va_end(a); uiLogFn(s);
 }
+// служебно (сценарий/гейт TEST60 №942; шаг часов режется до 0,1 с, как у живых, «uiclkadv 0.3» = подвисший кадр): flag uiclk 1 — часы интерфейса стоят, flag uiclkadv Д — сдвинуть на Д секунд; кадры появления пузыря снимаются по возрасту, а не по скорости эмулятора. В игре не вызывается
+static int uiClkHold; static float uiClkPend;
+static float uiClkDt;       // №942: шаг часов HUD за этот кадр (с)
+static float bubAge;        // №942: возраст пузыря задания с показа, шаг за кадр не больше UI_BUB_DT_CAP (подвисший кадр не съедает появление)
+static float objFlyT;       // №942: время полёта значка в угол, тот же шаг
+static float popAgeOf(int t, int on) { return (t == UI_T_OBJECTIVE && on && !BUBBLE_LAG942_OLD) ? bubAge : uiClk - (on ? tagOnT[t] : tagOffT[t]); }
+void uiClkTest(int mode, float v) { if (mode == 0) { uiClkHold = 0; uiClkPend = 0.f; } else if (mode == 1) uiClkHold = 1; else uiClkPend += v; }
 static void uiClockTick(void) {
   unsigned now = sceKernelGetSystemTimeLow();
-  if (uiClkInit) { float d = (now - uiClkLast) * 1e-6f; uiClk += d > .1f ? .1f : d; }
+  if (uiClkHold) { uiClkDt = uiClkInit ? (uiClkPend > .1f ? .1f : uiClkPend) : 0.f; uiClk += uiClkDt; uiClkPend = 0.f; uiClkInit = 1; uiClkLast = now; if (bubAge < 1000.f) bubAge += uiClkDt < UI_BUB_DT_CAP ? uiClkDt : UI_BUB_DT_CAP; return; }
+  uiClkDt = 0.f;
+  if (uiClkInit) { float d = (now - uiClkLast) * 1e-6f; uiClkDt = d > .1f ? .1f : d; uiClk += uiClkDt; }
+  if (bubAge < 1000.f) bubAge += uiClkDt < UI_BUB_DT_CAP ? uiClkDt : UI_BUB_DT_CAP;
   uiClkInit = 1; uiClkLast = now;
 }
 static int popKind(int tag) {   // какие теги HUD всплывают (ui_anim.h, п. 2); -1 — без анимации
@@ -841,6 +863,10 @@ int uiCoinIcon(float *cx, float *cy, float *h, float *alpha) {   // 1 — счё
   *cx = coinIc[0]; *cy = coinIc[1]; *h = coinIc[2]; *alpha = coinIc[3]; return 1;
 }
 static int gDx;                                              // №710: сдвиг по x рамки и текста пузыря без аватара к левому полю
+static int dbgWrapW, dbgNl, dbgWrapCalc;   // №942 (гейт): ширина строки и число строк последнего текста пузыря; сколько раз за прогон считался перенос
+static int bubSlideNow;                                       // №942: сдвиг вправо текста пузыря в начале проявления (px)
+// №942: содержимое пузыря задания (текст, аватар, значок) — всё, кроме самой капсулы (широкая картинка)
+static int bubContent(const UiItem *it) { return it->type == T_TEXT || it->type == T_SLOT || (it->type == T_IMG && it->w * 2 < it->h * 3); }
 static int gDy;                                              // сдвиг по y текущего элемента (стопка оверлеев миссии)
 #define OBJ_SHOW_S 3.5f   // с: задание с рамкой и текстом внизу слева, потом свёрнуто (запись PS2 2:13 -> 2:16)
 #define OBJ_FLY_S .35f    // с: значок уезжает вверх
@@ -1423,6 +1449,7 @@ static void drawTextItem(const UiItem *it, const char *s, unsigned col) {
   fitS = it->field == UI_F_OBJECTIVE ? s : 0;
   if (wrap) w = fitW(it, curScreen, &ml);                     // перенос по рамке, в которой стоит текст
   fitS = 0;
+  if (it->field == UI_F_OBJECTIVE && (traceBits & UI_TRACE_POP)) { int st_[MAXLINES], ln_[MAXLINES], lw_[MAXLINES]; dbgWrapW = w; dbgNl = textLayout(f, s, w, wrap, st_, ln_, lw_); }   // №942: для строки UIBUB942
   int ty = it->y, th = it->h;   // №619: рамка задания выросла вверх на lastGH — текст вместе с ней (центрованный — по новой высоте)
   if (wrap && it->field == UI_F_OBJECTIVE && lastGH) { ty -= lastGH; if (it->valign != 0) th += lastGH; }
   if (!BUBBLE_EVEN_OLD && wrap && it->field == UI_F_OBJECTIVE && it->valign == 0 && ml > 1) {   // №640: текст у верха рамки, рассчитанной на несколько строк — по высоте поровну сверху и снизу
@@ -1861,8 +1888,15 @@ static int fitW(const UiItem *t, int sidx, int *maxLines) {
     int wf = 1 | (objWidowOld ? 0 : UI_WRAP_NOWIDOW) | UI_WRAP_BALANCE;
     int maxTW = BUB_LAW_RIGHT + bubShift - R - BUB_LAW_PAD - t->x; if (maxTW < BUB_MINTEXT) maxTW = BUB_MINTEXT;   // bubShift: рамка рисуется левее пакета на него
     if (!BUB_ONE_OLD) { maxTW = BUB_ONE_RIGHT + bubShift - R - BUB_LAW_PAD - t->x; if (maxTW < BUB_MINTEXT) maxTW = BUB_MINTEXT; }   // один формат
-    int nl = wrapLines(f, fitS, maxTW, wf, st0, len), mw = 0;
-    for (int l = 0; l < nl; l++) { int lw = lineWidth(f, fitS + st0[l], len[l]); if (lw > mw) mw = lw; }
+    int nl, mw = 0;
+    static struct { const UiFont *f; int maxTW, wf, nl, mw, ok; char s[160]; } wc;   // №942: перенос считается один раз на текст и ширину (раньше — при каждом из 2–3 вызовов за кадр, пока виден пузырь)
+    if (!BUBBLE_WRAP942_OLD && wc.ok && wc.f == f && wc.maxTW == maxTW && wc.wf == wf && strlen(fitS) < sizeof wc.s && !strcmp(wc.s, fitS)) { nl = wc.nl; mw = wc.mw; }
+    else {
+      nl = wrapLines(f, fitS, maxTW, wf, st0, len);
+      for (int l = 0; l < nl; l++) { int lw = lineWidth(f, fitS + st0[l], len[l]); if (lw > mw) mw = lw; }
+      dbgWrapCalc++; if (traceBits & UI_TRACE_POP) uiLogf("UIWRAP942 calc=%d w=%d nl=%d\n", dbgWrapCalc, maxTW, nl);
+      if (strlen(fitS) < sizeof wc.s) { wc.f = f; wc.maxTW = maxTW; wc.wf = wf; wc.nl = nl; wc.mw = mw; snprintf(wc.s, sizeof wc.s, "%s", fitS); wc.ok = 1; }
+    }
     int tw = mw + (nl == 1 ? BUB_LAW_SHORT : 0); if (tw > maxTW) tw = maxTW; if (tw < BUB_MINTEXT) tw = BUB_MINTEXT;
     if (!BUB_ONE_OLD) tw = maxTW;   // рамка всегда одной ширины
     lawRight = t->x + tw + BUB_LAW_PAD + R; lastGW = lawRight - (objBubX + objBubW); lastGH = 0;   // правый край рамки: после текста — поле и правое скругление
@@ -2039,7 +2073,7 @@ static void drawScreen(int sidx, int selected) {
     msgNew = cdNew = 0;
     for (int t = 0; t < 32; t++) {
       unsigned b = 1u << t;
-      if (rise & b) { tagOnT[t] = uiClk; hudLeave &= ~b; if (popHook) popHook(t, 1); }
+      if (rise & b) { tagOnT[t] = uiClk; if (t == UI_T_OBJECTIVE) { bubAge = 0.f; objFlyT = 0.f; } hudLeave &= ~b; if (popHook) popHook(t, 1); }
       if (fall & b) { tagOffT[t] = uiClk; if (popKind(t) >= 0 && !(animOff & UI_ANIM_NOPOP)) hudLeave |= b; if (popHook) popHook(t, 0); }
     }
     hudPrev = mask;
@@ -2059,6 +2093,8 @@ static void drawScreen(int sidx, int selected) {
       if (it->x + it->w > p[2]) p[2] = it->x + it->w; if (it->y + it->h > p[3]) p[3] = it->y + it->h;
     }
   }
+  float objOc = uiClk - tagOnT[UI_T_OBJECTIVE] - OBJ_SHOW_S;   // №942: сколько секунд значок цели уже летит в угол (<= 0 — ещё нет)
+  if (hud && !BUBBLE_LAG942_OLD) { if (objOc <= 0.f) objFlyT = 0.f; else { objFlyT += uiClkDt < UI_BUB_DT_CAP ? uiClkDt : UI_BUB_DT_CAP; if (objFlyT <= 0.f) objFlyT = 1e-4f; if (objFlyT > objOc) objFlyT = objOc; } objOc = objOc > 0.f ? objFlyT : objOc; }
   objTextX = objTextStart(sc);
   int bubGW = 0, bubGH = 0; lawRight = -1;   // №619: рамка задания растёт под текст (fitW): вширь и вверх от низа
   if (hud && !BUBBLE_FIT_OLD && !BUBBLE_GROW_OLD && (((mask | leaveDraw) >> UI_T_OBJECTIVE) & 1u)) {
@@ -2101,7 +2137,7 @@ static void drawScreen(int sidx, int selected) {
   if (hud && !HUD_SHIFT_COND_OLD) {   // №623 (Роб 15.10): блок времени и места правее кружка только когда кружок цели виден в углу вверху слева; нет кружка — в самом углу
     int present = 0; float kk = 0.f;
     if (objCollapse && (mask >> UI_T_OBJECTIVE & 1u) && fieldv[UI_F_OBJICON] >= 0) {
-      float oc = uiClk - tagOnT[UI_T_OBJECTIVE] - OBJ_SHOW_S;
+      float oc = objOc;
       if (oc > 0.f) { present = 1; kk = oc / OBJ_FLY_S; if (kk > 1.f) kk = 1.f; kk = kk * kk * (3.f - 2.f * kk); }
     }
     int bx = 9999, hasHome = 0; float homeR = 0.f;
@@ -2124,7 +2160,7 @@ static void drawScreen(int sidx, int selected) {
     if (itemVarOff(it)) continue;   // №528: другой вариант пузыря задания
     unsigned tb = 1u << (it->tag & 31);
     if (!(mask & tb) && !(leaveDraw & tb)) continue;
-    xf.on = 0; xf.sy = 0.f;
+    xf.on = 0; xf.sy = 0.f; bubSlideNow = 0;
     if (pAnim) { xf.on = 1; xf.s = pS; xf.a = pA; xf.cx = 240.f; xf.cy = 120.f; }   // №631 (центр: по кадрам PS2 плита растёт из середины по x и около 0,44 высоты по y): рамка и пункты паузы растут из центра
     // №631: у PS2 отдельной плашки на весь экран нет, мир темнеет на 7 % (pauseDimA выше); плашка пака (75 % чёрного на весь экран) при включённой анимации не рисуется
     if (!PAUSE_ANIM_OLD && !scrMode && (sidx == UI_SCREEN_PAUSE || sidx == UI_SCREEN_PAUSEMSN) && it->type == T_RECT && it->x <= 0 && it->y <= 0 && it->w >= 480 && it->h >= 272) continue;
@@ -2160,9 +2196,16 @@ static void drawScreen(int sidx, int selected) {
     if (sidx == UI_SCREEN_TUTORIAL && tutK < .999f) { xf.on = 1; xf.s = tutK; xf.a = 1.f; xf.cx = 240.f; xf.cy = 136.f; }   // №516: подсказка Барта растёт из центра экрана
     if (hud && popKind(it->tag) >= 0 && !(animOff & UI_ANIM_NOPOP)) {   // всплывание / угасание группы от её центра
       int on = (mask & tb) != 0; float s_, a_;
-      uiPopState(popKind(it->tag), on, uiClk - (on ? tagOnT[it->tag] : tagOffT[it->tag]), &s_, &a_);
+      uiPopState(popKind(it->tag), on, popAgeOf(it->tag, on), &s_, &a_);
       // №610: текст пузыря (строка задания, окно сообщения) не рисуем, пока рамка растёт: он раскладывался узко и перестраивался. BUBBLE_TEXT_LATE_OLD=1 — прежнее
       if (BUBBLE_UNIFORM_OLD && !BUBBLE_TEXT_LATE_OLD && on && it->type == T_TEXT && (popKind(it->tag) == UI_POP_PILL || popKind(it->tag) == UI_POP_BOX) && (s_ != 1.f || a_ < 1.f)) continue;
+      if (!BUBBLE_TEXT942_OLD && !BUBBLE_UNIFORM_OLD && popKind(it->tag) == UI_POP_PILL && on && bubContent(it)) {   // №942: текст и аватар не растут с рамкой: после раскрытия рамки проявляются на месте, конечной раскладкой
+        float c = (popAgeOf(it->tag, 1) - UI_BUB_CONTENT_DELAY) / UI_BUB_CONTENT_FADE;
+        if (c <= 0.f) continue;                                    // рамка → потом содержимое
+        if (c > 1.f) c = 1.f;
+        float e = 1.f - (1.f - c) * (1.f - c);                     // ease-out
+        if (c < 1.f) { xf.on = 1; xf.s = 1.f; xf.a = e; xf.cx = xf.cy = 0.f; if (it->type == T_TEXT) bubSlideNow = (int)((float)UI_BUB_CONTENT_SLIDE * (1.f - e) + .5f); }
+      } else
       if (s_ != 1.f || a_ < 1.f) {
         const float *p = pv[it->tag & 31];
         xf.on = 1; xf.s = s_; xf.a = a_; xf.cx = (p[0] + p[2]) * .5f; xf.cy = (p[1] + p[3]) * .5f;
@@ -2174,6 +2217,7 @@ static void drawScreen(int sidx, int selected) {
     int ok_ = sidx == UI_SCREEN_HUD ? ovIndex(it->tag) : -1;
     gDy = ok_ >= 0 ? ovDy[ok_] : 0;
     gDx = (hud && bubShift && it->tag == UI_T_OBJECTIVE && !itemVarOff(it)) ? -bubShift : 0;   // №710
+    gDx += bubSlideNow;   // №942
     if (hud && bubGH && !BUBBLE_EVEN_OLD && it->tag == UI_T_OBJECTIVE && (it->type == T_SLOT || (it->type == T_IMG && it->w * 2 < it->h * 3))) gDy -= bubGH / 2;   // №646: значок/аватар остаётся по центру выросшей рамки (рамка растёт вверх от низа)
     if (failureDy && it->type == T_TEXT && it->field == UI_F_NONE && it->y >= failureY && it->x < failureRight && it->x + it->w > failureLeft)
       gDy += failureDy;
@@ -2184,7 +2228,7 @@ static void drawScreen(int sidx, int selected) {
     if (hud && it->tag == UI_T_OBJECTIVE && objCollapse && (mask & tb)) {
       // сверка с оригиналом 30.09 (запись PS2 2:10–2:16, 25:10): задание с текстом видно OBJ_SHOW_S, потом рамка и текст уходят,
       // а значок цели уезжает в угол вверху слева и остаётся там до следующего задания (новый текст — снова внизу с рамкой)
-      float oc = uiClk - tagOnT[UI_T_OBJECTIVE] - OBJ_SHOW_S;
+      float oc = objOc;
       if (oc > 0.f) {
         if (it->type != T_SLOT) continue;
         float k = oc / OBJ_FLY_S; if (k > 1.f) k = 1.f; k = k * k * (3.f - 2.f * k);
@@ -2338,14 +2382,18 @@ static void drawScreen(int sidx, int selected) {
           if (!TITLE_PULSE_OLD) { xf.on = 1; xf.a = subFadeA; xf.s = psPulse(scrT); xf.cx = it->x + it->w * .5f; xf.cy = it->y + it->h * .5f; }
           drawTextItem(it, s, col);
           uiPressStartBox[0] = scrT; memcpy(uiPressStartBox + 1, lastSpr, sizeof lastSpr);
-        } else if (!pAnim && (pulseFlagsOf(sidx) & 2) && ((sidx == UI_SCREEN_MAIN && !scrMode && it->field == UI_F_MENU_ITEM) ||
+        } else if (!pAnim && (pulseFlagsOf(sidx) & 2) &&
+                   ((sidx == UI_SCREEN_MAIN && !scrMode && it->field == UI_F_MENU_ITEM) ||
                    ((it->flags & F_MENU) && it->menu == selected))) {   // правка 412: пульс выбранного пункта
           unsigned now = sceKernelGetSystemTimeLow(); float d = (now - menuPulseLast) * 1e-3f; menuPulseLast = now;
           int key = scrMode * 256 + sidx;
           if (selected != menuPulseSel || key != menuPulseKey || d > 100.f || d < 0.f) { menuPulseSel = selected; menuPulseKey = key; menuPulseMs = 0.f; }   // смена пункта / экрана / пауза
           else menuPulseMs = fmodf(menuPulseMs + d, MENU_PULSE_MS);
-          float sc_ = MENU_PULSE_OLD ? 1.f : menuPulse(menuPulseMs) / (MENU_PULSE_MID + MENU_PULSE_AMP);   // правило порта: наибольший — строка порта
-          if (!MENU_PULSE_OLD) { xf.on = 1; xf.a = subFadeA; xf.s = sc_; xf.cx = it->x + it->w * .5f; xf.cy = (float)(it->y + gDy) + it->h * .5f; }
+          // №924: до правки (MENU_PULSE924_OLD=1) главное меню стояло. Ветка та же, но масштаб 1 и без преобразования: строка рисуется как раньше, а рамка всё равно попадает в журнал MENUITEM —
+          // красный гейт tests/menu/item_pulse.py падает по ширине (не пульсирует), а не по отсутствию строк
+          int still_ = MENU_PULSE_OLD || (!MENU_MAIN_PULSE_OLD && MENU_PULSE924_OLD && sidx == UI_SCREEN_MAIN && !scrMode);
+          float sc_ = still_ ? 1.f : menuPulse(menuPulseMs) / (MENU_PULSE_MID + MENU_PULSE_AMP);   // правило порта: наибольший — строка порта
+          if (!still_) { xf.on = 1; xf.a = subFadeA; xf.s = sc_; xf.cx = it->x + it->w * .5f; xf.cy = (float)(it->y + gDy) + it->h * .5f; }
           lastSpr[0] = lastSpr[1] = 1e9f; lastSpr[2] = lastSpr[3] = -1e9f;
           drawTextItem(it, s, col); xf.on = 0;
           uiMenuItemBox[0] = menuPulseMs; uiMenuItemBox[1] = sc_; memcpy(uiMenuItemBox + 2, lastSpr, sizeof lastSpr);
@@ -2386,7 +2434,7 @@ static void drawScreen(int sidx, int selected) {
           if (iconRightX >= 0.f) { float xi = fmaxf((float)HUD_CORNER_X, iconRightX + (float)HUD_HOME_GAP); xt = hudHomeOn ? xt + (xi - xt) * iconKK : HUD_CORNER_X + hudBlk * (xi - HUD_CORNER_X); }   // Роб 17.10: от рисунка
           fmtField(it, buf, sizeof buf); UiItem t2 = *it; t2.halign = 0; t2.x = (short)floorf(xt + .5f); drawNum(&t2, buf);
         }
-        else if (it->field == UI_F_TIMER && !TIMER_ICON_OLD && hud && objCollapse && (mask >> UI_T_OBJECTIVE & 1u) && uiClk - tagOnT[UI_T_OBJECTIVE] - OBJ_SHOW_S > 0.f) {
+        else if (it->field == UI_F_TIMER && !TIMER_ICON_OLD && hud && objCollapse && (mask >> UI_T_OBJECTIVE & 1u) && objOc > 0.f) {
           // №540 (Роб 11.10): таймер налезал на круглый значок цели в углу; со значком левый край времени = правый край круга + TIMER_ICON_GAP
           int right = -9999;
           for (unsigned j = 0; j < sc->count; j++) { const UiItem *c = &items[sc->first + j];
@@ -2403,6 +2451,9 @@ static void drawScreen(int sidx, int selected) {
       case T_RADARICONS: drawRadarIcons(it); break;
     }
     if (pfOn) { unsigned d_ = sceKernelGetSystemTimeLow() - pfI0; if ((unsigned)it->type < 10) { pfTyUs[it->type] += d_; pfTyN[it->type]++; } pfTagUs[it->tag & 31] += d_; pfItemsN++; }
+    if (hud && (traceBits & UI_TRACE_POP) && it->tag == UI_T_OBJECTIVE && lastSpr[2] > lastSpr[0] && (bubContent(it) || it->type == T_IMG))   // №942 (гейт): что и где нарисовано по кадрам появления; f — капсула, t — текст, a — аватар/значок
+      uiLogf("UIBUB942 age=%.3f part=%c x0=%.1f y0=%.1f x1=%.1f y1=%.1f a=%.2f wrapw=%d nl=%d\n", popAgeOf(UI_T_OBJECTIVE, 1), it->type == T_TEXT ? 't' : bubContent(it) ? 'a' : 'f',
+             lastSpr[0], lastSpr[1], lastSpr[2], lastSpr[3], xf.on ? xf.a : 1.f, dbgWrapW, dbgNl);
     if (hud && (traceBits & UI_TRACE_AVATAR) && it->tag == UI_T_OBJECTIVE && it->type == T_IMG && lastSpr[2] > lastSpr[0])
       uiLogf("UIBUBBLE t=%.3f x=%.2f y=%.2f w=%.2f h=%.2f\n", uiClk, lastSpr[0], lastSpr[1], lastSpr[2] - lastSpr[0], lastSpr[3] - lastSpr[1]);   // пузырь задания, как ушёл в GE
     if (hud && (traceBits & UI_TRACE_AVATAR) && it->type == T_TEXT && it->field == UI_F_OBJECTIVE && lastSpr[2] > lastSpr[0])   // правка 48: текст задания, как ушёл в GE
@@ -2421,10 +2472,10 @@ static void drawScreen(int sidx, int selected) {
       unsigned b = 1u << t; float s_ = 1.f, a_ = 1.f;
       if (popKind(t) < 0 || !((mask | leaveDraw) & b) || pv[t][2] < pv[t][0]) continue;
       int on = (mask & b) != 0;
-      if (!(animOff & UI_ANIM_NOPOP)) uiPopState(popKind(t), on, uiClk - (on ? tagOnT[t] : tagOffT[t]), &s_, &a_);
+      if (!(animOff & UI_ANIM_NOPOP)) uiPopState(popKind(t), on, popAgeOf(t, on), &s_, &a_);
       const float *r = tbox[t][2] > tbox[t][0] ? tbox[t] : pv[t];
       uiLogf("UIPOP t=%.3f tag=%d on=%d age=%.3f w=%.2f h=%.2f w0=%.0f h0=%.0f a=%.3f\n", uiClk, t, on,
-             uiClk - (on ? tagOnT[t] : tagOffT[t]), r[2] - r[0], r[3] - r[1], pv[t][2] - pv[t][0], pv[t][3] - pv[t][1], a_);
+             popAgeOf(t, on), r[2] - r[0], r[3] - r[1], pv[t][2] - pv[t][0], pv[t][3] - pv[t][1], a_);
     }
 }
 
@@ -2654,6 +2705,8 @@ void uiMessage(const char *text, int icon, float seconds) {
   if (seconds > 0.f && !msgUntil) msgUntil = 1;
   msgTags(1);
 }
+// №958б: диагностика (flag msnhud): что держит угол — поле значка, есть ли картинка извне, текст сообщения и последний погасший
+void uiObjDebug(int *icon, int *hasPix, const char **txt, const char **last) { *icon = fieldv[UI_F_OBJICON]; *hasPix = oiPix != 0; *txt = msgText; *last = msgLast; }
 void uiObjective(int index, int icon) {
   msgText[0] = 0; msgUntil = 0;
   fieldv[UI_F_OBJECTIVE] = index; fieldv[UI_F_OBJICON] = icon;

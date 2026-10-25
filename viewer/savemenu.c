@@ -93,6 +93,12 @@ static void devTake(SaveGame *g) {   // загрузка DEV: уровень в�
 // «flag svdialog» — окно и в служебном запуске; «flag svquiet» / файл «savequiet» рядом с EBOOT — прежний тихий путь (красный
 // контроль tests/savegame/dialog/run.py); «flag svdlgfail» — окно отвергает все варианты (имитация: живёт ли тихий запасной путь)
 static int svDlg, svDlgFail;
+// Тур финала L7 для железа (окно «Меню», 23.10, по просьбе Надзора): «flag svpickempty» — запись идёт только в ПУСТОЙ слот (первый пустой), занятые не трогаются;
+// пустого нет — запись отменяется (строка ENDSAVE skip), игра идёт дальше. SVPICK_OLD=1 — флаг не действует. Только служебный запуск (сценарий), обычная игра не затронута
+#ifndef SVPICK_OLD
+#define SVPICK_OLD 0
+#endif
+static int svPick, svPickDone;
 static int slotVar[SV_SLOTS] = {-1, -1, -1, -1};   // вариант, которым прочитана запись утилиты слота (-1 — нет её / слот решён файлом)
 static int fileThere(const char *name) {
   char fn[300]; snprintf(fn, sizeof fn, "%s%s", dir, name);
@@ -130,6 +136,7 @@ void svmInit(const char *ebootPath, int enabled) {
   svDlg = on && !fileThere("scenario.txt") && !fileThere("savequiet");   // 309: окно PSP — в обычном запуске
 }
 void svmDialog(int v) { svDlg = v; logf_("SVDLGMODE on=%d src=flag\n", v); }
+void svmPickEmpty(int v) { svPick = !SVPICK_OLD && v; logf_("SVPICK on=%d\n", svPick); }
 void svmDialogFail(int v) { svDlgFail = v; logf_("SVDLGFAIL on=%d\n", v); }
 
 // ---- правка 309: окно утилиты на экране (режимы SAVE / LOAD). Кадр за кадром: фон (застывший кадр меню) в буфер рисования, список
@@ -444,6 +451,40 @@ void svmDevBoot(int (*levelAvail)(int)) {
         "OED"[st], svvName[svvLast], force, (int)g.coins, (unsigned)g.owned[1], g.day, g.month, g.year, (sceKernelGetSystemTimeLow() - t0) / 1000);
 }
 
+// ---- служебное (сборка с -DSVM_ALLSAVE): запись «пройдено всё» в выбранный слот. Флаг-файл allsave (в нём номер слота 0..3, пусто — 3) и allsave.bin (SV_BYTES, собран
+// настоящими модулями игры: save_work/mkallsave) рядом с EBOOT. Запись — тем же путём, что DEV SAVE: утилита сохранения цепочкой вариантов + файл, подтверждение чтением;
+// номер записи на единицу больше любого из слотов (RESUME GAME берёт её), время — часы устройства. В обычную игру не входит
+void svmAllBoot(void) {
+#ifdef SVM_ALLSAVE
+  if (!on) return;
+  char fn[300], w[16] = {0}; snprintf(fn, sizeof fn, "%sallsave", dir);
+  SceUID h = sceIoOpen(fn, PSP_O_RDONLY, 0); if (h < 0) return;
+  sceIoRead(h, w, sizeof w - 1); sceIoClose(h);
+  int k = w[0] >= '0' && w[0] <= '3' ? w[0] - '0' : 3;
+  static uint8_t in[SV_BYTES] __attribute__((aligned(64))), out[SV_BYTES] __attribute__((aligned(64))), chk[SV_BYTES] __attribute__((aligned(64)));
+  snprintf(fn, sizeof fn, "%sallsave.bin", dir);
+  h = sceIoOpen(fn, PSP_O_RDONLY, 0); if (h < 0) { logf_("SVALL boot slot=%d skip=nobin\n", k); return; }
+  int rn = sceIoRead(h, in, sizeof in); sceIoClose(h);
+  SaveGame g; if (rn != SV_BYTES || svRead(in, SV_BYTES, &g) != SV_OK) { logf_("SVALL boot slot=%d skip=badbin n=%d\n", k, rn); return; }
+  unsigned mx = 0; for (int i = 0; i < SV_SLOTS; i++) if (slotSt[i] == SV_OK && slotSg[i].seq > mx) mx = slotSg[i].seq;
+  if (slotSt[k] == SV_OK) {   // записываемый слот уже занят (сейв Роба): его настройки, кошелёк и костюм переносятся, чтобы запись «пройдено всё» не сбрасывала их
+    const SaveGame *o = &slotSg[k];
+    g.music = o->music; g.effects = o->effects; g.vehicle = o->vehicle; g.voice = o->voice; g.radar = o->radar; g.skin = o->skin;
+    g.ext[SV_EXT_CAM] = o->ext[SV_EXT_CAM]; if (o->coins > g.coins) g.coins = o->coins;
+  }
+  g.seq = mx + 1; stampNow(&g); svWrite(&g, out);
+  unsigned t0 = sceKernelGetSystemTimeLow(), r = 0; int fw = 0, st = SV_OK;
+  if (!noWrite) {
+    r = (unsigned)util(PSP_UTILITY_SAVEDATA_AUTOSAVE, k, out, sizeof out, sizeof out, &g);
+    fw = (svFileOff || svBlock) ? 1 : svFileWrite(dir, k, out, SV_BYTES);
+    if (r == 0 || fw == 0) { SaveGame back; unsigned r2 = 0; st = readSlot(k, &back, &r2); if (st == SV_OK) { svWrite(&back, chk); if (memcmp(chk, out, SV_BYTES)) st = SV_DAMAGED; } }
+    else st = SV_DAMAGED;
+  }
+  if (st == SV_OK) { slotSt[k] = SV_OK; slotSg[k] = g; }
+  logf_("SVALL boot slot=%d res=%08x file=%d verify=%c var=%s seq=%u missions=%d ms=%u\n", k, r, fw, "OED"[st], svvName[svvLast], g.seq, svMissionsDone(&g), (sceKernelGetSystemTimeLow() - t0) / 1000);
+#endif
+}
+
 // ---- экраны
 enum { ST_OFF, ST_ASK, ST_SLOTS, ST_CONFIRM, ST_BUSY, ST_NOTICE, ST_SYSDLG };   // ST_SYSDLG — 309: окно PSP (фон — экран слотов)
 enum { OP_NONE, OP_SAVE, OP_LOAD, OP_DELETE };
@@ -511,7 +552,7 @@ int svmOpen(int mode, const SaveGame *game, int confirmLoad, int askQuit) {
     snprintf(fn, sizeof fn, "%sl%d/psave.shr", dir, game->level);
 #endif
   if (uiScrOpen(fn)) { logf_("SVOPEN mode=%d err=pack\n", mode); return -1; }
-  memset(&S, 0, sizeof S);
+  memset(&S, 0, sizeof S); svPickDone = 0;
   S.mode = mode; S.askQuit = askQuit; S.confirmLoad = confirmLoad;
   if (game) S.game = *game;
   logf_("SVOPEN mode=%s ask=%d confirm=%d slots=%c,%c,%c,%c\n", mode == SVM_SAVE ? "save" : "load", askQuit, confirmLoad,
@@ -600,6 +641,12 @@ int svmInput(unsigned hit) {
       else if (r == 1) { closeWith(SVM_R_QUIT); return SVM_R_QUIT; }
       break;
     case ST_SLOTS:
+      if (svPick && S.mode == SVM_SAVE && !svPickDone) {   // тур для железа: первый пустой слот, иначе отмена записи
+        int t = -1; svPickDone = 1;
+        for (int k = 0; k < SV_SLOTS && t < 0; k++) if (slotSt[k] == SV_EMPTY) t = k;
+        if (t < 0) { logf_("ENDSAVE skip no-empty-slot slots=%c%c%c%c\n", "OED"[slotSt[0]], "OED"[slotSt[1]], "OED"[slotSt[2]], "OED"[slotSt[3]]); closeWith(SVM_R_BACK); return SVM_R_BACK; }
+        S.sel = t; hit |= PSP_CTRL_CROSS; logf_("SVPICK slot=%d\n", t);
+      }
       if (S.mode == SVM_LOAD && (hit & (PSP_CTRL_LEFT | PSP_CTRL_RIGHT)) && slotSt[S.sel] == SV_OK && svmIsDev(&slotSg[S.sel]) &&
           devLevels() > 1) {   // правка 335: ◄ ► на строке DEV SAVE — уровень загрузки (только уровни, чьи наборы рядом с EBOOT)
         int d = (hit & PSP_CTRL_RIGHT) ? 1 : -1, n = devOk(devLevel) ? devLevel : 1;

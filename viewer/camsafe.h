@@ -16,6 +16,8 @@
 #define CS_MAXCYL 40
 #define CS_MAXTRI 3072   // №602: треугольники ВИДИМОЙ геометрии города у луча опора -> глаз (у картинки нет коллизии: карнизы, крыши, листва, вывески)
 #define CS_NEAR_MIN .25f    // ближе ближняя плоскость не подходит (16-бит глубина: ближе — мерцание вдали; как у камеры пешком)
+#define CAM_WALL_UP 3.f     // №922: м, на сколько высокие стены коллизии (здания) продолжены вверх для луча «опора -> глаз» (маска 128)
+extern float colSegUp;   // col.c: добавка к верху высоких стен в raySeg, ставит только csRayFracC на время луча камеры
 #define CS_GEOM_SKIP .8f    // луч опора -> глаз: первые .8 м сетка не смотрит (над крышей машины); лучи ближней плоскости — с 0
 #define CS_NEAR_K .8f       // ближняя плоскость — эта доля свободного места перед глазом (запас на промежутки между лучами)
 
@@ -27,10 +29,13 @@ typedef struct {
   CsBox box[CS_MAXBOX]; int nbox;
   CsCyl cyl[CS_MAXCYL]; int ncyl;
   float tri[CS_MAXTRI][9]; float (*geomRay)(const float a[3], const float b[3], float skip);   // сетка занятости (camgrid.h), 0 — нет
+  int (*roofAbove)(const float p[3]);   // №922: над точкой p (верх стены) в пределах CAM_WALL_UP есть видимая геометрия (кусок города); 0 — продлевать всегда
   int ntri, useTri;   // useTri — правило использует треугольники (замер — всегда); мировые вершины; ntri = 0 — правило выключено (CAM_GEOM_OLD)
 } CsScene;
 
 // доля пути a -> b до первого препятствия: мир (bodies & 1), все тела (bodies & 2), чужие тела без своей машины за рулём (bodies & 4); тело, в котором начинается путь, не мешает
+extern int camRaysOld, camRaysVerify; extern unsigned csRaysMismatch;   // CAMPERF: пакетные лучи ближней плоскости (camsafe.c); verify — считает расхождения с лучами по одному
+extern unsigned csRayCalls, csNfCalls;   // служебное (строка CAMSUB): сколько лучей и вызовов csNearFree за секунду
 float csRayFrac(const CsScene *s, const float a[3], const float b[3], int bodies);
 // доля пути a -> b до первого треугольника видимой геометрии (двусторонний тест)
 float csTriFrac(const CsScene *s, const float a[3], const float b[3]);

@@ -60,6 +60,8 @@ static void vlPoolTab(void) { if (vlPOk_) return; for (int i = 0; i <= VL_POOL_N
 #define VL_DIST 120.f     // векторный конус дешёвый (один вызов на все, без текстуры): видно дальше прежних 60 м — далёкие фонари (Роб: «и вдалеке»)
 #define VL_FADE 20.f
 #define VL_WARM_K .5f     // доля тёплого (255, 236, 170) в цвете; остальное — цвет лампы из данных
+#include "lamppool935.h"
+static unsigned lpSkipN[2], lpDrawN;   // №935: лампы без эллипса (мост / ломаный пол) и с эллипсом — счёт при первом поиске пола
 static int vecLight = !VEC_LIGHT_OLD; static float *lspPoolY; static unsigned vecLightN;   // lspPoolY: высота пола под концом конуса (лениво; 1e30 — не искали, −1e30 — нет пола)
 static inline float lspHaloFadeAt(float d2) {
   if (lspConeOld) return lspFadeAt(d2);
@@ -85,9 +87,44 @@ static void lspEnsure(void) {
   lspPoolY = (float *)malloc((lspArr + 1) * sizeof(float)); if (lspPoolY) for (unsigned k = 0; k <= lspArr; k++) lspPoolY[k] = 1e30f;   // пятна ищут пол один раз
   if (smkOn) { char s[160]; snprintf(s, sizeof s, "LSPBUILD level=%d entries=%u inst=%u dist=%.0f fade=%.0f old=%d\n", gameLevel, lsp.n, sprops.ninst, (double)LSP_DIST_M, (double)LSP_FADE_M, lspOld); smkWrite(s); }
 }
+// №913 (оптимизация предметов: lspDraw 0,25–0,31 мс Мака из 0,52 «билбордов» на L5, 316 записей света): за кадр таблица обходилась четыре раза целиком (lspFrameLive, проход конусов,
+// проход ореолов, основной), а в дальности света (VL_DIST 120 м) стоит десяток записей. Теперь обход — по списку записей в радиусе LSP_RANGE + LSP_NEAR_MARGIN от глаза на момент
+// построения: пока глаз сместился не более LSP_NEAR_MARGIN (8 м), любая запись вне списка дальше дальности света от глаза (затухание 0, ничего не рисуется), поэтому проверки по записям
+// списка те же, что были, и результат тот же (запись, вне списка, ничего не нарисовала бы и не поменяла бы порог «не больше N ближних»). Список — по возрастанию номера (порядок пачек
+// по текстуре прежний). «Своими» (lsp.live) считаются только записи списка: экземпляры дальше 60 м билборды стейтпропов не обходят (cand2_), больше live нигде не читается.
+// LSP_NEAR_OLD=1 / «flag lspnear 0|1 (2 — отрицательный контроль)» / файл lspnearold рядом с EBOOT — прежний полный обход
+#ifndef LSP_NEAR_OLD
+#define LSP_NEAR_OLD 0
+#endif
+#define LSP_NEAR_MARGIN 8.f
+static int lspNearOn = !LSP_NEAR_OLD;
+static uint16_t *lspNear; static unsigned lspNearN, lspNearCap, lspNearBuilds, lspNearFrames; static float lspNearE[3]; static const LspE *lspNearTab; static unsigned lspNearTabN; static int lspNearOk;
+static double lspStatMs;   // служебно: время счётчиков появления в lspDraw (только smkOn), вычитается из bb_t
+static float lspRangeM(void) { float r = lspConeDist > VL_DIST ? lspConeDist : VL_DIST; if (lspHaloDist > r) r = lspHaloDist; if (LSP_DIST_M > r) r = LSP_DIST_M; return r; }
+static void lspNearEnsure(float ex, float ey, float ez) {
+  if (!lspNearOn || !lsp.n) return;
+  float dx = ex - lspNearE[0], dy = ey - lspNearE[1], dz = ez - lspNearE[2];
+  if (lspNearOk && lspNearTab == lsp.e && lspNearTabN == lsp.n && dx * dx + dy * dy + dz * dz <= LSP_NEAR_MARGIN * LSP_NEAR_MARGIN) return;
+  if (lspNearCap < lsp.n) { free(lspNear); lspNear = (uint16_t *)malloc(sizeof(uint16_t) * (lsp.n + 1)); lspNearCap = lspNear ? lsp.n : 0; }
+  if (!lspNear) { lspNearOk = 0; return; }
+  float R = lspNearOn == 2 ? 20.f : lspRangeM() + LSP_NEAR_MARGIN, R2 = R * R; lspNearN = 0;   // 2 — отрицательный контроль гейта: радиус 20 м теряет свет
+
+  for (unsigned k = 0; k < lsp.n; k++) { const LspE *e = &lsp.e[k]; float x = e->p[0] - ex, y = e->p[1] - ey, z = e->p[2] - ez; if (x * x + y * y + z * z <= R2) lspNear[lspNearN++] = (uint16_t)k; }
+  lspNearE[0] = ex; lspNearE[1] = ey; lspNearE[2] = ez; lspNearTab = lsp.e; lspNearTabN = lsp.n; lspNearOk = 1; lspNearBuilds++;
+}
+static inline unsigned lspNL(void) { return lspNearOn && lspNearOk ? lspNearN : lsp.n; }   // сколько записей обходить
+static inline unsigned lspNK(unsigned j) { return lspNearOn && lspNearOk ? lspNear[j] : j; }   // j-я запись обхода -> номер в таблице
+static void lspFrameLiveNear(void) {   // lspFrameLive (lightsprite_core.h), только по списку
+  memset(lsp.live, 0, lsp.spN);
+  for (unsigned j = 0; j < lspNearN; j++) { const LspE *e = &lsp.e[lspNear[j]]; const SpRun *r = &sprops.run[e->inst];
+    if (r->alive && r->state == e->state0 && !memcmp(&r->x, e->snap, sizeof e->snap)) lsp.live[e->inst] = 1; }
+}
+static int lspDumpOnce_;
 static void lspBegin(void) {
   lspFrameNo++; lspEnsure(); if (!lsp.n) return;
-  if (!lspOld) lspFrameLive(&lsp, &sprops); else if (lsp.live) memset(lsp.live, 0, lsp.spN);
+  if (smkOn && lspDumpOnce_ != gameLevel) { lspDumpOnce_ = gameLevel; unsigned nm_[4] = {0, 0, 0, 0}; for (unsigned k = 0; k < lsp.n; k++) nm_[lsp.e[k].mode & 3]++; char l_[120]; snprintf(l_, sizeof l_, "LSPMODES level=%d m0=%u m1=%u m2=%u m3=%u\n", gameLevel, nm_[0], nm_[1], nm_[2], nm_[3]); smkWrite(l_); }   // служебно (№913): состав таблицы по режимам (0 ореол, 1 знак, 2 конус, 3 луч)
+  lspNearEnsure(eyeX, eyeY, eyeZ); lspNearFrames++;
+  if (!lspOld) { if (lspNearOn && lspNearOk && lsp.live) lspFrameLiveNear(); else lspFrameLive(&lsp, &sprops); } else if (lsp.live) memset(lsp.live, 0, lsp.spN);
   memset(lspA, 0, sizeof(float) * lspArr);
 }
 static inline int lspOwnsBill(unsigned i, unsigned b) { return lsp.n && lspOwns(&lsp, i, b); }
@@ -124,7 +161,8 @@ static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float
       for (int m = 0; m < 12; m++) { VV *o = &q[nv++]; int c_ = tri[m]; o->c = c_ < 2 ? cT : c_ < 4 ? cM : cB; o->x = P[c_][0]; o->y = P[c_][1]; o->z = P[c_][2]; } }
     unsigned k = hk[i]; float hw = sqrtf(X[0] * X[0] + X[2] * X[2]), pa = VL_POOL_A * hf[i];
     if (!haveCol || !lspPoolY || hw < .05f || pa < 1.f) continue;
-    if (lspPoolY[k] > 1e29f) { float y_, n_[3]; lspPoolY[k] = colGround(&world, F[0], F[2], L[1] - .1f, F[1] - 12.f, &y_, n_) ? y_ : -1e30f; }
+    if (lspPoolY[k] > 1e29f) { float y_, n_[3]; lspPoolY[k] = colGround(&world, F[0], F[2], L[1] - .1f, F[1] - 12.f, &y_, n_) ? y_ : -1e30f;
+      if (lspPoolY[k] > -1e29f) { if (lpPoolSkip(&world, F, lspPoolY[k])) { lspPoolY[k] = -1e30f; lpSkipN[1]++; } else lpDrawN++; } }   // №935: мост/эстакада — без эллипса, только конус
     float gy = lspPoolY[k]; if (gy < -1e29f) continue;
     float dxp = ex - F[0], dyp = ey - gy, dzp = ez - F[2], dd = sqrtf(dxp * dxp + dyp * dyp + dzp * dzp), kk = dd > .3f ? VL_PULL / dd : .5f; if (kk > .5f) kk = .5f;
     unsigned c = ((unsigned)(pa + .5f) << 24) | rgb; float Cc[3] = {F[0], gy + .02f, F[2]};
@@ -245,20 +283,22 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
   uint16_t hk_[VL_MAX]; float hf_[VL_MAX]; unsigned nh_ = 0;   // №715/736: чёткие конусы кадра
   float cdS_ = lspConeDist, cfS_ = lspConeFade; int cmS_ = lspConeMax; if (vecLight) { lspConeDist = VL_DIST; lspConeFade = VL_FADE; lspConeMax = VL_MAX; }   // вернуть в конце
   float coneT = 1e30f, haloT = 1e30f;   // пороги d² для «не больше LIGHTCONE_MAX / LIGHTHALO_MAX ближних»
+  lspNearEnsure(ex, ey, ez); unsigned nL_ = lspNL();   // №913: обход по списку записей в радиусе света (LSP_NEAR_OLD — все)
+  if (smkOn) { smkLspList += nL_; smkLspAll += lsp.n; }
   if (!lspConeOld && lspConeMax > 0 && !lspOld) {
     static float cd_[1024]; unsigned nc_ = 0;
-    for (unsigned k = 0; k < lsp.n && nc_ < 1024; k++) { const LspE *e = &lsp.e[k]; if (e->mode != 2 || !lsp.live[e->inst]) continue;
+    for (unsigned j_ = 0; j_ < nL_ && nc_ < 1024; j_++) { unsigned k = lspNK(j_); const LspE *e = &lsp.e[k]; if (e->mode != 2 || !lsp.live[e->inst]) continue;
       float dx = e->p[0] - ex, dy = e->p[1] - ey, dz = e->p[2] - ez, d2 = dx * dx + dy * dy + dz * dz; if (lspConeFadeAt(d2) <= 0.f) continue;
       if (rfSphereOut(pl, e3, e->p, (e->hw > e->hh ? e->hw : e->hh) * 1.42f * lspConeW + .5f)) continue; cd_[nc_++] = d2; }
     if ((int)nc_ > lspConeMax) { qsort(cd_, nc_, sizeof(float), lspCmpF); coneT = cd_[lspConeMax - 1]; }
     nc_ = 0;
-    for (unsigned k = 0; k < lsp.n && nc_ < 1024; k++) { const LspE *e = &lsp.e[k]; if (e->mode > 1 || !lsp.live[e->inst]) continue;
+    for (unsigned j_ = 0; j_ < nL_ && nc_ < 1024; j_++) { unsigned k = lspNK(j_); const LspE *e = &lsp.e[k]; if (e->mode > 1 || !lsp.live[e->inst]) continue;
       float dx = e->p[0] - ex, dy = e->p[1] - ey, dz = e->p[2] - ez, d2 = dx * dx + dy * dy + dz * dz; if (lspHaloFadeAt(d2) <= 0.f) continue;
       if (rfSphereOut(pl, e3, e->p, (e->hw > e->hh ? e->hw : e->hh) * 1.42f + .5f)) continue; cd_[nc_++] = d2; }
     if ((int)nc_ > lspHaloMax) { qsort(cd_, nc_, sizeof(float), lspCmpF); haloT = cd_[lspHaloMax - 1]; }
   }
-  for (unsigned k = 0; k < lsp.n; k++) {
-    const LspE *e = &lsp.e[k];
+  for (unsigned j_ = 0; j_ < nL_; j_++) {
+    unsigned k = lspNK(j_); const LspE *e = &lsp.e[k];
     if (lspOld || !lsp.live[e->inst]) continue;
     if (slLightOn && (e->mode < 2 || (e->mode == 3 && gameLevel != 7))) continue;   // №658 (PS2: у фонарей ни ореола, ни пятна): при lightspr 1 точечные ореолы и знаки (mode 0/1) не рисуются; остаются конусы (mode 2: гараж АЭС) и на L7 лучи mode 3 (столб НЛО); зелёных лучей снаружи АЭС у PS2 нет (kadры a_02/a_04/b_18)
     float dx = e->p[0] - ex, dy = e->p[1] - ey, dz = e->p[2] - ez, d2 = dx * dx + dy * dy + dz * dz;
@@ -285,7 +325,7 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
     }
     if (bindTex != curTex) { bindTexLean(curTex); bindTex = curTex; lspBindN++; }
     if (!q) {   // пачка: места на все записи этой текстуры подряд (не больше, чем осталось в таблице)
-      unsigned run = 0; for (unsigned j = k; j < lsp.n && lsp.e[j].tex == curTex; j++) run++;
+      unsigned run = 0; for (unsigned j = j_; j < nL_ && lsp.e[lspNK(j)].tex == curTex; j++) run++;
       q = (BV *)ggVbAlloc(run * 6 * sizeof(BV)); nq = 0;
     }
     float v[12]; lspQuad(e, ex, ey, ez, v);
@@ -298,7 +338,7 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
     for (int m = 0; m < 6; m++) { int c = ord[m]; o[m].u = (float)(c & 1); o[m].v = spBillTexV(c, spBillUvOld); o[m].c = col; o[m].x = v[3 * c]; o[m].y = v[3 * c + 1]; o[m].z = v[3 * c + 2]; }
     nq++; lspQuadN++;
     if (smkOn) { float w_ = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2])), h_ = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2])); float fp_ = 136.f / tanf(curFovY * .5f * GU_PI / 180.f), a_ = w_ * h_ * fp_ * fp_ / (d2 + 1.f); lspAreaSum += a_ > 130560.f ? 130560.f : a_; }
-    if (k + 1 >= lsp.n || lsp.e[k + 1].tex != curTex) { sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nq * 6, 0, q); lspDrawN++; nq = 0; q = 0; }
+    if (j_ + 1 >= nL_ || lsp.e[lspNK(j_ + 1)].tex != curTex) { sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nq * 6, 0, q); lspDrawN++; nq = 0; q = 0; }
   }
   if (nq) { sceGuDrawArray(GU_TRIANGLES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nq * 6, 0, q); lspDrawN++; }
   if (open) { ggVbWriteback(bb0); sceGuTexScale(128.f, 128.f); if (!inR) sceGuEnable(GU_FOG); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0); resetState(); }
@@ -306,6 +346,13 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
   lspConeDist = cdS_; lspConeFade = cfS_; lspConeMax = cmS_;
   // счётчики появления: запись, которой не было в кадре (alpha 0) и вдруг есть (скачок alpha >= 0,35), а в прошлом кадре её место было в поле зрения — щелчок
   if (!smkOn) return;
+  unsigned st0_ = sceKernelGetSystemTimeLow();
+  if (lspNearOn && lspNearOk) {   // №913 сверка (только смоук): запись вне списка не должна иметь ненулевое затухание — иначе список потерял бы свет (lsp_viol в PHSUB; «flag lspnear 2» даёт нарушения)
+    unsigned jn_ = 0, viol_ = 0;
+    for (unsigned k = 0; k < lsp.n; k++) { if (jn_ < lspNearN && lspNear[jn_] == k) { jn_++; continue; }
+      const LspE *e = &lsp.e[k]; float dx = e->p[0] - ex, dy = e->p[1] - ey, dz = e->p[2] - ez, d2 = dx * dx + dy * dy + dz * dz;
+      float f = e->mode == 2 ? lspConeFadeAt(d2) : e->mode < 2 ? lspHaloFadeAt(d2) : lspFadeAt(d2); if (f > 0.f) viol_++; }
+    smkLspViol += viol_; }
   int cont = lspLastFrame && lspFrameNo == lspLastFrame + 1; lspLastFrame = lspFrameNo; lspFramesN++;
   for (unsigned k = 0; k < lsp.n; k++) {
     const LspE *e = &lsp.e[k];
@@ -316,6 +363,7 @@ static void lspDraw(float ex, float ey, float ez, int inR) {
     if (cont && fabsf(lspA[k] - lspAp[k]) > .12f && lspAp[k] > 0.f && lspA[k] > 0.f) lspAlphaJumps++;
     lspAp[k] = lspA[k]; lspFr[k] = (uint8_t)inFr;
   }
+  lspStatMs += (sceKernelGetSystemTimeLow() - st0_) / 1000.0;
 }
 // №660 (Роб: «гараж АЭС светлее»; эталон PS2 Стенда2: яркость кадра 40–58 из 255 против 32–36 у нас): внутри зала с лампами-конусами (таблица №599, mode 2) к кадру
 // прибавляется ровный свет зеленоватого оттенка — один полноэкранный аддитивный прямоугольник без текстуры (около 0,5 мс заливки на PSP). Сила — flag garagelift N (доля 0–255

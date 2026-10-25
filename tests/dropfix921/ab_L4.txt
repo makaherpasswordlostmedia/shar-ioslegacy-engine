@@ -1,0 +1,70 @@
+wait 12
+scene LOAD
+flag golevel 4
+wait 40
+flag cfgdefaults 1
+flag diaglog 1
+flag camin 1
+flag dropfix921 0
+scene P045o
+foot -49.3 633.5 0
+wait 1.6
+shot o045_0
+press r 1.0
+wait 1.15
+shot o045_1
+press r 1.0
+wait 1.15
+shot o045_2
+press r 1.0
+wait 1.15
+shot o045_3
+press r 1.0
+wait 1.15
+scene P063o
+foot 118.7 150.5 0
+wait 1.6
+shot o063_0
+press r 1.0
+wait 1.15
+shot o063_1
+press r 1.0
+wait 1.15
+shot o063_2
+press r 1.0
+wait 1.15
+shot o063_3
+press r 1.0
+wait 1.15
+flag dropfix921 MODE
+scene P045n
+foot -49.3 633.5 0
+wait 1.6
+shot n045_0
+press r 1.0
+wait 1.15
+shot n045_1
+press r 1.0
+wait 1.15
+shot n045_2
+press r 1.0
+wait 1.15
+shot n045_3
+press r 1.0
+wait 1.15
+scene P063n
+foot 118.7 150.5 0
+wait 1.6
+shot n063_0
+press r 1.0
+wait 1.15
+shot n063_1
+press r 1.0
+wait 1.15
+shot n063_2
+press r 1.0
+wait 1.15
+shot n063_3
+press r 1.0
+wait 1.15
+end

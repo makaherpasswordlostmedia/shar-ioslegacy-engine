@@ -30,4 +30,5 @@
 #define SHAR_BLACKBOX_H
 void bbOp(const char *op, const char *arg, int sync);
 void bbBeatTick(void);
+void bbNoteIcon(const char *line);   // №958б: строка события в кольцо ящика без записи на карту и без смены «последнего действия» (смена значка/облачка цели)
 #endif
