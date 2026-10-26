@@ -222,7 +222,7 @@ static int16_t *tlY, *rlY;   // №774: нижняя высота линий к�
 #define INK978_RANGE 28.f
 #endif
 static int ink978On = !INK978_OLD;
-static unsigned ink978Pen(void) { return skinInkTone((unsigned)curbR, (unsigned)curbG, (unsigned)curbB); }
+static unsigned ink978Pen(void) { if (curb987On && curbNat[3]) return skinInkTone(curbNat[0], curbNat[1], curbNat[2]); return skinInkTone((unsigned)curbR, (unsigned)curbG, (unsigned)curbB); }   // №987: тон родного бордюра, не серо-фиолетовый
 static int tlSelReset;   // №912: набор линий сменился — отбор записей не переиспользовать
 static void edgeFree(void);
 static void toonLinesFree(void) { edgeFree(); tlSelReset = 1; if (tlC) free(tlC); if (tlV) free(tlV); tlC = 0; tlV = 0; tlNC = tlN = 0; if (rlC) free(rlC); if (rlV) free(rlV); rlC = 0; rlV = 0; rlNC = rlN = 0; free(tlY); free(rlY); tlY = rlY = 0; }
@@ -262,7 +262,8 @@ static void edgeLoad(void) {
 }
 static int edgeCurbTex(void) { static unsigned gen_ = ~0u; static int t_ = -1; if (gen_ != flatLevelGen) { gen_ = flatLevelGen; t_ = -1; for (unsigned i = 0; i < ntex && i < 1024; i++) if (tex[i].curb == 1) { t_ = (int)i; break; } } return t_; }
 static unsigned edgeDraw(float ex, float ey, float ez) {   // слой кромки; вызывается до линий мира (линии лягут поверх)
-  (void)ey; if (!edgeOn || !egNC || !flatOn || !curbOn) return 0; int ct = edgeCurbTex(); if (ct < 0) return 0;
+  (void)ey; if (!edgeOn || !egNC || !flatOn || !curbOn || curb987On) return 0;   // №987: кромка серо-фиолетовым убрана — бордюр родной
+  int ct = edgeCurbTex(); if (ct < 0) return 0;
   unsigned n = 0; int bound_ = 0;
   for (unsigned c = 0; c < egNC; c++) {
     float ox = egC[c].cx * TL_CELL, oz = egC[c].cz * TL_CELL; if (ex < ox - EDGE983_RANGE || ex > ox + TL_CELL + EDGE983_RANGE || ez < oz - EDGE983_RANGE || ez > oz + TL_CELL + EDGE983_RANGE) continue;
@@ -314,7 +315,7 @@ static unsigned toonLinesDraw(float ex, float ey, float ez) {
     unsigned c1_ = 0; if (!(ink978On && pass)) { if (ink978On) tlRangeOv = INK978_RANGE; c1_ = tlDrawSet(rlC, rlV, rlY, rlNC, pass, ex, ey, ez, rlLift); tlRangeOv = 0.f; }   // №824: край асфальта — тем же проходом, пером, туманом и толщиной
     sceGuDepthOffset(tlDepth); sceGuColor(TL_RGBA_K(INK_WORLD));
     if (smkOn) { tlUsW += t1_ - t0_; tlUsR += sceKernelGetSystemTimeLow() - t1_; tlWords += ((unsigned)sceGuCheckList() - w0_) / 4; }   // цена подачи линий на CPU (мкс), в smoke.txt раз в 1,5 с на кадр
-    if (pathOn && plNC && !pass) { unsigned pp_ = pathPen(); if (pp_) { sceGuDepthOffset(tlDepth + 28); sceGuColor(pp_); tlRangeOv = INK978_RANGE; tlDrawSet(plC, plV, 0, plNC, 0, ex, ey, ez, 0.f); tlRangeOv = 0.f; sceGuDepthOffset(tlDepth); sceGuColor(TL_RGBA_K(INK_WORLD)); } }   // №983: линии тропинок поверх линий мира
+    if (pathOn && !curb987On && plNC && !pass) { unsigned pp_ = pathPen(); if (pp_) { sceGuDepthOffset(tlDepth + 28); sceGuColor(pp_); tlRangeOv = INK978_RANGE; tlDrawSet(plC, plV, 0, plNC, 0, ex, ey, ez, 0.f); tlRangeOv = 0.f; sceGuDepthOffset(tlDepth); sceGuColor(TL_RGBA_K(INK_WORLD)); } }   // №983: линии тропинок поверх линий мира
     if (!pass) { n = c0_; nr = c1_; tlFr++; }
     if (pass) sceGuOffset(2048 - SCR_W / 2, 2048 - SCR_H / 2);
   }

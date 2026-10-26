@@ -136,7 +136,9 @@ static void flatPoll(void) {
   { static unsigned palHookGen_ = ~0u; static int palHookToon_ = -1;   // №974/№979: палитры тонируются при загрузке таблицы текстур, раньше чем читается flat912.bin (там класс угловой детали и асфальта) — один раз на уровень и режим добавляем их тон здесь; задание тона дальше ведёт их само (curbPal в шаге)
     int tn_ = toneToon(); if (flatFromFile && !toneJob.active && ntex > 0 && (palHookGen_ != flatLevelGen || palHookToon_ != tn_)) { palHookGen_ = flatLevelGen; palHookToon_ = tn_;
       unsigned nh_ = 0; if (tn_) for (unsigned i_ = 0; i_ < ntex; i_++) if (tex[i_].pal && (tex[i_].asph || tex[i_].curb == 2)) { curbPal(&tex[i_], (unsigned char *)tex[i_].pal); sceKernelDcacheWritebackRange(tex[i_].pal, 1024); nh_++; }
-      if (nh_) { bound = -2; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "CURBPALLOAD level=%d hooked=%u t=%.1f\n", gameLevel, nh_, smkT); smkWrite(l_); } } } }
+      if (nh_) { bound = -2; if (smkOn) { char l_[100]; snprintf(l_, sizeof l_, "CURBPALLOAD level=%d hooked=%u t=%.1f\n", gameLevel, nh_, smkT); smkWrite(l_);
+        unsigned char t_[4] = {0, 0, 0, 0}; int ok_ = 0; for (unsigned q_ = 0; q_ < ntex && q_ < 1024 && !ok_; q_++) if (tex[q_].curb == 2) ok_ = curbTarget(&tex[q_], t_);
+        snprintf(l_, sizeof l_, "CURB987 level=%d on=%d nat=%d,%d,%d(%d) corner=%d,%d,%d(%d)\n", gameLevel, curb987On, curbNat[0], curbNat[1], curbNat[2], curbNat[3], t_[0], t_[1], t_[2], ok_); smkWrite(l_); } } } }
   { static const void *rescanFor_; static unsigned rescanGen_; int base_ = toneToon() && !flatOld && ntex > 0 && !toneJob.active;   // текстуры загружены, пока заливка была выключена: статистика не считалась — задание тона пересчитает (без перезагрузки уровня)
     if (base_ && (rescanFor_ != (const void *)tex || rescanGen_ != flatLevelGen)) { int miss_ = 0; for (unsigned q_ = 0, qn_ = !flatRescanOld && flatLevelN && flatLevelN < ntex ? flatLevelN : ntex; q_ < qn_; q_++) if (!tex[q_].flatDone && tex[q_].pal) { miss_++; tex[q_].tstatOk = 0; }
       rescanFor_ = tex; rescanGen_ = flatLevelGen; if (miss_) { toneApplyAll(); return; }

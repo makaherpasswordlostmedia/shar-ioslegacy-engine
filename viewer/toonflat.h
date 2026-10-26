@@ -171,6 +171,22 @@ static int curbR = 150, curbG = 140, curbB = 168;   // «flag curbrgb 0xRRGGBB (
 #define WALKCOLD985_OLD 0
 #endif
 static int curbOn = !CURB974_OLD, curbAll = !WALKCOLD985_OLD;   // curbAll — толкование (Б): весь тротуар холодным серым («flag curb974 2»)
+// №987 (Роб 26.10 после тура TEST69 на PSP: «бордюры оставим родное; на некоторых слишком желтит, а уголочки прям серые; хочу, чтобы всё выглядело единым; не перебарщивать»; выбор «Родной, уголки под него»):
+// бордюр — родная заливка (серо-фиолетовая заливка №974, кромка у дороги №983 и контур тропинок №983 выключены; перо бордюра №978 берёт тон родного бордюра); холодный серый тротуар №985, газон «бумагой»
+// и асфальт +8 % остаются; угловая деталь (люк, сток) — в тон своего соседа на уровне: Мак (tools/flat_list.py) кладёт номер соседней заливки в R,G строки flat912.bin (B = 0x87), движок берёт её
+// итоговый цвет; тёплая жёлто-оранжевая заливка земли — чуть спокойнее по насыщенности (CURB987_YS). Цена в кадре 0 (всё при загрузке и сборке таблицы заливок). CURB987_OLD=1 / файл curb987old рядом с EBOOT /
+// «flag curb987 0» — как в TEST69
+#ifndef CURB987_OLD
+#define CURB987_OLD 0
+#endif
+#ifndef CURB987_YS
+#define CURB987_YS .6f       // доля насыщенности выше порога, остающаяся у тёплой жёлто-оранжевой земли
+#endif
+#ifndef CURB987_S0
+#define CURB987_S0 .30f      // порог насыщенности (HSV)
+#endif
+static int curb987On = !CURB987_OLD; static float curb987Ys = CURB987_YS;   // «flag curb987 0|1», «flag curb987ys X»
+static unsigned char curbNat[4];                                           // цвет родного бордюра уровня после правил (для пера №978); curbNat[3] — есть ли
 // №979 (Роб 25.10: «асфальт капельку светлее, без смены кривой и оттенка»): светлота (HSL) палитры родного асфальта всех уровней +ASPHLIGHT_K, оттенок и насыщенность те же. ASPHLIGHT_OLD=1 /
 // файл asphlightold рядом с EBOOT / «flag asphlight 0» — как было. Какие текстуры — по данным Мака (старшие 4 бита последнего байта строки flat912.bin, tools/flat_list.py)
 #ifndef ASPHLIGHT_OLD
@@ -189,29 +205,52 @@ static void asphLight(unsigned char *pal) {
     float o[3]; int hi = (int)h; switch (hi % 6) { case 0: o[0] = c; o[1] = x2; o[2] = 0; break; case 1: o[0] = x2; o[1] = c; o[2] = 0; break; case 2: o[0] = 0; o[1] = c; o[2] = x2; break; case 3: o[0] = 0; o[1] = x2; o[2] = c; break; case 4: o[0] = x2; o[1] = 0; o[2] = c; break; default: o[0] = c; o[1] = 0; o[2] = x2; }
     for (int k = 0; k < 3; k++) { float v = (o[k] + m) * 255.f; q[k] = (unsigned char)(v < 0.f ? 0.f : v > 255.f ? 255.f : v + .5f); } }
 }
+static int curbTarget(const Tex *x, unsigned char *c);
 static void curbPal(const Tex *x, unsigned char *pal) {   // палитра уголка (RGBA×256): светлые нейтральные и тёплые записи — в тон бордюра с сохранением светотени; фиолетовый асфальт и прозрачные не трогаем
   if (!x || !pal || !toneToon()) return;   // только в мультике: обычный вид палитр не трогаем
   if (asphOn && x->asph) asphLight(pal);   // №979
   if (!curbOn || x->curb != 2) return;
+  int tr = curbR, tg = curbG, tb = curbB; { unsigned char t_[4]; if (curb987On && curbTarget(x, t_)) { tr = t_[0]; tg = t_[1]; tb = t_[2]; } }   // №987: тон соседа на уровне (был серо-фиолетовый)
   for (int i = 0; i < 256; i++) { unsigned char *q = pal + i * 4; int r = q[0], g = q[1], b = q[2]; if (q[3] < 16) continue;
     if (b > r + 10) continue;
     float lum = .299f * r + .587f * g + .114f * b, k = lum / 170.f; if (k > 1.25f) k = 1.25f;
-    int nr = (int)(curbR * k + .5f), ng = (int)(curbG * k + .5f), nb = (int)(curbB * k + .5f); q[0] = nr > 255 ? 255 : nr; q[1] = ng > 255 ? 255 : ng; q[2] = nb > 255 ? 255 : nb; }
+    int nr = (int)(tr * k + .5f), ng = (int)(tg * k + .5f), nb = (int)(tb * k + .5f); q[0] = nr > 255 ? 255 : nr; q[1] = ng > 255 ? 255 : ng; q[2] = nb > 255 ? 255 : nb; }
 }
 // ---- таблица заливок: цвет через цветокоррекцию мультика, 4 бита на канал (куски одного цвета потом склеиваются)
+static int flatGdOf(const Tex *x) {   // класс земли текстуры (0 — общий шум); №987: родной бордюр без зерна
+  if (!(gdStyle && x->curb != 3 && x->curb != 2 && gdBuiltStyle == gdStyle && (x->tstat[4] & 4) && flatNoiseOn && x->flatK == 1 && gdLevelOk())) return 0;
+  if (curb987On && x->curb == 1) return 0;
+  int gc_ = curbOn && x->curb == 1 ? GD_CLS_CURB : gdClassOf((int)(x->flatC & 255), (int)((x->flatC >> 8) & 255), (int)((x->flatC >> 16) & 255));
+  return gc_ && gdReady[gc_] ? gc_ : 0;
+}
+// цвет заливки текстуры после цветокоррекции мультика, смешения со средним и правил №974 / №985 / №987 (без зерна); общий для таблицы заливок и для палитры угловой детали
+static void flatBaseC(const Tex *x, int gd, unsigned char *c) {
+  c[0] = (unsigned char)(x->flatC & 255); c[1] = (unsigned char)((x->flatC >> 8) & 255); c[2] = (unsigned char)((x->flatC >> 16) & 255); c[3] = 255;
+  unsigned char m[4] = {x->tstat[0], x->tstat[1], x->tstat[2], 255};
+  toneColorRGB(c); toneColorRGB(m);   // преобладающий тон и среднее — оба через цветокоррекцию мультика; у бимодальных и градиентных текстур тон сдвигается к среднему (вид глазом)
+  { float share = x->flatS / 255.f, be = (FLAT_BETA_S0 - share) * FLAT_BETA_K; be = be < 0.f ? 0.f : be > FLAT_BETA_MAX ? FLAT_BETA_MAX : be;
+    for (int j = 0; j < 3; j++) c[j] = (unsigned char)(c[j] + (m[j] - (float)c[j]) * be + .5f); }
+  if (curbOn && !curb987On && x->curb == 1) { c[0] = (unsigned char)(curbR - (curbAll ? 28 : 0)); c[1] = (unsigned char)(curbG - (curbAll ? 32 : 0)); c[2] = (unsigned char)(curbB - (curbAll ? 18 : 0)); }   // №974: бордюр — серо-фиолетовая заливка
+  else if ((curbOn || curb987On) && curbAll && gd == GD_CLS_WALK) { c[0] = (unsigned char)(curbR + 8); c[1] = (unsigned char)(curbG + 8); c[2] = (unsigned char)(curbB + 6); }   // №985: весь тротуар холодный серый (№987: не зависит от заливки бордюра)
+  else if (curb987On && (x->tstat[4] & 4) && gd != GD_CLS_GRASS) {   // №987: тёплая жёлто-оранжевая земля (R ≥ G ≥ B, насыщенность выше порога) — спокойнее; газон, холодный тротуар, дорога и дома не трогаются
+    int mx = c[0], mn = c[2]; if (c[0] >= c[1] && c[1] >= c[2] && mx > 0) { float sat = (float)(mx - mn) / (float)mx;
+      if (sat > CURB987_S0) { float s2 = CURB987_S0 + (sat - CURB987_S0) * curb987Ys, f = s2 / sat; for (int j = 1; j < 3; j++) c[j] = (unsigned char)(mx - (mx - c[j]) * f + .5f); } } }
+}
+// тон угловой детали (№987): Мак кладёт в R,G её строки номер соседней заливки (B = 0x87); нет данных — родной бордюр уровня; 0 — нет ни того ни другого (останется серо-фиолетовый №974)
+static int curbTarget(const Tex *x, unsigned char *c) {
+  if (((x->flatC >> 16) & 255) == 0x87u) { unsigned p = x->flatC & 0xffffu; if (p < ntex && p < 1024 && tex[p].flatK == 1) { flatBaseC(&tex[p], flatGdOf(&tex[p]), c); return 1; } }
+  for (unsigned t = 0; t < ntex && t < 1024; t++) if (tex[t].curb == 1 && tex[t].flatK == 1) { flatBaseC(&tex[t], flatGdOf(&tex[t]), c); return 1; }
+  return 0;
+}
 static void flatTintBuild(void) {
-  unsigned key = toneKey() ^ ((unsigned)ntex << 20) ^ (unsigned)(toneToonTexPct() << 8) ^ ((unsigned)gdStyle << 28) ^ ((unsigned)gdBuiltStyle << 26) ^ ((unsigned)gameLevel << 22) ^ (gdAll ? 0x55u : 0u) ^ (curbOn ? 0x2aa00000u : 0u) ^ (curbAll ? 0x1500000u : 0u); if (key == flatTintKey && flatTintN == ntex) return;
-  flatTintKey = key; flatTintN = ntex; flatKinds[0] = flatKinds[1] = flatKinds[2] = 0;
+  unsigned key = toneKey() ^ ((unsigned)ntex << 20) ^ (unsigned)(toneToonTexPct() << 8) ^ ((unsigned)gdStyle << 28) ^ ((unsigned)gdBuiltStyle << 26) ^ ((unsigned)gameLevel << 22) ^ (gdAll ? 0x55u : 0u) ^ (curbOn ? 0x2aa00000u : 0u) ^ (curbAll ? 0x1500000u : 0u) ^ (curb987On ? 0x00a70000u + (unsigned)(curb987Ys * 100.f) * 977u : 0u); if (key == flatTintKey && flatTintN == ntex) return;
+  flatTintKey = key; flatTintN = ntex; flatKinds[0] = flatKinds[1] = flatKinds[2] = 0; curbNat[3] = 0;
   for (unsigned t = 0; t < ntex && t < 1024; t++) { const Tex *x = &tex[t]; flatTint[t] = 0; flatQ[t] = 0; if (!x->flatK) continue;
-    unsigned char c[4] = {(unsigned char)(x->flatC & 255), (unsigned char)((x->flatC >> 8) & 255), (unsigned char)((x->flatC >> 16) & 255), 255};
-    unsigned char m[4] = {x->tstat[0], x->tstat[1], x->tstat[2], 255};
-    toneColorRGB(c); toneColorRGB(m);   // преобладающий тон и среднее — оба через цветокоррекцию мультика; у бимодальных и градиентных текстур тон сдвигается к среднему (вид глазом)
-    { float share = x->flatS / 255.f, be = (FLAT_BETA_S0 - share) * FLAT_BETA_K; be = be < 0.f ? 0.f : be > FLAT_BETA_MAX ? FLAT_BETA_MAX : be;
-      for (int j = 0; j < 3; j++) c[j] = (unsigned char)(c[j] + (m[j] - (float)c[j]) * be + .5f); }
-    flatGd[t] = 0; if (gdStyle && x->curb != 3 && x->curb != 2 && gdBuiltStyle == gdStyle && (x->tstat[4] & 4) && flatNoiseOn && x->flatK == 1 && gdLevelOk()) { int gc_ = curbOn && x->curb == 1 ? GD_CLS_CURB : gdClassOf((int)(x->flatC & 255), (int)((x->flatC >> 8) & 255), (int)((x->flatC >> 16) & 255)); if (gc_ && gdReady[gc_]) flatGd[t] = (unsigned char)gc_; }
+    flatGd[t] = (unsigned char)flatGdOf(x);
+    unsigned char c[4]; flatBaseC(x, flatGd[t], c);
     float k = (x->tstat[4] & 4) && flatNoiseOn ? 1.f / (flatGd[t] ? gdMean[flatGd[t]] : noiseMean) : 1.f;
-    if (curbOn && x->curb == 1) { c[0] = (unsigned char)(curbR - (curbAll ? 28 : 0)); c[1] = (unsigned char)(curbG - (curbAll ? 32 : 0)); c[2] = (unsigned char)(curbB - (curbAll ? 18 : 0)); k = flatGd[t] ? 1.f / gdMean[flatGd[t]] : 1.f; }   // №974: бордюр — серо-фиолетовая заливка (с зерном асфальта, если есть)
-    else if (curbOn && curbAll && flatGd[t] == GD_CLS_WALK) { c[0] = (unsigned char)(curbR + 8); c[1] = (unsigned char)(curbG + 8); c[2] = (unsigned char)(curbB + 6); }   // (Б) весь тротуар холодный серый
+    if (curb987On && x->curb == 1) { k = 1.f; if (!curbNat[3]) { curbNat[0] = c[0]; curbNat[1] = c[1]; curbNat[2] = c[2]; curbNat[3] = 1; } }   // №987: родной бордюр — ровная заливка своего тона
+    else if (curbOn && x->curb == 1) k = flatGd[t] ? 1.f / gdMean[flatGd[t]] : 1.f;   // №974: бордюр — с зерном асфальта, если есть
     unsigned r = (unsigned)(c[0] * k + .5f), g = (unsigned)(c[1] * k + .5f), b = (unsigned)(c[2] * k + .5f); if (r > 255) r = 255; if (g > 255) g = 255; if (b > 255) b = 255;
     if (flatDbg) { unsigned h_ = t * 2654435761u; r = 60 + ((h_ >> 4) & 0xbf); g = 60 + ((h_ >> 12) & 0xbf); b = 60 + ((h_ >> 20) & 0xbf); if (r > 255) r = 255; if (g > 255) g = 255; if (b > 255) b = 255; }
     unsigned qr = (r * 15 + 127) / 255, qg = (g * 15 + 127) / 255, qb = (b * 15 + 127) / 255;
@@ -245,7 +284,7 @@ static inline int flatKind(int t) {
   if (!flatOn || (unsigned)t >= ntex || (unsigned)t >= 1024) return 0; const Tex *x = &tex[t];
   if (!x->flatK || x->flatE != FLAT_EL_OK || !flatQ[t]) return 0;
   if (x->flatK == 3 && !marksOk) return 0;                      // асфальт с разметкой: без слоя разметки остаётся текстурой
-  if (curbOn && x->curb == 1 && !(flatGd[t] && gdReady[flatGd[t]])) return 1;   // №974: бордюр без шума
+  if ((curbOn || curb987On) && x->curb == 1 && !(flatGd[t] && gdReady[flatGd[t]])) return 1;   // №974: бордюр без шума (№987: и родной)
   if ((x->tstat[4] & 4) && flatNoiseOn && !flatNoSuppress && !flatVNoise) return flatGd[t] && gdReady[flatGd[t]] ? 3 : 2;   // 3 — рисунок №969
   return 1;
 }

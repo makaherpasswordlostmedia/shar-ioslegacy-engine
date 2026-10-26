@@ -158,18 +158,26 @@ static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   /
 #define BOOT_WORK_OLD 0
 #endif
 #define BOOT_W_DISC 18754
-#define BOOT_W_RUNS 3450   // TEST69: 3403 (TEST68) + 47 журналов smoke.txt с 25.10 19:37 (стенд ботов города, тур TEST68); счёт — нижняя граница
+#define BOOT_W_RUNS 3455   // TEST70: 3450 (TEST69) + 5 журналов smoke.txt с 25.10 20:44 (гейты TEST69, тур TEST69 на PSP); счёт — нижняя граница
 #define BOOT_W_PS2REC 130
-#define BOOT_W_HOURS 38
-#define BOOT_W_FIXES 985   // TEST69: номер последней строки ПРАВКИ_РОБА.md
-#define BOOT_W_BUILDS 69
+#define BOOT_W_HOURS 51   // TEST70 (№988): пересчёт 26.10 — сумма последнего « t=» по 2287 журналам smoke.txt на диске (без копий): smoke 43,3 ч, туры PSP 7,5 ч, эмулятор 0,5 ч; нижняя граница
+#define BOOT_W_FIXES 988   // TEST70: номер последней строки ПРАВКИ_РОБА.md
+#define BOOT_W_BUILDS 70
+// №988 (Роб 26.10: «вся инфа, сколько мы сожгли токенов»): журналы Claude Code этого проекта 26.09–26.10 (~/.claude/projects/*shar*, ответы без повторов):
+// 66 сессий, 51 882 ответа, 18,69 млрд токенов (из них 18,48 млрд — чтение кэша, написано 34,5 млн); журналы старше 30 дней стёрты — нижняя граница.
+// Строка встаёт после FIXES; чтобы «Loading…» осталась над «Press START», убран пустой ряд перед ней. BOOT_AI988_OLD=1 — как TEST69
+#ifndef BOOT_AI988_OLD
+#define BOOT_AI988_OLD 0
+#endif
+#define BOOT_W_TOKENS_DM 187   // десятые доли миллиарда: 18,7 млрд
+#define BOOT_W_SESSIONS 66
 static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   char b[80], c[40];
   if (n <= 0) {   // первый кадр: производитель и копирайт слева вверху, подсказка и идентификатор внизу — как у BIOS сразу при включении
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/25/26-GONEMAKERS-SHAR-PORT-69");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/26/26-GONEMAKERS-SHAR-PORT-70");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;
@@ -191,9 +199,13 @@ static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
     r++;
     if (n >= BSQ_MEDIA) { snprintf(b, sizeof b, "%d notes, %d builds", BOOT_W_FIXES, BOOT_W_BUILDS); bsqCheck(put, u, r, "FIXES", b, "OK", BUI_ACC); }
     r++;
-    if (n >= BSQ_AUDIO) bsqCheck(put, u, r, "LIGHT", "cones, floor pools, shade", "OK", BUI_ACC);
+    if (!BOOT_AI988_OLD) {   // №988: токены — между FIXES и LIGHT, LIGHT и DRAW сдвигаются на 6 и 4 кадра (до строк данных BSQ_DATA0)
+      if (n >= BSQ_AUDIO) { snprintf(b, sizeof b, "%d.%dB tokens, %d sessions", BOOT_W_TOKENS_DM / 10, BOOT_W_TOKENS_DM % 10, BOOT_W_SESSIONS); bsqCheck(put, u, r, "AI", b, "OK", BUI_ACC); }
+      r++;
+    }
+    if (n >= (BOOT_AI988_OLD ? BSQ_AUDIO : BSQ_POWER)) bsqCheck(put, u, r, "LIGHT", "cones, floor pools, shade", "OK", BUI_ACC);
     r++;
-    if (n >= BSQ_POWER) bsqCheck(put, u, r, "DRAW", "far LOD, HLOD, horizon", "OK", BUI_ACC);
+    if (n >= (BOOT_AI988_OLD ? BSQ_POWER : BSQ_POWER + 4)) bsqCheck(put, u, r, "DRAW", "far LOD, HLOD, horizon", "OK", BUI_ACC);
     r += 2;
   } else {
   // железо: настоящие значения PSP
@@ -244,7 +256,7 @@ static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
   d += BSQ_DATA_STEP;
   if (s->nMovie && n >= d) { snprintf(b, sizeof b, "%d FMV %uMB JPEG on ME", s->nMovie, s->movieMB); bsqCheck(put, u, r, "MOVIES", b, "OK", BUI_ACC); }
   if (s->nMovie) r++;
-  r++;
+  if (BOOT_WORK_OLD || BOOT_AI988_OLD) r++;   // №988: в строках работы на одну больше — без пустого ряда перед «Loading…»
   if (n >= BSQ_RULE && r < BUI_ROW_FOOT - 1) bsqLine(put, u, r, BUI_KEY, "Loading The Simpsons Hit & Run ...");
   bootSeqMarksDraw(n, put, u);
 }

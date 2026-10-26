@@ -19,14 +19,15 @@ No game files are included, and none will be.
 - [Tests](tests/README.md): how every fix is checked
 - [All documents](docs/index.md)
 
-## What's new in build 69
+## What's new in build 70
 
-October 25, 2026. Since the first release on October 22:
+October 26, 2026. Since the first release on October 22:
 
 - Level 7 can be finished: the UFO and its tractor beam are in the world, so the "drive into the beam and get out" stages complete
-- Cartoon mode is now the base look. Flat-color textures became vector fills, grass and sidewalks carry a fine paper-like grain, sidewalks are a cool gray with gray-violet curbs; the original asphalt and road markings stay, a little lighter
+- On a real PSP-2000 an automated tour plays all 16 cutscenes and runs the ending to the credits
+- Cartoon mode is now the base look. Flat-color textures became vector fills, grass and sidewalks carry a fine paper-like grain, sidewalks are a cool gray. Curbs keep their original colors and the corner pieces match them; overly saturated warm ground is toned down a little. The original asphalt and road markings stay, a little lighter
 - Lights and sparkles are vector shapes: windows, neon, street lamps, and interaction sparkles shaped like a card diamond; coins get three small sparkles
-- Colors follow the show's palette, traffic cars included, with dark wheels and underbodies
+- Traffic and parked cars keep their original textures
 - The sky is a gradient dome. Distant landmarks, roads and bridges stay on screen
 - Wheels spin on every car, traffic included. Damage smoke matches the PS2 original
 - Poles and lamp posts fall like on the PS2: whole, pivoting at the base, with fall times measured on the original; on levels 4 to 7 many more of them can be knocked down
@@ -40,6 +41,13 @@ October 25, 2026. Since the first release on October 22:
 1. `./setup.sh` installs the PSPDEV toolchain into `./pspdev`
 2. `export PSPDEV=$PWD/pspdev PATH=$PWD/pspdev/bin:$PATH`
 3. `cd viewer && psp-cmake -S . -B build && cmake --build build` builds `EBOOT.PBP`
+
+The exact build we test on a PSP-2000 (release switches; each `*_OLD=1` keeps an older behavior that won on hardware):
+
+```
+psp-cmake -S . -B build -DSHAR_RELEASE=ON -DSHAR_RELEASE_KEEP_DIAG=ON -DSHAR_RELEASE_KEEP_HUD=ON \
+  -DCMAKE_C_FLAGS="-DJITTER_STRIPS_OLD=1 -DJITTER_CAR_OLD=1 -DFE_DEMO_PS2_OLD=1 -DZF932_OLD=1 -DCARFILL930_OLD=1"
+```
 
 Game data: unpack your own disc with [hit-and-run-web](https://github.com/Vheissu/hit-and-run-web) into
 `hit-and-run-web/source/`, run `tools/build_level.sh` or `tools/ship.sh`, and copy the result next to the EBOOT

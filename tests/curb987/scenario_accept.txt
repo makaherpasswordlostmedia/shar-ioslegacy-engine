@@ -1,0 +1,29 @@
+# №987 приёмка: обычный старт уровня (L1, L2), камера над уголком и бордюром; снимки сравниваются «было» (файл curb987old) и «стало»
+scene C_BOOT
+flag cfgdefaults 1
+wait 6
+scene C_L1
+flag golevel 1
+wait 40
+scene S_L1_K
+foot -138 269 0
+wait 4
+cam -132.0 8.2 275.0 -0.640 -0.480 -0.640
+wait 8
+shot A_L1_K
+scene S_L1_C1
+foot -193 93 0
+wait 4
+cam -187.0 8.2 99.0 -0.640 -0.480 -0.640
+wait 8
+shot A_L1_C1
+scene C_L2
+flag golevel 2
+wait 40
+scene S_L2_C2
+foot -178 -17 0
+wait 4
+cam -172.0 11.8 -11.0 -0.640 -0.480 -0.640
+wait 8
+shot A_L2_C2
+end

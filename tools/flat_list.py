@@ -12,6 +12,7 @@
 import os, struct, sys
 from pathlib import Path
 import numpy as np
+sys.path.insert(0, str(Path(__file__).resolve().parent))   # shr7read рядом (python -I не добавляет папку скрипта)
 
 R2, R2_FAR = 1600, 6400
 EDGE_D = 35
@@ -208,6 +209,42 @@ def asphalt_set(f, tex, res):
     return out
 
 
+CORNER987_MARK = 0x87   # №987: у рисунка угловой детали (вид 0) в R,G номер соседней заливки (u16), в B — этот знак; движок берёт итоговый цвет соседа
+
+
+def corner_partners(lvl, res, cbs):
+    """№987: для каждой угловой детали (класс 2) — заливка земли, чаще всего соседствующая с её кусками (общая вершина в кубике 1 м, считаются куски детали): тротуар или бордюр; зелёное и тёмное
+    (газон, вода) не считается. -> {номер текстуры: номер соседа}"""
+    import shr7read as S2
+    from collections import defaultdict
+    corners = [i for i, c in enumerate(cbs) if (c & 15) == 2]
+    if not corners: return {}
+    d = S2.load(lvl); P, T = d['P'], d['TEX']
+    def ok(i):
+        k, why, col, sh, ed = res[i]
+        if k != 1: return False
+        r, g, b = (int(v) for v in col); lum = .299 * r + .587 * g + .114 * b
+        return (cbs[i] & 15) == 1 or (lum >= 110 and g <= r + 8)
+    cand = {i for i in range(len(res)) if ok(i)}
+    key = lambda p: (int(np.floor(p[0])), int(np.floor(p[1])), int(np.floor(p[2])))
+    g = defaultdict(set)
+    for i in np.nonzero(np.isin(T, list(cand)))[0]:
+        for v in P[i]: g[key(v)].add(int(T[i]))
+    out = {}
+    for ct in corners:
+        cnt = defaultdict(int)
+        for i in np.nonzero(T == ct)[0]:
+            seen = set()
+            for v in P[i]:
+                k0 = key(v)
+                for dx in (-1, 0, 1):
+                    for dy in (-1, 0, 1):
+                        for dz in (-1, 0, 1): seen |= g.get((k0[0] + dx, k0[1] + dy, k0[2] + dz), set())
+            for t in seen: cnt[t] += 1
+        if cnt: out[ct] = max(cnt.items(), key=lambda kv: (kv[1], -kv[0]))[0]
+    return out
+
+
 def build(lvl, notoon=None):
     """-> (байты flat912.bin, строки (вид, причина) по текстурам)"""
     notoon = notoon or str(Path(lvl).with_name('notoon.txt'))
@@ -223,10 +260,16 @@ def build(lvl, notoon=None):
     asph = asphalt_set(f, tex, res)   # №979: родной асфальт уровня — старшие 4 бита последнего байта строки: движок чуть осветляет палитру (flag asphlight)
     rows = []; body = bytearray()
     src = asphalt_source(lvl, tex, res)   # №977: чистый родной асфальт уровня — фрагмент для земли (класс 3)
-    for i, (k, why, col, sh, ed) in enumerate(res):
+    cbs = []
+    for i in range(len(res)):
         cb = 0 if os.environ.get('CURB974_OLD') == '1' else curb_class(f, tex[i])
         if i == src and cb == 0: cb = 3
         if i in asph: cb |= 0x10
+        cbs.append(cb)
+    part = {} if os.environ.get('CURB987_OLD') == '1' else corner_partners(lvl, res, cbs)   # №987
+    for i, (k, why, col, sh, ed) in enumerate(res):
+        cb = cbs[i]
+        if i in part: col = (part[i] & 255, part[i] >> 8, CORNER987_MARK)
         body += struct.pack('<BBBBBBBB', k, why, col[0], col[1], col[2], sh, ed, cb); rows.append((k, why))
     return b'FLT1' + struct.pack('<II', len(tex), sig) + bytes(body), rows, sig
 
