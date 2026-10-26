@@ -1,0 +1,27 @@
+# №997: дальние виды уровня 5: глаз на 9 м над героем, 6 направлений через 60°; horizon.shr — набор с хвостом HCL1 (A/B флагом hzcol997)
+scene g646
+wait 1
+flag service 1
+flag golevel 5
+wait 40
+wait 3
+camrel 0 9 0 0.259 0.02 -0.966
+wait 2.5
+shot l5_d0
+camrel 0 9 0 0.966 0.02 -0.259
+wait 2.5
+shot l5_d1
+camrel 0 9 0 0.707 0.02 0.707
+wait 2.5
+shot l5_d2
+camrel 0 9 0 -0.259 0.02 0.966
+wait 2.5
+shot l5_d3
+camrel 0 9 0 -0.966 0.02 0.259
+wait 2.5
+shot l5_d4
+camrel 0 9 0 -0.707 0.02 -0.707
+wait 2.5
+shot l5_d5
+cam off
+end

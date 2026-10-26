@@ -63,6 +63,7 @@ int uiSfxService(const char *f, float a) {
     uiAnimOff(f[10] == 'o' ? UI_ANIM_OLDHNR : 0); uiTrace(UI_TRACE_HNR); return 1;   // ...old — прежний код кольца (красный контроль)
   }
   if (!strcmp(f, "uipop")) { uiTrace(UI_TRACE_POP); uiForceShow((int)a, 1.5f); return 1; }   // тег a всплывает на 1.5 с
+  if (!strcmp(f, "brtrace")) { uiTrace(UI_TRACE_POP); return 1; }   // №994: служебно — трасса кадров карточки миссии (BRIEFANIM/BRIEFDRAW)
   if (!strcmp(f, "uipop0")) { uiAnimOff(UI_ANIM_NOPOP); return 1; }
   if (!strcmp(f, "uipopmsg") || !strcmp(f, "uipopmsgh")) { uiTrace(UI_TRACE_POP); uiMessage(a > 5.5f ? "GO TO THE KWIK-E-MART AND BUY SOME COLA FOR MARGE" : a > 4.5f ? "GATE: NEW OBJECTIVE B" : a > 3.5f ? "VEHICLE DESTROYED! FIND A WRENCH, THEN GET BACK IN THE CAR AND DRIVE TO THE KWIK-E-MART" : a > 2.5f ? "GO TO THE KWIK-E-MART AND BUY SOME COLA FOR MARGE" : a > 1.5f ? "TELEPHONE BOOTH UNAVAILABLE" : a > 0.f ? "GATE: NEW OBJECTIVE B" : "GATE: NEW OBJECTIVE A", a > 3.5f ? (UI_SFX_POPSLOT_OLD ? 0 : UI_OBJICON_EXTERNAL) : -1, f[8] == 'h' ? 40.f : 1.5f); return 1; }   // №640/646: тексты для кадров пузыря; a > 3,5 — с аватаркой задания (в игре значок всегда из msnicons, в кольце; малый слот пакета — только прежний тест, UI_SFX_POPSLOT_OLD=1)
   if (!strcmp(f, "uipopdest")) { uiTrace(UI_TRACE_POP); uiMessage("VEHICLE DESTROYED!\nFIND A WRENCH,\nOR GO TO A PHONEBOOTH,\nTO REPAIR YOUR VEHICLE.", -1, 6.f); return 1; }   // №689: служебно (гейт): настоящий текст «разбита» из main_loop.h (4 жёстких переноса)

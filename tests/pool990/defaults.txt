@@ -1,0 +1,136 @@
+# №990: эллипсы света под фонарями. Все уровни по очереди (как тур): в машине автопилот по дорогам, первая половина pool990 1 (новое), вторая pool990 0 (как TEST70); счёт POOL990 level on ell_tab ell_cell cone_tab cone_cell
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P990_L1_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l1_on
+scene P990_L1_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l1_off
+scene P990_GO4
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 4
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L4_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l4_on
+scene P990_L4_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l4_off
+scene P990_GO5
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 5
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L5_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l5_on
+scene P990_L5_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l5_off
+scene P990_GO6
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 6
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L6_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l6_on
+scene P990_L6_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l6_off
+scene P990_GO7
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 7
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L7_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l7_on
+scene P990_L7_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l7_off
+scene P990_GO2
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 2
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L2_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l2_on
+scene P990_L2_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l2_off
+scene P990_GO3
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 3
+wait 40
+wait 3
+press triangle 0.2
+wait 3
+scene P990_L3_on
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l3_on
+scene P990_L3_off
+flag drive 12
+wait 13.5
+flag pool990stat
+shot p990_l3_off
+end

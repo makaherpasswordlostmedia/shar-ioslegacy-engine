@@ -1,0 +1,23 @@
+# №994 (flag card994 0 — прежнее, красный контроль на новой сборке): карточка миссии перед миссией, кадры по трассе BRIEFANIM/BRIEFDRAW (flag brtrace). Три брифинга: L1 m1 (первый после загрузки: газета LOADING), L1 m2, L1 m3 (только карточка)
+scene g646
+flag card994 0
+flag msn
+flag brtrace
+wait 1
+flag msnmainat 101
+wait 12
+shot b1_loaded
+press cross 0.2
+wait 4
+shot b1_after
+flag msnmainat 201
+wait 10
+shot b2_loaded
+press cross 0.2
+wait 4
+flag msnmainat 301
+wait 10
+shot b3_loaded
+press cross 0.2
+wait 4
+end

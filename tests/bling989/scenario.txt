@@ -1,0 +1,57 @@
+# №989: блики на объектах «было TEST70 (файл bling989old) / стало»; обычный старт уровня
+scene C_BOOT
+flag cfgdefaults 1
+wait 6
+scene C_L1
+flag golevel 1
+wait 40
+scene S_L1_G1
+foot 228.6 201.1 0
+wait 4
+cam 232.1 5.2 204.6 -0.687 -0.236 -0.687
+wait 8
+shot L1_G1
+wait 1.1
+shot L1_G1b
+scene S_L1_G2
+foot 219.3 206.5 0
+wait 4
+cam 222.8 5.8 210.0 -0.687 -0.236 -0.687
+wait 8
+shot L1_G2
+wait 1.1
+shot L1_G2b
+scene C_L2
+flag golevel 2
+wait 40
+scene S_L2_W1
+foot 125.2 -310.2 0
+wait 4
+cam 128.7 22.1 -306.7 -0.687 -0.236 -0.687
+wait 8
+shot L2_W1
+wait 1.1
+shot L2_W1b
+scene C_L6
+flag golevel 6
+wait 40
+scene S_L6_G1
+foot 63.1 -38.1 0
+wait 4
+cam 66.6 8.8 -34.6 -0.687 -0.236 -0.687
+wait 8
+shot L6_G1
+wait 1.1
+shot L6_G1b
+scene C_L7
+flag golevel 7
+wait 40
+scene S_L7_W1
+foot 152.1 190.9 0
+wait 4
+cam 155.6 13.4 194.4 -0.687 -0.236 -0.687
+wait 8
+shot L7_W1
+wait 1.1
+shot L7_W1b
+end

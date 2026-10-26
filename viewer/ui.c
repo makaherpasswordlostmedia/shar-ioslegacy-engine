@@ -864,6 +864,8 @@ int uiCoinIcon(float *cx, float *cy, float *h, float *alpha) {   // 1 — счё
 }
 static int gDx;                                              // №710: сдвиг по x рамки и текста пузыря без аватара к левому полю
 static int dbgWrapW, dbgNl, dbgWrapCalc;   // №942 (гейт): ширина строки и число строк последнего текста пузыря; сколько раз за прогон считался перенос
+int uiBubble992Old = BUBBLE992_OLD;   // №992: 1 — появление пузыря как в TEST70 (flag bubble992 0 / файл bubble992old)
+void uiBubble992Set(int old) { uiBubble992Old = old; }
 static int bubSlideNow;                                       // №942: сдвиг вправо текста пузыря в начале проявления (px)
 // №942: содержимое пузыря задания (текст, аватар, значок) — всё, кроме самой капсулы (широкая картинка)
 static int bubContent(const UiItem *it) { return it->type == T_TEXT || it->type == T_SLOT || (it->type == T_IMG && it->w * 2 < it->h * 3); }
@@ -1214,13 +1216,27 @@ void uiBriefingBonus(int on) { briefBonus = on; }
 #ifndef BRIEF_EXIT_SMOOTH_OLD
 #define BRIEF_EXIT_SMOOTH_OLD 0
 #endif
+// №994 (Роб 26.10 после TEST70: «часто глюк: показывается карточка, а потом её привозят. Карточка перед миссией немножечко лагает. Сделай так, чтобы она не появлялась сразу, а её привозила рука, и потом увозила рука, потому что опять рассинхрон»):
+// причина по трассе BRIEFANIM/BRIEFDRAW (tests/card994): таймер въезда запускался при открытии брифинга (msn_view.c) и ещё раз, когда карточка готова (№612), а первые кадры рисовались уже после
+// окончания первого въезда — карточка стояла на месте (руку уже уносило), потом второй запуск сбрасывал её за край и привозил заново. Теперь: пока карточка не готова (ждём загрузку), рисуется только
+// подпись LOADING, карточка, руки и текст не рисуются; въезд стартует со второго запуска и его часы идут с ПЕРВОГО нарисованного кадра (длинный кадр загрузки между запуском и рисованием не съедает въезд):
+// первый видимый кадр карточки — в руке за краем экрана. Выезд уже от руки (№612/№633), не тронут. CARD994_OLD=1 / файл card994old рядом с EBOOT / flag card994 0 — как в TEST70
+#ifndef CARD994_OLD
+#define CARD994_OLD 0
+#endif
+int uiCard994Old = CARD994_OLD;
+void uiCard994Set(int old) { uiCard994Old = old; }
+static int brWaitLoad, brPend;
 static int brLeaving, brAnimOn, brHold, brHoldN; static unsigned brT0us, brHoldAt;
 void uiBriefAnim(int on) {
   if (UI_BRIEF_ANIM_OLD) return;
-  brT0us = sceKernelGetSystemTimeLow(); brLeaving = !on; brAnimOn = 1;
+  brT0us = sceKernelGetSystemTimeLow(); brLeaving = !on; brAnimOn = 1; brWaitLoad = 0; brPend = !on || uiCard994Old ? 0 : 1;   // №994: часы въезда — с первого нарисованного кадра
+  if (traceBits & UI_TRACE_POP) uiLogf("BRIEFANIM on=%d us=%u\n", on, brT0us);   // №994 (гейт): момент старта въезда/выезда
   brHold = !on && !BRIEF_EXIT_SMOOTH_OLD; brHoldAt = brT0us; brHoldN = 2;   // два кадра: первый живой кадр и следующий (камера, клетки)
 }
+void uiBriefHold(void) { if (!UI_BRIEF_ANIM_OLD && !uiCard994Old) brWaitLoad = 1; }   // №994: брифинг открыт, карточка ещё не готова — только LOADING, без карточки на месте
 static float brAnimSec(void) {
+  if (brPend) { brPend = 0; brT0us = sceKernelGetSystemTimeLow(); }
   if (brHold) { if ((unsigned)(sceKernelGetSystemTimeLow() - brHoldAt) < 600000u) return 0.f; brHold = 0; brT0us = sceKernelGetSystemTimeLow(); }
   return (unsigned)(sceKernelGetSystemTimeLow() - brT0us) * 1e-6f; }
 void uiBriefExitGo(void) { if (brHold && brLeaving && --brHoldN <= 0) { brHold = 0; uiLogf("BRIEFEXIT go after=%u ms\n", (unsigned)(sceKernelGetSystemTimeLow() - brHoldAt) / 1000u); brT0us = sceKernelGetSystemTimeLow(); } }   // конец первого живого кадра после Continue: выезд карточки стартует
@@ -1596,7 +1612,17 @@ const char *uiFontName(int font) { return (H && (unsigned)font < H->nfont) ? str
 #ifndef HUD_CORNER_DY
 #define HUD_CORNER_DY 7   // px вверх: верх блока без кружка = нижнее поле радара (16 px по ободу), по диагонали симметрично
 #endif
-static int hudHomeOn; static float hudHomeA = 1.f, hudHomeExtra;   // hudHomeExtra: на сколько место и круг правее запечённого положения, пока виден значок дома
+// №993 (Роб: «почему по умолчанию всегда в левом верхнем углу дом Симпсонов, как будто туда ехать; на разных уровнях всплывает»). Причина: синтетический значок
+// дома №623 (HomeIcon из ui.shr, придуман 15.10 по внешнему видео L1 и слову Роба) рисуется всякий раз, когда в углу нет кружка задания: при старте каждой
+// миссии, пока значок задания ещё в пузыре внизу, между миссиями, на всех уровнях. На диске дом стоит в углу только там, где этап зовёт SetHUDIcon("simpsons")
+// (L1 m1sdi m2sdi m3sdi m5sdi m6i, L4 m6sdi m7i, L7 m1i) — и он рисуется обычным значком задания, а не этим элементом. Теперь значка дома вне задания нет:
+// нет кружка — блок времени и места в углу (как просил Роб в первой версии №623). ICON993_OLD=1 (flag icon993 0, файл icon993old) — как было
+#ifndef ICON993_OLD
+#define ICON993_OLD 0
+#endif
+int icon993Old = ICON993_OLD;
+static int hudHomeOn; static float hudHomeA = 1.f, hudHomeExtra;
+int uiHomeShown(void) { return hudHomeOn && hudHomeA > .5f; }   // №993: диагностика (MSNICON home=)   // hudHomeExtra: на сколько место и круг правее запечённого положения, пока виден значок дома
 static float hudBlkV, hudBlkClk = -1.f;   // №623: 0 — блок в углу (кружка нет), 1 — правее кружка; плавно, вместе с подъёмом значка (OBJ_FLY_S)
 static int hudBlockX = HUD_CORNER_X;      // левый край цифр места/круга в пакете (с запечённым сдвигом №614 или без)
 static int hudBlkInit;
@@ -2128,11 +2154,12 @@ static void drawScreen(int sidx, int selected) {
       else { if (a->x < cL) cL = a->x; if (a->x + a->w > cR) cR = a->x + a->w; }
     }
     if (cR > cL) {
-      float t = brAnimSec();
+      float t = brWaitLoad && !brLeaving ? 0.f : brAnimSec();
       if (brLeaving && t >= UI_BR_EXIT) brAnimOn = 0;
       else { uiBriefPose(brLeaving, t, cL, cR, aLR > -1e8f ? aLR : cL, aRL < 1e8f ? aRL : cR, 480.f, &brDx, &brArmL, &brArmR, &brShowL, &brShowR, &brCardA, &brBackA); brAnim = 1; }
     }
   }
+  if (sidx == UI_SCREEN_MISSIONLOAD && !scrMode && (traceBits & UI_TRACE_POP)) uiLogf("BRIEFDRAW us=%u wait=%d anim=%d on=%d leaving=%d dx=%.1f armL=%.1f armR=%.1f showL=%d showR=%d cardA=%.2f backA=%.2f\n", sceKernelGetSystemTimeLow(), brWaitLoad, brAnim, brAnimOn, brLeaving, brDx, brArmL, brArmR, brShowL, brShowR, brCardA, brBackA);   // №994 (гейт): что нарисовано в каждом кадре карточки
   float hudBlk = 1.f;
   if (hud && !HUD_SHIFT_COND_OLD) {   // №623 (Роб 15.10): блок времени и места правее кружка только когда кружок цели виден в углу вверху слева; нет кружка — в самом углу
     int present = 0; float kk = 0.f;
@@ -2143,7 +2170,7 @@ static void drawScreen(int sidx, int selected) {
     int bx = 9999, hasHome = 0; float homeR = 0.f;
     for (unsigned j = 0; j < sc->count; j++) { const UiItem *c = &items[sc->first + j]; if (c->type == T_NUM && (c->tag == UI_T_LAP || c->tag == UI_T_POSITION) && c->x < bx) bx = c->x; if (c->type == T_IMG && ITEM_HOME(c)) { hasHome = 1; homeR = c->px; } }
     // №623: значок дома — пока HUD виден (радар) и кружка задания в углу нет; кружок цели поднимается — значок дома гаснет той же кривой
-    hudHomeOn = !HUD_HOME_ICON_OLD && hasHome && (mask >> UI_T_RADAR & 1u);
+    hudHomeOn = icon993Old && !HUD_HOME_ICON_OLD && hasHome && (mask >> UI_T_RADAR & 1u);   // №993: вне задания дома нет
     hudHomeA = present ? 1.f - kk : 1.f;
     hudBlk = hudBlkUpdate(present || hudHomeOn, hudHomeOn ? 1.f : kk, hudHomeOn);
     hudBlockX = bx < 9999 ? bx : HUD_CORNER_X;
@@ -2166,10 +2193,11 @@ static void drawScreen(int sidx, int selected) {
     if (!PAUSE_ANIM_OLD && !scrMode && (sidx == UI_SCREEN_PAUSE || sidx == UI_SCREEN_PAUSEMSN) && it->type == T_RECT && it->x <= 0 && it->y <= 0 && it->w >= 480 && it->h >= 272) continue;
     UiItem brIt;
     if (brAnim) {   // №512: вход слева / выход вправо; руки — только на время переезда; полосы фона — на месте, гаснут при выезде
-      float dx = ITEM_ARML(it) ? brArmL : ITEM_ARMR(it) ? brArmR : ITEM_BACK(it) ? 0.f : brDx, al = ITEM_BACK(it) ? brBackA : (ITEM_ARML(it) || ITEM_ARMR(it)) ? brCardA : brCardA;
+      float dx = (brWaitLoad && !brLeaving && it->tag == UI_T_LOADING) ? 0.f : ITEM_ARML(it) ? brArmL : ITEM_ARMR(it) ? brArmR : ITEM_BACK(it) ? 0.f : brDx, al = ITEM_BACK(it) ? brBackA : (ITEM_ARML(it) || ITEM_ARMR(it)) ? brCardA : brCardA;
       if ((ITEM_ARML(it) && !brShowL) || (ITEM_ARMR(it) && !brShowR) || al <= 0.f) continue;
+      if (brWaitLoad && !brLeaving && !ITEM_BACK(it) && it->tag != UI_T_LOADING) continue;   // №994: ждём загрузку — карточки, рук и текста нет
       brIt = *it; brIt.x = (short)floorf((float)it->x + dx + .5f); it = &brIt;
-      if (!BRIEF_TEXT_LATE_OLD && !brLeaving && it->type == T_TEXT && !ITEM_BACK(it)) {   // №217 голосом Роба (16.10): текст карточки после сборки рамки: пока карточка едет — нет, затем проявляется за BRIEF_TEXT_FADE
+      if (!BRIEF_TEXT_LATE_OLD && !brLeaving && !brWaitLoad && it->type == T_TEXT && !ITEM_BACK(it)) {   // №217 голосом Роба (16.10): текст карточки после сборки рамки: пока карточка едет — нет, затем проявляется за BRIEF_TEXT_FADE
         float tt_ = brAnimSec() - UI_BR_IN; if (tt_ < 0.f) continue; if (tt_ < BRIEF_TEXT_FADE) al *= tt_ / BRIEF_TEXT_FADE; }
       if (al < 1.f) { xf.on = 1; xf.s = 1.f; xf.a = al; xf.cx = xf.cy = 0.f; }
     }
@@ -2199,7 +2227,7 @@ static void drawScreen(int sidx, int selected) {
       uiPopState(popKind(it->tag), on, popAgeOf(it->tag, on), &s_, &a_);
       // №610: текст пузыря (строка задания, окно сообщения) не рисуем, пока рамка растёт: он раскладывался узко и перестраивался. BUBBLE_TEXT_LATE_OLD=1 — прежнее
       if (BUBBLE_UNIFORM_OLD && !BUBBLE_TEXT_LATE_OLD && on && it->type == T_TEXT && (popKind(it->tag) == UI_POP_PILL || popKind(it->tag) == UI_POP_BOX) && (s_ != 1.f || a_ < 1.f)) continue;
-      if (!BUBBLE_TEXT942_OLD && !BUBBLE_UNIFORM_OLD && popKind(it->tag) == UI_POP_PILL && on && bubContent(it)) {   // №942: текст и аватар не растут с рамкой: после раскрытия рамки проявляются на месте, конечной раскладкой
+      if (uiBubble992Old && !BUBBLE_TEXT942_OLD && !BUBBLE_UNIFORM_OLD && popKind(it->tag) == UI_POP_PILL && on && bubContent(it)) {   // №942 (и №992: только в режиме TEST70, новое — содержимое едет с рамкой по ветке ниже): текст и аватар не растут с рамкой: после раскрытия рамки проявляются на месте, конечной раскладкой
         float c = (popAgeOf(it->tag, 1) - UI_BUB_CONTENT_DELAY) / UI_BUB_CONTENT_FADE;
         if (c <= 0.f) continue;                                    // рамка → потом содержимое
         if (c > 1.f) c = 1.f;
@@ -2706,6 +2734,7 @@ void uiMessage(const char *text, int icon, float seconds) {
   msgTags(1);
 }
 // №958б: диагностика (flag msnhud): что держит угол — поле значка, есть ли картинка извне, текст сообщения и последний погасший
+const void *uiObjPix(void) { return oiPix; }   // №993: какие пиксели сейчас в значке угла (сверка с пакетом, msnartIconPixOk)
 void uiObjDebug(int *icon, int *hasPix, const char **txt, const char **last) { *icon = fieldv[UI_F_OBJICON]; *hasPix = oiPix != 0; *txt = msgText; *last = msgLast; }
 void uiObjective(int index, int icon) {
   msgText[0] = 0; msgUntil = 0;

@@ -69,19 +69,19 @@ owner's words
 - Tour artifacts are real. Writing the log and teleporting the scenario cost frames by themselves, so verdicts use frame work time, and every new diagnostic carries its own cost.
 - Example: in one hardware tour the city phase grew by 0.41 ms on average. Bisecting by switches on a still camera pinned about 0.85 ms (converted to PSP) on one merge, which was then made cheaper. A separate depth-pass change added about 0.49 ms on one level and let the sea hide the distant view on the pier, so the following builds ship with it off.
 
-## Numbers (build 70, October 26, 2026)
+## Numbers (build 71, October 26, 2026)
 
 | What | Count | Source |
 |---|---|---|
-| Numbered requests | 988 | request list and the loading-screen counter |
-| Builds | 70 | loading-screen counter |
-| Runs (emulator and hardware) | 3455 | loading-screen counter: reference catalog, smoke runs, emulator runs, hardware tours |
+| Numbered requests | 997 | request list and the loading-screen counter |
+| Builds | 71 | loading-screen counter |
+| Runs (emulator and hardware) | 3543 | loading-screen counter: reference catalog, smoke runs, emulator runs, hardware tours |
 | Logged play in run logs | 51 h | sum of the last timestamp of 2287 run logs still on disk; older logs were deleted, so this is a lower bound |
-| Hardware tour log folders | 28 | full tours plus repeats |
-| Commits on the integration branch | 3337 | `git rev-list --count` |
+| Hardware tour log folders | 29 | full tours plus repeats |
+| Commits on the integration branch | 3358 | `git rev-list --count` |
 | Real PS2 recordings used for comparison | 130 | reference library index |
-| Named rollback switches in the code | 1059 | unique `*_OLD` names in `viewer/` (not all independent) |
-| Test folders | 263, including 46 acceptance scripts and 60 gate scripts | `tests/`, files `accept*.sh` and `*gate*.sh` |
+| Named rollback switches in the code | 1068 | unique `*_OLD` names in `viewer/` (not all independent) |
+| Test folders | 272, including 55 acceptance scripts and 60 gate scripts | `tests/`, files `accept*.sh` and `*gate*.sh` |
 | AI tokens | 18.7 billion over 66 sessions | Claude Code logs, September 26 to October 26, 2026; 18.5 billion of them are re-reads of cached context, 34.5 million were written; older logs were deleted, so this is a lower bound |
 
 Not measured: total hours people spent on the project.

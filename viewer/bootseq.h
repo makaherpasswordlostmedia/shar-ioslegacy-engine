@@ -158,11 +158,11 @@ static void bsqK(char *b, int n, const char *pre, int v, const char *post) {   /
 #define BOOT_WORK_OLD 0
 #endif
 #define BOOT_W_DISC 18754
-#define BOOT_W_RUNS 3455   // TEST70: 3450 (TEST69) + 5 журналов smoke.txt с 25.10 20:44 (гейты TEST69, тур TEST69 на PSP); счёт — нижняя граница
+#define BOOT_W_RUNS 3543   // TEST71: 3455 (TEST70) + 87 журналов smoke.txt с 26.10 14:12 (правки №989–997 в окнах, тур TEST70) + 1 тур TEST70 на PSP; счёт — нижняя граница
 #define BOOT_W_PS2REC 130
 #define BOOT_W_HOURS 51   // TEST70 (№988): пересчёт 26.10 — сумма последнего « t=» по 2287 журналам smoke.txt на диске (без копий): smoke 43,3 ч, туры PSP 7,5 ч, эмулятор 0,5 ч; нижняя граница
-#define BOOT_W_FIXES 988   // TEST70: номер последней строки ПРАВКИ_РОБА.md
-#define BOOT_W_BUILDS 70
+#define BOOT_W_FIXES 997   // TEST71: номер последней строки ПРАВКИ_РОБА.md
+#define BOOT_W_BUILDS 71
 // №988 (Роб 26.10: «вся инфа, сколько мы сожгли токенов»): журналы Claude Code этого проекта 26.09–26.10 (~/.claude/projects/*shar*, ответы без повторов):
 // 66 сессий, 51 882 ответа, 18,69 млрд токенов (из них 18,48 млрд — чтение кэша, написано 34,5 млн); журналы старше 30 дней стёрты — нижняя граница.
 // Строка встаёт после FIXES; чтобы «Loading…» осталась над «Press START», убран пустой ряд перед ней. BOOT_AI988_OLD=1 — как TEST69
@@ -177,7 +177,7 @@ static void bootSeqDraw(int n, const BootSys *s, BuiPut put, void *u) {
     bsqLine(put, u, 0, BUI_HI, "GONE Makers BIOS v1.02");
     bsqLine(put, u, 1, BUI_KEY, BOOT_WORK_OLD ? "(C) 2026 GONE Makers Co. PSP-2000" : "(C) 2026 GONE Makers Co.");
     bsqLine(put, u, BUI_ROW_FOOT - 1, BUI_KEY, "Press START to skip");
-    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/26/26-GONEMAKERS-SHAR-PORT-70");
+    bsqLine(put, u, BUI_ROW_FOOT, BUI_DIM, BOOT_WORK_OLD ? "10/03/26-PSP2000-GONEMAKERS-SHAR-01" : "10/26/26-GONEMAKERS-SHAR-PORT-71");
   }
   if (BOOT_GONE_MARK) {   // знак справа вверху: первый проход, пауза, второй проход, покой
     int p1 = BSQ_P0 + BSQ_PAUSE;

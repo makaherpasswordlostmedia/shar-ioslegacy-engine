@@ -54,7 +54,7 @@ SKY_TAN = 0.012   # небо несёт свой силуэт, если мешы
 SKY_DIL = 6       # расширение маски по азимуту, бинов (±3°)
 
 
-def contour(V, ex, ez, near, far, eps, ey=None, Vs=None):
+def contour(V, ex, ez, near, far, eps, ey=None, Vs=None, C=None):
     if ey is None:
         nb = V[np.hypot(V[:, 0] - ex, V[:, 2] - ez) < 15]
         ey = (float(np.median(nb[:, 1])) if len(nb) else 0.) + 2.
@@ -73,7 +73,8 @@ def contour(V, ex, ez, near, far, eps, ey=None, Vs=None):
     dd = dist.copy(); okd = dd > 0   # №934 (HOR2): расстояние до точки контура по бинам (skyline), пустые азимуты — по соседям (как и высота)
     if okd.any(): x_ = np.arange(NB); dd = np.interp(x_, np.concatenate([x_[okd] - NB, x_[okd], x_[okd] + NB]), np.concatenate([dd[okd]] * 3))
     else: dd = np.full(NB, float(far))
-    return ey, sk, ids, (~np.isnan(top)).mean(), dd
+    fc = facade_cols(V, C, ex, ey, ez, near, far, top) if C is not None else None   # №997
+    return ey, sk, ids, (~np.isnan(top)).mean(), dd, fc
 
 
 def extract_landmark(V, x, z, r):
@@ -120,12 +121,57 @@ def pack4(a):
     return bytes((a[0::2] | (a[1::2] << 4)).astype(np.uint8).tobytes())
 
 
-def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None, near2=None):
+def facade_cols(V, C, ex, ey, ez, near, far, top, below=0.04, smooth=3):
+    """№997: цвет фасада, дающего кромку: по бинам азимута среднее цвета точек не ниже top − below (tan, ≈2,3° под самой высокой точкой бина) на расстоянии near..far; цвет точки — средний цвет
+    текстуры × вершинный цвет треугольника (свет запечён, приём tools/silh_export.py). Окно ±smooth бинов, пустые азимуты — по соседям. Возвращает (NB, 3) RGB 0..255."""
+    dx = V[:, 0] - ex; dz = V[:, 2] - ez; d = np.hypot(dx, dz)
+    m = (d >= near) & (d <= far)
+    dx, dz, d, y, c = dx[m], dz[m], d[m], V[m, 1], C[m]
+    az = (np.arctan2(dx, -dz) % (2 * np.pi)) / (2 * np.pi) * NB
+    ib = np.minimum(az.astype(np.int64), NB - 1); t = (y - ey) / d
+    tb = top[ib]; sel = t >= (np.nan_to_num(tb, nan=9.0) - below)
+    sums = np.zeros((NB, 3)); cnt = np.zeros(NB)
+    np.add.at(sums, ib[sel], c[sel]); np.add.at(cnt, ib[sel], 1.0)
+    k = np.ones(2 * smooth + 1)
+    def circ(v): return np.stack([np.convolve(np.r_[v[-smooth:, i], v[:, i], v[:smooth, i]], k, 'valid') for i in range(v.shape[1])], 1)
+    sums = circ(np.c_[sums]); cnt = circ(cnt[:, None])[:, 0]
+    ok = cnt > 0; out = np.full((NB, 3), 128.0)
+    if ok.any():
+        avg = sums[ok] / cnt[ok, None]; x = np.arange(NB)
+        for i in range(3): out[:, i] = np.interp(x, np.concatenate([x[ok] - NB, x[ok], x[ok] + NB]), np.concatenate([avg[:, i]] * 3))
+    return out
+
+
+def tri_colors(level, d, keep):
+    """№997: цвет каждого треугольника (после маски keep): средний цвет текстуры × средний вершинный цвет (байты +4..+6 вершины 16 Б; у 12-байтовой вершины цвета нет — 0,78)"""
+    import hlod_export
+    tc = hlod_export.tex_avg_colors(level); b = np.frombuffer(Path(level).read_bytes(), np.uint8)
+    T = d['TEX'][keep]; OFF = d['OFF'][keep]; VS = d['VS'][keep]; vc = np.zeros((len(T), 3))
+    for k in range(3):
+        o = OFF + k * VS; vc += b[o[:, None] + np.arange(4, 7)[None, :]]
+    vc = vc / 3.0 / 255.0; vc[VS != 16] = 0.78
+    return tc[np.clip(T, 0, len(tc) - 1)] * vc
+
+
+def palette16(cols, iters=14):
+    """16 цветов по всем вершинам контуров (Ллойд, начало — равномерные квантили по яркости)"""
+    X = np.asarray(cols, float); lum = X @ np.array([.3, .59, .11]); o = np.argsort(lum)
+    Cc = X[o[(np.linspace(0, 1, 16) * (len(X) - 1)).astype(int)]].copy()
+    for _ in range(iters):
+        idx = ((X[:, None, :] - Cc[None]) ** 2).sum(2).argmin(1)
+        for k in range(16):
+            if (idx == k).any(): Cc[k] = X[idx == k].mean(0)
+    idx = ((X[:, None, :] - Cc[None]) ** 2).sum(2).argmin(1)
+    return np.clip(np.round(Cc), 0, 255).astype(np.uint8), idx.astype(np.uint8)
+
+
+def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None, near2=None, C=None, lmcols=None):
     """HOR1: 'HOR1', ncells u32, radius f32, nlm u32, смещение таблицы ориентиров u32, 12 нулей | ячейки по 32 Б: cx, cz, ey f32, nv u32, off u32, 12 нулей | вершины контура 4 Б: az u16 (0..65535 = 0..360°), tan s16 (/16384)"""
-    tab = []; blob = bytearray(); dst = []   # dst: по две записи на клетку (основной контур, второй) — расстояния для DST1
+    tab = []; blob = bytearray(); dst = []; hcl = []   # dst: по две записи на клетку (основной контур, второй) — расстояния для DST1
     for (cx, cz) in cells:
-        ey, sk, ids, cov, dd = contour(V, cx, cz, near, far, eps, Vs=Vs)
+        ey, sk, ids, cov, dd, fc = contour(V, cx, cz, near, far, eps, Vs=Vs, C=C)
         if cov < 0.05: continue
+        hc0 = fc[np.minimum(ids, NB - 1)] if fc is not None else None; hc1 = None   # №997: цвета вершин контура
         dst.append(dq(dd[np.minimum(ids, NB - 1)])); dst2 = None
         off = len(blob)
         for i in ids:
@@ -133,13 +179,15 @@ def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None
             blob += struct.pack('<Hh', az, int(np.clip(round(sk[i] * 16384), -32768, 32767)))
         off2 = nv2 = 0
         if near2:   # №913: второй контур клетки (от near2 м) — для зон, где город держится дальше; p1 = смещение, p2 = число вершин
-            _, sk2, ids2, _, dd2 = contour(V, cx, cz, near2, far, eps, Vs=Vs, ey=ey)
+            _, sk2, ids2, _, dd2, fc2 = contour(V, cx, cz, near2, far, eps, Vs=Vs, ey=ey, C=C)
+            hc1 = fc2[np.minimum(ids2, NB - 1)] if fc2 is not None else None
             dst2 = dq(dd2[np.minimum(ids2, NB - 1)])
             off2 = len(blob); nv2 = len(ids2)
             for i in ids2:
                 az = int(round(i / NB * 65536)) & 0xffff if i < NB else 65535
                 blob += struct.pack('<Hh', az, int(np.clip(round(sk2[i] * 16384), -32768, 32767)))
         tab.append((cx, cz, ey, len(ids), off, gfn(cx, cz) if gfn else 0, off2, nv2)); dst.append(dst2 if dst2 is not None else np.zeros(0, np.uint8))
+        hcl.append((hc0, hc1))
     base = 32 + 32 * len(tab)
     out = bytearray(struct.pack('<4sIfII', b'HOR1', len(tab), radius, len(lms), base + len(blob)) + b'\0' * 12)   # +16: смещение таблицы ориентиров
     for (cx, cz, ey, nv, off, g, off2, nv2) in tab: out += struct.pack('<3fIIIII', cx, cz, ey, nv, base + off, g, (base + off2) if nv2 else 0, nv2)   # p0 = цвет дальней земли 0x00BBGGRR (0 — нет данных): земля ленты неотличима от земли рядом
@@ -154,7 +202,25 @@ def write_hor1(path, V, cells, near, far, eps, radius, lms=(), Vs=None, gfn=None
     # Движок ставит вершину в мировых координатах (cx + D sin a, ey + tan·D, cz − D cos a) и проецирует на цилиндр дальности с настоящего глаза (лента не прыгает при смене клетки на склоне: поправка высоты шла на радиусе 154 м, а дом стоит на D ≥ 300 м).
     # Четыре бита, а не байт: хвост 8 бит на вершину давал +21…60 КБ к horizon.shr (куча уровня хуже TEST59 на 0,04 МБ), 4 бита — вдвое меньше.
     # Формат: 'DST2', ncell u32, 8 нулей | u32 смещение массива клетки от начала хвоста × ncell | массивы (на клетку: ceil(nv/2) байт основного контура, затем ceil(p2/2) байт второго; младшая тетрада — чётная вершина) | добивка до 4 | подвал 16 Б 'DSTF', u32 смещение хвоста, 8 нулей
-    t0 = len(out); n_ = len(tab); hdr = bytearray(b'DST2' + struct.pack('<I', n_) + b'\0' * 8); arrs = bytearray(); cur = 16 + 4 * n_
+    # №997 HCL1: цвет фасада на каждой вершине контура (4 бита — номер цвета из палитры уровня на 16 цветов, как DST2), хвост ПЕРЕД DST2: смещение лежит в заголовке DST2 (байты 8..11, там были нули —
+    # прежний движок их не читает и читает файл как раньше). Формат: 'HCL1', ncell u32, 8 нулей | палитра 16 × (r, g, b, 0) | u32 смещение массива клетки от начала хвоста × ncell | массивы (на клетку: ceil(nv/2) байт основного контура,
+    # затем ceil(p2/2) байт второго; младшая тетрада — чётная вершина) | добивка до 4
+    hcl_off = 0
+    if C is not None and hcl:
+        allc = np.concatenate([x for pr in hcl for x in pr if x is not None]); pal, _ = palette16(allc)
+        def idxof(cv): return ((cv[:, None, :] - pal[None].astype(float)) ** 2).sum(2).argmin(1).astype(np.uint8)
+        hcl_off = len(out); hh = bytearray(b'HCL1' + struct.pack('<I', len(tab)) + b'\0' * 8)
+        for (r_, g_, b_) in pal: hh += bytes((int(r_), int(g_), int(b_), 0))
+        cur = len(hh) + 4 * len(tab); offs = bytearray(); arrs = bytearray()
+        for (h0_, h1_) in hcl:
+            a0 = pack4(idxof(h0_)) if h0_ is not None else b''; a1 = pack4(idxof(h1_)) if h1_ is not None else b''
+            offs += struct.pack('<I', cur); arrs += a0 + a1; cur += len(a0) + len(a1)
+        arrs += b'\0' * (-len(arrs) % 4)
+        lmb = b''.join(bytes((int(c[0]), int(c[1]), int(c[2]), 0)) for c in lmcols) if lmcols and len(lmcols) == len(lms) else b''   # цвет карточки каждого ориентира (r, g, b, 0), в порядке таблицы ориентиров
+        if lmb: struct.pack_into('<I', hh, 8, hcl_off + len(hh) + len(offs) + len(arrs))   # заголовок HCL1, байты 8..11: смещение цветов ориентиров от начала файла (0 — нет)
+        out += hh + offs + arrs + lmb
+        print('HCL1: палитра', [tuple(int(v) for v in c) for c in pal][:16], 'байт', len(hh) + len(offs) + len(arrs) + len(lmb), 'цветов ориентиров', len(lmb) // 4)
+    t0 = len(out); n_ = len(tab); hdr = bytearray(b'DST2' + struct.pack('<II', n_, hcl_off) + b'\0' * 4); arrs = bytearray(); cur = 16 + 4 * n_
     for i in range(n_):
         a0 = pack4(dst[2 * i]); a1 = pack4(dst[2 * i + 1]); hdr += struct.pack('<I', cur); arrs += a0 + a1; cur += len(a0) + len(a1)
     arrs += b'\0' * (-len(arrs) % 4)   # подвал 'DSTF' + смещение читаются как u32: хвост выровнен на 4 (PSP падает на невыровненном чтении, эмулятор прощает)
@@ -184,7 +250,7 @@ def main():
     ap = argparse.ArgumentParser(); ap.add_argument('level')
     ap.add_argument('--view'); ap.add_argument('--out', help='записать horizon.shr (HOR1) по сетке клеток'); ap.add_argument('--cell', type=float, default=150.); ap.add_argument('--lvl', type=int, default=0); ap.add_argument('--lmfile', default=str(Path(__file__).resolve().parent / 'horizon_landmarks.json')); ap.add_argument('--radius', type=float, default=260.); ap.add_argument('--ey', type=float, default=None, help='высота глаза, м; по умолчанию земля под точкой (медиана вершин в 15 м) + 2')
     ap.add_argument('--near2', type=float, default=0., help='второй контур клетки от этого радиуса (p1/p2 клетки HOR1): зоны 150 м при основном --near 130');
-    ap.add_argument('--near', type=float, default=200.); ap.add_argument('--far', type=float, default=1500.)
+    ap.add_argument('--nocolor', action='store_true', help='№997: без хвоста HCL1 (цвета фасадов дальних домов)'); ap.add_argument('--near', type=float, default=200.); ap.add_argument('--far', type=float, default=1500.)
     ap.add_argument('--eps', type=float, default=0.004); ap.add_argument('--png'); ap.add_argument('--nosky', action='store_true', help='без учёта мешей неба (прежнее: лента поверх неба)')
     a = ap.parse_args()
     d = shr7read.load(a.level, far=False, owner=0)
@@ -193,18 +259,23 @@ def main():
     Vs = None if a.nosky else (np.concatenate([d['P'][skym].reshape(-1, 3), d['P'][skym].mean(1)]) if skym.any() else None)
     V = d['P'][keep].reshape(-1, 3)
     V = np.concatenate([V, d['P'][keep].mean(1)])   # центры треугольников: крупные грани не теряют кромку
-    lms = []
+    Cv = None
+    if a.out and not a.nocolor:   # №997: цвет каждой точки V (вершины и центры треугольников) — средний цвет текстуры × свет вершин; режем вместе с V
+        ct = tri_colors(a.level, d, keep); Cv = np.concatenate([np.repeat(ct, 3, axis=0), ct])
+    lms = []; lmcols = []
     if a.out and a.lvl and Path(a.lmfile).exists():
         for (lx, lz, lr) in json.loads(Path(a.lmfile).read_text()).get(str(a.lvl), []):
             r = extract_landmark(V, lx, lz, lr)
+            if r and Cv is not None:   # №997: цвет карточки ориентира — средний цвет его точек (текстура × свет) выше основания
+                sel_ = (np.hypot(V[:, 0] - lx, V[:, 2] - lz) < max(lr, 14.)) & (V[:, 1] > r[2] + 1.0); lmcols.append(Cv[sel_].mean(0) if sel_.any() else np.array([128., 128., 128.]))
             if r: lms.append(r); print('ориентир', (lx, lz), '->', 'ось %.1f,%.1f основание %.1f высота %.1f точек профиля %d' % (r[0], r[1], r[2], r[3], len(r[4])))
             # из панорамы вырезаем геометрию ориентира: он рисуется отдельной карточкой в своих координатах (параллакс клетки не двигает его)
-            V = V[~((np.hypot(V[:, 0] - lx, V[:, 2] - lz) < max(lr, 14.)) & (V[:, 1] > (r[2] + 1.0 if r else -1e9)))]   # вырез шире профильного радиуса: рядом пристройки и остров
+            cut_ = ~((np.hypot(V[:, 0] - lx, V[:, 2] - lz) < max(lr, 14.)) & (V[:, 1] > (r[2] + 1.0 if r else -1e9))); V = V[cut_]; Cv = Cv[cut_] if Cv is not None else None   # вырез шире профильного радиуса: рядом пристройки и остров
     if a.out:
         mn = V.min(0); mx = V.max(0)
         xs = np.arange(np.floor(mn[0] / a.cell) * a.cell + a.cell / 2, mx[0], a.cell); zs = np.arange(np.floor(mn[2] / a.cell) * a.cell + a.cell / 2, mx[2], a.cell)
         gfn = ground_fn(a.level, d, keep)
-        write_hor1(a.out, V, [(float(x), float(z)) for x in xs for z in zs], a.near, a.far, a.eps, a.radius, lms, Vs, gfn, a.near2 or None); return
+        write_hor1(a.out, V, [(float(x), float(z)) for x in xs for z in zs], a.near, a.far, a.eps, a.radius, lms, Vs, gfn, a.near2 or None, Cv, lmcols); return
     ex, ez = [float(s) for s in a.view.split(',')]
     if a.ey is None:
         nb = V[np.hypot(V[:, 0] - ex, V[:, 2] - ez) < 15]

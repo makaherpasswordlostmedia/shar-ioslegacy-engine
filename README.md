@@ -19,10 +19,16 @@ No game files are included, and none will be.
 - [Tests](tests/README.md): how every fix is checked
 - [All documents](docs/index.md)
 
-## What's new in build 70
+## What's new in build 71
 
 October 26, 2026. Since the first release on October 22:
 
+- Camera settings: HEIGHT and DISTANCE on the pause CAMERA page, five steps each, for driving and on foot
+- Mission cards slide in with the hand without flashing first; message bubbles appear together with their text
+- Street lamps keep only their light cones, without glowing ellipses on the floor; the UFO on level 7 shines a cone of light down
+- Sparkles on gags and pickups are softer, and traffic outlines stay clean when seen from above
+- The Simpsons house icon shows in the corner only where the original mission calls for it
+- Distant city silhouettes take the hue of the buildings they stand for
 - Level 7 can be finished: the UFO and its tractor beam are in the world, so the "drive into the beam and get out" stages complete
 - On a real PSP-2000 an automated tour plays all 16 cutscenes and runs the ending to the credits
 - Cartoon mode is now the base look. Flat-color textures became vector fills, grass and sidewalks carry a fine paper-like grain, sidewalks are a cool gray. Curbs keep their original colors and the corner pieces match them; overly saturated warm ground is toned down a little. The original asphalt and road markings stay, a little lighter

@@ -10,6 +10,25 @@
 #include "horizon_chord.h"
 #include "far909.h"
 #include "hzzone913.h"
+// №997 (Роб 26.10 после TEST70: «вдали тяжело грузить родные текстуры, но можно на Маке понять, какого примерно цвета фасады дальних домов, и раскрасить их, как машины до текстур. Сейчас они в тон уровня, неплохо, но иногда палится»):
+// хвост HCL1 horizon.shr (tools/horizon_export.py, смещение в заголовке DST2) — цвет фасада на каждой вершине контура (средний цвет текстуры × свет вершин, палитра уровня 16 цветов, 4 бита на вершину).
+// Верх мировой ленты и карточки ориентиров красятся прежним тоном силуэта (fogCol, притемнённый), умноженным на относительный цвет фасада (фасад / среднее по палитре): оттенок виден, яркость остаётся яркостью дымки (ночью тёмная); влияние 90 % на 150 м → 50 % на 900 м, вдали почти прежнее.
+// Нет хвоста в файле (прежние данные) или HZCOL997_OLD=1 / файл hzcol997old рядом с EBOOT / «flag hzcol997 0» — лента прежнего тона. Цена: те же вершины и вызов, на клетку лишние 3 столбца цвета при пересборке
+#ifndef HZCOL997_OLD
+#define HZCOL997_OLD 0
+#endif
+#ifndef HZ_HC_W0
+#define HZ_HC_W0 90   // %: влияние цвета фасада на ближней границе (150 м)
+#endif
+#ifndef HZ_HC_W1
+#define HZ_HC_W1 50   // %: то же на 900 м и дальше
+#endif
+static unsigned hzFacadeCol(unsigned colT, unsigned f1, unsigned f2, float w2, float D);
+static void hzFacadeGain(unsigned f, float D, unsigned short *g3);
+static unsigned hzHcInv[3];   // №997: 256·65536 / среднее по палитре HCL1 (канал), считается один раз при загрузке: на колонку ленты — умножение, не деление
+static const unsigned char *hzLmCol;   // №997: цвета карточек ориентиров (r, g, b, 0) в хвосте HCL1, по таблице ориентиров (0 — нет)
+static int hzCol997Old = HZCOL997_OLD; static const unsigned char *hzHcl;   static unsigned hzTopSpread;   // №997 (гейт, только со смоуком): разброс цвета верхних вершин мировой ленты по столбцам, сумма СКО каналов ×10
+   // hzHcl — хвост HCL1 (0 — нет, лента прежняя)
 #define HZ_MAXV 1600   // №911: было 1400; вершин ленты на клетку до 4 × (контур + промежуточные по дуге)
 #define HZ_FADE 0.14f   // градиент: высота перехода в дымку под верхним краем контура, доля радиуса
 #define HZ_MAXLM 16
@@ -74,7 +93,7 @@ static unsigned short hzXaz[HZ_MAXV / 4]; static short hzXt[HZ_MAXV / 4]; static
 #endif
 static int hzWorldOn = !HZ_WORLD934_OLD; static const unsigned char *hzDst;   // hzDst — хвост DST2 (0 — нет, лента прежняя)
 static const float hzDq[16] = { 130.f, 154.7f, 184.1f, 219.1f, 260.7f, 310.2f, 369.2f, 439.3f, 522.8f, 622.1f, 740.3f, 880.9f, 1048.3f, 1247.5f, 1484.5f, 1766.5f };   // шкала расстояний DST2: 130 · 1,19^k
-typedef struct { int cell, set; unsigned stamp; float cx, cz, ey, D[HZ_RN + 1], t[HZ_RN + 1]; unsigned char km[HZ_RN + 1]; } HzRs;   // контур клетки на общей сетке азимутов: расстояние и tan по столбцам (8 Б на столбец) и отметка «столбец рисуется»
+typedef struct { int cell, set; unsigned stamp; float cx, cz, ey, D[HZ_RN + 1], t[HZ_RN + 1]; unsigned char km[HZ_RN + 1]; unsigned hc[HZ_RN + 1]; unsigned short gn[HZ_RN + 1][3]; } HzRs;   // gn — множители цвета фасада ×256 по каналам (№997), 0 — нет цвета   // контур клетки на общей сетке азимутов: расстояние и tan по столбцам (8 Б на столбец) и отметка «столбец рисуется»
 #define HZ_RSN 3   // клеток в кэше: у границы нужны две, третья — запас от перебора на углу; кэш 3 × 1,6 КБ (прежний 4 × 3,1 КБ с готовыми x, y, z стоил кучи уровня)
 static HzRs hzRs[HZ_RSN]; static unsigned hzRsTick; static float hzSinT[HZ_RN + 1], hzCosT[HZ_RN + 1]; static int hzSinInit;
 static HzVtx hzWV[4 * (HZ_RN + 1)] __attribute__((aligned(64))); static float hzWex, hzWey, hzWez, hzWR, hzWw2; static unsigned hzWnc = HZ_RN + 1; static unsigned hzWsig, hzWUsAcc, hzWUsN, hzWBuilds;
@@ -87,7 +106,7 @@ __attribute__((noinline)) static float hz913Apply(float dd, float ex, float ez, 
   float cap = HZ913_OLD ? FAR150_D : hz913Cap(ex, ez, dt);
   return ok && dd > cap && !hi ? cap : dd;
 }
-static void horizonFree(void) { if (!HZ_VB934_OLD) { free(hzVbBuf); hzVbBuf = 0; } hzDst = 0; for (int q = 0; q < HZ_RSN; q++) hzRs[q].cell = -1; hzWsig = 0; hzWex = hzWey = hzWez = 1e9f; hzWR = 0.f; free(hzZData); hzZData = 0; memset(&hzZ, 0, sizeof hzZ); memset(&hz913St, 0, sizeof hz913St); hzSetCur = -1; free(hzData); hzData = 0; hzN = 0; hzC = 0; hzL = 0; hzNL = 0; hzCur = -1; hzBldCell = -1; hzLevel = -99; }
+static void horizonFree(void) { if (!HZ_VB934_OLD) { free(hzVbBuf); hzVbBuf = 0; } hzDst = 0; hzHcl = 0; hzLmCol = 0; for (int q = 0; q < HZ_RSN; q++) hzRs[q].cell = -1; hzWsig = 0; hzWex = hzWey = hzWez = 1e9f; hzWR = 0.f; free(hzZData); hzZData = 0; memset(&hzZ, 0, sizeof hzZ); memset(&hz913St, 0, sizeof hz913St); hzSetCur = -1; free(hzData); hzData = 0; hzN = 0; hzC = 0; hzL = 0; hzNL = 0; hzCur = -1; hzBldCell = -1; hzLevel = -99; }
 static void horizonLoad(int level) {
   horizonFree(); hzLevel = level; // одна попытка на уровень: нет файла — молча без горизонта; №917: панорамы зон 250 м этого уровня (нет файла — как раньше)
   char fn[256]; levelFile(fn, "horizon.shr");
@@ -109,7 +128,12 @@ static void horizonLoad(int level) {
     if (!(t0 & 3) && t0 + 16ull + 4ull * n <= (unsigned)sz - 16 && !memcmp(m + t0, "DST2", 4) && *(unsigned *)(m + t0 + 4) == n) {
       int ok = 1; for (unsigned i = 0; i < n && ok; i++) { const HzCell *c = (const HzCell *)(m + 32) + i; unsigned o0 = *(unsigned *)(m + t0 + 16 + 4 * i);
         if (c->nv < 2 || t0 + (unsigned long long)o0 + (c->nv + 1) / 2 + (c->p2 + 1) / 2 > (unsigned)sz - 16) ok = 0; }
-      if (ok) hzDst = m + t0; } }
+      if (ok) hzDst = m + t0;
+      if (ok) { unsigned ho = *(unsigned *)(m + t0 + 8);   // №997: хвост HCL1 перед DST2 (смещение в заголовке DST2; 0 — нет)
+        if (ho && !(ho & 3) && ho + 80ull + 4ull * n <= t0 && !memcmp(m + ho, "HCL1", 4) && *(unsigned *)(m + ho + 4) == n) {
+          int ok2 = 1; for (unsigned i = 0; i < n && ok2; i++) { const HzCell *c = (const HzCell *)(m + 32) + i; unsigned o0 = *(unsigned *)(m + ho + 80 + 4 * i);
+            if (ho + (unsigned long long)o0 + (c->nv + 1) / 2 + (c->p2 + 1) / 2 > t0) ok2 = 0; }
+          if (ok2) { hzHcl = m + ho; for (int c = 0; c < 3; c++) { unsigned sm_ = 0; for (int k = 0; k < 16; k++) sm_ += m[ho + 16 + 4 * k + c]; hzHcInv[c] = 16u * 256u * 4096u / (sm_ + 16u); } unsigned lmo = *(unsigned *)(m + ho + 8); if (nl && lmo && !(lmo & 3) && lmo + 4ull * nl <= t0) hzLmCol = m + lmo; } } } } }
   hzData = m; hzSize = (unsigned)sz; hzN = n; hzC = (const HzCell *)(m + 32); hzNL = nl; hzL = nl ? (const HzLm *)(m + lo) : 0; if (r > 50.f && r < 1000.f) hzR = r;
   if (smkOn) { char s_[96]; snprintf(s_, sizeof s_, "HZLOAD level=%d bytes=%u dst=%d free=%u\n", level, (unsigned)sz, hzDst != 0, heapFreeBytes()); smkWrite(s_); }   // №934: куча сразу после загрузки ленты (точные байты; гейт кучи сверяет с базой)
   { char zn[256]; levelFile(zn, "hzzone.bin"); SceUID zf = sceIoOpen(zn, PSP_O_RDONLY, 0);   // №913: таблица зон дальности ('HZN1', w, h u32, x0, z0, шаг f32, w·h байт)
@@ -222,9 +246,10 @@ static void horizonLmDraw(float ex, float ey, float ez, unsigned col) {
     float Dp = D < drawDist + 4.f ? D : drawDist + 4.f, s = Dp / D, ux = dx / D, uz = dz / D, rx = -uz, rz = ux;
     float bx = ux * Dp, bz = uz * Dp, by = (l->y0 - ey) * s;
     const unsigned char *pp = hzData + l->off; unsigned n = l->np;
+    unsigned lc = col; if (hzLmCol && !hzCol997Old && q < hzNL) { unsigned c4 = *(const unsigned *)(hzLmCol + 4 * q) & 0xffffffu; if (c4) lc = hzFacadeCol(col, c4, 0u, 0.f, D); }   // №997: карточка ориентира — цвет его фасада, смешанный с прежним тоном по расстоянию
     for (unsigned m = 0; m < n; m++) {
       float r = (float)*(const unsigned short *)(pp + 4 * m) * 0.01f * s, h = (float)*(const unsigned short *)(pp + 4 * m + 2) * 0.01f * s;
-      HzVtx a = {col, bx - rx * r, by + h, bz - rz * r}, b = {col, bx + rx * r, by + h, bz + rz * r};
+      HzVtx a = {lc, bx - rx * r, by + h, bz - rz * r}, b = {lc, bx + rx * r, by + h, bz + rz * r};
       if (!m && k) { v[k] = v[k - 1]; v[k + 1] = a; k += 2; }   // стык полос: вырожденные треугольники (последняя вершина предыдущей и первая этой повторены)
       v[k++] = a; v[k++] = b;
     }
@@ -239,12 +264,13 @@ static unsigned hzColTop(unsigned col, unsigned colB, float tt) {
 }
 // контур клетки (вершины az/tan/D) на общей сетке азимутов 2°, считается на лету при сборке ленты: без кэша клеток (кэш на 4 клетки стоил 12 КБ образа и 100 мкс на смену клетки; куча уровня не хуже TEST59).
 // HzCv — просмотр контура одной клетки: k растёт вместе с j (столбцы идут по возрастанию азимута), значения D и tan — линейно между вершинами
-typedef struct { const HzCell *c; const unsigned char *p, *dd; unsigned nv, k; } HzCv;
+typedef struct { const HzCell *c; const unsigned char *p, *dd, *hq; unsigned nv, k; } HzCv;   // hq — тетрады цвета фасада вершин (№997), 0 — нет
 static void hzCvInit(HzCv *v, int ci, int set) {
   v->c = &hzC[ci]; v->nv = set ? v->c->p2 : v->c->nv; v->p = hzData + (set ? v->c->p1 : v->c->off); v->k = 0;
   v->dd = hzDst + *(const unsigned *)(hzDst + 16 + 4 * ci) + (set ? (v->c->nv + 1) / 2 : 0);   // тетрады: младшая — чётная вершина
+  v->hq = hzHcl ? hzHcl + *(const unsigned *)(hzHcl + 80 + 4 * ci) + (set ? (v->c->nv + 1) / 2 : 0) : 0;
 }
-static void hzCvAt(HzCv *v, int j, float *Dp, float *tp) {
+static void hzCvAt(HzCv *v, int j, float *Dp, float *tp, unsigned *cp) {
   const unsigned char *p = v->p, *dd = v->dd; unsigned nv = v->nv, k = v->k; float aj = (float)j * (65536.f / HZ_RN);
   while (k < nv && (float)*(const unsigned short *)(p + 4 * k) <= aj) k++;   // k — число вершин с азимутом ≤ aj
   v->k = k; unsigned k0 = k ? k - 1 : nv - 1, k1 = k < nv ? k : 0; float a0 = (float)*(const unsigned short *)(p + 4 * k0), a1 = (float)*(const unsigned short *)(p + 4 * k1);
@@ -252,6 +278,9 @@ static void hzCvAt(HzCv *v, int j, float *Dp, float *tp) {
   float f = a1 > a0 ? (aj - a0) / (a1 - a0) : 0.f, t0 = (float)*(const short *)(p + 4 * k0 + 2), t1 = (float)*(const short *)(p + 4 * k1 + 2);
   float D0 = hzDq[(dd[k0 >> 1] >> ((k0 & 1) << 2)) & 15], D1 = hzDq[(dd[k1 >> 1] >> ((k1 & 1) << 2)) & 15];
   *tp = (t0 + (t1 - t0) * f) * (1.f / 16384.f); *Dp = D0 + (D1 - D0) * f;
+  if (cp && v->hq) {   // №997: цвет фасада — палитра уровня, линейно между вершинами; 0x00BBGGRR
+    const unsigned char *q0 = hzHcl + 16 + 4 * ((v->hq[k0 >> 1] >> ((k0 & 1) << 2)) & 15), *q1 = hzHcl + 16 + 4 * ((v->hq[k1 >> 1] >> ((k1 & 1) << 2)) & 15); unsigned fq = (unsigned)(f * 256.f);
+    *cp = (((q0[2] * (256u - fq) + q1[2] * fq) >> 8) << 16) | (((q0[1] * (256u - fq) + q1[1] * fq) >> 8) << 8) | ((q0[0] * (256u - fq) + q1[0] * fq) >> 8); }
 }
 static void hzCvMark(const HzCv *v, unsigned char *km) { for (unsigned q = 0; q < v->nv; q++) { int j = (int)((float)*(const unsigned short *)(v->p + 4 * q) * (HZ_RN / 65536.f) + 0.5f); km[j > HZ_RN ? HZ_RN : j] = 1; } }   // столбец у каждой вершины контура
 // контур клетки на общей сетке (кэш на HZ_RSN клеток, заполнение один раз на клетку и набор контура ≈ 100 мкс)
@@ -260,9 +289,22 @@ static HzRs *hzResample(int ci, int set) {
   for (int q = 0; q < HZ_RSN; q++) if (hzRs[q].cell == ci && hzRs[q].set == set) { hzRs[q].stamp = hzRsTick; return &hzRs[q]; }
   for (int q = 1; q < HZ_RSN; q++) if (hzRs[q].cell < 0 || (r->cell >= 0 && hzRs[q].stamp < r->stamp)) r = &hzRs[q];
   HzCv v; hzCvInit(&v, ci, set); r->cell = ci; r->set = set; r->stamp = hzRsTick; r->cx = v.c->cx; r->cz = v.c->cz; r->ey = v.c->ey;
-  for (int j = 0; j <= HZ_RN; j++) { hzCvAt(&v, j, &r->D[j], &r->t[j]); r->km[j] = HZ_WCOLS934_OLD || j == 0 || j == HZ_RN || j % HZ_WFILL == 0; }
+  for (int j = 0; j <= HZ_RN; j++) { r->hc[j] = 0; hzCvAt(&v, j, &r->D[j], &r->t[j], &r->hc[j]); if (r->hc[j]) hzFacadeGain(r->hc[j], r->D[j], r->gn[j]); else r->gn[j][0] = r->gn[j][1] = r->gn[j][2] = 0; r->km[j] = HZ_WCOLS934_OLD || j == 0 || j == HZ_RN || j % HZ_WFILL == 0; }
   if (!HZ_WCOLS934_OLD) hzCvMark(&v, r->km);
   return r;
+}
+// №997: цвет верха ленты и карточек ориентиров: прежний тон силуэта colT (fogCol, притемнённый — он уже несёт свет уровня, ночью тёмный), умноженный на ОТНОСИТЕЛЬНЫЙ цвет фасада (цвет фасада / среднее по палитре уровня,
+// 0,5…1,8 по каналам): оттенок дома виден, яркость остаётся яркостью дымки (сырые цвета фасада светлее ночной дымки и «выпрыгивали» бы). Доля влияния фасада 90 % на 150 м → 50 % на 900 м и дальше. 0x00BBGGRR → 0xffBBGGRR
+static void hzFacadeGain(unsigned f, float D, unsigned short *g3) {   // множители ×256 по каналам для цвета фасада f на расстоянии D (один раз на клетку и столбец при пересчёте контура, не на кадр ленты)
+  float u = (D - 150.f) * (1.f / 750.f); u = u < 0.f ? 0.f : u > 1.f ? 1.f : u; int w = (int)(HZ_HC_W0 + (float)((int)HZ_HC_W1 - (int)HZ_HC_W0) * u + .5f);   // влияние фасада, %
+  for (int sh = 0, c = 0; sh <= 16; sh += 8, c++) { int rel = (int)((((f >> sh) & 255u) * hzHcInv[c]) >> 12); rel = rel < 128 ? 128 : rel > 460 ? 460 : rel; g3[c] = (unsigned short)(256 + (rel - 256) * w / 100); }
+}
+static unsigned hzMulGain(unsigned colT, const unsigned short *g3) {
+  unsigned o = 0xff000000u; for (int sh = 0, c = 0; sh <= 16; sh += 8, c++) { unsigned v = (((colT >> sh) & 255u) * g3[c]) >> 8; o |= (v > 255u ? 255u : v) << sh; } return o;
+}
+static unsigned hzFacadeCol(unsigned colT, unsigned f1, unsigned f2, float w2, float D) {   // одиночный цвет (карточки ориентиров, до 16 на кадр)
+  unsigned short g[3], h[3]; hzFacadeGain(f1, D, g); if (f2) { hzFacadeGain(f2, D, h); unsigned q2 = (unsigned)(w2 * 256.f); for (int c = 0; c < 3; c++) g[c] = (unsigned short)((g[c] * (256u - q2) + h[c] * q2) >> 8); }
+  return hzMulGain(colT, g);
 }
 // мировая лента: две ближайшие клетки (i1 — ближняя, i2 — вторая, или −1), вес второй w2 (0…0,5), глаз (ex, ey, ez); до 4 × (HZ_RN + 1) вершин в hzWV, полосы A и B как у прежней ленты
 static void hzWorldBuild(int i1, int i2, float w2, float ex, float ey, float ez, unsigned col, float R) {
@@ -277,10 +319,16 @@ static void hzWorldBuild(int i1, int i2, float w2, float ex, float ey, float ez,
     if (r2) { float D2 = r2->D[j], t2 = r2->t[j]; px += (r2->cx + D2 * hzSinT[j] - px) * w2; py += (r2->ey + t2 * D2 - py) * w2; pz += (r2->cz - D2 * hzCosT[j] - pz) * w2; tt += (t2 - tt) * w2; }
     float dx = px - ex, dz = pz - ez, dh2 = dx * dx + dz * dz, s = R / sqrtf(dh2 > 1.f ? dh2 : 1.f), xr = dx * s, zr = dz * s, yt = (py - ey) * s, ym = yt - fade;
     if (ym < bot || !gr) ym = bot;   // без градиента полоса A тянется от верха до низа
-    unsigned colT = hzColTop(col, colB, tt);
+    unsigned colF = col;   // №997: тон силуэта над горизонтом — цвет фасада дальнего дома, смешанный с прежним тоном; ниже горизонта (дальняя земля) остаётся прежний цвет земли (hzColTop смешивает по углу места)
+    if (hzHcl && !hzCol997Old && r1->gn[j][0]) { unsigned short g[3] = { r1->gn[j][0], r1->gn[j][1], r1->gn[j][2] };
+      if (r2 && r2->gn[j][0]) { unsigned q2 = (unsigned)(w2 * 256.f); for (int c = 0; c < 3; c++) g[c] = (unsigned short)((g[c] * (256u - q2) + r2->gn[j][c] * q2) >> 8); }
+      colF = hzMulGain(col, g); }
+    unsigned colT = hzColTop(colF, colB, tt);
     hzWV[2 * o] = (HzVtx){colT, xr, yt, zr}; hzWV[2 * o + 1] = (HzVtx){colB, xr, ym, zr};
     hzWV[2 * NC + 2 * o] = (HzVtx){colB, xr, ym, zr}; hzWV[2 * NC + 2 * o + 1] = (HzVtx){colB, xr, bot, zr}; o++;
   }
+  if (smkOn && o) { float sm[3] = {0, 0, 0}, sq[3] = {0, 0, 0}; for (unsigned q = 0; q < o; q++) for (int c = 0; c < 3; c++) { float v = (float)((hzWV[2 * q].c >> (8 * c)) & 255u); sm[c] += v; sq[c] += v * v; }
+    float tot = 0.f; for (int c = 0; c < 3; c++) { float m = sm[c] / (float)o, var = sq[c] / (float)o - m * m; tot += sqrtf(var > 0.f ? var : 0.f); } hzTopSpread = (unsigned)(tot * 10.f); }
 }
 // №934 диагностика (smoke, «flag hztrace 2»): кромка нарисованной ленты — угол места (градусы ×100, целое) на 72 азимутах через 5° от глаза; по строкам HZE гейт tests/horizon/hz934.sh считает скачок между соседними шагами глаза. k, dy — масштаб и сдвиг матрицы прежней ленты (мировая: 1, 0)
 static void hzTraceEdge(const HzVtx *V, unsigned nc, int wr, float k, float dy, float ex, float ey, float ez) {
@@ -318,7 +366,7 @@ static void horizonDraw(float ex, float ey, float ez) {
   unsigned nvc, nv4; HzVtx *v;
   if (world) {   // вершины пересчитываются, когда глаз сдвинулся больше HZ_WSTEP, сменились клетки/вес/цвет/дальность; иначе копия прежних
     float R = drawDist + 4.f, w2 = 0.f; if (second >= 0) { float da = sqrtf(bd), db = sqrtf(bd2), t = (da + HZ_WBAND - db) * (1.f / HZ_WBAND); w2 = 0.5f * (t >= 1.f ? 1.f : t > 0.f ? t : 0.f); }
-    unsigned fog = hzFogCol(), sig = (unsigned)best * 2654435761u ^ (unsigned)(second + 1) * 40503u ^ col ^ (fog * 31u) ^ ((unsigned)hzSetWant << 20) ^ (unsigned)hzGrad() * 77u;
+    unsigned fog = hzFogCol(), sig = (unsigned)best * 2654435761u ^ (unsigned)(second + 1) * 40503u ^ col ^ (fog * 31u) ^ ((unsigned)hzSetWant << 20) ^ (unsigned)hzGrad() * 77u ^ (hzHcl && !hzCol997Old ? 0x9b3u : 0u);
     float mx_ = ex - hzWex, my_ = ey - hzWey, mz_ = ez - hzWez;
     if (sig != hzWsig || R != hzWR || mx_ * mx_ + my_ * my_ + mz_ * mz_ > HZ_WSTEP * HZ_WSTEP) {
       unsigned tw0 = sceKernelGetSystemTimeLow(); hzWorldBuild(best, second, w2, ex, ey, ez, col, R); hzWex = ex; hzWey = ey; hzWez = ez; hzWR = R; hzWw2 = w2; hzWsig = sig;
@@ -337,5 +385,5 @@ static void horizonDraw(float ex, float ey, float ez) {
   if (hzNL && hzLmOn) { ScePspFMatrix4 id; memset(&id, 0, sizeof id); id.x.x = id.y.y = id.z.z = id.w.w = 1.f; sceGuSetMatrix(GU_MODEL, &id); if (HZ_LM928_OLD) horizonLmDrawOld(ex, ey, ez, col); else horizonLmDraw(ex, ey, ez, col); }
   resetState();
   unsigned us_ = sceKernelGetSystemTimeLow() - t0_; hzUsAcc += us_; if (us_ > hzUsMax) hzUsMax = us_;
-  if (++hzUsN >= 30) { if (smkOn) { char s[128]; snprintf(s, sizeof s, "HORIZON cost level=%d avg_us=%u max_us=%u frames=%u verts=%u calls=%u drawDist=%.0f world=%d wus=%u builds=%u\n", gameLevel, hzUsAcc / hzUsN, hzUsMax, hzUsN, hzVerts, hzCalls, drawDist, hzWorldOn && hzDst != 0, hzWUsN ? hzWUsAcc / hzWUsN : 0u, hzWBuilds); hzWUsAcc = hzWUsN = 0; hzWBuilds = 0; smkWrite(s); } hzUsAcc = hzUsN = hzUsMax = 0; }
+  if (++hzUsN >= 30) { if (smkOn) { char s[224]; snprintf(s, sizeof s, "HORIZON cost level=%d avg_us=%u max_us=%u frames=%u verts=%u calls=%u drawDist=%.0f world=%d wus=%u builds=%u hcl=%d hcold=%d spread=%u\n", gameLevel, hzUsAcc / hzUsN, hzUsMax, hzUsN, hzVerts, hzCalls, drawDist, hzWorldOn && hzDst != 0, hzWUsN ? hzWUsAcc / hzWUsN : 0u, hzWBuilds, hzHcl != 0, hzCol997Old, hzTopSpread); hzWUsAcc = hzWUsN = 0; hzWBuilds = 0; smkWrite(s); } hzUsAcc = hzUsN = hzUsMax = 0; }
 }

@@ -433,6 +433,7 @@ void fxSparkle(float x, float y, float z, float size, float phase) { fxSparkleC(
 #define GLINT970_OLD 0
 #endif
 int fxGlint970Old = GLINT970_OLD;
+int fxBling989 = !BLING989_OLD;   // №989 (fx.h)
 #ifndef COIN_SAT_N
 #define COIN_SAT_N 3
 #endif

@@ -165,8 +165,19 @@ enum { UI_POP_PILL = 3 };
 #define UI_BUB_DT_CAP        0.04f   // с: самый большой шаг возраста за кадр (25 к/с); подвисший кадр не пропускает шаги
 #define UI_BUB_STEPS 8
 static const float UI_BUB_K[UI_BUB_STEPS] = {0.25f, 0.525f, 0.595f, 0.70f, 0.77f, 0.86f, 0.935f, 0.998f};
+// №992 (Роб 26.10 после TEST70: «бабл появляется прикольно, но всё равно не синхронизирован с текстом. Меньше анимации в появлении у бабла и больше синхронизации с текстом»):
+// появление короче и спокойнее — 3 шага по 1/50 с (0,06 с) вместо 8 (0,16 с), старт 0,88 вместо 0,25; текст и аватар едут ВМЕСТЕ с рамкой (тот же масштаб и та же прозрачность, без задержки
+// BUB_CONTENT_DELAY и без сдвига справа налево): с первого кадра виден весь пузырь. Раскладка текста конечная (ширина зоны текста не сжимается), кегль и место не тронуты.
+// BUBBLE992_OLD=1 / файл bubble992old рядом с EBOOT / flag bubble992 0 (uiBubble992Old) — как в TEST70 (№942: 8 шагов, содержимое после раскрытия рамки)
+#ifndef BUBBLE992_OLD
+#define BUBBLE992_OLD 0
+#endif
+extern int uiBubble992Old;   // ui.c: 1 — появление как в TEST70
+#define UI_BUB992_STEPS 3
+static const float UI_BUB992_K[UI_BUB992_STEPS] = {0.88f, 0.94f, 0.98f};
 static inline float uiBubScale(float t) {
   int i = (int)floorf((t < 0.f ? 0.f : t) * 50.f + 1e-4f);
+  if (!uiBubble992Old) return i >= UI_BUB992_STEPS ? 1.f : UI_BUB992_K[i];
   return i >= UI_BUB_STEPS ? 1.f : UI_BUB_K[i];
 }
 #define UI_PILL_STEPS 4

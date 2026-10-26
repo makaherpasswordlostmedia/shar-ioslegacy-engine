@@ -13,6 +13,7 @@ const char *msnartWantIcon(void);                     // №958б: имя зна
 void msnartMissionStart(void);                    // новая миссия: записи прошлой выгружаются (уровня — остаются)
 extern int (*msnartRoom)(unsigned);              // №637: освободить далёкие клетки под запись; 1 — цельный кусок нужного размера есть
 void msnartPump(void);                            // раз в кадр: асинхронное чтение очереди записей (sceIoReadAsync)
+int  msnartIconPixOk(void);                      // №993: диагностика — пиксели в углу те, что просит миссия
 int  msnartImage(const char *name);               // 1 = есть значок задания (SetHUDIcon, msnicons) с этим именем
 void msnartSetObjIcon(const char *name);          // значок в рамку задания HUD (ui.c: UI_OBJICON_EXTERNAL); NULL — нет
 int  msnartImageData(const char *name, const void **pix, int *tw, int *th, int *w, int *h);   // 1 = картинка (брифинг) загружена
@@ -45,6 +46,9 @@ int msnartFlat(const char *name, MsnartFlat *f);
 // №805: луч (рисунок с «beam» в имени — UfoBeam L7): билборд к камере сложением рисует main векторным конусом с эллипсом на земле;
 // p — центр квада, X — половина ширины (горизонталь), Y — половина высоты, abgr — цвет кадра. 0 — рисовать картинкой, как было
 extern int (*msnartVecBeam)(const float p[3], const float X[3], const float Y[3], unsigned abgr);
+// №995: свет под тарелкой одним конусом от днища до земли (ставит main: lightsprite.h beam995Draw); ufo — центр тарелки. 1 — нарисован, картинку луча UfoBeam не рисовать; 0 — рисовать, как было
+extern unsigned mvBeamUs, mvBeamN;   // №995 служебно (msn_view.c)
+extern int (*msnartBeam995)(const float ufo[3], float ex, float ey, float ez);
 // №839: размытые свечения значков и предметов (квады сложением) — нашим векторным бликом (ставит main: spritelight.h glowGlintHook); p — центр
 // самого крупного квада свечения, w — его ширина, c1/c2 — цвет двух крупных (ABGR кадра), a — альфа кадра. 0 — картинкой, как было
 extern int (*msnartGlowGlint)(const char *name, const float p[3], float w, unsigned c1, unsigned c2, float a, float ex, float ey, float ez);

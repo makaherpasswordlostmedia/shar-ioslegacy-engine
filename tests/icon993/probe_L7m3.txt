@@ -1,0 +1,26 @@
+# №993 зонд: L7, NEW GAME, затем миссия 3 так, как в туре (F_967_L7M3): значок угла по секундам, pixok = пиксели те, что просит миссия
+flag menu
+flag lvset 7
+wait 1.5
+press cross
+wait 25
+flag msnhud 1
+shot a0_start
+flag msnmainat 202
+wait 0.2
+flag msnhud 1
+wait 0.6
+flag msnhud 1
+press cross 0.2
+wait 0.3
+flag msnhud 1
+wait 1.2
+flag msnhud 1
+shot a1_brief
+wait 1
+flag msnhud 1
+shot a2_after
+wait 3
+flag msnhud 1
+shot a3_late
+end

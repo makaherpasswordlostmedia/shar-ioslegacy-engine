@@ -1,0 +1,39 @@
+# №993 матрица: NEW GAME на уровне 1, затем смена миссии (MISSION SELECT, тот же путь mvSwitchTo): пузырь задания внизу, угол по секундам (MSNICON want/home)
+flag menu
+flag lvset 1
+wait 1.5
+press cross
+wait 14
+flag icon993 0
+flag msnhud 1
+flag msnsel 2
+wait 0.4
+flag msnhud 1
+wait 1.2
+flag msnhud 1
+shot s2a
+wait 2
+flag msnhud 1
+wait 3
+flag msnhud 1
+flag msnsel 3
+wait 0.4
+flag msnhud 1
+wait 1.2
+flag msnhud 1
+shot s3a
+wait 2
+flag msnhud 1
+wait 3
+flag msnhud 1
+flag msnsel 4
+wait 0.4
+flag msnhud 1
+wait 1.2
+flag msnhud 1
+shot s4a
+wait 2
+flag msnhud 1
+wait 3
+flag msnhud 1
+end

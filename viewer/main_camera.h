@@ -520,6 +520,7 @@ static void chaseCamUpdate(const Car *c, float yawOfs, float dt, float cam[3], f
     }
     tgtY = lift + cd->ty; tgtF = cd->tz;
   } else { back = c->p.camMag * sinf(c->p.camElev) + s->pull; eyeH = CAM_TGT_H + c->p.camMag * cosf(c->p.camElev); }   // прежнее: ближний (CAR1 v2)
+  if (chaseView != 2) { back *= homerCamUserD; eyeH = tgtY + (eyeH - tgtY) * homerCamUserH; }   // №996: Distance и Height страницы CAMERA (дальше стены считают уже новый глаз); бампер — глаз у кузова, не трогаем
   chaseInfo.name = c->p.name; chaseInfo.ps2 = cd != 0; chaseInfo.wall = 1.f; chaseInfo.back = back; chaseInfo.eye = eyeH; chaseInfo.need = roadNeed;
   chaseInfo.tgtY = tgtY; chaseInfo.tgtF = tgtF;
   cam[0] = ax - sinf(s->yaw) * back; cam[2] = az - cosf(s->yaw) * back; cam[1] = ay + eyeH;

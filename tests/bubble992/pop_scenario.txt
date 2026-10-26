@@ -1,0 +1,184 @@
+# №992: кадры появления пузыря по возрасту (как №942: часы HUD стоят, шаг 0,02 с = кадр 50 к/с): s — короткий, m — 3 строки, a — короткий с аватаром, l — длинный с аватаром (VEHICLE DESTROYED, 5 строк)
+scene g646
+flag msn
+wait 1.5
+flag uiclk 1
+wait 0.3
+# s: возраст 0..0.24 с
+flag uipopmsgh 0
+wait 0.5
+shot s_00
+flag uiclkadv 0.02
+wait 0.25
+shot s_01
+flag uiclkadv 0.02
+wait 0.25
+shot s_02
+flag uiclkadv 0.02
+wait 0.25
+shot s_03
+flag uiclkadv 0.02
+wait 0.25
+shot s_04
+flag uiclkadv 0.02
+wait 0.25
+shot s_05
+flag uiclkadv 0.02
+wait 0.25
+shot s_06
+flag uiclkadv 0.02
+wait 0.25
+shot s_07
+flag uiclkadv 0.02
+wait 0.25
+shot s_08
+flag uiclkadv 0.02
+wait 0.25
+shot s_09
+flag uiclkadv 0.02
+wait 0.25
+shot s_10
+flag uiclkadv 0.02
+wait 0.25
+shot s_11
+flag uiclkadv 0.02
+wait 0.25
+shot s_12
+flag uiclkadv 1.0
+wait 0.3
+flag uiclkadv 1.0
+wait 0.3
+# m: возраст 0..0.24 с
+flag uipopmsgh 3
+wait 0.5
+shot m_00
+flag uiclkadv 0.02
+wait 0.25
+shot m_01
+flag uiclkadv 0.02
+wait 0.25
+shot m_02
+flag uiclkadv 0.02
+wait 0.25
+shot m_03
+flag uiclkadv 0.02
+wait 0.25
+shot m_04
+flag uiclkadv 0.02
+wait 0.25
+shot m_05
+flag uiclkadv 0.02
+wait 0.25
+shot m_06
+flag uiclkadv 0.02
+wait 0.25
+shot m_07
+flag uiclkadv 0.02
+wait 0.25
+shot m_08
+flag uiclkadv 0.02
+wait 0.25
+shot m_09
+flag uiclkadv 0.02
+wait 0.25
+shot m_10
+flag uiclkadv 0.02
+wait 0.25
+shot m_11
+flag uiclkadv 0.02
+wait 0.25
+shot m_12
+flag uiclkadv 1.0
+wait 0.3
+flag uiclkadv 1.0
+wait 0.3
+# a: возраст 0..0.24 с
+flag uipopmsgh 5
+wait 0.5
+shot a_00
+flag uiclkadv 0.02
+wait 0.25
+shot a_01
+flag uiclkadv 0.02
+wait 0.25
+shot a_02
+flag uiclkadv 0.02
+wait 0.25
+shot a_03
+flag uiclkadv 0.02
+wait 0.25
+shot a_04
+flag uiclkadv 0.02
+wait 0.25
+shot a_05
+flag uiclkadv 0.02
+wait 0.25
+shot a_06
+flag uiclkadv 0.02
+wait 0.25
+shot a_07
+flag uiclkadv 0.02
+wait 0.25
+shot a_08
+flag uiclkadv 0.02
+wait 0.25
+shot a_09
+flag uiclkadv 0.02
+wait 0.25
+shot a_10
+flag uiclkadv 0.02
+wait 0.25
+shot a_11
+flag uiclkadv 0.02
+wait 0.25
+shot a_12
+flag uiclkadv 1.0
+wait 0.3
+flag uiclkadv 1.0
+wait 0.3
+# l: возраст 0..0.24 с
+flag uipopmsgh 4
+wait 0.5
+shot l_00
+flag uiclkadv 0.02
+wait 0.25
+shot l_01
+flag uiclkadv 0.02
+wait 0.25
+shot l_02
+flag uiclkadv 0.02
+wait 0.25
+shot l_03
+flag uiclkadv 0.02
+wait 0.25
+shot l_04
+flag uiclkadv 0.02
+wait 0.25
+shot l_05
+flag uiclkadv 0.02
+wait 0.25
+shot l_06
+flag uiclkadv 0.02
+wait 0.25
+shot l_07
+flag uiclkadv 0.02
+wait 0.25
+shot l_08
+flag uiclkadv 0.02
+wait 0.25
+shot l_09
+flag uiclkadv 0.02
+wait 0.25
+shot l_10
+flag uiclkadv 0.02
+wait 0.25
+shot l_11
+flag uiclkadv 0.02
+wait 0.25
+shot l_12
+flag uiclkadv 1.0
+wait 0.3
+flag uiclkadv 1.0
+wait 0.3
+flag uiclk 0
+end

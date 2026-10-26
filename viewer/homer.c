@@ -1212,6 +1212,7 @@ int homerCamCarOld = HOMER_CAMCAR982_OLD; float homerCamCarTop = -1e9f;
 int homerFlipHold, homerFlipBusyOld = HOMER_FLIPBUSY_OLD;   // №947б: 1 — перескок камеры у стены не замораживает курс управления
 int homerExitYawOld = HOMER_EXITYAW_OLD; int homerCtrlFreezeOld = HOMER_CTRL_FREEZE_OLD; float homerCtrlYaw; int homerCtrlOn, homerCamBusy;
 int homerCamWallOff;   // служебное (красный контроль tests/camera): камера пешком без обхода стен
+float homerCamUserD = 1.f, homerCamUserH = 1.f;   // №996 (homer.h)
 float homerCamDist = HOMER_CAM_DIST, homerCamEyeH = HOMER_CAM_EYE_H, homerCamLookH = HOMER_CAM_LOOK_H;   // красный контроль правки 167: прежние 4.2 / 1.9 / 1.2
 int camOverGround(const ColWorld *w, float x, float z, float y) {   // под точкой (x, z) опора коллизии не ниже 40 м под глазом
   float gy; return colGround(w, x, z, y + .5f, y - 40.f, &gy, 0);
@@ -1243,6 +1244,7 @@ static void homerCameraAt(Homer *H, const ColWorld *w, float dt, float eye[3], f
     }
     if (H->camHoldD > 0.f) { camD = H->camHoldD; camE = H->camHoldE; }
   }
+  camD *= homerCamUserD; camE = homerCamLookH + (camE - homerCamLookH) * homerCamUserH;   // №996: Distance и Height страницы CAMERA (высота — отступ глаза над точкой взгляда)
   if (H->speed > .5f && homerOnFoot(H)) {
     float d = wrapPi(H->h - H->camYaw);
     H->camYaw = wrapPi(H->camYaw + d * fminf(1.f, dt * 1.6f * clampf(H->speed / 4.f, .3f, 1.f)));

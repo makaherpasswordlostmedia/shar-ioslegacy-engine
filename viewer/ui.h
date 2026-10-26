@@ -156,6 +156,9 @@ void uiSetRadar(float x, float z, float heading);  // engine metres + main.c hea
 // icon 0..31 = UI_F_OBJICON order; seconds <= 0 = until replaced.  NULL/"" hides it.
 void uiMessage(const char *text, int icon, float seconds);
 void uiObjectiveCollapse(int on);   // 1 (по умолчанию): задание через 3.5 с сворачивается — значок в угол вверху слева (как PS2); 0 — рамка всё время
+extern int icon993Old;                       // №993: 1 — значок дома №623 вне задания, как было (красный контроль)
+int uiHomeShown(void);                       // №993: диагностика — в углу сейчас значок дома №623
+const void *uiObjPix(void);                  // №993: указатель на пиксели значка угла (диагностика)
 void uiObjDebug(int *icon, int *hasPix, const char **txt, const char **last);   // №958б: диагностика угла (flag msnhud)
 void uiObjective(int index, int icon);             // original MISSION_OBJECTIVE_<index> string (-1 hides)
 // Значок задания из данных миссии (msnicons, viewer/msnart.c): icon = UI_OBJICON_EXTERNAL в uiMessage/uiObjective рисует
@@ -173,6 +176,8 @@ void uiDrawBriefing(void);
 void uiLastBubbleGrow(int *gw, int *gh);   // №619
 int  uiBriefPicSettled(int frames);   // №612: картинка карточки миссии уже frames кадров подряд готова (до этого карточку не показываем)
 void uiBriefAnim(int on);        // №512: 1 — карточка миссии появилась (въезд), 0 — нажат Continue (выезд)
+void uiBriefHold(void);        // №994: брифинг открыт, карточка ещё не готова: рисуется только LOADING, въезд стартует следующим uiBriefAnim(1) (CARD994_OLD / flag card994 0 — без этого)
+void uiCard994Set(int old);       // №994: 1 — карточка как в TEST70 (стоит на месте до второго запуска въезда)
 void uiBriefExitGo(void);         // №633: конец первого кадра после Continue — карточка начинает выезд (до этого стоит)
 int  uiBriefExitBusy(void);      // 1 — карточка ещё уезжает (после Continue): main рисует её поверх мира (uiDrawBriefing)
 // Провал миссии (Scrooby MissionOver.scr, экран UI_SCREEN_MISSIONOVER): FAILED, причина, подсказка, «Retry Mission?»,
@@ -250,6 +255,7 @@ void uiPauseSlow(float k);        // служебно (smoke, flag pauseslow K):
 int  uiPaused(void);
 unsigned uiPadRepeat(unsigned buttons, unsigned hit);   // правка 202/№706: автоповтор ↑ ↓ ◄ ► (0,4 с, затем 0,12 с) в списках
 void uiPadRepeatOld(int on);                            // №706: 1 — прежнее (только ↑/↓, 0,35/0,09 с)
+void uiBubble992Set(int old);                         // №992: 1 — появление пузыря как в TEST70 (8 шагов, текст после рамки); 0 — короче, содержимое вместе с рамкой (flag bubble992 0 / файл bubble992old)
 extern int uiPadRepeated;                                // 1 — в hit шаг повтора (у края списка не по кругу)
 int  uiPauseSelected(void);
 int  uiPauseInput(unsigned buttonsJustPressed);

@@ -71,6 +71,18 @@ void fxExplosionOld(int on);                // №391: отрицательны�
 void fxSparkle(float x, float y, float z, float size, float phase);
 extern int fxGlint976Old;   // №976: 1 — кольцо цели и звёздочки столба как в TEST66; flag glint976old
 extern int fxGlintOne970;   // №970: следующий блик очереди — одна звезда (маленькие звёзды монет)
+// №989 (Роб, TEST70 на PSP: «блинг-блинг штучки на объектах в необычных местах уровня слишком яркие, в 2–3 раза прозрачнее»): блёстки над гэгами, свечения предметов и бонус-объектов, блики выключателей —
+// прозрачность BLING989_K от прежней (1 -> .4, форма и анимация те же); ключ, будка, монеты, столб цели, огни и значки миссий не тронуты (настроены №908/№910/№965/№970/№976).
+// BLING989_OLD=1 / файл bling989old рядом с EBOOT / «flag bling989 0» — как в TEST70
+#ifndef BLING989_OLD
+#define BLING989_OLD 0
+#endif
+#ifndef BLING989_K
+#define BLING989_K .4f
+#endif
+extern int fxBling989;
+#define BLING989_A (fxBling989 ? BLING989_K : 1.f)
+void fxSparkleCA(float x, float y, float z, float size, float phase, unsigned abgr, float alpha);
 extern int fxGlint970Old;   // №970: 1 — блики как в TEST66 (ключ, будка, монеты, огни машин); flag glint970old
 void fxSparkleCoin(float x, float y, float z, float size, float phase, float ex, float ey, float ez);   // №910: блёстки монет прозрачнее
 void fxSparkleC(float x, float y, float z, float size, float phase, unsigned abgr);

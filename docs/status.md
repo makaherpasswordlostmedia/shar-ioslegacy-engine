@@ -1,6 +1,6 @@
 # Status
 
-Where the port stands against the original PS2 game, as of October 26, 2026 (build 70). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
+Where the port stands against the original PS2 game, as of October 26, 2026 (build 71). Every row says how it was checked, because a Mac emulator run does not prove anything about PSP speed or a story ending.
 
 - **Hardware:** PSP-2000 with custom firmware, PAL disc. Nothing else has been tested.
 - **Latest hardware tour:** a scripted run of 33 scenes across all 7 levels (build "TEST62", second run). The final build ("TEST64") is on the PSP but has not been measured yet, so the numbers below belong to the previous build.

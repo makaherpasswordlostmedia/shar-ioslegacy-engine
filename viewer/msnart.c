@@ -29,7 +29,8 @@ typedef struct { unsigned tex, blend, mode, zwrite; float c[3], ax[3], ay[3], w,
 typedef struct { unsigned tex, flags, nvert, offVert; } MsaMesh;   // 16 Б; flags: BLMD 0-7, режим 8-15 (0 непрозрачный 1 вырезка 2 полупрозр. 3 сложение 4 вычитание), сустав 16-31
 _Static_assert(sizeof(MsaDraw) == 64 && sizeof(MsaBill) == 80 && sizeof(MsaMesh) == 16, "MSA2 (tools/msnart_export.py)");
 typedef struct { float u, v; unsigned c; float x, y, z; } MsaVert;                                  // 24 Б
-int (*msnartVecBeam)(const float p[3], const float X[3], const float Y[3], unsigned abgr);   // №805 (lightsprite.h vecBeamHook)
+int (*msnartVecBeam)(const float p[3], const float X[3], const float Y[3], unsigned abgr);
+int (*msnartBeam995)(const float ufo[3], float ex, float ey, float ez);   // №995 (lightsprite.h beam995Draw)   // №805 (lightsprite.h vecBeamHook)
 int (*msnartGlowGlint)(const char *, const float *, float, unsigned, unsigned, float, float, float, float);   // №839 (spritelight.h glowGlintHook)
 static int msaIsShadow(const char *n) { size_t l = strlen(n); return l > 7 && !strcasecmp(n + l - 7, "_shadow"); }
 #ifndef GLOW_GLINT_OLD
@@ -187,6 +188,15 @@ void msnartSetObjIcon(const char *name) {
   const MsaTex *t = (const MsaTex *)(b + ((const MsaHdr *)b)->offTex) + m->tex;
   uiSetObjIconImage(b + t->off, t->w, t->h, (int)m->w, (int)m->h);
   uiSetObjIconTop((int)m->pad - 1);   // свой верх значка из экспорта (tools/msnart_export.py icon_top); -1 — нет
+}
+
+// №993: 1 — в углу пиксели того значка, что просит миссия (wantIcon); 0 — чужие или оборванные (запись выгружена); -1 — значка нет. Диагностика (flag msnhud)
+int msnartIconPixOk(void) {
+  const void *p = uiObjPix(); if (!wantIcon[0]) return p ? 0 : -1;
+  const unsigned char *b; const MsaImg *m = findImg(wantIcon, &b);
+  if (!m) return p ? 0 : -1;
+  const MsaTex *t = (const MsaTex *)(b + ((const MsaHdr *)b)->offTex) + m->tex;
+  return p == (const void *)(b + t->off);
 }
 
 static void bindTex(const unsigned char *b, unsigned ti, int wrap) {

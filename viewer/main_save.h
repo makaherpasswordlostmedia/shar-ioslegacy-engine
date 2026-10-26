@@ -175,6 +175,10 @@ static void cfgApply(void) {
     if (pal) toneApplyAll(); }
   { static int ddSet = -1; if (cfg.drawDist < 0 || cfg.drawDist > 2) cfg.drawDist = 1;   // №795: Draw Distance — пол регулятора дальности (200 м — как было, без подмены)
     if (cfg.drawDist != ddSet) { static const float dd_[3] = {150.f, 200.f, 250.f}; ddSet = cfg.drawDist; ddFloorOver = cfg.drawDist == 1 ? 0.f : dd_[cfg.drawDist]; } }
+  if (cfg.camHeight < 0 || cfg.camHeight > 4) cfg.camHeight = 2;   // №996: страница CAMERA — Height и Distance (0..4, 2 — как было)
+  if (cfg.camDist < 0 || cfg.camDist > 4) cfg.camDist = 2;
+  { float h_ = camCfg996On ? camCfgH996[cfg.camHeight] : 1.f, d_ = camCfg996On ? camCfgD996[cfg.camDist] : 1.f;
+    if (h_ != homerCamUserH || d_ != homerCamUserD) { homerCamUserH = h_; homerCamUserD = d_; camCfgSnap996 = 1; } }
   flatTexUser = cfg.texturesOn != 0;   // №912: Textures On — родные текстуры (заливку включает flatPoll при Cartoon и Off)
   if ((cfg.toon != 0) != toneToon()) { toneSetToon(cfg.toon != 0); if (cfg.toon) toneToonPrep(); toneApplyAll(); toonModeChanged = 1; }   // №754: пресет 90-х на палитрах — вместе с Cartoon, фоновым заданием
   sndUserVolumes(cfg.music / 1000.f, cfg.effects / 1000.f, cfg.vehicle / 1000.f, cfg.voice / 1000.f);
@@ -193,10 +197,10 @@ static void cfgLoad(void) {
   char fn[256]; sibling(fn, "settings.bin"); Settings t = cfg;   // чего нет в файле (запись ver 1 короче) — по умолчанию
   SceUID f = sceIoOpen(fn, PSP_O_RDONLY, 0);
   if (f >= 0) { int n = sceIoRead(f, &t, sizeof t), n1 = (int)offsetof(Settings, tutorial);
-    if (n >= n1 && !memcmp(t.magic, "SHST", 4) && t.ver >= 1 && t.ver <= 10) {
+    if (n >= n1 && !memcmp(t.magic, "SHST", 4) && t.ver >= 1 && t.ver <= 11) {
       if (t.ver == 7 && n >= (int)sizeof t) t.oldTv = t.oldTv ? 5 : 0;   // №830: ver 7 — Off/On, теперь сила 0..10
       if (t.ver == 1 || n < (int)sizeof t) { Settings d = cfg; memcpy((char *)&d, &t, t.ver == 1 ? (size_t)n1 : (size_t)n); t = d; }
-      t.ver = 10; t.movies |= 1u; if (t.ink < 0 || t.ink > 2) t.ink = INK951_DEF; if (t.oldTv < 0 || t.oldTv > 10) t.oldTv = 5; if (t.texturesOn < 0 || t.texturesOn > 1) t.texturesOn = 0; cfg = t; }   // ver 1 — без tutorial / tutSeen / movies; ver 2 — без colour; ver 3 — без invertCam; ver 4 — без contrast … toonTex; ver 5 — без drawDist; ver 6 — без oldTv (по умолчанию)
+      t.ver = 11; t.movies |= 1u; if (t.camHeight < 0 || t.camHeight > 4) t.camHeight = 2; if (t.camDist < 0 || t.camDist > 4) t.camDist = 2; if (t.ink < 0 || t.ink > 2) t.ink = INK951_DEF; if (t.oldTv < 0 || t.oldTv > 10) t.oldTv = 5; if (t.texturesOn < 0 || t.texturesOn > 1) t.texturesOn = 0; cfg = t; }   // ver 1 — без tutorial / tutSeen / movies; ver 2 — без colour; ver 3 — без invertCam; ver 4 — без contrast … toonTex; ver 5 — без drawDist; ver 6 — без oldTv (по умолчанию)
     sceIoClose(f); }
   cfgApply();
 }
@@ -343,6 +347,8 @@ static int *cfgSlot(int scr, int row, int sound) {   // значение нас�
   if (row == rowOf(scr, "CONTRAST")) { cfgContrastRow = (cfg.contrast - 50) / 10; return &cfgContrastRow; }   // №777: подстраница PICTURE
   if (row == rowOf(scr, "LINE")) return &cfg.lineWidth;                                                   // №777: подстраница CARTOON — Line Width
   if (row == rowOf(scr, "INK")) return &cfg.ink;                                                          // №951: Ink — Indigo / Black / Tone
+  if (row == rowOf(scr, "HEIGHT")) return &cfg.camHeight;                                                // №996: страница CAMERA — Height (Low … High)
+  if (row == rowOf(scr, "DISTANCE")) return &cfg.camDist;                                                // №996: Distance (Near … Far)
   if (row == rowOf(scr, "EYE")) return &cfg.eyeLines;                                                     // Eye Lines: Off / Soft / Full
   if (row == rowOf(scr, "TEXTURE")) { cfgTexRow = cfg.toonTex / 5; return &cfgTexRow; }                   // Texture Detail
   if (row == rowOf(scr, "DRAW")) return &cfg.drawDist;                                                     // №795: Draw Distance 150 / 200 / 250 м
@@ -376,8 +382,8 @@ static void optLog(const char *pack, int scr, int sel, int r) {
   if (!smkOn) return;
   char s[192]; int n = snprintf(s, sizeof s, "OPT pack=%s scr=%d sel=%d r=%d rows=", pack, scr, sel, r);
   for (int k = 0; k < uiScrRows(scr) && n < 150; k++) n += snprintf(s + n, sizeof s - n, "%s%d%s", k ? "," : "", uiScrGetRow(k), uiScrEnabled(scr, k) ? "" : "x");
-  snprintf(s + n, sizeof s - n, " vol=%d,%d,%d,%d radar=%d tut=%d colour=%d inv=%d toon=%d tree=%d ct=%d lw=%d eye=%d tex=%d ink=%d t=%.1f\n", cfg.music, cfg.effects, cfg.vehicle, cfg.voice,
-           cfg.radar, cfg.tutorial, cfg.colour, cfg.invertCam, cfg.toon, cfg.treeShadow, cfg.contrast, cfg.lineWidth, cfg.eyeLines, cfg.toonTex, cfg.ink, smkT); smkWrite(s);
+  snprintf(s + n, sizeof s - n, " vol=%d,%d,%d,%d radar=%d tut=%d colour=%d inv=%d toon=%d tree=%d ct=%d lw=%d eye=%d tex=%d ink=%d camh=%d camd=%d t=%.1f\n", cfg.music, cfg.effects, cfg.vehicle, cfg.voice,
+           cfg.radar, cfg.tutorial, cfg.colour, cfg.invertCam, cfg.toon, cfg.treeShadow, cfg.contrast, cfg.lineWidth, cfg.eyeLines, cfg.toonTex, cfg.ink, cfg.camHeight, cfg.camDist, smkT); smkWrite(s);
   if (smkOn) { char d_[48]; snprintf(d_, sizeof d_, "OPTDD dd=%d floor=%.0f t=%.1f\n", cfg.drawDist, ddFloorOver, smkT); smkWrite(d_); }
 }
 // меню паузы: 0 pauseoptions, 1 pausesound, 2 pausesettings (pmenu.shr открыт на время); -1 — закрыто

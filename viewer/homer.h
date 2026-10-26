@@ -325,6 +325,9 @@ extern float homerCamCarTop;   // №982: верх кузова машины, з
 extern int homerCamFlipOld, homerCamFlipN, homerFlipBusyOld, homerFlipHold;   // №916в: перескок камеры у стены одним кадром (CAM_FLIP1_OLD=1 / flag camflip1old 1 — как было); счётчик перескоков
 extern int homerCamPs2Old;   // CAM_WALL_PS2_OLD=1 / flag camwallps2old 1 — стена за камерой пешком как раньше (подъезд + подъём), не как у PS2
 extern int homerCamWallOff;   // 1 — камера пешком без обхода стен (служебное, красный контроль tests/camera)
+// №996 (Роб 26.10: «настройка высоты и дальности камеры в меню, и в машине, и пешком»): множители страницы CAMERA паузы (Height, Distance; 1 — как было): камера пешком и камера за машиной
+// (main_camera.h chaseCamUpdate). Задаёт cfgApply (viewer/main_save.h). CAMCFG996_OLD=1 / файл camcfg996old рядом с EBOOT / «flag camcfg996 0» — множители всегда 1
+extern float homerCamUserD, homerCamUserH;
 extern float homerCamDist, homerCamEyeH, homerCamLookH;   // камера пешком (HOMER_CAM_DIST / _EYE_H / _LOOK_H; служебное — красный контроль)
 #ifndef HOMER_CAM_SEAT_K
 #define HOMER_CAM_SEAT_K (1.f / 3.8f)   // правка 223: на посадке камера догоняет Гомера с постоянной 3,8 с (близнец В23); 0 (-D) — жёстко, как было

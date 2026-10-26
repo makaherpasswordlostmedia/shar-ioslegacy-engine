@@ -845,6 +845,14 @@ static int dropInk922 = !DROPINK922_OLD;
 static const void *carFanV[8]; static int carFanN;
 static inline int carFanHas(const void *v) { for (int i = 0; i < carFanN; i++) if (carFanV[i] == v) return 1; return 0; }
 static int carNear853(const Piece *d, const ScePspFMatrix4 *m); static void drawGeoPatch853(const Piece *d, const ScePspFMatrix4 *m);
+// №991 (Роб 26.10 на PSP: «у машин NPC при некоторых ракурсах контур ломается — в три четверти сверху и с торца обводка сливается в одну большую толстую»): воспроизведено (L1, trfgo, глаз 8–30 м, высота 0,25–0,6 от расстояния; кадр с мультиком и без):
+// оболочка плоской крыши, поднятая на вытяжку над самой крышей, проходит тест глубины и красит крышу целиком тушью — крыша «чёрный блок», бока вдвое толще. Сдвиг назад 30 см (№901) на этих дальностях и под скользящим углом крышу не прячет
+// (лечит 60 см и больше). У NPC-машин сдвиг 80 см (больше 1,2 м уже съедает линию по нижнему краю бампера); машина игрока — как была (30 см). CARINK991_OLD=1 / «flag carink991 0» / файл carink991old — прежнее
+#ifndef CARINK991_OLD
+#define CARINK991_OLD 0
+#endif
+#define CAR_TOON_SIL_NPC .8f
+static int carInk991 = !CARINK991_OLD;
 static int carToonNpcNow;   // №931: рисуется контур NPC-машины (npcCarToon): тоньше и светлее с расстоянием, дальше TOON_NPC_N линии нет; машина игрока — прежнее
 static void carToonHull(Piece *d, const float *m) {
   if (d->r.ni <= 0 || geOver(GE_HARD) || d->r.sc <= 0.f) return;
@@ -859,7 +867,7 @@ static void carToonHull(Piece *d, const float *m) {
   float W_ = CAR_TOON_W779_OLD ? CAR_TOON_W : carToonNpcNow ? skinToonWorldWNpc(dW_) : skinToonWorldW(dW_);
   if (W_ <= 0.f) return;
   unsigned ink_ = TOON_INK_OLD ? 0u : (CAR_TOON_W779_OLD ? TOON_INK_ABGR : carToonNpcNow ? skinToonAirMixNpc(skinInkAbgr(INK_CHAR), dist_) : skinToonAirMix(skinInkAbgr(INK_CHAR), dist_)) & 0xffffff;   // №796: перо линий
-  int silD_ = (!CAR_TOON_W779_OLD && dist_ > .5f) ? (int)fminf(20000.f, CAR_TOON_SIL_M * 65535.f / dist_) : 0;
+  int silD_ = (!CAR_TOON_W779_OLD && dist_ > .5f) ? (int)fminf(20000.f, (carToonNpcNow && carInk991 ? CAR_TOON_SIL_NPC : CAR_TOON_SIL_M) * 65535.f / dist_) : 0;
   float sc3[3], tr3[3], o[3] = {d->r.ox, d->r.oy, d->r.oz};   // оболочка: масштаб по осям вокруг центра куска и сдвиг (диагональная A)
   for (int i = 0; i < 3; i++) {
     float half = (d->r.bb[i + 3] - d->r.bb[i]) * .5f, c = (d->r.bb[i + 3] + d->r.bb[i]) * .5f;

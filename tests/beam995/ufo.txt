@@ -1,0 +1,77 @@
+# №995: тарелка L7, три вида, beam995 0 затем 1
+flag menu
+flag lvset 7
+scene B995_BOOT
+wait 1.5
+press cross
+wait 9
+flag msnufo
+scene B995_SIDE
+flag msnmainat 202
+wait 0.8
+press cross 0.2
+goto -116.1 580.0 0.0
+wait 1.2
+cam -160 22 601.8 1 -0.12 0 70
+flag beam995 0
+wait 0.9
+flag beam995stat
+shot b995_side_off
+flag beam995 1
+wait 0.9
+flag beam995stat
+shot b995_side_on
+cam off
+wait 0.3
+scene B995_TOP
+flag msnmainat 202
+wait 0.8
+press cross 0.2
+goto -116.1 580.0 0.0
+wait 1.2
+cam -121.5 62 575 0 -0.75 0.66 70
+flag beam995 0
+wait 0.9
+flag beam995stat
+shot b995_top_off
+flag beam995 1
+wait 0.9
+flag beam995stat
+shot b995_top_on
+cam off
+wait 0.3
+scene B995_LOW
+flag msnmainat 202
+wait 0.8
+press cross 0.2
+goto -116.1 580.0 0.0
+wait 1.2
+cam -121.5 3 650 0 0.28 -1 70
+flag beam995 0
+wait 0.9
+flag beam995stat
+shot b995_low_off
+flag beam995 1
+wait 0.9
+flag beam995stat
+shot b995_low_on
+cam off
+wait 0.3
+scene B995_CAR
+flag msnmainat 202
+wait 0.8
+press cross 0.2
+goto -121.5 601.8 0.0
+wait 1.2
+flag beam995 0
+wait 0.9
+flag beam995stat
+shot b995_car_off
+flag beam995 1
+wait 0.9
+flag beam995stat
+shot b995_car_on
+cam off
+wait 0.3
+flag msnufo
+end

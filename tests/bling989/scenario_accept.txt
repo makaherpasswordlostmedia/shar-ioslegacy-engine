@@ -1,0 +1,14 @@
+# №989 приёмка: L6, блёстка гэга крупно; «было» — файл bling989old
+scene C_BOOT
+flag cfgdefaults 1
+wait 6
+scene C_L6
+flag golevel 6
+wait 40
+scene S_L6_G1
+foot 63.1 -38.1 0
+wait 4
+cam 66.6 8.8 -34.6 -0.707 -0.243 -0.707
+wait 8
+shot A_L6_G1
+end

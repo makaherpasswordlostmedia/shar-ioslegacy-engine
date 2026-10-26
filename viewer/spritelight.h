@@ -784,7 +784,7 @@ static unsigned slPoolSkipN, slPoolDrawN;
 #define SL_DISC_R 1.2f   // радиус диска свечения пропа — доля большей полустороны куска
 #define SL_DISC_A 1.2f   // альфа в центре — доля VL_A
 static void slResetPool935(void) { for (unsigned k = 0; k < slLn; k++) slL[k].pool = 0; }   // №935: флаг сценария lamppool935 меняет правило — решения по конусам заново   // №935: конусы таблицы клеток/стейтпропов: без эллипса (мост) и с эллипсом
-static void slLightDrawVec(float ex, float ey, float ez) {
+static void slLightDrawVec_(float ex, float ey, float ez) {
   typedef struct { unsigned c; float x, y, z; } VV;
   unsigned b0 = ggVbUsed, nv = 0, cap = slLn * (12 + VL_POOL_N * 3); if (cap > 24000u) cap = 24000u;
   VV *q = (VV *)ggVbAlloc(cap * sizeof(VV)); if (!q) return;
@@ -819,12 +819,14 @@ static void slLightDrawVec(float ex, float ey, float ez) {
                      {e->p[0] - Xx, bot, e->p[2] - Xz}, {e->p[0] + Xx, bot, e->p[2] + Xz}};
     static const unsigned char tri[12] = {0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5};
     for (int m = 0; m < 12; m++) { int c_ = tri[m]; VV *o = &q[nv++]; o->c = c_ < 2 ? cT : c_ < 4 ? cM : cB; o->x = P[c_][0]; o->y = P[c_][1]; o->z = P[c_][2]; }
+    if (cone) p990[3]++;   // №990: конус клетки нарисован
+    if (cone && pool990) { quads++; continue; }   // №990: эллипса под конусом нет, конус остаётся
     if (cone && !((SlL *)e)->pool) {   // №935: тот же признак, что у ламп таблицы света (lamppool935.h): под полотном вторая поверхность глубже 3 м — эллипс не рисуется, конус остаётся
       float F_[3] = {e->p[0], bot, e->p[2]}, gy_, n_[3]; int sk_ = 0;
       if (haveCol && colGround(&world, e->p[0], e->p[2], bot + 1.f, bot - 12.f, &gy_, n_)) sk_ = lpPoolSkip(&world, F_, gy_);
       ((SlL *)e)->pool = (uint8_t)(sk_ ? 2 : 1); if (sk_) slPoolSkipN++; else slPoolDrawN++; }
     if (cone && e->pool != 2) {   // эллипс под конусом (пятно на полу)
-      unsigned c = ((unsigned)(VL_POOL_A * f + .5f) << 24) | rgb; float R0 = e->X[0], kk = sqrtf(d2) > .3f ? VL_PULL / sqrtf(d2) : .5f; if (kk > .5f) kk = .5f;
+      p990[1]++; p990tri[1] += VL_POOL_N; unsigned c = ((unsigned)(VL_POOL_A * f + .5f) << 24) | rgb; float R0 = e->X[0], kk = sqrtf(d2) > .3f ? VL_PULL / sqrtf(d2) : .5f; if (kk > .5f) kk = .5f;
       vlPoolTab(); for (int j = 0; j < VL_POOL_N; j++) {
         float Q[3][3] = {{e->p[0], bot + .02f, e->p[2]}, {e->p[0] + R0 * vlPC_[j], bot + .02f, e->p[2] + R0 * vlPS_[j]}, {e->p[0] + R0 * vlPC_[j + 1], bot + .02f, e->p[2] + R0 * vlPS_[j + 1]}};
         for (int m = 0; m < 3; m++) { VV *o = &q[nv++]; o->c = c; o->x = Q[m][0] + (ex - Q[m][0]) * kk; o->y = Q[m][1] + (ey - Q[m][1]) * kk; o->z = Q[m][2] + (ez - Q[m][2]) * kk; } } }
@@ -837,6 +839,10 @@ static void slLightDrawVec(float ex, float ey, float ez) {
   sceGuDepthMask(GU_TRUE); setCull(0);
   sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nv, 0, q);
   sceGuEnable(GU_TEXTURE_2D); resetState(); slLQuads += quads; slLDraws++;
+}
+static void slLightDrawVec(float ex, float ey, float ez) {   // №990: служебно — время и вызовы
+  unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; slLightDrawVec_(ex, ey, ez);
+  if (smkOn) { p990us[1] += sceKernelGetSystemTimeLow() - t0; p990c[1]++; }
 }
 static void slLightDraw(float ex, float ey, float ez, int inR) {
   if (slLightResetReq) slLightReset();
@@ -1229,6 +1235,7 @@ static void glintFlush(void) {
 #define MARK_GLINT_K (GLINT_MARK908_OLD ? 1.f : .5f)
 #define GG_MAX 3.f
 static int glowGlintHook(const char *name, const float p[3], float w, unsigned c1, unsigned c2, float a, float ex, float ey, float ez) {
+  if (beam995 && !strcmp(name, "spaceship")) return 1;   // №995: блинк под тарелкой не рисуется — свет даёт конус (lightsprite.h beam995Draw)
   float sc = w * GG_K; if (sc > GG_MAX) sc = GG_MAX;
   if (smkOn) { static char seen_[16][24]; static int nseen_; int k_ = 0; for (; k_ < nseen_; k_++) if (!strcmp(seen_[k_], name)) break;
     if (k_ == nseen_ && nseen_ < 16) { snprintf(seen_[nseen_++], 24, "%s", name); char l_[160]; snprintf(l_, sizeof l_, "GLOWGLINT %s p=%.1f,%.1f,%.1f w=%.2f scale=%.2f c1=%06x c2=%06x a=%.2f\n", name, p[0], p[1], p[2], w, sc, c1 & 0xffffffu, c2 & 0xffffffu, a); smkWrite(l_); } }
@@ -1251,7 +1258,8 @@ static const char *gq944Site;   // служебно: кто поставил к�
 static void glowQuadQ(const float *v, unsigned abgr, float ph) {   // квад (4 угла v[12]) -> блик в его центре, размер — бо́льшая сторона × GG_K
   float w = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]));
   float h = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]));
-  glowGlintQ_((v[0] + v[3] + v[6] + v[9]) * .25f, (v[1] + v[4] + v[7] + v[10]) * .25f, (v[2] + v[5] + v[8] + v[11]) * .25f, (w > h ? w : h) * GG_K, abgr, (float)(abgr >> 24) / 255.f, ph);
+  float k989 = gq944Site && (!strcmp(gq944Site, "coll") || !strcmp(gq944Site, "bonus")) ? BLING989_A : 1.f;   // №989: свечения предметов и бонус-объектов прозрачнее; огни и свечения пропов — как были
+  glowGlintQ_((v[0] + v[3] + v[6] + v[9]) * .25f, (v[1] + v[4] + v[7] + v[10]) * .25f, (v[2] + v[5] + v[8] + v[11]) * .25f, (w > h ? w : h) * GG_K, abgr, (float)(abgr >> 24) / 255.f * k989, ph);
 }
 static void glowGlintFlush(float ex, float ey, float ez) {
   for (unsigned s = 0; s < ggQn; s += 32) { unsigned n = ggQn - s > 32 ? 32 : ggQn - s; glintBegin(n);
@@ -1303,7 +1311,7 @@ static void aoBillGlint(unsigned i, const float *v, uint32_t col, float ex, floa
   float c[3] = {(v[0] + v[3] + v[6] + v[9]) * .25f, (v[1] + v[4] + v[7] + v[10]) * .25f, (v[2] + v[5] + v[8] + v[11]) * .25f};
   float w = sqrtf((v[3] - v[0]) * (v[3] - v[0]) + (v[4] - v[1]) * (v[4] - v[1]) + (v[5] - v[2]) * (v[5] - v[2]));
   float h = sqrtf((v[6] - v[0]) * (v[6] - v[0]) + (v[7] - v[1]) * (v[7] - v[1]) + (v[8] - v[2]) * (v[8] - v[2]));
-  glintAdd(c, ex, ey, ez, w > h ? w : h, col & 0xFFFFFFu, col & 0xFFFFFFu, (float)(col >> 24) / 255.f * AO_GLINT_K, (float)i * .41f);
+  glintAdd(c, ex, ey, ez, w > h ? w : h, col & 0xFFFFFFu, col & 0xFFFFFFu, (float)(col >> 24) / 255.f * AO_GLINT_K * BLING989_A, (float)i * .41f);   // №989: блик выключателя прозрачнее
 }
 #ifndef WRENCH970_S
 #define WRENCH970_S .7f   // №970: размер блика ключа от TEST66

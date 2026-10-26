@@ -240,13 +240,19 @@ static void gagSound(int g) {
 #define DEFAULTS794_OLD 0
 #endif
 typedef struct { char magic[4]; int ver, music, effects, vehicle, voice, radar, tutorial; unsigned tutSeen, movies; int colour, invertCam, toon, treeShadow;
-                 int contrast, lineWidth, eyeLines, toonTex, drawDist, oldTv, texturesOn, ink; } Settings;   // ver 9 (№912): texturesOn — строка Textures на PICTURE: 0 Off — мир без текстур (заливка, мультик), 1 On — родные текстуры
+                 int contrast, lineWidth, eyeLines, toonTex, drawDist, oldTv, texturesOn, ink, camHeight, camDist; } Settings;   // ver 9 (№912): texturesOn — строка Textures на PICTURE: 0 Off — мир без текстур (заливка, мультик), 1 On — родные текстуры
 // №794 (сверено 19.10 с settings.bin Роба на PSP: насыщенность 1,56, контраст 1,50): значения по умолчанию для нового файла. DEFAULTS794B_OLD=1 — 1,36/1,00
 #ifndef DEFAULTS794B_OLD
 #define DEFAULTS794B_OLD 0
 #endif
 static Settings cfg = {{'S', 'H', 'S', 'T'}, 10, 1000, 1000, 1000, 1000, 1, 1, 0, 1, DEFAULTS794B_OLD ? TONE_SAT_DEF : 156, 1, DEFAULTS794_OLD ? 0 : 1, 0, DEFAULTS794B_OLD ? 100 : 150,
-                       DEFAULTS794_OLD ? 5 : 4, 1, DEFAULTS794_OLD ? 35 : 45, 1, 5, 0, INK951_DEF};
+                       DEFAULTS794_OLD ? 5 : 4, 1, DEFAULTS794_OLD ? 35 : 45, 1, 5, 0, INK951_DEF, 2, 2};   // ver 11 (№996): camHeight, camDist — строки Height и Distance страницы CAMERA, 0..4, 2 (Normal) — как было; в старых файлах короче — 2
+// №996: CAMCFG996_OLD=1 / файл camcfg996old рядом с EBOOT / «flag camcfg996 0» — множители камеры всегда 1 (как TEST70); шаги Height / Distance — множитель дальности и отступа глаза над точкой взгляда
+#ifndef CAMCFG996_OLD
+#define CAMCFG996_OLD 0
+#endif
+static int camCfg996On = !CAMCFG996_OLD, camCfgSnap996;   // camCfgSnap996: Height / Distance сменились — сглаживание камеры (отпускание стены, опора глаза) сбросить: под паузой (dt = 0) оно иначе не сдвинется
+static const float camCfgH996[5] = {.5f, .75f, 1.f, 1.25f, 1.5f}, camCfgD996[5] = {.7f, .85f, 1.f, 1.15f, 1.3f};
 static int toonDevFile;   // №428: служебный файл toon рядом с EBOOT — режим включён поверх настройки игрока
 static int camTurnOld, boomCamOld;   // правки 362 / 361: служебное, прежнее — L/R без инверсии / камера держит горящую машину (красный контроль)
 static void cfgSave(void);
@@ -592,7 +598,7 @@ static void collDraw(float ex, float ey, float ez, int inR, float t) {
     const CollGag *G = &coll.gag[g];
     if (G->room != room || !collectSparkle(&coll, g)) continue;
     float dx = G->tx - ex, dz = G->tz - ez; if (dx * dx + dz * dz > 45.f * 45.f) continue;
-    fxSparkle(G->tx, G->ty + .6f, G->tz, 1.3f, t * .5f + g * .37f);
+    fxSparkleCA(G->tx, G->ty + .6f, G->tz, 1.3f, t * .5f + g * .37f, 0xffc8f0ff, BLING989_A);   // №989: блёстки гэга прозрачнее (было fxSparkle, 1)
   }
   if (smkOn) { unsigned c3 = sceKernelGetSystemTimeLow(); cpA[0] += (cp1 - cp0) * .001; cpA[1] += (cp2 - cp1) * .001; cpA[2] += (c3 - cp2) * .001; cpA[3] += sp->ninst;
     if (++cpN >= 30) { char l[200]; snprintf(l, sizeof l, "COLLPROF gagskin=%.3f inst=%.3f bill_spark=%.3f ninst=%.0f ngag=%u ms/frame\n", cpA[0] / cpN, cpA[1] / cpN, cpA[2] / cpN, cpA[3] / cpN, coll.ngag); smkWrite(l); cpN = 0; memset(cpA, 0, sizeof cpA); } }

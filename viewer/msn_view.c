@@ -517,7 +517,7 @@ static void titleCb(void *u, const char *id, const char *title, const char *info
           else if (c->op == MSN_OP_SETRACEENTERYFEE) pay = 2 * msn_arg_i(&M.f, c, 0); } }
       logf_("MSN wager fee=%d par=%d pay=%d t=%.1f\n", fee, par, pay, clock_); }
     uiHudSet(UI_F_WAGER_FEE, fee); uiHudSet(UI_F_WAGER_PAR, par); uiHudSet(UI_F_WAGER_PAY, pay); uiSetWager(gm && fee > 0); H.brWager = gm && fee > 0; }
-  H.briefing = 1; uiMessage(NULL, -1, 0.f); uiBriefAnim(1);   // №512: карточка въезжает слева
+  H.briefing = 1; uiMessage(NULL, -1, 0.f); uiBriefAnim(1); if (!BRIEF_ANIM_AT_LOAD_OLD) uiBriefHold();   // №512: карточка въезжает слева; №994: пока не готова — только LOADING, въезд стартует при готовности
   brReadyT = -1.f; H.brT0 = sceKernelGetSystemTimeLow(); H.brFirst = !brBriefed; H.brLoaded = H.brQueued = H.brPicLost = 0; brBriefed = 1;   // правка 52: LOADING до загрузки
   logf_("MSN briefing %s \"%s\" bitmap=%s first=%d path=%s t=%.1f\n", id ? id : "", H.title, H.present[0] ? H.present : "-", H.brFirst, H.brFirst ? "newspaper" : "card-only", clock_);
 }
@@ -1256,6 +1256,7 @@ static void drawItems(float ex, float ey, float ez, float t) {
     }
   if (n != itemsDrawnLast) { if (n || itemsDrawnLast > 0) logf_("MSN items-drawn %d t=%.1f\n", n, clock_); itemsDrawnLast = n; }
 }
+unsigned mvBeamUs, mvBeamN;   // №995 служебно: время света луча тарелки (µs Mac) и кадры
 unsigned mvRouteCalcUs, mvRouteDrawUs;   // №849 служебно: расчёт пути стрелки и рисунок стрелок (мкс)
 unsigned mvMkUs[5];   // №849/№852 служебно: стрелка пути, предметы, значки персонажей, прочее (мкс)
 void mvDrawMarkers(float ex, float ey, float ez, float t) {
@@ -1267,7 +1268,7 @@ void mvDrawMarkers(float ex, float ey, float ez, float t) {
   if (!gameBoss967Old && M.ufoOn && !M.interior) {   // №967: тарелка и луч L7 в точке локатора (рисование как в галерее artgal 7, main_loop.h)
     float dx = M.ufoPos[0] - ex, dz = M.ufoPos[2] - ez;
     float dy = M.ufoPos[1] - ey, d2 = dx * dx + dy * dy + dz * dz, dot = dx * mvViewDir[0] + dy * mvViewDir[1] + dz * mvViewDir[2];
-    if (d2 < 300.f * 300.f && (d2 < 50.f * 50.f || dot > 0.35f * sqrtf(d2))) { ufoDrawn++; msnartDraw("spaceship", M.ufoPos, ex, ey, ez, t); msnartDraw("UfoBeam", M.ufoPos, ex, ey, ez, t); } }
+    if (d2 < 300.f * 300.f && (d2 < 50.f * 50.f || dot > 0.35f * sqrtf(d2))) { ufoDrawn++; msnartDraw("spaceship", M.ufoPos, ex, ey, ez, t); unsigned tb_ = sceKernelGetSystemTimeLow(); if (!(msnartBeam995 && msnartBeam995(M.ufoPos, ex, ey, ez))) msnartDraw("UfoBeam", M.ufoPos, ex, ey, ez, t); mvBeamUs += sceKernelGetSystemTimeLow() - tb_; mvBeamN++; } }   // №995: mvBeamUs — весь свет луча за кадр (конус или билборды), служебно
   unsigned k2_ = sceKernelGetSystemTimeLow(); mvMkUs[1] += k2_ - k1_;
   if (raceProps[0] && !M.interior) msnartDrawCull(raceProps, NULL, ex, ey, ez, t, 70.f);   // правка 122: шины и отбойники трассы гонки
   if (H.markerOn && H.marker.drawable && *H.marker.drawable) {
@@ -1739,7 +1740,7 @@ void mvServiceMainAt(int code) {   // служебное (правка 302): о�
 }
 void mvServiceUfo(void) { logf_("MSNUFO on=%d pos=%.1f,%.1f,%.1f charge=%.1f sent=%d old=%d ship=%d beam=%d drawn=%u t=%.1f\n", active ? M.ufoOn : 0, M.ufoPos[0], M.ufoPos[1], M.ufoPos[2], M.ufoCharge, M.ufoSent, gameBoss967Old, msnartHas("spaceship"), msnartHas("UfoBeam"), ufoDrawn, clock_); }   // №967: состояние тарелки для гейта tests/missions/boss_l7.sh
 void mvServiceHud(void) {   // №943: что миссия считает целью сейчас (stage — этап рантайма), что держит HUD (obj — текст цели) и маркер; строки сверяет tests/msnhome/check.py
-  { int ic, px; const char *t, *l; uiObjDebug(&ic, &px, &t, &l); logf_("MSNICON want=\"%s\" field=%d pix=%d msg=\"%.30s\" last=\"%.30s\" active=%d t=%.1f\n", msnartWantIcon(), ic, px, t, l, active, clock_); }   // №958б
+  { int ic, px; const char *t, *l; uiObjDebug(&ic, &px, &t, &l); logf_("MSNICON want=\"%s\" field=%d pix=%d pixok=%d home=%d msg=\"%.30s\" last=\"%.30s\" active=%d t=%.1f\n", msnartWantIcon(), ic, px, msnartIconPixOk(), uiHomeShown(), t, l, active, clock_); }   // №958б
   if (!active) { logf_("MSNHUD active=0\n"); return; }
   int cur = M.rt.cur >= 0 && (unsigned)M.rt.cur < M.f.nmissions;
   logf_("MSNHUD cur=%s story=%s phase=%d stage=%d status=%d stagetext=\"%.40s\" obj=\"%.40s\" marker=%d gmarker=%d mpos=%.1f,%.1f briefing=%d t=%.1f\n",

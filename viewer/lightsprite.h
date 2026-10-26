@@ -144,7 +144,7 @@ static uint32_t vlColor(uint32_t abgr) {   // цвет света без аль�
   r += (255.f - r) * VL_WARM_K; g += (236.f - g) * VL_WARM_K; b += (170.f - b) * VL_WARM_K;
   return ((unsigned)(b + .5f) << 16) | ((unsigned)(g + .5f) << 8) | (unsigned)(r + .5f);
 }
-static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float ex, float ey, float ez, int inR) {   // №715/736: чёткие конусы и пятна — один вызов, без текстуры
+static void vecLightDraw_(const uint16_t *hk, const float *hf, unsigned nh, float ex, float ey, float ez, int inR) {   // №715/736: чёткие конусы и пятна — один вызов, без текстуры
   typedef struct { unsigned c; float x, y, z; } VV;
   unsigned b0 = ggVbUsed, nv = 0; VV *q = (VV *)ggVbAlloc(nh * (12 + VL_POOL_N * 3) * sizeof(VV)); if (!q) return;
   float sw = lspConeW, sl = lspConeL; lspConeW = lspConeL = 1.f;   // размер конуса оригинала
@@ -160,12 +160,14 @@ static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float
       static const unsigned char tri[12] = {0, 1, 2, 2, 1, 3, 2, 3, 4, 4, 3, 5};
       for (int m = 0; m < 12; m++) { VV *o = &q[nv++]; int c_ = tri[m]; o->c = c_ < 2 ? cT : c_ < 4 ? cM : cB; o->x = P[c_][0]; o->y = P[c_][1]; o->z = P[c_][2]; } }
     unsigned k = hk[i]; float hw = sqrtf(X[0] * X[0] + X[2] * X[2]), pa = VL_POOL_A * hf[i];
+    if (al >= 1.f) p990[2]++;   // №990: конус нарисован
+    if (pool990) continue;   // №990: эллипса на полу нет ни у одной лампы, остаётся конус с затуханием вниз
     if (!haveCol || !lspPoolY || hw < .05f || pa < 1.f) continue;
     if (lspPoolY[k] > 1e29f) { float y_, n_[3]; lspPoolY[k] = colGround(&world, F[0], F[2], L[1] - .1f, F[1] - 12.f, &y_, n_) ? y_ : -1e30f;
       if (lspPoolY[k] > -1e29f) { if (lpPoolSkip(&world, F, lspPoolY[k])) { lspPoolY[k] = -1e30f; lpSkipN[1]++; } else lpDrawN++; } }   // №935: мост/эстакада — без эллипса, только конус
     float gy = lspPoolY[k]; if (gy < -1e29f) continue;
     float dxp = ex - F[0], dyp = ey - gy, dzp = ez - F[2], dd = sqrtf(dxp * dxp + dyp * dyp + dzp * dzp), kk = dd > .3f ? VL_PULL / dd : .5f; if (kk > .5f) kk = .5f;
-    unsigned c = ((unsigned)(pa + .5f) << 24) | rgb; float Cc[3] = {F[0], gy + .02f, F[2]};
+    unsigned c = ((unsigned)(pa + .5f) << 24) | rgb; float Cc[3] = {F[0], gy + .02f, F[2]}; p990[0]++; p990Tri += VL_POOL_N;
     vlPoolTab(); for (int j = 0; j < VL_POOL_N; j++) {
       float Pp[3][3] = {{Cc[0], Cc[1], Cc[2]}, {Cc[0] + hw * vlPC_[j], Cc[1], Cc[2] + hw * vlPS_[j]}, {Cc[0] + hw * vlPC_[j + 1], Cc[1], Cc[2] + hw * vlPS_[j + 1]}};
       for (int m = 0; m < 3; m++) { VV *o = &q[nv++]; o->c = c; o->x = Pp[m][0] + (ex - Pp[m][0]) * kk; o->y = Pp[m][1] + (ey - Pp[m][1]) * kk; o->z = Pp[m][2] + (ez - Pp[m][2]) * kk; } }
@@ -179,6 +181,10 @@ static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float
   sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nv, 0, q);
   sceGuEnable(GU_TEXTURE_2D); resetState(); lspDrawN++; vecLightN += nh;
 }
+static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float ex, float ey, float ez, int inR) {   // №990: служебно — время и вызовы (Mac µs → PSP ×5,8 для оценки цены)
+  unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; vecLightDraw_(hk, hf, nh, ex, ey, ez, inR);
+  if (smkOn) { p990us[0] += sceKernelGetSystemTimeLow() - t0; p990c[0]++; p990tri[0] += p990Tri; p990Tri = 0; }
+}
 // №805 (Роб 18.10: «L7, последняя миссия, бейсбольное поле F13-9 — свет размытый; наш векторный конус с фейдом вниз и кружок на
 // поле»): луч летающей тарелки (UfoBeam, art/missions/level07/ufobeam.p3d — билборды к камере сложением, размер и цвет по кадрам
 // клипа) — не размытой картинкой, а как векторный свет (vecLightDraw): трапеция ровного цвета (верх — VL_TOPW ширины, на середине
@@ -187,13 +193,79 @@ static void vecLightDraw(const uint16_t *hk, const float *hf, unsigned nh, float
 #define VEC_BEAM_OLD 0
 #endif
 static unsigned vecBeamN;
-static int vecBeamHook(const float p[3], const float X[3], const float Y[3], unsigned abgr) {
+// №995 (Роб после TEST70: «у тарелки НЛО на L7 стоит блинк, надо просто цилиндр света, можно чуть конусообразный, как будто НЛО светит сверху вниз»): вместо билбордов луча UfoBeam
+// (квадратные размытые кадры клипа и трапеция с эллипсом, на железе луча почти не видно) — один полупрозрачный усечённый конус от днища тарелки до земли: у днища уже, книзу шире до зоны заряда луча
+// (BEAM995_RBOT = радиус зоны BOSS967_R), яркость у днища BEAM995_A, на середине BEAM995_AMID доли, у земли BEAM995_ABOT доли; боковая поверхность без текстуры, один вызов, по BEAM995_SIDES граней.
+// BEAM995_OLD=1 (в игре файл beam995old или «flag beam995 0») — прежнее: билборды луча с эллипсом
+#ifndef BEAM995_OLD
+#define BEAM995_OLD 0
+#endif
+#ifndef BEAM995_SIDES
+#define BEAM995_SIDES 14
+#endif
+#ifndef BEAM995_RTOP
+#define BEAM995_RTOP 7.f       // радиус у днища, м
+#endif
+#ifndef BEAM995_RBOT
+#define BEAM995_RBOT 11.f     // радиус у земли, м: зона заряда BOSS967_R (game_msn.h)
+#endif
+#ifndef BEAM995_DROP
+#define BEAM995_DROP 1.5f     // верх конуса ниже центра тарелки, м
+#endif
+#ifndef BEAM995_A
+#define BEAM995_A 110.f       // альфа у днища (из 255)
+#endif
+#ifndef BEAM995_AMID
+#define BEAM995_AMID .65f     // яркость на середине — доля от яркости у днища
+#endif
+#ifndef BEAM995_ABOT
+#define BEAM995_ABOT .55f    // яркость у земли — доля от яркости у днища
+#endif
+static int beam995 = !BEAM995_OLD; static uint32_t b995Rgb = 0x00c8ffeau; static unsigned b995Draws, b995Tri, b995Calls, b995Us, b995UsOld; static float b995Top, b995Gy;
+static int beam995Draw_(const float ufo[3], float ex, float ey, float ez) {   // 1 — луч нарисован (или тарелка не над землёй), картинку луча не рисовать; 0 — рисовать как было
+  (void)ex; (void)ey; (void)ez;
+  if (!beam995 || !vecLight) return 0;
+  float gy, top = ufo[1] - BEAM995_DROP; static float gyP[3] = {1e30f, 0.f, 0.f}, gyV, csT[BEAM995_SIDES + 1], snT[BEAM995_SIDES + 1]; static int tabOk;
+  if (gyP[0] != ufo[0] || gyP[1] != ufo[1] || gyP[2] != ufo[2]) { float n_[3]; gyV = (haveCol && colGround(&world, ufo[0], ufo[2], top - .5f, top - 90.f, &gy, n_)) ? gy : top - 14.f; memcpy(gyP, ufo, sizeof gyP); }   // земля под тарелкой — раз на место (тарелка стоит)
+  gy = gyV; if (!tabOk) { for (int i = 0; i <= BEAM995_SIDES; i++) { csT[i] = cosf(6.2831853f * i / BEAM995_SIDES); snT[i] = sinf(6.2831853f * i / BEAM995_SIDES); } tabOk = 1; }
+  if (gy > top - 2.f) return 1;
+  typedef struct { unsigned c; float x, y, z; } BV3;
+  const int NS = BEAM995_SIDES; unsigned b0 = ggVbUsed, nv = 0; BV3 *q = (BV3 *)ggVbAlloc(NS * 12 * sizeof(BV3)); if (!q) return 1;
+  float yy[3] = {top, top + (gy - top) * .4f, gy}, rr[3], aa[3] = {BEAM995_A, BEAM995_A * BEAM995_AMID, BEAM995_A * BEAM995_ABOT};
+  for (int i = 0; i < 3; i++) rr[i] = BEAM995_RTOP + (BEAM995_RBOT - BEAM995_RTOP) * (yy[i] - top) / (gy - top);
+  unsigned cc[3]; for (int i = 0; i < 3; i++) cc[i] = ((unsigned)(aa[i] + .5f) << 24) | b995Rgb;
+  for (int s = 0; s < NS; s++) { float c0 = csT[s], s0 = snT[s], c1 = csT[s + 1], s1 = snT[s + 1];
+    for (int i = 0; i < 2; i++) { BV3 *o = q + nv;
+      float x0a = ufo[0] + rr[i] * c0, z0a = ufo[2] + rr[i] * s0, x1a = ufo[0] + rr[i] * c1, z1a = ufo[2] + rr[i] * s1, x0b = ufo[0] + rr[i + 1] * c0, z0b = ufo[2] + rr[i + 1] * s0, x1b = ufo[0] + rr[i + 1] * c1, z1b = ufo[2] + rr[i + 1] * s1;
+      o[0] = (BV3){cc[i], x0a, yy[i], z0a}; o[1] = (BV3){cc[i], x1a, yy[i], z1a}; o[2] = (BV3){cc[i + 1], x0b, yy[i + 1], z0b};
+      o[3] = (BV3){cc[i], x1a, yy[i], z1a}; o[4] = (BV3){cc[i + 1], x1b, yy[i + 1], z1b}; o[5] = (BV3){cc[i + 1], x0b, yy[i + 1], z0b}; nv += 6; } }
+  ggVbWriteback(b0);
+  ScePspFMatrix4 I; memset(&I, 0, sizeof I); I.x.x = I.y.y = I.z.z = I.w.w = 1.f; sceGuSetMatrix(GU_MODEL, &I);
+  sceGuDisable(GU_TEXTURE_2D); sceGuDisable(GU_ALPHA_TEST); sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0);
+  sceGuDepthMask(GU_TRUE); setCull(0);
+  sceGuDrawArray(GU_TRIANGLES, GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D, (int)nv, 0, q);
+  sceGuEnable(GU_TEXTURE_2D); resetState(); b995Draws++; b995Tri += nv / 3; b995Top = top; b995Gy = gy;
+  return 1;
+}
+static int beam995Draw(const float ufo[3], float ex, float ey, float ez) {   // служебно: время (Mac µs) и вызовы за кадр
+  unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; int r = beam995Draw_(ufo, ex, ey, ez);
+  if (smkOn) { b995Us += sceKernelGetSystemTimeLow() - t0; b995Calls++; }
+  return r;
+}
+static int vecBeamHook_(const float p[3], const float X[3], const float Y[3], unsigned abgr);
+static int vecBeamHook(const float p[3], const float X[3], const float Y[3], unsigned abgr) {   // служебно: время старого пути (билборды луча) за кадр
+  unsigned t0 = smkOn ? sceKernelGetSystemTimeLow() : 0; int r = vecBeamHook_(p, X, Y, abgr);
+  if (smkOn && !beam995) b995UsOld += sceKernelGetSystemTimeLow() - t0;
+  return r;
+}
+static int vecBeamHook_(const float p[3], const float X[3], const float Y[3], unsigned abgr) {
   if (VEC_BEAM_OLD || !vecLight) return 0;
+  if (beam995) { b995Rgb = vlColor(abgr & 0xffffffu); return 1; }   // №995: квады луча (блинк, размытые квадраты) не рисуются — свет даёт конус beam995Draw
   float ya = (abgr >> 24) / 255.f; if (ya < .01f) return 1;
   { float hwq = X[0] * X[0] + X[1] * X[1] + X[2] * X[2], hhq = Y[0] * Y[0] + Y[1] * Y[1] + Y[2] * Y[2];
     if (hhq < hwq * 1.69f) return 1; }   // квадратное размытое свечение луча (UfoBeam: 9–31 м по кадрам) — не рисуется: свет луча — конус и эллипс высокого квада
-  if (smkOn && !(vecBeamN & 63)) { char s_[160]; snprintf(s_, sizeof s_, "VECBEAM n=%u p=%.1f,%.1f,%.1f hw=%.2f hh=%.2f a=%.2f t=%.1f\n", vecBeamN, p[0], p[1], p[2],
-    sqrtf(X[0] * X[0] + X[1] * X[1] + X[2] * X[2]), sqrtf(Y[0] * Y[0] + Y[1] * Y[1] + Y[2] * Y[2]), ya, smkT); smkWrite(s_); }   // служебно: где луч (раз в 64 вызова)
+  if (smkOn && !(vecBeamN & 63)) { char s_[160]; snprintf(s_, sizeof s_, "VECBEAM n=%u p=%.1f,%.1f,%.1f hw=%.2f hh=%.2f a=%.2f abgr=%08x t=%.1f\n", vecBeamN, p[0], p[1], p[2],
+    sqrtf(X[0] * X[0] + X[1] * X[1] + X[2] * X[2]), sqrtf(Y[0] * Y[0] + Y[1] * Y[1] + Y[2] * Y[2]), ya, abgr, smkT); smkWrite(s_); }   // служебно: где луч (раз в 64 вызова)
   typedef struct { unsigned c; float x, y, z; } BV2;
   unsigned b0 = ggVbUsed, nv = 0; BV2 *q = (BV2 *)ggVbAlloc((12 + VL_POOL_N * 3) * sizeof(BV2)); if (!q) return 1;
   float T[3], B[3]; for (int a = 0; a < 3; a++) { T[a] = p[a] + Y[a]; B[a] = p[a] - Y[a]; } if (T[1] < B[1]) { float t_[3]; memcpy(t_, T, sizeof t_); memcpy(T, B, sizeof T); memcpy(B, t_, sizeof B); }
