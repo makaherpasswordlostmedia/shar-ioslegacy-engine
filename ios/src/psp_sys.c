@@ -12,8 +12,23 @@
 #include <dirent.h>
 #ifdef __APPLE__
 #include <malloc/malloc.h>
+#include <mach/mach_time.h>
 #endif
 void ge_invalidate_range(const void *p, unsigned n);
+
+/* ---- time: clock_gettime exists only since iOS 10; this port targets iOS 7.0-9.3.5 -> mach_absolute_time / gettimeofday ---- */
+static uint64_t mono_us(void) {
+#ifdef __APPLE__
+  static mach_timebase_info_data_t tb;
+  if (!tb.denom) mach_timebase_info(&tb);
+  return mach_absolute_time() * tb.numer / tb.denom / 1000u;
+#else
+  struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (uint64_t)t.tv_sec * 1000000u + t.tv_nsec / 1000;
+#endif
+}
+static void real_ts(struct timespec *t) {
+  struct timeval tv; gettimeofday(&tv, 0); t->tv_sec = tv.tv_sec; t->tv_nsec = (long)tv.tv_usec * 1000L;
+}
 
 /* ---- path mapping: ms0:/PSP/GAME/SHARVIEW/x -> <Documents>/SHARVIEW/x ---- */
 static void mp(const char *in, char *out, size_t n) {
@@ -72,7 +87,7 @@ SceUID sceKernelCreateSema(const char *n, unsigned a, int i, int m, void *o) { (
 int sceKernelDeleteSema(SceUID s) { sems[s & 127].used = 0; return 0; }
 int sceKernelSignalSema(SceUID s, int n) { Sm *x = &sems[s & 127]; pthread_mutex_lock(&x->m); x->n += n; pthread_cond_broadcast(&x->c); pthread_mutex_unlock(&x->m); return 0; }
 int sceKernelWaitSema(SceUID s, int n, SceUInt *to) { Sm *x = &sems[s & 127]; pthread_mutex_lock(&x->m);
-  if (to) { struct timespec t; clock_gettime(CLOCK_REALTIME, &t); t.tv_nsec += (long)*to * 1000L; t.tv_sec += t.tv_nsec / 1000000000L; t.tv_nsec %= 1000000000L; while (x->n < n) if (pthread_cond_timedwait(&x->c, &x->m, &t)) { pthread_mutex_unlock(&x->m); return (int)0x800201a8; } }
+  if (to) { struct timespec t; real_ts(&t); t.tv_nsec += (long)*to * 1000L; t.tv_sec += t.tv_nsec / 1000000000L; t.tv_nsec %= 1000000000L; while (x->n < n) if (pthread_cond_timedwait(&x->c, &x->m, &t)) { pthread_mutex_unlock(&x->m); return (int)0x800201a8; } }
   else while (x->n < n) pthread_cond_wait(&x->c, &x->m);
   x->n -= n; pthread_mutex_unlock(&x->m); return 0; }
 int sceKernelPollSema(SceUID s, int n) { Sm *x = &sems[s & 127]; int r = 0; pthread_mutex_lock(&x->m); if (x->n >= n) x->n -= n; else r = (int)0x80020193; pthread_mutex_unlock(&x->m); return r; }
@@ -81,8 +96,8 @@ int sceKernelReferEventFlagStatus(SceUID e, SceKernelEventFlagInfo *i) { (void)e
 SceUID sceKernelCreateCallback(const char *n, SceKernelCallbackFunction f, void *a) { (void)n; (void)f; (void)a; return 1; }
 int sceKernelRegisterExitCallback(SceUID c) { (void)c; return 0; }
 void sceKernelExitGame(void) { ios_exit_requested(); for (;;) sleep(1000); }
-unsigned sceKernelGetSystemTimeLow(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (unsigned)((uint64_t)t.tv_sec * 1000000u + t.tv_nsec / 1000); }
-SceInt64 sceKernelGetSystemTimeWide(void) { struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); return (SceInt64)t.tv_sec * 1000000 + t.tv_nsec / 1000; }
+unsigned sceKernelGetSystemTimeLow(void) { return (unsigned)mono_us(); }
+SceInt64 sceKernelGetSystemTimeWide(void) { return (SceInt64)mono_us(); }
 void sceKernelDcacheWritebackAll(void) {} void sceKernelDcacheWritebackInvalidateAll(void) {}
 #undef sceKernelDcacheWritebackRange
 void sceKernelDcacheWritebackRange(const void *p, unsigned n) { ge_invalidate_range(p, n); }
@@ -94,8 +109,8 @@ int sceKernelStartModule(SceUID m, SceSize a, void *p, int *s, void *o) { (void)
 
 /* ---- display / ge ---- */
 static unsigned vcount; static uint8_t *edram;
-static void vwait(void) { static unsigned long long last; struct timespec t; clock_gettime(CLOCK_MONOTONIC, &t); unsigned long long now = (unsigned long long)t.tv_sec * 1000000ull + t.tv_nsec / 1000, per = 16667;
-  if (last && now - last < per) usleep((unsigned)(per - (now - last))); clock_gettime(CLOCK_MONOTONIC, &t); last = (unsigned long long)t.tv_sec * 1000000ull + t.tv_nsec / 1000; vcount++; }
+static void vwait(void) { static unsigned long long last; unsigned long long now = mono_us(), per = 16667;
+  if (last && now - last < per) usleep((unsigned)(per - (now - last))); last = mono_us(); vcount++; }
 int sceDisplayWaitVblankStart(void) { vwait(); return 0; } int sceDisplayWaitVblank(void) { vwait(); return 0; } int sceDisplayIsVblank(void) { return 1; }
 unsigned sceDisplayGetVcount(void) { return vcount; } unsigned sceDisplayGetCurrentHcount(void) { return vcount * 286; }
 int sceDisplayGetFrameBuf(void **t, int *bw, int *pf, int s) { (void)s; if (t) *t = sceGeEdramGetAddr(); if (bw) *bw = 512; if (pf) *pf = 3; return 0; }
