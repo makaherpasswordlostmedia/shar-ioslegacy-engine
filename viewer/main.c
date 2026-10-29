@@ -1,3 +1,6 @@
+#ifdef SHAR_IOS
+#define main shar_main   /* iOS: UIApplicationMain owns main(); engine runs as shar_main on its own thread */
+#endif
 // SHAR main assembly: included modules share the original static state and order.
 // One translation unit; no gameplay/ABI/optimizer boundary changes.
 #ifndef MAIN_MODULES_OLD

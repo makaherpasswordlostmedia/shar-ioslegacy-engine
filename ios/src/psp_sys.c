@@ -1,6 +1,8 @@
 /* psp_sys.c - kernel / io / thread / sema / time / display / power stubs on POSIX (iOS). */
 #define _GNU_SOURCE
 #include "psp_compat.h"
+#undef sceIoRead    /* msio.h (-include) renames these to msioRead/msioWrite; here are the real ones (msio.c calls them) */
+#undef sceIoWrite
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
@@ -15,6 +17,14 @@
 #include <mach/mach_time.h>
 #endif
 void ge_invalidate_range(const void *p, unsigned n);
+
+/* libpspdebug font `msx` (hud.c: extern unsigned char msx[]) - on iOS it is a copy of viewer/bootmsx.h */
+#include "bootmsx.h"
+unsigned char msx[2048];
+__attribute__((constructor)) static void msx_init(void) { memcpy(msx, bootMsx, sizeof msx); }
+/* newlib libm symbol used by viewer/fxdsp.h (FXD_EXPF); iOS libm only has expf */
+#include <math.h>
+float __ieee754_expf(float x) { return expf(x); }
 
 /* ---- time: clock_gettime exists only since iOS 10; this port targets iOS 7.0-9.3.5 -> mach_absolute_time / gettimeofday ---- */
 static uint64_t mono_us(void) {

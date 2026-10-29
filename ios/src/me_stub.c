@@ -2,6 +2,7 @@
  * Every ME service reports "not available", the engine falls back to its CPU paths
  * (audio mixer thread, particles on the main CPU). meprobe.c / me_gametask.c / me_math.c are not built. */
 #include "psp_compat.h"
+void fxSetMeMax(int n) { (void)n; }   /* viewer/fx.c defines it only for __psp__ */
 unsigned meSvcDbg[4]; unsigned meSvcChained;
 int meSvcScheme(void) { return 0; }
 int meSvcSubmit(int c, volatile void *b, unsigned k, void *j, unsigned w) { (void)c; (void)b; (void)k; (void)j; (void)w; return -1; }

@@ -12,6 +12,7 @@ APPLICATION_NAME = SHARArmv7
 SHARArmv7_FILES = $(SHAR_SRC) src/ge_list.c src/ge_gles2.c src/psp_sys.c src/me_stub.c host/ios_host.m host/ios_availability_stub.m
 
 ios_host.m_CFLAGS += -fobjc-arc
+SHARArmv7_OBJCFLAGS += -fobjc-arc   # per-file key above does not match paths in FILES; ios_host.m is written for ARC
 main.c_CFLAGS += -Dmain=shar_main
 psp_sys.c_CFLAGS += -DMSIO_IMPL
 

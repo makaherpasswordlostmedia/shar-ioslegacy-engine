@@ -1,6 +1,8 @@
 /* ge_list.c - libpspgu / libpspgum replacement: writes real GE command words into the
  * caller's list buffer, executes finished direct lists through ge_gles2.c. */
 #include "psp_compat.h"
+#undef sceGuSetMatrix    /* geguard.h (-include) renames these to geSetMatrixSafe/geBoneMatrixSafe; here are the real ones */
+#undef sceGuBoneMatrix
 void ge_exec(const uint32_t *list);
 void ge_frame_end(void);
 void ge_invalidate_range(const void *p, unsigned n);
