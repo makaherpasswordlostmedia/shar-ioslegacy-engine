@@ -1,0 +1,44 @@
+# №978 контур бордюра: ink978 0 — как было (чёрное перо Ink 1 Black, 2 px, на всю дальность), 1 — тёмный насыщенный тон бордюра, 1 px, ближе 28 м. Бордюр №974 включён (curb974 1), газон «бумага» (ground969 1)
+scene S
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 4
+foot 220 172 0
+wait 3
+flag ground969 1
+flag curb974 1
+wait 12
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3
+flag ink978 0
+wait 2
+shot H_street_o0
+flag ink978 1
+wait 2
+shot H_street_o1
+cam 228 4 158 -0.1 -0.25 -1
+wait 3
+flag ink978 0
+wait 2
+shot K_corner_o0
+flag ink978 1
+wait 2
+shot K_corner_o1
+cam 205 2.2 167 1 -0.12 0.02
+wait 3
+flag ink978 0
+wait 2
+shot A_along_o0
+flag ink978 1
+wait 2
+shot A_along_o1
+cam 214 1.8 166 0.3 -0.2 -1
+wait 3
+flag ink978 0
+wait 2
+shot L_near_o0
+flag ink978 1
+wait 2
+shot L_near_o1

@@ -1,0 +1,38 @@
+scene F_N950_L6
+flag cfgdefaults 1
+flag golevel 6
+wait 40
+flag repair
+wait 3
+scene F_N950_PIER
+foot -417 50 0.1
+wait 14
+flag neonsign950 1
+scene SIGN_n
+wait 10
+cam -417 -55 46 -0.1 0.02 1
+wait 1.2
+shot n_a
+cam -424 -55 52 0.3 0.0 1
+wait 1.2
+shot n_b
+cam -412 -56 40 -0.25 0.03 1
+wait 1.2
+shot n_c
+cam off
+wait 1
+flag neonsign950 0
+scene SIGN_o
+wait 10
+cam -417 -55 46 -0.1 0.02 1
+wait 1.2
+shot o_a
+cam -424 -55 52 0.3 0.0 1
+wait 1.2
+shot o_b
+cam -412 -56 40 -0.25 0.03 1
+wait 1.2
+shot o_c
+cam off
+wait 1
+end

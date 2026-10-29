@@ -1,0 +1,15 @@
+# Правка Роба 236 (tests/ui/radar_car.sh): своя машина на радаре, пока Гомер пешком. Старт в машине у дома (220, 172) -> вышел ->
+# отошёл на 21 м (в круге радара) -> на 63 м. В машине значка нет: строка RADAR сначала в машине (drawn без машины)
+flag radarlog
+scene start
+wait 2.5
+shot incar
+press triangle
+wait 3
+foot 240.0 160.0 0
+wait 2
+shot radar_near
+foot 280.0 150.0 0
+wait 2
+shot radar_far
+end

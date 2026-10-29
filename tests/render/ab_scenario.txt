@@ -1,0 +1,16 @@
+scene rfspawn
+flag rfold 7
+wait 5
+flag rfcompare
+wait 1
+scene rfnear
+foot 289.5 178 -1.5708
+wait 5
+flag rfcompare
+wait 1
+scene rfprops
+foot 213.9 299 3.1416
+wait 5
+flag rfcompare
+wait 1
+end

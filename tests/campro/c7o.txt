@@ -1,0 +1,31 @@
+# цена камеры в езде (тур TEST58, F_L7_CR*): тот же маршрут, goto 214.9 172.3 -3.0 и drive 18 с, L7; CAMSUB (мкс на кадр по частям) и CAMIN cparts
+wait 12
+flag cfgdefaults 1
+flag player
+flag camin 1
+flag camnfreuseold 1
+flag cgdirtyold 1
+flag cgpendold 1
+flag golevel 7
+wait 40
+scene CR7_a
+press triangle 0.2
+wait 2
+goto 214.9 172.3 -3.0
+wait 3
+flag drive 18
+wait 19
+flag stop
+flag camin 1
+wait 1
+scene CR7_b
+goto 214.9 172.3 -3.0
+wait 3
+flag drive 18
+wait 19
+flag stop
+flag camin 1
+wait 1
+scene Z_END
+wait 1
+end

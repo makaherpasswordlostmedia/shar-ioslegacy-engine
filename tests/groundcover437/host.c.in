@@ -1,0 +1,64 @@
+#include <stdio.h>
+#include <string.h>
+#include "groundcover.h"
+#include "pspgu.h"
+#define F_NOIDX 16
+#define F_V12 32
+#define FOG_NEAR .06f
+#define FARPROBE_KEY 0xff00ff
+static GroundCover groundCover;static ColWorld world;static Car car;
+static struct{int state;} cl[1]={{2}};static int haveCol=1;static unsigned npc=1,ntex=1,ncell=1;static int farProbe,fogCityOld,oldFog;
+static float drawDist=250,fogK,fogNear,fogFar;static unsigned fogCol=0x112233,fogValue;
+static int draws;static GroundCoverVertex vertices[10];
+void sceGumMatrixMode(int a){(void)a;}void sceGumStoreMatrix(ScePspFMatrix4*m){memset(m,0,sizeof *m);m->x.x=m->y.y=m->z.z=m->w.w=1;}
+void sceGuFog(float n,float f,unsigned col){fogNear=n;fogFar=f;fogValue=col;}
+void sceGuDepthOffset(int a){(void)a;}
+int sceGuGetStatus(int a){(void)a;return 0;}
+void sceGuDisable(int a){(void)a;}void sceGuEnable(int a){(void)a;}
+void sceGuDrawArray(int a,int b,int n,const void*i,const void*v){(void)a;(void)b;(void)i;draws=n;memcpy(vertices,v,sizeof vertices);}
+typedef struct {short u,v;unsigned c;short x,y,z,pad;} Vert;
+typedef struct {int w,h,levels;void*pal;void*lv[8];void*slv[8];int pre;float slope;int t4;const void*opqPal;int opq;} Tex;
+typedef struct {float bb[6];int tex,flags,nv,ni,owner;float ox,oy,oz,sc;unsigned off,nf,cell,pad[2];} Rec;
+typedef struct {Rec r;float cx,cy,cz,rad;Vert*v;unsigned short*idx,*fidx;void*ggBatch;} Piece;
+static Tex tex[1];static Piece pc[1];
+static int texRowBytes(int t4,int pre,int w){(void)pre;return t4?(w+1)/2:w;}
+SAMPLE
+COLOUR
+DRAW
+FOG
+static int bad;
+#define CHECK(x) do{if(!(x)){bad++;printf("FAIL line%d %s\n",__LINE__,#x);}}while(0)
+int main(void){
+ struct {ColHdr h;ColTri t[2];unsigned start[2],refs[2];} floor={0};
+ memcpy(floor.h.magic,"COL1",4);floor.h.ox=floor.h.oz=-100;floor.h.cell=200;floor.h.W=floor.h.H=1;floor.h.ntri=floor.h.nref=2;floor.start[1]=2;floor.refs[1]=1;
+ floor.t[0]=(ColTri){{-100,-2,-100},{100,-2,100},{100,-2,-100},{0,1,0}};
+ floor.t[1]=(ColTri){{-100,-2,-100},{-100,-2,100},{100,-2,100},{0,1,0}};
+ CHECK(!colInit(&world,&floor,sizeof floor));unsigned palette[256]={0xff446622};unsigned char pixels[16]={0};tex[0].w=tex[0].h=4;tex[0].pal=palette;tex[0].lv[0]=pixels;
+ Vert data[3]={{0,0,~0u,-5,-2,-5,0},{0,0,~0u,5,-2,5,0},{0,0,~0u,5,-2,-5,0}};
+ short packed[3][6]={{0,0,-1,-5,-2,-5},{0,0,-1,5,-2,5},{0,0,-1,5,-2,-5}};
+ car.y=-1;pc[0].r.sc=32768;pc[0].r.nv=pc[0].r.ni=3;
+ for(int small=0;small<2;small++){
+  pc[0].r.flags=F_NOIDX|(small?F_V12:0);pc[0].v=small?(Vert*)packed:data;
+  groundCoverReset(&groundCover,&world);groundCoverDraw(60,1);
+  CHECK(groundCover.ready);CHECK(groundCover.rgb==0x446622);CHECK(groundCover.y<-2);CHECK(draws==4);
+  for(int i=0;i<draws;i++){CHECK(vertices[i].z==3);CHECK(vertices[i].c==0xff446622);}
+  // Actual background covers all below-horizon rays, including intersections beyond far clip.
+  CHECK(vertices[0].y==136 && vertices[2].y==272);
+  draws=0;groundCoverDraw(60,-100);CHECK(draws==0);
+  fogBase();CHECK(fogValue==groundCover.rgb && fogNear==187.5f && fogFar==250);
+  unsigned first=groundCover.rgb;palette[0]=0xff112233;groundCoverColour();CHECK(groundCover.rgb==first);palette[0]=0xff446622;
+ }
+ // Pitch and roll: clip exactly the downward camera rays, preserve the sky half.
+ GroundCover g={-2.25f,0x446622,1};GroundCoverVertex v[8];
+ for(int pitch=-70;pitch<=70;pitch+=10)for(int roll=-30;roll<=30;roll+=15){
+  float p=pitch*.01745329252f,r=roll*.01745329252f,fy=sinf(p),ry=cosf(p)*sinf(r),uy=cosf(p)*cosf(r);
+  int n=groundCoverBackground(&g,fy,ry,uy,235,v);CHECK(n<=5);
+  for(int y=2;y<272;y+=11)for(int x=2;x<480;x+=13){
+   float ray=fy+(x-240)*ry/235-(y-136)*uy/235;if(fabsf(ray)<.0001f)continue;
+   int inside=n>=3;
+   for(int i=0;i<n;i++){GroundCoverVertex a=v[i],b=v[(i+1)%n];if((b.x-a.x)*(y-a.y)-(b.y-a.y)*(x-a.x)<-.001f)inside=0;}
+   CHECK(inside==(ray<0));
+  }
+ }
+ colFree(&world);printf("%s underlay ray-coverage, native16/12-bit colour, lowest support, stable colour, matching fog failures=%d\n",bad?"FAIL":"PASS",bad);return !!bad;
+}

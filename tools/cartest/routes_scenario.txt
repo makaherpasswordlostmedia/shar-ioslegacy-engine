@@ -1,0 +1,32 @@
+# Гейт пункта 12 (tools/cartest/routes_gate.sh): обход трамплинов ↑ / ↓ в машине по routes.txt рядом с EBOOT.
+# Строка SHOT в smoke.txt несёт позицию машины (pos x y z курс), её сверяет tools/cartest/routes_gate.py с routes.txt.
+# r0 — спавн до нажатий; ↑ ×3 -> трамплины 1, 2, 3; ↓ -> снова 2. Без routes.txt все снимки — на месте r0.
+# Потом пешком (△ — выйти, ↑ 1 с — Гомер идёт) и в полёте (L+R+△, ↑ 1 с — камера летит): машина не двигается, строк RAMP нет.
+scene ramps
+wait 3
+shot r0
+press up
+wait 2
+shot r1
+press up
+wait 2
+shot r2
+press up
+wait 2
+shot r3
+press down
+wait 2
+shot r2back
+press triangle
+wait 3
+press up 1
+wait 1.5
+shot foot
+press l 0.3
+press r 0.3
+press triangle 0.3
+wait 1
+press up 1
+wait 1.5
+shot fly
+end

@@ -1,0 +1,40 @@
+# №597: VIEW CARDS, открытая карточка уровня 7 (карточка 6 — самое длинное описание уровня). Пауза -> ↓×4 VIEW CARDS -> X сетка -> ▼ ►► карточка 6 -> X крупно.
+flag level 7
+scene typo_vcards
+flag msn
+wait 3
+flag cardsset 127
+wait 0.5
+press start
+wait 1
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot vcgrid_a
+press down
+wait 0.3
+press right
+wait 0.3
+press right
+wait 0.3
+shot vcsel_a
+press cross
+wait 1
+shot vcard_a
+flag uitypo 1
+wait 0.1
+shot vcard_b
+flag uitypo 2
+wait 0.1
+shot vcard_c
+flag uitypo 0
+wait 0.1
+shot vcard_a2
+end

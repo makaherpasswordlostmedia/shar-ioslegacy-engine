@@ -1,0 +1,10 @@
+# №706: пауза, зажатая ▼ 1,5 с (список паузы; шаг повтора у края встаёт) 
+scene pause
+wait 3
+press start
+wait 1.5
+press down 0.15
+wait 1.2
+press down 1.5
+wait 1.9
+end

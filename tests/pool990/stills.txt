@@ -1,0 +1,151 @@
+# №990: места с фонарями, pool990 0 (TEST70) и 1 (новое) с той же камерой; счёт POOL990 за 3 с; снимки p990_<место>_off/on
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P990_S_l1
+foot -61.9 -301.0 0
+wait 8
+cam -49.9 5.0 -301.0 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l1_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l1_on
+cam off
+wait 1
+scene P990_GO4
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 4
+wait 40
+wait 3
+scene P990_S_l4
+foot 193.9 107.3 0
+wait 8
+cam 206.0 11.0 107.3 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l4_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l4_on
+cam off
+wait 1
+scene P990_GO5
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 5
+wait 40
+wait 3
+scene P990_S_l5b
+foot -517.9 -546.2 0
+wait 8
+cam -505.0 28.5 -546.2 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l5b_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l5b_on
+cam off
+wait 1
+scene P990_S_l5s
+foot -357.5 -156.8 0
+wait 8
+cam -345.5 13.5 -156.8 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l5s_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l5s_on
+cam off
+wait 1
+scene P990_GO6
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 6
+wait 40
+wait 3
+scene P990_S_l6p
+foot -396.1 -53.0 0
+wait 8
+cam -384.0 -63.0 -53.0 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l6p_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l6p_on
+cam off
+wait 1
+scene P990_GO7
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 7
+wait 40
+wait 3
+scene P990_S_l7n
+foot 5.8 -260.9 0
+wait 8
+cam 18.0 7.0 -260.9 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l7n_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l7n_on
+cam off
+wait 1
+scene P990_GO3
+press circle 0.3
+wait 0.5
+press circle 0.3
+wait 0.5
+flag golevel 3
+wait 40
+wait 3
+scene P990_S_l3
+foot -297.2 -172.2 0
+wait 8
+cam -285.0 -44.0 -172.2 -1 -0.3 0 70
+wait 2
+flag pool990 0
+wait 3
+flag pool990stat
+shot p990_l3_off
+flag pool990 1
+wait 3
+flag pool990stat
+shot p990_l3_on
+cam off
+wait 1
+end

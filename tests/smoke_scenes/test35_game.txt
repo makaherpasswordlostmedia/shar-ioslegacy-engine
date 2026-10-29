@@ -1,0 +1,197 @@
+# TEST35 · тур (Роб 18.10): плоское меню OPTIONS (№783), Draw Distance (№795); дальше как TEST34: Settings с подстраницами (№777), мультик крупно (№779–№781), переходы всех уровней (№775/№776) и подгрузка текстур на ходу (№778).
+# Переходы — тем же путём, что «уровень пройден» и MISSION SELECT (flag golevel); на каждом уровне: снимок пешком, в машину, автопилот по дорогам 20 с, снимок, выход, снимок.
+# Зависнет — экран сторожа и stall.txt называют шаг и ожидание; PSP перезагрузить (питание 10 с), данные на карте.
+scene F_L1
+# №851: настройки сборки по умолчанию в начале тура (прежние прогоны сдвигали Draw Distance/насыщенность/линию и сохраняли — туры не сравнить)
+flag cfgdefaults 1
+flag repair
+wait 6
+shot f00_l1
+# Settings (№783, плоское меню): пауза → OPTIONS (SOUND / CAMERA / GAME / PICTURE) → CAMERA, GAME, PICTURE (насыщенность +1, Draw Distance
+# 250 м) → CARTOON (Line Width +1); назад △ трижды и START. Нажатия держатся 0,2 с (короткое на PSP не перекрывает кадр)
+scene F_SET
+foot 214 210 -2.4
+wait 2
+press start 0.2
+wait 1
+press up 0.2
+wait 0.4
+press up 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_options
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_camera
+press triangle 0.2
+wait 0.6
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_game
+press triangle 0.2
+wait 0.6
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_picture
+press right 0.2
+wait 0.5
+press down 0.2
+wait 0.4
+press down 0.2
+wait 0.4
+press down 0.2
+wait 0.4
+press right 0.2
+wait 1
+shot f_set_picture_on
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_cartoon
+press down 0.2
+wait 0.4
+press right 0.2
+wait 3
+shot f_set_cartoon_ch
+press triangle 0.2
+wait 0.6
+press triangle 0.2
+wait 0.6
+press triangle 0.2
+wait 0.6
+press start 0.2
+wait 3
+shot f_set_world
+# мультик включён меню выше; на случай, если строка не сработала, — флаг (тур не должен зависеть от одного нажатия)
+flag toon 1
+# №851: после проверки меню — снова по умолчанию (дальность 200 м, как тур TEST34), чтобы скорость уровней сравнивалась честно
+flag cfgdefaults 1
+flag toon 1
+wait 3
+shot f01_l1_toon
+scene F_GO1_L4
+flag golevel 4
+wait 40
+shot f02_l4_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f02_l4_b
+flag stop
+press triangle 0.2
+wait 4
+shot f02_l4_c
+scene F_GO2_L5
+flag golevel 5
+wait 40
+shot f03_l5_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f03_l5_b
+flag stop
+press triangle 0.2
+wait 4
+shot f03_l5_c
+scene F_GO3_L6
+flag golevel 6
+wait 40
+shot f04_l6_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f04_l6_b
+flag stop
+press triangle 0.2
+wait 4
+shot f04_l6_c
+scene F_GO4_L5
+flag golevel 5
+wait 40
+shot f05_l5_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f05_l5_b
+flag stop
+press triangle 0.2
+wait 4
+shot f05_l5_c
+scene F_GO5_L4
+flag golevel 4
+wait 40
+shot f06_l4_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f06_l4_b
+flag stop
+press triangle 0.2
+wait 4
+shot f06_l4_c
+scene F_GO6_L7
+flag golevel 7
+wait 40
+shot f07_l7_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f07_l7_b
+flag stop
+press triangle 0.2
+wait 4
+shot f07_l7_c
+scene F_GO7_L2
+flag golevel 2
+wait 40
+shot f08_l2_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f08_l2_b
+flag stop
+press triangle 0.2
+wait 4
+shot f08_l2_c
+scene F_GO8_L3
+flag golevel 3
+wait 40
+shot f09_l3_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f09_l3_b
+flag stop
+press triangle 0.2
+wait 4
+shot f09_l3_c
+scene F_GO9_L1
+flag golevel 1
+wait 40
+shot f10_l1_a
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f10_l1_b
+flag stop
+press triangle 0.2
+wait 4
+shot f10_l1_c
+end

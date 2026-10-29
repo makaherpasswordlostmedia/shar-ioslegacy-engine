@@ -1,0 +1,18 @@
+# ОСТАТОК 09.10 п. 18 (249): следы шин машин миссии (tests/skid/ai_emu.sh). sr2 — три соперника стартуют и тормозят на поворотах
+# трассы; игрок едет автопилотом (flag autodrive: соперники держат темп игрока, аудит п. 10). Строка SKID ai= — квадов от машин миссии
+scene spawn
+wait 3
+scene start
+flag msn
+wait 3
+scene sr2
+flag msnmain 9
+wait 3
+press cross
+wait 4
+flag autodrive
+wait 25
+flag skidlog
+shot sr2_ai
+wait 1
+end

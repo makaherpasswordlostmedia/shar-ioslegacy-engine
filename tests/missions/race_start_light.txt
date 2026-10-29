@@ -1,0 +1,31 @@
+# №старт-гонки (tests/missions/race_start_light.sh): уровень 1, затем L3 и гонка Лизы (карточка 901) — PH4CARS в строках smoke.txt: стоимость машин миссии за первые секунды гонки
+scene R_L1_load
+flag golevel 1
+wait 20
+scene R_card_race_L1
+flag repair
+flag msn
+wait 3
+flag msnmainat 801
+wait 4
+press cross 0.3
+wait 1
+flag msngo
+wait 8
+flag stop
+flag msn
+wait 1
+scene R_L3_load
+flag golevel 3
+wait 20
+scene R_card_lisa_L3
+flag msn
+wait 3
+flag msnmainat 901
+wait 3
+press cross 0.3
+wait 1
+flag msngo
+wait 8
+flag stop
+end

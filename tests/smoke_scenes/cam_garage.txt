@@ -1,0 +1,43 @@
+# Камера финала 16.10: конусы света гаража АЭС (кадр как ps2_light_garage_lamps) и тень Гомера. L1, гараж; камера cam вдоль коридора на подвесные лампы.
+# Кадры парами: прежнее / новое (conewide 1, homerspot 1); флаги выкл по умолчанию.
+scene CG_L1_load
+flag golevel 1
+wait 15
+scene CG_cones_off
+flag repair
+foot -85 -300 1.5708
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+flag lightspr 0
+wait 4
+shot cg_cones_off
+scene CG_cones_old
+flag lightspr 1
+wait 4
+shot cg_cones_old
+scene CG_cones_wide
+flag conewide 1
+wait 4
+shot cg_cones_wide
+flag conewide 0
+cam off
+flag lightspr 0
+scene CG_homer_old
+foot -84.63 -300.67 1.5708
+flag shadowspr 0
+wait 3
+shot cg_homer_old
+scene CG_homer_spot
+flag homerspot 1
+wait 3
+shot cg_homer_spot
+flag homerspot 0
+flag shadowspr 0
+scene CG_street_old
+foot 50 -285 0.0
+wait 3
+shot cg_street_old
+scene CG_street_spot
+flag homerspot 1
+wait 3
+shot cg_street_spot
+end

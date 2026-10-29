@@ -1,0 +1,15 @@
+# №889: главное меню, 6 кадров выбранного пункта подряд (0,1 с) — размер строки и покой (tests/menu889/check.py)
+flag menu
+wait 2
+shot f0
+wait 0.1
+shot f1
+wait 0.1
+shot f2
+wait 0.1
+shot f3
+wait 0.1
+shot f4
+wait 0.1
+shot f5
+end

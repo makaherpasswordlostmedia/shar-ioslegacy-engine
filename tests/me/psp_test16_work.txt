@@ -1,0 +1,33 @@
+# TEST 16 · ME работает из памяти игры (04.10 вечер). TEST 15 на железе 22:16: функция ME в памяти игры (meGameTask) — ME ответил
+# за 5 мкс, сумма сошлась, выход в обработчик правильный (ME_STATE -567). Здесь настоящая работа: 15 — ячейка и пустое задание,
+# 17 — сумма буфера нижней памяти ×10, 19 — ×200 (время), 18 — буфер в верхних 32 МБ (последним из работ: может не дотянуться),
+# потом ролик (прошивка жива?), 20 — задание после ролика без новой ячейки, 21 — перезапуск + ячейка + задание. ~1,5 мин.
+scene ME16_work
+goto 220 172 1.5708
+wait 3
+flag melad 0
+wait 2
+flag melad 15
+wait 2
+flag melad 17
+wait 2
+flag melad 19
+wait 3
+flag melad 18
+wait 2
+scene ME16_movie
+flag mefmv
+wait 14
+scene ME16_after_movie
+flag melad 20
+wait 2
+flag melad 21
+wait 2
+scene ME16_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 10
+flag stop
+wait 3
+end

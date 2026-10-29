@@ -1,0 +1,16 @@
+# №916: проход вдоль борта машины (глаз камеры идёт вдоль кузова): курс камеры, кадр управления, курс ходьбы
+wait 12
+flag cfgdefaults 1
+flag player
+flag camlog
+scene PASS_side
+foot 236 169.4 -1.5708
+wait 3
+press up 8
+wait 8.5
+scene PASS_side2
+foot 236 175.0 -1.5708
+wait 3
+press up 8
+wait 8.5
+end

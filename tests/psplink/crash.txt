@@ -1,0 +1,8 @@
+# Гейт стенда PSPLink (этап С.1 аудита 30.09), заведомо плохой вход: игра падает (исключение процессора).
+# Стенд обязан сообщить «ВЫЛЕТ» (код 10) и строку кода (viewer/smoke.h, flag crash)
+scene crash
+wait 6
+shot crash_before
+flag crash
+wait 40
+end

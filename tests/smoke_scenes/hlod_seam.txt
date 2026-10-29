@@ -1,0 +1,81 @@
+# HLOD шов: 8 точек вдоль улиц L3 на уровне земли, 150 м, без HLOD и с HLOD (кадры подряд как при проезде каждые ~40-60 м)
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag horizon 0
+flag drawdist 60
+scene HS_0
+flag hlod 0
+flag repair
+goto -20 -30 1.57
+wait 3
+shot HS_0_off
+flag hlod 1
+wait 1
+shot HS_0_on
+scene HS_1
+flag hlod 0
+flag repair
+goto 40 -30 1.57
+wait 3
+shot HS_1_off
+flag hlod 1
+wait 1
+shot HS_1_on
+scene HS_2
+flag hlod 0
+flag repair
+goto 100 -30 1.57
+wait 3
+shot HS_2_off
+flag hlod 1
+wait 1
+shot HS_2_on
+scene HS_3
+flag hlod 0
+flag repair
+goto 160 -30 1.57
+wait 3
+shot HS_3_off
+flag hlod 1
+wait 1
+shot HS_3_on
+scene HS_4
+flag hlod 0
+flag repair
+goto 220 -30 1.57
+wait 3
+shot HS_4_off
+flag hlod 1
+wait 1
+shot HS_4_on
+scene HS_5
+flag hlod 0
+flag repair
+goto 60 120 0.0
+wait 3
+shot HS_5_off
+flag hlod 1
+wait 1
+shot HS_5_on
+scene HS_6
+flag hlod 0
+flag repair
+goto 60 40 0.0
+wait 3
+shot HS_6_off
+flag hlod 1
+wait 1
+shot HS_6_on
+scene HS_7
+flag hlod 0
+flag repair
+goto 60 -100 0.0
+wait 3
+shot HS_7_off
+flag hlod 1
+wait 1
+shot HS_7_on
+end

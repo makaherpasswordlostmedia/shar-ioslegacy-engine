@@ -1,0 +1,26 @@
+# №950: L6 причал C8-6 (x -417, z 50): снимки по сторонам; перепись кусков свечения (flag neoncensus)
+scene F_N950_L6
+flag cfgdefaults 1
+flag golevel 6
+wait 40
+flag repair
+wait 3
+scene F_N950_PIER
+foot -417 50 0.1
+wait 14
+shot n950_a
+camrel 0 3 0 0 0 1
+wait 2
+shot n950_b
+camrel 0 3 0 1 0 0
+wait 2
+shot n950_c
+camrel 0 3 0 0 0 -1
+wait 2
+shot n950_d
+camrel 0 3 0 -1 0 0
+wait 2
+shot n950_e
+cam off
+wait 1
+end

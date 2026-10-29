@@ -1,0 +1,12 @@
+flag level 6
+flag policewarmold 0
+scene police_heap_l6
+flag msn
+wait 6
+flag hnr 100
+wait 5
+flag hnrbust
+wait 2
+shot police_heap_l6
+wait 2
+end

@@ -1,0 +1,65 @@
+# №975: L5 F3-2, фонарь с баннером (стейтпроп 98, красный столб у перекрёстка): удар такси на ~16 м/с, кадры и строки SPHITS каждые 0,17 с
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+scene F_L5
+flag golevel 5
+wait 40
+flag repair
+wait 3
+scene H_s98
+goto -137.4 -484.3 1.111
+wait 2.5
+flag autostraight 2.4
+wait 0.17
+flag sphits
+shot hh_00
+wait 0.17
+flag sphits
+shot hh_01
+wait 0.17
+flag sphits
+shot hh_02
+wait 0.17
+flag sphits
+shot hh_03
+wait 0.17
+flag sphits
+shot hh_04
+wait 0.17
+flag sphits
+shot hh_05
+wait 0.17
+flag sphits
+shot hh_06
+wait 0.17
+flag sphits
+shot hh_07
+wait 0.17
+flag sphits
+shot hh_08
+wait 0.17
+flag sphits
+shot hh_09
+wait 0.17
+flag sphits
+shot hh_10
+wait 0.17
+flag sphits
+shot hh_11
+wait 0.17
+flag sphits
+shot hh_12
+wait 0.17
+flag sphits
+shot hh_13
+wait 0.17
+flag sphits
+shot hh_14
+wait 0.17
+flag sphits
+shot hh_15
+flag stop
+wait 1
+end

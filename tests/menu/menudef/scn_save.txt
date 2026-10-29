@@ -1,0 +1,33 @@
+# Сохранение для гейта menudef: новая игра -> пауза -> SAVE GAME (слот 1) -> QUIT -> NO -> главное меню (возврат после QUIT: курсор как раньше, NEW GAME)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 6
+shot b_game
+press start
+wait 1.5
+shot b_pause
+press up
+wait 0.5
+press up
+wait 0.5
+press cross
+wait 1.5
+shot b_slots_save
+press cross
+wait 3
+shot b_saved
+press cross
+wait 0.8
+press down
+wait 0.4
+press cross
+wait 1.2
+shot b_quitask
+press down
+wait 0.3
+press cross
+wait 5
+shot b_menu_after
+end

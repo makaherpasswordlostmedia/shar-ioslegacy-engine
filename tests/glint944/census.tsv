@@ -1,0 +1,40 @@
+# №944 перепись путей блика/светяшки: файл, якорь (regex, должен быть в файле), путь (SHAPE941 — общий шейп №941 через gvStar/fxVec*, SHAPE944 — переведено в №944 под GLINT944_OLD, EXCLUDED — не блик взаимодействия), что рисует, где в игре
+viewer/msnart.c	msnartGlowGlint\(d->name	SHAPE941	свечения квадов сложением у рисунков миссий: «!», $, цель, кубики, флажки, предметы миссий, значки NPC-бонусов, томаты, ведёрко	L1-L7: над персонажами миссий, предметы целей
+viewer/msnart.c	doorStarDraw944\(p, X, Y, col, tsec\)	SHAPE944	звезда входа в дом/магазин/школу/бар (*doorstar*: l1_doorstars, simp/kwik/school_mission_doorstar, l2_/l3_/l4_…): каждый квад звезды, не только первый	L1-L7: двери Симпсонов, Kwik-E-Mart, школы, Moe's, обсерватории и т. д. при цели «войти»
+viewer/spritelight.h	static int glowGlintHook	SHAPE941	хук msnart: один блик на рисунок (центр самого крупного свечения)	см. строку 1
+viewer/spritelight.h	static void glowGlintQ_	SHAPE941	очередь бликов кадра (искры, подбор, огни машин, квады сложением карточек/ос/приколов/бонус-игр/заграждений)	см. ниже
+viewer/spritelight.h	static void aoBillGlint	SHAPE941	свечение выключателей объектов с действием (кнопки, звонки, подъёмник Duff, пульт АЭС)	L1-L7: объекты с △
+viewer/spritelight.h	static void wrGlowDraw	SHAPE941	блик под гаечным ключом	L1-L7: ключи
+viewer/spritelight.h	static int iconSprHook	SHAPE941	«!» и трубка спрайтом + общий блик под значком	L1-L7: над собеседниками и будками
+viewer/main_collect.h	glowQuadQ\(v, col	SHAPE941	квады сложением карточек-коллекционок, ос, приколов (гэгов), сцен	L1-L7: карточки, осы, гэги
+viewer/bonus_play.h	glowQuadQ\(v, col	SHAPE941	квады сложением бонус-игры	бонус-игры
+viewer/main_loop.h	glowQuadQ\(v, col	SHAPE941	огни заграждений и свечения пропов	L1-L7: заграждения, огни пропов
+viewer/main_loop.h	aoBillGlint\(i, v, col	SHAPE941	выключатели объектов (вызов)	L1-L7
+viewer/fx.c	fxGlowGlint\(x, y, z, size	SHAPE941	искры: монеты, блёстки над ненайденными гэгами, подбор	L1-L7
+viewer/fx.c	fxVecSparkles	SHAPE941	звезда стекла (sparkle) и звезда частиц (fxVecCross)	L1-L7: разбитое стекло, частицы
+viewer/collectfx.c	fxGlowGlint\(	SHAPE941	столб и звёзды подбора цели миссии	L1-L7: wrench_collect, цели
+viewer/carvis.c	fxGlowGlint\(	SHAPE941	огни машин: стоп-сигналы, задний ход	L1-L7
+viewer/main_collect.h	aoDrawRings	EXCLUDED	красное кольцо на земле у выключателя — плоский пояс-маркер, не блик-звезда	L1, АЭС
+viewer/lightsprite.h	vecGlowFlat|vecGlowHook	EXCLUDED	плоские пятна <рисунок>_shadow на земле под значками и целями (диск/кольцо) — закон света, не звезда	L1-L7
+viewer/lightsprite.h	vecBeamHook	EXCLUDED	луч тарелки UfoBeam (конус с эллипсом) — луч, не блик	L7
+viewer/spritelight.h	static void slLightDraw	EXCLUDED	конусы и пятна света ламп, неон, таблички — закон света Роба 17.10	город
+viewer/main_render.h	F_ADDITIVE	EXCLUDED	аддитивные куски города (ореолы фонарей, неон): NEON_SKIP / slLight (закон света)	город
+viewer/police_fx.c	policeFxDraw	EXCLUDED	мигалки и лучи полицейской машины — свет машины, не взаимодействие (кандидат на отдельное слово Роба)	погоня
+viewer/frontend3d.c	F_ADD	EXCLUDED	аддитивный слой 3D меню (гостиная)	меню
+viewer/oldtv.h	GU_FIX	EXCLUDED	эффект старого телевизора (экран, не мир)	экран
+viewer/main_collect.h	fx_ = \(int\)i == coll.kickFx	EXCLUDED	взмах ноги, удар током, молнии героя (№846: картинкой, бликом — только свечения предметов)	герой
+viewer/fx.c	texVec\[i\] = 2	EXCLUDED	искра-штрих spark3 (след искры, не звезда), взрыв, огонь, дым	удары, взрывы
+viewer/skin.c	TOON_HULL_BLEND_OLD	EXCLUDED	контур и глаза персонажей (смешивание тушью)	персонажи
+#COUNT	viewer/bonus_play.h	2
+#COUNT	viewer/carvis.c	2
+#COUNT	viewer/collectfx.c	3
+#COUNT	viewer/frontend3d.c	1
+#COUNT	viewer/fx.c	5
+#COUNT	viewer/lightsprite.h	3
+#COUNT	viewer/main_collect.h	2
+#COUNT	viewer/main_loop.h	4
+#COUNT	viewer/main_render.h	1
+#COUNT	viewer/msnart.c	2
+#COUNT	viewer/oldtv.h	2
+#COUNT	viewer/police_fx.c	1
+#COUNT	viewer/spritelight.h	4

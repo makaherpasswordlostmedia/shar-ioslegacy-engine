@@ -1,0 +1,118 @@
+# L3 F5-7 (-195,-221): 8 направлений, горизонт выкл / 6 / 8
+scene start
+wait 3
+flag golevel 3
+wait 25
+scene PF_0
+flag horizon 0
+flag repair
+goto -195 -221 0.0
+wait 3
+flag horizon 0
+wait 1
+shot PF_0_off
+flag horizon 6
+wait 1
+shot PF_0_6
+flag horizon 8
+wait 1
+shot PF_0_8
+scene PF_1
+flag horizon 0
+flag repair
+goto -195 -221 0.785
+wait 3
+flag horizon 0
+wait 1
+shot PF_1_off
+flag horizon 6
+wait 1
+shot PF_1_6
+flag horizon 8
+wait 1
+shot PF_1_8
+scene PF_2
+flag horizon 0
+flag repair
+goto -195 -221 1.571
+wait 3
+flag horizon 0
+wait 1
+shot PF_2_off
+flag horizon 6
+wait 1
+shot PF_2_6
+flag horizon 8
+wait 1
+shot PF_2_8
+scene PF_3
+flag horizon 0
+flag repair
+goto -195 -221 2.356
+wait 3
+flag horizon 0
+wait 1
+shot PF_3_off
+flag horizon 6
+wait 1
+shot PF_3_6
+flag horizon 8
+wait 1
+shot PF_3_8
+scene PF_4
+flag horizon 0
+flag repair
+goto -195 -221 3.142
+wait 3
+flag horizon 0
+wait 1
+shot PF_4_off
+flag horizon 6
+wait 1
+shot PF_4_6
+flag horizon 8
+wait 1
+shot PF_4_8
+scene PF_5
+flag horizon 0
+flag repair
+goto -195 -221 3.927
+wait 3
+flag horizon 0
+wait 1
+shot PF_5_off
+flag horizon 6
+wait 1
+shot PF_5_6
+flag horizon 8
+wait 1
+shot PF_5_8
+scene PF_6
+flag horizon 0
+flag repair
+goto -195 -221 4.712
+wait 3
+flag horizon 0
+wait 1
+shot PF_6_off
+flag horizon 6
+wait 1
+shot PF_6_6
+flag horizon 8
+wait 1
+shot PF_6_8
+scene PF_7
+flag horizon 0
+flag repair
+goto -195 -221 5.498
+wait 3
+flag horizon 0
+wait 1
+shot PF_7_off
+flag horizon 6
+wait 1
+shot PF_7_6
+flag horizon 8
+wait 1
+shot PF_7_8
+end

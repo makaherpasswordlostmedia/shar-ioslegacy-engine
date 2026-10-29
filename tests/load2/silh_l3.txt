@@ -1,0 +1,19 @@
+# Загрузка 3: силуэты L3 без/с flag silh 1 (камера у старта уровня 3, 20 м над землёй)
+flag golevel 3
+wait 25
+scene sil3
+flag loadacc 1
+cam -3.3 22 -5.6 1 -0.04 0
+wait 2
+shot s3_E_off
+flag silh 1
+wait 2
+shot s3_E_on
+flag silh 0
+cam -3.3 22 -5.6 0 -0.04 1
+wait 2
+shot s3_S_off
+flag silh 1
+wait 2
+shot s3_S_on
+end

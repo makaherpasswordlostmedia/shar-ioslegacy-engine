@@ -1,0 +1,24 @@
+# L6 после загрузки: repair/drive как в T20_L6_bridge (Сборка), смотрим JUMPRUSH/JUMPDONE и клетки
+flag menu
+wait 1.5
+press cross
+wait 14
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 6
+press cross
+wait 14
+scene L6_after_load
+wait 2
+scene L6_bridge
+flag repair
+flag warmhere
+flag drive 75
+wait 8
+flag stop
+wait 1
+end

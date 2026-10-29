@@ -1,0 +1,25 @@
+# Правки Роба 153–155 (tests/boot_flow/emu.sh, разбор tests/boot_flow/check.py): меню без нажатий 2 с -> ирис -> титульный ->
+# 2 с -> ролик простоя demo (снимок: без рамки-телевизора, «- DEMO -» крупнее) -> X -> ирис над роликом -> меню раскрывается
+# (снимок середины) -> простой снова 60 с -> X = NEW GAME -> перелёт к газете -> газета (уровень читается) -> ролик fmv1a
+# (START — пропустить) -> игра: звук уровня (LEVELAUDIO) только теперь. emu.sh --red подставляет «flag noiris», «flag demotv»,
+# «flag musold» (прежнее поведение) — разбор обязан провалить demo_tv, iris_in, iris_exit, music
+flag menu
+flag newgamefmv
+wait 2
+flag idle 2
+flag demoidle 2
+wait 6.5
+shot demo
+wait 0.3
+press cross
+wait 0.9
+shot iris
+flag idle 0
+wait 1.5
+press cross
+wait 7
+shot fmv1a
+press start
+wait 4
+shot game
+end

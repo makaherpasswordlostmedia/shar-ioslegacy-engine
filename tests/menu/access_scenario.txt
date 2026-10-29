@@ -1,0 +1,38 @@
+# Пункт ДОБИВКИ 26 (tests/menu/access_emu.sh, сверка access_check.py) — повтор записей PS2 ps2_access_pause ->
+# ps2_access_options_unlock -> ps2_access_settings_unlock в порту: новая игра L1 (m0sd, «TALK TO MARGE»), START -> пауза
+# (MISSION SELECT серый), ↓↓↓ + ✕ -> OPTIONS (SOUND / SETTINGS), ↓ + ✕ -> SETTINGS, START -> сразу игра; START ещё раз —
+# пауза открывается снова (значит, игра шла), START — закрыть. «flag saves» — сохранения включены, как в обычном запуске: без него
+# служебный смоук гасит SAVE GAME (main.c svmInit), а на PS2 shot_120 он белый (access_check.py, группа rows). Флаги запуска читаются
+# только до первой команды (viewer/smoke.h smokeWantsFlag) — потому «flag saves» первой строкой
+flag saves
+scene car
+wait 3
+flag player
+flag msn
+wait 5
+press start
+wait 1
+shot ac_pause
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press cross
+wait 1
+shot ac_options
+press down
+wait 0.4
+press cross
+wait 1
+shot ac_settings
+press start
+wait 1
+shot ac_game
+press start
+wait 1
+shot ac_pause2
+press start
+wait 1
+end

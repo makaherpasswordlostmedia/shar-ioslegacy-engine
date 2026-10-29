@@ -1,0 +1,12 @@
+# Правка Роба 40 (tests/camera/zonecam_emu.sh, разбор tests/camera/zonecam_check.py emu): камера зоны у двери дома Симпсонов.
+# Гомер пешком в 2.5 м от двери лицом к ней, шаг вперёд — ноги в триггере z1_cam1: снимает неподвижная камера со двора на
+# дверь (запись PS2 12:23). Строки ZONECAM — смена камеры зоны, глаз, где Гомер.
+wait 3
+scene zone_door
+foot 228.94 180.5 0 3.83
+wait 2
+press up 0.5
+wait 1.5
+shot zone_door
+wait 1
+end

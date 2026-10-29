@@ -1,0 +1,11 @@
+### №941 лист форм блика на чёрном (flag glintlab): A, B, стекло, звезда частиц — через настоящие пути рисования
+scene F_LAB
+flag cfgdefaults 1
+flag repair
+wait 4
+flag glintlab 1
+wait 1
+shot lab
+wait 0.4
+shot lab2
+end

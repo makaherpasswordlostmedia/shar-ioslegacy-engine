@@ -1,0 +1,459 @@
+{
+ "id": "b2_warn",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 600,
+ "every": 1,
+ "trace": [
+  "hnr",
+  {
+   "addr": "6120d0",
+   "type": "u32",
+   "label": "m6120d0"
+  },
+  {
+   "addr": "6120d4",
+   "type": "u32",
+   "label": "m6120d4"
+  },
+  {
+   "addr": "6120d8",
+   "type": "u32",
+   "label": "m6120d8"
+  },
+  {
+   "addr": "6120dc",
+   "type": "u32",
+   "label": "m6120dc"
+  },
+  {
+   "addr": "6120e0",
+   "type": "u32",
+   "label": "m6120e0"
+  },
+  {
+   "addr": "6120e4",
+   "type": "u32",
+   "label": "m6120e4"
+  },
+  {
+   "addr": "6120e8",
+   "type": "u32",
+   "label": "m6120e8"
+  },
+  {
+   "addr": "6120ec",
+   "type": "u32",
+   "label": "m6120ec"
+  },
+  {
+   "addr": "6120f0",
+   "type": "u32",
+   "label": "m6120f0"
+  },
+  {
+   "addr": "6120f4",
+   "type": "u32",
+   "label": "m6120f4"
+  },
+  {
+   "addr": "6120f8",
+   "type": "u32",
+   "label": "m6120f8"
+  },
+  {
+   "addr": "6120fc",
+   "type": "u32",
+   "label": "m6120fc"
+  },
+  {
+   "addr": "612100",
+   "type": "u32",
+   "label": "m612100"
+  },
+  {
+   "addr": "612104",
+   "type": "u32",
+   "label": "m612104"
+  },
+  {
+   "addr": "612108",
+   "type": "u32",
+   "label": "m612108"
+  },
+  {
+   "addr": "61210c",
+   "type": "u32",
+   "label": "m61210c"
+  },
+  {
+   "addr": "612110",
+   "type": "u32",
+   "label": "m612110"
+  },
+  {
+   "addr": "612118",
+   "type": "u32",
+   "label": "m612118"
+  },
+  {
+   "addr": "61211c",
+   "type": "u32",
+   "label": "m61211c"
+  },
+  {
+   "addr": "612120",
+   "type": "u32",
+   "label": "m612120"
+  },
+  {
+   "addr": "612124",
+   "type": "u32",
+   "label": "m612124"
+  },
+  {
+   "addr": "612128",
+   "type": "u32",
+   "label": "m612128"
+  },
+  {
+   "addr": "61212c",
+   "type": "u32",
+   "label": "m61212c"
+  },
+  {
+   "addr": "612130",
+   "type": "u32",
+   "label": "m612130"
+  },
+  {
+   "addr": "612134",
+   "type": "u32",
+   "label": "m612134"
+  },
+  {
+   "addr": "612138",
+   "type": "u32",
+   "label": "m612138"
+  },
+  {
+   "addr": "61213c",
+   "type": "u32",
+   "label": "m61213c"
+  },
+  {
+   "addr": "612140",
+   "type": "u32",
+   "label": "m612140"
+  },
+  {
+   "addr": "612144",
+   "type": "u32",
+   "label": "m612144"
+  },
+  {
+   "addr": "612148",
+   "type": "u32",
+   "label": "m612148"
+  },
+  {
+   "addr": "61214c",
+   "type": "u32",
+   "label": "m61214c"
+  },
+  {
+   "addr": "612150",
+   "type": "u32",
+   "label": "m612150"
+  },
+  {
+   "addr": "612154",
+   "type": "u32",
+   "label": "m612154"
+  },
+  {
+   "addr": "612158",
+   "type": "u32",
+   "label": "m612158"
+  },
+  {
+   "addr": "61215c",
+   "type": "u32",
+   "label": "m61215c"
+  },
+  {
+   "addr": "612160",
+   "type": "u32",
+   "label": "m612160"
+  },
+  {
+   "addr": "612164",
+   "type": "u32",
+   "label": "m612164"
+  },
+  {
+   "addr": "612168",
+   "type": "u32",
+   "label": "m612168"
+  },
+  {
+   "addr": "61216c",
+   "type": "u32",
+   "label": "m61216c"
+  },
+  {
+   "addr": "612170",
+   "type": "u32",
+   "label": "m612170"
+  },
+  {
+   "addr": "612174",
+   "type": "u32",
+   "label": "m612174"
+  },
+  {
+   "addr": "612178",
+   "type": "u32",
+   "label": "m612178"
+  },
+  {
+   "addr": "61217c",
+   "type": "u32",
+   "label": "m61217c"
+  },
+  {
+   "addr": "612180",
+   "type": "u32",
+   "label": "m612180"
+  },
+  {
+   "addr": "612184",
+   "type": "u32",
+   "label": "m612184"
+  },
+  {
+   "addr": "612188",
+   "type": "u32",
+   "label": "m612188"
+  },
+  {
+   "addr": "61218c",
+   "type": "u32",
+   "label": "m61218c"
+  },
+  {
+   "addr": "612190",
+   "type": "u32",
+   "label": "m612190"
+  },
+  {
+   "addr": "612194",
+   "type": "u32",
+   "label": "m612194"
+  },
+  {
+   "addr": "612198",
+   "type": "u32",
+   "label": "m612198"
+  },
+  {
+   "addr": "61219c",
+   "type": "u32",
+   "label": "m61219c"
+  },
+  {
+   "addr": "6121a0",
+   "type": "u32",
+   "label": "m6121a0"
+  },
+  {
+   "addr": "6121a4",
+   "type": "u32",
+   "label": "m6121a4"
+  },
+  {
+   "addr": "6121a8",
+   "type": "u32",
+   "label": "m6121a8"
+  },
+  {
+   "addr": "6121ac",
+   "type": "u32",
+   "label": "m6121ac"
+  },
+  {
+   "addr": "6121b0",
+   "type": "u32",
+   "label": "m6121b0"
+  },
+  {
+   "addr": "6121b4",
+   "type": "u32",
+   "label": "m6121b4"
+  },
+  {
+   "addr": "6121b8",
+   "type": "u32",
+   "label": "m6121b8"
+  },
+  {
+   "addr": "6121bc",
+   "type": "u32",
+   "label": "m6121bc"
+  },
+  {
+   "addr": "6121c0",
+   "type": "u32",
+   "label": "m6121c0"
+  },
+  {
+   "addr": "6121c4",
+   "type": "u32",
+   "label": "m6121c4"
+  },
+  {
+   "addr": "6121c8",
+   "type": "u32",
+   "label": "m6121c8"
+  },
+  {
+   "addr": "6121cc",
+   "type": "u32",
+   "label": "m6121cc"
+  },
+  {
+   "addr": "6121d0",
+   "type": "u32",
+   "label": "m6121d0"
+  },
+  {
+   "addr": "6121d4",
+   "type": "u32",
+   "label": "m6121d4"
+  },
+  {
+   "addr": "6121d8",
+   "type": "u32",
+   "label": "m6121d8"
+  },
+  {
+   "addr": "6121dc",
+   "type": "u32",
+   "label": "m6121dc"
+  },
+  {
+   "addr": "6121e0",
+   "type": "u32",
+   "label": "m6121e0"
+  },
+  {
+   "addr": "6121e4",
+   "type": "u32",
+   "label": "m6121e4"
+  },
+  {
+   "addr": "6121e8",
+   "type": "u32",
+   "label": "m6121e8"
+  },
+  {
+   "addr": "6121ec",
+   "type": "u32",
+   "label": "m6121ec"
+  },
+  {
+   "addr": "6121f0",
+   "type": "u32",
+   "label": "m6121f0"
+  },
+  {
+   "addr": "6121f4",
+   "type": "u32",
+   "label": "m6121f4"
+  },
+  {
+   "addr": "6121f8",
+   "type": "u32",
+   "label": "m6121f8"
+  },
+  {
+   "addr": "6121fc",
+   "type": "u32",
+   "label": "m6121fc"
+  },
+  {
+   "addr": "612200",
+   "type": "u32",
+   "label": "m612200"
+  },
+  {
+   "addr": "612204",
+   "type": "u32",
+   "label": "m612204"
+  },
+  {
+   "addr": "612208",
+   "type": "u32",
+   "label": "m612208"
+  },
+  {
+   "addr": "61220c",
+   "type": "u32",
+   "label": "m61220c"
+  },
+  {
+   "addr": "612210",
+   "type": "u32",
+   "label": "m612210"
+  }
+ ],
+ "writes": [
+  {
+   "name": "hnr",
+   "value": 70.0,
+   "at": 150
+  },
+  {
+   "name": "hnr",
+   "value": 77.0,
+   "at": 200
+  },
+  {
+   "name": "hnr",
+   "value": 79.0,
+   "at": 250
+  },
+  {
+   "name": "hnr",
+   "value": 65.0,
+   "at": 300
+  },
+  {
+   "name": "hnr",
+   "value": 58.0,
+   "at": 340
+  },
+  {
+   "name": "hnr",
+   "value": 79.0,
+   "at": 380
+  },
+  {
+   "name": "hnr",
+   "value": 90.0,
+   "at": 430
+  },
+  {
+   "name": "hnr",
+   "value": 77.5,
+   "at": 480
+  },
+  {
+   "name": "hnr",
+   "value": 78.5,
+   "at": 520
+  }
+ ],
+ "shots": []
+}

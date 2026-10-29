@@ -1,0 +1,109 @@
+# Гомер у арки на кухню: держим стик, где останавливается (сравнение с PS2: предел z 395,3 на x 497,3)
+scene start
+wait 3
+scene house_door
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene a00
+foot 497.3 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a00
+scene a01
+foot 497.3 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a01
+scene a02
+foot 497.3 397.0 0 -19.5
+wait 1.5
+press left 5
+wait 5.5
+shot a02
+scene a03
+foot 497.3 397.0 0 -19.5
+wait 1.5
+press right 5
+wait 5.5
+shot a03
+scene a10
+foot 499.0 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a10
+scene a11
+foot 499.0 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a11
+scene a12
+foot 499.0 397.0 0 -19.5
+wait 1.5
+press left 5
+wait 5.5
+shot a12
+scene a13
+foot 499.0 397.0 0 -19.5
+wait 1.5
+press right 5
+wait 5.5
+shot a13
+scene a20
+foot 501.0 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a20
+scene a21
+foot 501.0 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a21
+scene a22
+foot 501.0 397.0 0 -19.5
+wait 1.5
+press left 5
+wait 5.5
+shot a22
+scene a23
+foot 501.0 397.0 0 -19.5
+wait 1.5
+press right 5
+wait 5.5
+shot a23
+scene a30
+foot 496.3 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a30
+scene a31
+foot 496.3 397.0 0 -19.5
+wait 1.5
+press up 5
+wait 5.5
+shot a31
+scene a32
+foot 496.3 397.0 0 -19.5
+wait 1.5
+press left 5
+wait 5.5
+shot a32
+scene a33
+foot 496.3 397.0 0 -19.5
+wait 1.5
+press right 5
+wait 5.5
+shot a33
+end

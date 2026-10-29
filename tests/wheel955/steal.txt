@@ -1,0 +1,35 @@
+wait 3
+flag msn
+wait 3
+scene trf_walk
+foot 160 279.9 1.5708
+wait 3
+flag trfspawn 2
+wait 0.3
+press triangle
+wait 5
+flag seatlog 0
+scene trf_drive
+flag autostraight 6
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+wait 0.5
+flag carang
+flag stop
+end

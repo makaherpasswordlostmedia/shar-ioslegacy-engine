@@ -1,0 +1,143 @@
+wait 12
+scene LOAD
+flag golevel 1
+wait 40
+flag cfgdefaults 1
+foot 231.87 175.13 -2.81
+wait 4
+flag trfspawn 0
+wait 5
+camrel 10.00 1.8 0.00 -10.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t0_0
+flag lumakey 1
+wait 2
+shot t0_0k
+camrel 3.00 1.8 5.20 -3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t0_1
+flag lumakey 1
+wait 2
+shot t0_1k
+camrel -3.00 1.8 5.20 3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t0_2
+flag lumakey 1
+wait 2
+shot t0_2k
+camrel -6.00 1.8 0.00 6.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t0_3
+flag lumakey 1
+wait 2
+shot t0_3k
+camrel -3.00 1.8 -5.20 3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t0_4
+flag lumakey 1
+wait 2
+shot t0_4k
+camrel 3.00 1.8 -5.20 -3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t0_5
+flag lumakey 1
+wait 2
+shot t0_5k
+flag lumakey 0
+flag trfspawn 1
+wait 5
+camrel 10.00 1.8 0.00 -10.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t1_0
+flag lumakey 1
+wait 2
+shot t1_0k
+camrel 3.00 1.8 5.20 -3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t1_1
+flag lumakey 1
+wait 2
+shot t1_1k
+camrel -3.00 1.8 5.20 3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t1_2
+flag lumakey 1
+wait 2
+shot t1_2k
+camrel -6.00 1.8 0.00 6.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t1_3
+flag lumakey 1
+wait 2
+shot t1_3k
+camrel -3.00 1.8 -5.20 3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t1_4
+flag lumakey 1
+wait 2
+shot t1_4k
+camrel 3.00 1.8 -5.20 -3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t1_5
+flag lumakey 1
+wait 2
+shot t1_5k
+flag lumakey 0
+flag trfspawn 2
+wait 5
+camrel 10.00 1.8 0.00 -10.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t2_0
+flag lumakey 1
+wait 2
+shot t2_0k
+camrel 3.00 1.8 5.20 -3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t2_1
+flag lumakey 1
+wait 2
+shot t2_1k
+camrel -3.00 1.8 5.20 3.00 -0.25 -5.20
+flag lumakey 0
+wait 3
+shot t2_2
+flag lumakey 1
+wait 2
+shot t2_2k
+camrel -6.00 1.8 0.00 6.00 -0.25 -0.00
+flag lumakey 0
+wait 3
+shot t2_3
+flag lumakey 1
+wait 2
+shot t2_3k
+camrel -3.00 1.8 -5.20 3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t2_4
+flag lumakey 1
+wait 2
+shot t2_4k
+camrel 3.00 1.8 -5.20 -3.00 -0.25 5.20
+flag lumakey 0
+wait 3
+shot t2_5
+flag lumakey 1
+wait 2
+shot t2_5k
+flag lumakey 0
+end

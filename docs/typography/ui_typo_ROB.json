@@ -1,0 +1,550 @@
+{
+ "version": 1,
+ "target": "shar-psp/build/ui_typo.json",
+ "made": "2026-10-12 19:38",
+ "note": "твик-панель типографики SHAR (правка 312); мост tools/ui_typo.py",
+ "groups": {
+  "bonus_head": {
+   "face": "bart_16bit@1",
+   "dx": -1,
+   "dy": 5
+  },
+  "bonus_rows": {
+   "face": "msx_thin@1",
+   "dx": -4,
+   "dy": 2
+  },
+  "hud_bubble_avatar": {
+   "font": "bart_16bit@1",
+   "padT": -1,
+   "padL": 2,
+   "padN": 7,
+   "padR": 1,
+   "dx": 48,
+   "dy": 3
+  },
+  "hud_bubble_plain": {
+   "font": "bart_16bit@1^-1",
+   "padT": -1,
+   "padL": 1,
+   "padN": 7,
+   "w": 219,
+   "padR": -6
+  },
+  "hud_action": {
+   "font": "bart_16bit@1",
+   "dy": 3
+  },
+  "hud_busted": {
+   "face": "boulder_24@1",
+   "dx": 2,
+   "dy": 5
+  },
+  "hud_hitrun": {
+   "face": "boulder_24*2.395",
+   "dx": 7,
+   "dy": 34
+  },
+  "hud_banner": {
+   "face": "boulder_24@1",
+   "dx": -1,
+   "dy": 7
+  },
+  "hud_mdone": {
+   "gk": 1.4
+  },
+  "load_text": {},
+  "mini_menu": {
+   "face": "bart_16bit@1",
+   "dx": 2,
+   "dy": -2
+  },
+  "mini_menu_track": {
+   "face": "bart_16bit@1"
+  },
+  "mini_hints": {
+   "face": "bart_16bit@1",
+   "dx": 32,
+   "dy": 5
+  },
+  "hints_minipause": {
+   "face": "bart_16bit@1",
+   "dx": -2,
+   "dy": 2
+  },
+  "mini_pause": {
+   "face": "bart_16bit@1"
+  },
+  "phone_damage": {
+   "face": "bart_16bit@1",
+   "dy": 4
+  },
+  "hud_unlock": {
+   "face": "boulder_16@1",
+   "dx": 1,
+   "dy": -2
+  },
+  "hud_dropped": {
+   "font": "boulder_24*1.4496",
+   "dx": 145,
+   "dy": 28
+  },
+  "hud_small": {
+   "face": "bart_16bit@1",
+   "dy": 1,
+   "ord_dx": -3
+  },
+  "hud_nums": {
+   "gk": 1.25
+  },
+  "hud_nums_pause": {
+   "gk": 0.95
+  },
+  "hud_nums_phone": {
+   "gk": 0.81
+  },
+  "pause_coins": {
+   "dx": 40,
+   "dy": -6
+  },
+  "pause_title": {
+   "face": "boulder_24*1.3235+1^-1",
+   "dy": -2
+  },
+  "pause_title_ls": {
+   "face": "boulder_24*1.3235+1^-1",
+   "dy": -2
+  },
+  "pause_items": {
+   "face": "boulder_16*2",
+   "pitch": 26
+  },
+  "ls_rows": {
+   "face": "bart_16bit@1",
+   "dx": 1
+  },
+  "hints_main": {
+   "face": "bart_16bit@1",
+   "dx": -12,
+   "dy": -2
+  },
+  "hints_message": {
+   "face": "bart_16bit@1",
+   "dx": -14
+  },
+  "hints_over": {
+   "face": "bart_16bit@1",
+   "dx": 20,
+   "dy": 17
+  },
+  "hints_tut": {
+   "face": "bart_16bit@1",
+   "dx": -44,
+   "dy": -3
+  },
+  "hints_pause": {
+   "face": "bart_16bit@1",
+   "dx": -2
+  },
+  "hints_pause_ls": {
+   "face": "bart_16bit@1",
+   "dx": -2
+  },
+  "hints_save": {
+   "face": "bart_16bit@1",
+   "dx": -2
+  },
+  "hints_save_prompt": {
+   "face": "bart_16bit@1",
+   "dx": -2
+  },
+  "hints_msel": {
+   "face": "bart_16bit@1",
+   "dx": -2,
+   "dy": -1
+  },
+  "hints_phone": {
+   "face": "bart_16bit@1",
+   "dx": 45,
+   "dy": 4
+  },
+  "ms_rows": {
+   "face": "bart_16bit@1"
+  },
+  "ms_level": {
+   "dx": -2
+  },
+  "ms_status": {
+   "face": "bart_16bit@1",
+   "dx": -2
+  },
+  "main_item": {
+   "face": "boulder_16*2",
+   "dy": -2
+  },
+  "brief_title": {
+   "face": "boulder_24*1.103+1",
+   "dx": 2,
+   "dy": 0
+  },
+  "brief_info": {
+   "font": "bart_16bit@1",
+   "dy": -1,
+   "w": 306
+  },
+  "brief_btn": {
+   "face": "bart_16bit@1",
+   "dx": 0,
+   "dy": -3
+  },
+  "lb_buttons": {
+   "face": "bart_16bit@1",
+   "dx": -5,
+   "dy": 2
+  },
+  "over_text": {
+   "face": "bart_16bit@1",
+   "dy": 8
+  },
+  "over_retry": {
+   "face": "bart_16bit@1",
+   "dy": 8
+  },
+  "over_answers": {
+   "face": "boulder_24*1.3235",
+   "dy": 23
+  },
+  "tut_text": {
+   "gk": 0.6,
+   "trk": -1,
+   "dy": -3
+  },
+  "tut_board": {},
+  "tut_disable": {
+   "face": "bart_16bit@1",
+   "dx": 11,
+   "dy": 7
+  },
+  "msgbox": {
+   "font": "boulder_16@1",
+   "dx": -1,
+   "dy": 2,
+   "w": 203
+  },
+  "save_head": {
+   "face": "bart_16bit@1",
+   "dy": 1
+  },
+  "save_slots": {
+   "face": "boulder_24*1.1975",
+   "dy": 48,
+   "pitch": 28
+  },
+  "save_msg": {
+   "face": "boulder_16@1",
+   "dy": 17,
+   "w": 210
+  },
+  "save_answers": {
+   "face": "boulder_24*0.9454",
+   "dy": 2
+  },
+  "save_hints": {},
+  "save_hints_prompt": {},
+  "shop_name": {
+   "face": "boulder_24*1.9059+-1",
+   "dy": -13
+  },
+  "shop_price": {
+   "face": "boulder_24*1.3588",
+   "dy": 18
+  },
+  "shop_stats": {
+   "face": "bart_16bit@1"
+  },
+  "shop_buttons": {
+   "face": "bart_16bit@1"
+  },
+  "phone_name": {
+   "face": "boulder_24@1",
+   "dx": 2,
+   "dy": 30
+  },
+  "phone_stats_text": {
+   "font": "msx_thin@1",
+   "dx": 6
+  },
+  "phone_stats": {
+   "dx": -15,
+   "dy": -6
+  },
+  "st_bubble_avatar": {
+   "k": 0.95,
+   "dx": -4,
+   "dy": 1
+  },
+  "st_ticket": {
+   "k": 1.53,
+   "dy": 13
+  },
+  "st_shop_stars": {
+   "k": 1.1
+  },
+  "vc_title": {
+   "face": "bart_16bit@1",
+   "dx": -2,
+   "dy": 4
+  },
+  "vc_episode": {
+   "face": "bart_16bit@1",
+   "dx": -2,
+   "dy": -18,
+   "w": 164
+  },
+  "vc_desc": {
+   "face": "msx_thin@1^2",
+   "dx": -2,
+   "dy": -25,
+   "w": 158
+  },
+  "bpause_items": {
+   "pitch": 23
+  },
+  "hints_vcards": {
+   "face": "bart_16bit@1",
+   "dx": -2,
+   "dy": -1
+  },
+  "pause_cell": {
+   "dx": 3
+  },
+  "brief_loading": {
+   "face": "bart_16bit@1",
+   "dx": 0,
+   "dy": 1
+  }
+ },
+ "elements": {
+  "tutorial|img|Accept": {
+   "dx": 1
+  },
+  "tutorial|img|DisableTutorial": {
+   "dx": 11,
+   "dy": 6
+  },
+  "letterbox|img|Accept": {
+   "dy": 3,
+   "dx": 1
+  },
+  "letterbox|img|Cancel": {
+   "dx": 1,
+   "dy": 3
+  },
+  "missionload|img|Continue": {
+   "dx": 0,
+   "dy": -3,
+   "k": 0.8
+  },
+  "pause|img|Accept": {
+   "dx": -1,
+   "k": 1.21
+  },
+  "levelstats|img|Back": {
+   "dx": -1,
+   "dy": 1,
+   "k": 1.19
+  },
+  "main|img|Accept": {
+   "dx": 1,
+   "dy": 1
+  },
+  "main|img|MainMenu_RArrow4": {
+   "k": 1.01
+  },
+  "loading|img|Dynamite": {
+   "dx": 2,
+   "dy": -1,
+   "k": 1.1,
+   "w": 1.01,
+   "h": 1.01
+  },
+  "mmtrack|img|NumLaps_RArrow_0": {
+   "dx": 3,
+   "k": 0.8
+  },
+  "mmtrack|img|NumLaps_LArrow_0": {
+   "dx": -6,
+   "k": 0.8
+  },
+  "mmtrack|img|Options": {
+   "dx": -1,
+   "dy": 2
+  },
+  "mmhints|img|Accept": {
+   "dx": 32,
+   "dy": 7
+  },
+  "mmhints|img|Back": {
+   "dx": 32,
+   "dy": 6
+  },
+  "mmhints|img|Options": {
+   "dy": 2
+  },
+  "mmhints|img|NumLaps_LArrow_0": {
+   "dx": -6,
+   "k": 0.8
+  },
+  "mmhints|img|NumLaps_RArrow_0": {
+   "dx": 6,
+   "k": 0.8
+  },
+  "missionover|text|Response0": {
+   "dy": -11
+  },
+  "missionover|img|Accept": {
+   "dx": 1,
+   "dy": 1
+  },
+  "missionover|text|Response1": {
+   "dy": -4
+  },
+  "message|img|Accept": {
+   "dx": 1,
+   "dy": 1
+  },
+  "pprompt|text|Response1": {
+   "dy": 4
+  },
+  "purchase|img|Back": {
+   "dx": -1
+  },
+  "phone|img|Back": {
+   "dx": 1,
+   "dy": 1
+  },
+  "msbase|text|Wins": {
+   "dx": -13
+  },
+  "msbase|text|Accept": {
+   "dx": -16,
+   "dy": -8
+  },
+  "msbase|img|Accept": {
+   "dx": -16,
+   "k": 0.9,
+   "dy": -4
+  },
+  "msbase|text|Points": {
+   "dx": -5
+  },
+  "missionload|img|clipArmLeft1_strip": {
+   "dx": -32,
+   "dy": -1
+  },
+  "msbase|text|TotalTime": {
+   "dx": 2
+  },
+  "msbase|text|RaceSummary": {
+   "dy": -8
+  },
+  "pslots|img|Back": {
+   "dx": 1
+  },
+  "pslots|img|Accept": {
+   "dx": 1
+  },
+  "minipause|img|Accept": {
+   "dy": -1
+  },
+  "missionselect|img|Back": {
+   "dx": 1
+  },
+  "missionselect|img|Accept": {
+   "dx": 1
+  },
+  "pprompt|img|Accept": {
+   "dx": 1
+  },
+  "msrow0|text|Rank0": {
+   "dx": -3
+  },
+  "msrow1|text|Rank1": {
+   "dx": -3
+  },
+  "msrow2|text|Rank2": {
+   "dx": -3,
+   "dy": 1
+  },
+  "msrow3|text|Rank3": {
+   "dx": -3,
+   "dy": 1
+  },
+  "msrow2|text|BestLap2": {
+   "dy": 1
+  },
+  "msrow2|text|TotalTime2": {
+   "dy": 1
+  },
+  "msrow2|text|NumPoints2": {
+   "dy": 1
+  },
+  "msrow2|text|NumWins2": {
+   "dy": 1
+  },
+  "msrow2|text|Player2": {
+   "dy": 1
+  },
+  "msrow3|text|BestLap3": {
+   "dy": 1
+  },
+  "msrow3|text|TotalTime3": {
+   "dy": 1
+  },
+  "msrow3|text|NumPoints3": {
+   "dy": 1
+  },
+  "msrow3|text|NumWins3": {
+   "dy": 1
+  },
+  "msrow3|text|Player3": {
+   "dy": 1
+  },
+  "pprompt|text|Message": {
+   "dx": -2
+  },
+  "pslots|text|Slot0": {
+   "dx": -1
+  },
+  "pslots|text|Slot1": {
+   "dx": -1
+  },
+  "pslots|text|Slot2": {
+   "dx": -1
+  },
+  "pslots|text|Slot3": {
+   "dx": -1
+  },
+  "levelstats|text|BonusMissions_Unlocked": {
+   "dx": 1
+  },
+  "viewcards|img|Back": {
+   "dx": 1
+  },
+  "viewcards|img|Accept": {
+   "dx": 1
+  },
+  "hud|num|Position": {
+   "dx": 58
+  },
+  "hud|num|Lap": {
+   "dx": 58
+  },
+  "hud|text|PositionOrdinal": {
+   "dx": 58
+  },
+  "hud|text|Laps": {
+   "dx": 58
+  }
+ }
+}

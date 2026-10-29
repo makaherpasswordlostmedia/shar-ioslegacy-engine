@@ -1,0 +1,18 @@
+scene start
+wait 3
+flag golevel 7
+wait 24
+flag repair
+wait 4
+flag addstat 1
+scene A7_def
+wait 6
+flag addstat 1
+shot A7_def
+scene A7_neon
+flag neonglow 1
+wait 6
+flag addstat 1
+shot A7_neon
+flag neonglow 0
+end

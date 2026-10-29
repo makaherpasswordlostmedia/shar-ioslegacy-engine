@@ -1,0 +1,26 @@
+# №943: смена миссии на одном уровне (служебное msnsel = тот же путь mvSwitchTo, что ✕ в паузе): после каждой смены цель HUD, маркер и реестр прежней миссии сняты (MSNSWITCH),
+# а потом цель HUD и маркер — новой миссии (MSNHUD). Игрок держится в стороне от цели (msnfar), чтобы у прежней миссии маркер был живой.
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+flag msn
+wait 3
+flag msnsel 3
+wait 2
+flag msnfar 40
+wait 2
+flag msnhud 1
+flag msnsel 4
+wait 3
+flag msnhud 1
+flag msnfar 40
+wait 2
+flag msnsel 1
+wait 3
+flag msnhud 1
+flag msnsel 5
+wait 3
+flag msnhud 1
+shot sw_end
+end

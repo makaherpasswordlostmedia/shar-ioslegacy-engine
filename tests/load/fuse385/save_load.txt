@@ -1,0 +1,69 @@
+# Diagnostic concatenation of legacy scenarios; slot occupancy changes UI confirmations.
+# Not a standalone acceptance oracle. Actual save/load acceptance: emu_check.py SAVE_RUN RESUME_RUN, see task report.
+# Same-process isolated save/load regression, based on tests/savegame/emu_{save,load}.txt
+# Новая игра -> отметка прогресса (flag svmark: m0 пройдена,
+# карточка 1, +7 монет, монета мира 0, музыка 300) -> пауза -> SAVE GAME -> слот 1 (пустой: запись сразу, проверка чтением)
+# -> «Save Successful» -> QUIT GAME -> «Do you want to save your game?» NO -> главное меню. Дальше эмулятор закрывается (выход)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 4
+flag svmark
+wait 0.5
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+shot sv_pause
+press cross
+wait 1
+shot sv_slots
+press cross
+wait 2.5
+shot sv_saved
+press cross
+wait 0.8
+press down
+wait 0.4
+press cross
+wait 1
+shot sv_quitask
+press down
+wait 0.3
+press cross
+wait 3
+shot sv_menu_after
+
+# Same process: load the slot just written, in the isolated smoke directory
+# Прогон 2 (новый запуск эмулятора): главное меню -> LOAD GAME (карусель ◄ x4: NEW GAME -> LOAD GAME) -> слот 1 ->
+# «Load Successful» -> уровень -> строка прогресса SVPROG src=load (сверка с прогоном 1)
+wait 1.5
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+shot sv_menu_load
+press cross
+# перелёт камеры к видику (~1 с), потом слоты
+wait 2
+shot sv_load_slots
+press cross
+wait 2.5
+shot sv_loaded
+press cross
+wait 1
+# Same-process menu adds a confirmation; acknowledge the actual Load Successful notice
+press cross
+wait 5
+scene restored
+flag svlog
+wait 2
+shot sv_game_loaded
+end

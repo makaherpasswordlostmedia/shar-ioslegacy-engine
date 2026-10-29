@@ -1,0 +1,227 @@
+# Тур-проба «ГАРАЖ» (16.10, Карта): почему на PSP гараж АЭС L1 (G4-7) и асфальт бледные, а в эмуляторе нет. Три точки: G1 (-85;-302) пол, левая и дальняя стена в кадре как на ps2_npp_t1086, G2 (-85;-310) стена с дверью, улица H5-2,
+# на каждой по очереди варианты: флаг -> wait 3 -> shot -> флаг обратно. Имя сцены и снимка = точка_вариант; метка сцены на экране в начале каждого.
+# Обратимые варианты идут первыми; потом lightplant (после него golevel 1 перезагружает уровень, свет сбрасывается), потом mipconst 0 (в смоуке вернуть mipconst -1 нельзя: отрицательное значение сводится к 0).
+# ddfloor 400 — туман и даль дальше (вернуть: ddfloor 0 = пол 150, мягкий 200).
+# Флаги, которых нет в сборке, движок пропускает молча. Длина около 4 минут. Основа: PLANT_garage_scenario.txt.
+scene GP_L1_load
+flag golevel 1
+wait 15
+# кадр без флагов на улице H5-2, вид вдоль асфальта
+scene H5_street0
+flag repair
+foot 50 -285 0.0
+wait 3
+shot H5_street0
+# --- точка G1
+scene G1_asis
+flag repair
+foot -85 -302 1.5708
+wait 1
+wait 3
+shot G1_asis
+scene G1_mipbias
+flag mipbias -1
+wait 3
+shot G1_mipbias
+flag mipbias 0
+scene G1_grd05
+flag groundbias 0.5
+wait 3
+shot G1_grd05
+flag groundbias 1
+scene G1_grd2
+flag groundbias 2
+wait 3
+shot G1_grd2
+flag groundbias 1
+scene G1_fogcity
+flag fogcityold 1
+wait 3
+shot G1_fogcity
+flag fogcityold 0
+scene G1_fogz
+flag fogzold 1
+wait 3
+shot G1_fogz
+flag fogzold 0
+scene G1_fogtone
+flag fogtoneold 1
+wait 3
+shot G1_fogtone
+flag fogtoneold 0
+scene G1_sat100
+flag hzcachetone 100
+wait 3
+shot G1_sat100
+flag hzcachetone 136
+scene G1_lspold
+flag lspold 1
+wait 3
+shot G1_lspold
+flag lspold 0
+scene G1_mecity0
+flag mecity 0
+wait 3
+shot G1_mecity0
+flag mecity 1
+scene G1_dd400
+flag ddfloor 400
+wait 3
+shot G1_dd400
+flag ddfloor 0
+# --- точка G2
+scene G2_asis
+flag repair
+foot -85 -310 1.5708
+wait 1
+wait 3
+shot G2_asis
+scene G2_mipbias
+flag mipbias -1
+wait 3
+shot G2_mipbias
+flag mipbias 0
+scene G2_grd05
+flag groundbias 0.5
+wait 3
+shot G2_grd05
+flag groundbias 1
+scene G2_grd2
+flag groundbias 2
+wait 3
+shot G2_grd2
+flag groundbias 1
+scene G2_fogcity
+flag fogcityold 1
+wait 3
+shot G2_fogcity
+flag fogcityold 0
+scene G2_fogz
+flag fogzold 1
+wait 3
+shot G2_fogz
+flag fogzold 0
+scene G2_fogtone
+flag fogtoneold 1
+wait 3
+shot G2_fogtone
+flag fogtoneold 0
+scene G2_sat100
+flag hzcachetone 100
+wait 3
+shot G2_sat100
+flag hzcachetone 136
+scene G2_lspold
+flag lspold 1
+wait 3
+shot G2_lspold
+flag lspold 0
+scene G2_mecity0
+flag mecity 0
+wait 3
+shot G2_mecity0
+flag mecity 1
+scene G2_dd400
+flag ddfloor 400
+wait 3
+shot G2_dd400
+flag ddfloor 0
+# --- точка H5
+scene H5_asis
+flag repair
+foot 50 -285 1.5708
+wait 1
+wait 3
+shot H5_asis
+scene H5_mipbias
+flag mipbias -1
+wait 3
+shot H5_mipbias
+flag mipbias 0
+scene H5_grd05
+flag groundbias 0.5
+wait 3
+shot H5_grd05
+flag groundbias 1
+scene H5_grd2
+flag groundbias 2
+wait 3
+shot H5_grd2
+flag groundbias 1
+scene H5_fogcity
+flag fogcityold 1
+wait 3
+shot H5_fogcity
+flag fogcityold 0
+scene H5_fogz
+flag fogzold 1
+wait 3
+shot H5_fogz
+flag fogzold 0
+scene H5_fogtone
+flag fogtoneold 1
+wait 3
+shot H5_fogtone
+flag fogtoneold 0
+scene H5_sat100
+flag hzcachetone 100
+wait 3
+shot H5_sat100
+flag hzcachetone 136
+scene H5_lspold
+flag lspold 1
+wait 3
+shot H5_lspold
+flag lspold 0
+scene H5_mecity0
+flag mecity 0
+wait 3
+shot H5_mecity0
+flag mecity 1
+scene H5_dd400
+flag ddfloor 400
+wait 3
+shot H5_dd400
+flag ddfloor 0
+# --- одноразовые: свет уровня-1-днём (lightplant) на трёх точках, потом перезагрузка уровня
+scene G1_lightplant
+flag repair
+foot -85 -302 1.5708
+flag lightplant 1
+wait 3
+shot G1_lightplant
+scene G2_lightplant
+flag repair
+foot -85 -310 1.5708
+flag lightplant 1
+wait 3
+shot G2_lightplant
+scene H5_lightplant
+flag repair
+foot 50 -285 1.5708
+flag lightplant 1
+wait 3
+shot H5_lightplant
+scene GP_reload
+flag golevel 1
+wait 20
+# --- одноразовое: мип 0 у всех текстур
+scene G1_mip0
+flag repair
+foot -85 -302 1.5708
+flag mipconst 0
+wait 3
+shot G1_mip0
+scene G2_mip0
+flag repair
+foot -85 -310 1.5708
+flag mipconst 0
+wait 3
+shot G2_mip0
+scene H5_mip0
+flag repair
+foot 50 -285 1.5708
+flag mipconst 0
+wait 3
+shot H5_mip0
+end

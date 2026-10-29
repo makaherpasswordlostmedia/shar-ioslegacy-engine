@@ -1,0 +1,19 @@
+# №949 шум земли по метрам: L6, газон (кусок 3918, тайл родной текстуры 20–32 м), камера сверху, шум усилен; MODE 1 — тайл 5 м (правило), 0 — по родным UV (как TEST59, красный контроль)
+scene F_GO6
+flag golevel 6
+wait 40
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+flag noiseamp 0.9
+wait 4
+foot 60 -100 0
+wait 6
+cam 60 40 -100 0 -1 0.001
+wait 3
+flag noise949 MODE
+wait 3
+shot top_on
+flag noise949 0
+wait 3
+shot top_off

@@ -1,0 +1,41 @@
+# Горизонт L3: цена пересборки ленты при смене клетки (прыжки между клетками каждые 2 с), гейт tools/horizon_gate.py
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 8
+scene HZ_jump
+flag repair
+goto -366 94 1.57
+wait 2
+flag repair
+goto -225 75 1.57
+wait 2
+flag repair
+goto -390 -120 1.57
+wait 2
+flag repair
+goto -300 200 1.57
+wait 2
+flag repair
+goto -366 94 1.57
+wait 2
+flag repair
+goto -225 75 1.57
+wait 2
+flag repair
+goto -390 -120 1.57
+wait 2
+flag repair
+goto -300 200 1.57
+wait 2
+flag repair
+goto -366 94 1.57
+wait 2
+flag repair
+goto -225 75 1.57
+wait 2
+end

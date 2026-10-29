@@ -1,0 +1,32 @@
+# №932б кадры двух проходов глубины (flag zf932 1) и одного (0), L5: центр и эстакада (точки F_FLAT_L5 / F_G59_LAMP тура TEST59)
+scene FK_L5_BOOT
+flag cfgdefaults 1
+flag bisect 4
+flag long
+flag golevel 5
+wait 40
+scene FK_L5_CENTRE
+foot -154.9 -482.05 0.024
+wait 14
+flag zf932 1
+wait 4
+shot z1_FK_L5_CENTRE
+flag zf932 0
+wait 4
+shot z0_FK_L5_CENTRE
+flag zf932 1
+wait 4
+shot z1b_FK_L5_CENTRE
+scene FK_L5_BRIDGE
+foot -516.7 -516.7 0
+wait 14
+flag zf932 1
+wait 4
+shot z1_FK_L5_BRIDGE
+flag zf932 0
+wait 4
+shot z0_FK_L5_BRIDGE
+flag zf932 1
+wait 4
+shot z1b_FK_L5_BRIDGE
+end

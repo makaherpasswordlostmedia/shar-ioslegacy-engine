@@ -1,0 +1,231 @@
+# TEST30 пробный: L1 над городом (32 м): 250 | 150+мягкий туман+HLOD+лента
+scene start
+wait 4
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+scene L1_0_init
+flag hlod 0
+flag repair
+goto 220 172 0
+wait 5
+flag eyex 220
+flag eyey 32
+flag eyez 172
+flag eyedx -1.00
+flag eyedy -0.10
+flag eyedz 0.00
+flag eyeon 1
+wait 2
+scene L1_0_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_0_250
+scene L1_0_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_0_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_1_init
+flag hlod 0
+flag repair
+goto 0 0 0
+wait 5
+flag eyex 0
+flag eyey 32
+flag eyez 0
+flag eyedx 0.00
+flag eyedy -0.10
+flag eyedz 0.00
+flag eyeon 1
+wait 2
+scene L1_1_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_1_250
+scene L1_1_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_1_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_2_init
+flag hlod 0
+flag repair
+goto 300 400 0
+wait 5
+flag eyex 300
+flag eyey 32
+flag eyez 400
+flag eyedx -0.60
+flag eyedy -0.10
+flag eyedz -0.80
+flag eyeon 1
+wait 2
+scene L1_2_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_2_250
+scene L1_2_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_2_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_3_init
+flag hlod 0
+flag repair
+goto -200 300 0
+wait 5
+flag eyex -200
+flag eyey 32
+flag eyez 300
+flag eyedx 0.55
+flag eyedy -0.10
+flag eyedz -0.83
+flag eyeon 1
+wait 2
+scene L1_3_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_3_250
+scene L1_3_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_3_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_4_init
+flag hlod 0
+flag repair
+goto 400 -300 0
+wait 5
+flag eyex 400
+flag eyey 32
+flag eyez -300
+flag eyedx -0.80
+flag eyedy -0.10
+flag eyedz 0.60
+flag eyeon 1
+wait 2
+scene L1_4_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_4_250
+scene L1_4_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_4_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_5_init
+flag hlod 0
+flag repair
+goto 100 -500 0
+wait 5
+flag eyex 100
+flag eyey 32
+flag eyez -500
+flag eyedx -0.20
+flag eyedy -0.10
+flag eyedz 0.98
+flag eyeon 1
+wait 2
+scene L1_5_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_5_250
+scene L1_5_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_5_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1_6_init
+flag hlod 0
+flag repair
+goto -300 -100 0
+wait 5
+flag eyex -300
+flag eyey 32
+flag eyez -100
+flag eyedx 0.95
+flag eyedy -0.10
+flag eyedz 0.32
+flag eyeon 1
+wait 2
+scene L1_6_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot L1_6_250
+scene L1_6_H
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 4
+shot L1_6_H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+end

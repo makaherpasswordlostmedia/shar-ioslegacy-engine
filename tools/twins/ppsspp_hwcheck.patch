@@ -1,0 +1,296 @@
+diff -ruN a/CMakeLists.txt b/CMakeLists.txt
+--- a/CMakeLists.txt	2026-10-03 22:55:01
++++ b/CMakeLists.txt	2026-10-03 22:55:01
+@@ -2506,6 +2506,8 @@
+ 	Core/MIPS/MIPSDisVFPU.cpp
+ 	Core/MIPS/MIPSDisVFPU.h
+ 	Core/MIPS/MIPSInt.cpp
++	Core/MIPS/HwCheck.cpp
++	Core/MIPS/HwCheck.h
+ 	Core/MIPS/MIPSInt.h
+ 	Core/MIPS/MIPSIntVFPU.cpp
+ 	Core/MIPS/MIPSIntVFPU.h
+diff -ruN a/Core/MIPS/HwCheck.cpp b/Core/MIPS/HwCheck.cpp
+--- a/Core/MIPS/HwCheck.cpp	1970-01-01 03:00:00
++++ b/Core/MIPS/HwCheck.cpp	2026-10-03 22:55:01
+@@ -0,0 +1,132 @@
++// SHAR freeze252: see HwCheck.h
++#include <cstdio>
++#include <cstdlib>
++#include <cstdarg>
++#include <cstring>
++#include <mutex>
++#include <unordered_map>
++#include "Core/MIPS/HwCheck.h"
++#include "Core/MIPS/MIPS.h"
++#include "Core/MemMap.h"
++#include "Core/CoreTiming.h"
++#include "Core/HLE/sceKernelThread.h"
++#include "Core/HLE/sceKernel.h"
++#include "Core/Core.h"
++#include <string>
++
++namespace HwCheck {
++unsigned long long g_calls[4];
++static int g_on = -1, g_trapMode, g_trapped;
++static FILE *g_f;
++static std::unordered_map<unsigned long long, int> g_seen;
++static unsigned long long g_total[KIND_N], g_trap[KIND_N];
++static const char *kName[KIND_N] = {"FPE_V", "FPE_Z", "FPE_O", "FPE_VCMP", "FPE_VCVT", "NAN_IN", "UNALIGNED", "BADADDR", "KMEM", "BREAK", "STACKOVF"};
++struct StackRec { std::string name; u32 start = 0, end = 0, minsp = 0xFFFFFFFF; bool told = false; };
++static std::unordered_map<int, StackRec> g_stk;
++static int g_lastUid = -1; static StackRec *g_lastRec;
++static void StackSample() {
++	SceUID uid = __KernelGetCurThread();
++	if (uid != g_lastUid || !g_lastRec) {
++		g_lastUid = uid; StackRec &r = g_stk[uid]; g_lastRec = &r;
++		u32 err = 0; PSPThread *t = kernelObjects.Get<PSPThread>(uid, err);
++		if (t) { r.name = t->GetName(); r.start = t->currentStack.start; r.end = t->currentStack.end; }
++	}
++	u32 sp = currentMIPS->r[29];
++	StackRec *r = g_lastRec;
++	if (r->end && sp > r->start - 0x10000 && sp <= r->end + 0x100) {
++		if (sp < r->minsp) r->minsp = sp;
++		if (sp < r->start + 256 && !r->told) { r->told = true; Report(STACKOVF, currentMIPS->pc, "sp=%08x stack=%08x..%08x", sp, r->start, r->end); }
++	}
++}
++static void Summary() {
++	if (!g_f) return;
++	for (auto &kv : g_stk) { StackRec &r = kv.second; if (!r.end || r.minsp == 0xFFFFFFFF) continue;
++		fprintf(g_f, "HWSTACK thread=%s size=%u used=%u free=%u\n", r.name.c_str(), r.end - r.start, r.end - r.minsp, r.minsp > r.start ? r.minsp - r.start : 0); }
++	fprintf(g_f, "HWSUM");
++	for (int k = 0; k < KIND_N; k++) fprintf(g_f, " %s=%llu/%llu", kName[k], g_trap[k], g_total[k]);
++	fprintf(g_f, " sites=%zu calls fpu3=%llu fpu2=%llu cmp=%llu mem=%llu\n", g_seen.size(), g_calls[0], g_calls[1], g_calls[2], g_calls[3]);
++	fflush(g_f);
++}
++bool On() {
++	if (g_on < 0) {
++		const char *e = getenv("SHAR_HWCHK");
++		g_on = e && *e && *e != '0';
++		const char *tm = getenv("SHAR_HWCHK_TRAP");
++		g_trapMode = tm && *tm && *tm != '0';   // как железо: исключение, которое PSP не простит, останавливает эмулятор
++		if (g_on) {
++			const char *lf = getenv("SHAR_HWCHK_LOG");
++			g_f = lf ? fopen(lf, "w") : stderr;
++			if (!g_f) g_f = stderr;
++			fprintf(g_f, "HWCHK start\n");
++			fflush(g_f);
++			atexit(Summary);
++		}
++	}
++	return g_on != 0;
++}
++static void LastSmoke(char *out, size_t n) {
++	out[0] = 0;
++	static const char *smoke = getenv("TWINS_SMOKE");
++	if (!smoke) return;
++	FILE *f = fopen(smoke, "rb");
++	if (!f) return;
++	fseek(f, 0, SEEK_END);
++	long sz = ftell(f);
++	long st = sz > 400 ? sz - 400 : 0;
++	fseek(f, st, SEEK_SET);
++	char b[420];
++	size_t got = fread(b, 1, sizeof b - 1, f);
++	fclose(f);
++	b[got] = 0;
++	if (got && b[got - 1] == '\n') b[--got] = 0;
++	char *p = strrchr(b, '\n');
++	snprintf(out, n, "%s", p ? p + 1 : b);
++}
++void Report(int kind, u32 pc, const char *fmt, ...) {
++	if (!On()) return;
++	u32 fcr = currentMIPS->fcr31;
++	bool trap = Trap(kind, fcr);
++	g_total[kind]++;
++	if (trap) g_trap[kind]++;
++	unsigned long long key = ((unsigned long long)kind << 32) | pc;
++	int &n = g_seen[key];
++	n++;
++	if (n > 3 && n != 100 && n != 10000 && n != 1000000) return;
++	SceUID th = __KernelGetCurThread();
++	const char *tn = __KernelGetThreadName(th);
++	char last[200];
++	LastSmoke(last, sizeof last);
++	fprintf(g_f, "HWCHK %s trap=%d pc=%08x ra=%08x thread=%s fcr31=%08x n=%d emu_t=%.3f ", kName[kind], trap ? 1 : 0, pc,
++	        currentMIPS->r[31], tn ? tn : "?", fcr, n, (double)CoreTiming::GetGlobalTimeUs() / 1e6);
++	va_list a;
++	va_start(a, fmt);
++	vfprintf(g_f, fmt, a);
++	va_end(a);
++	fprintf(g_f, " | after: %s\n", last);
++	fflush(g_f);
++	// ловушка выключена — у PSP взводится липкий флаг FCR31 (биты 2..6: I U O Z V); PPSSPP флагов не считает — ставим сами,
++	// чтобы движок (viewer/fpuguard.h) видел то же, что на железе
++	if (!trap) {
++		u32 fl = (kind == FPE_V || kind == FPE_VCMP || kind == FPE_VCVT) ? 0x40u : kind == FPE_Z ? 0x20u : kind == FPE_O ? 0x10u : 0u;
++		currentMIPS->fcr31 |= fl;
++	}
++	if (g_trapMode && trap && kind != BREAK_ && kind != KMEM && kind != NAN_IN && kind != STACKOVF && !g_trapped) {
++		g_trapped = 1;
++		fprintf(g_f, "HWTRAP %s pc=%08x thread=%s: real PSP raises an exception here -> emulation stopped (exit 86)\n", kName[kind], pc, tn ? tn : "?");
++		fflush(g_f);
++		exit(86);   // как PSP: игра дальше не идёт (сценарий без END)
++	}
++}
++void Mem(u32 pc, u32 addr, int size, bool write) {
++	if (!On()) return;
++	g_calls[3]++;
++	StackSample();
++	if (size > 1 && (addr & (u32)(size - 1)))
++		Report(UNALIGNED, pc, "addr=%08x size=%d %s", addr, size, write ? "write" : "read");
++	u32 a = addr & 0x3FFFFFFF;
++	if (!Memory::IsValidRange(addr, size))
++		Report(BADADDR, pc, "addr=%08x size=%d %s", addr, size, write ? "write" : "read");
++	else if ((addr & 0x80000000) || (a >= 0x08000000 && a < 0x08800000))
++		Report(KMEM, pc, "addr=%08x size=%d %s", addr, size, write ? "write" : "read");
++}
++}  // namespace HwCheck
+diff -ruN a/Core/MIPS/HwCheck.h b/Core/MIPS/HwCheck.h
+--- a/Core/MIPS/HwCheck.h	1970-01-01 03:00:00
++++ b/Core/MIPS/HwCheck.h	2026-10-03 22:55:01
+@@ -0,0 +1,25 @@
++// SHAR freeze252 (03.10.2026): checks that real PSP hardware traps on but PPSSPP computes silently.
++// SHAR_HWCHK=1 enables; SHAR_HWCHK_LOG=file (default stderr); TWINS_SMOKE=smoke.txt -> last engine line is attached.
++// Kinds: FPE_V (invalid op: 0/0, inf-inf, 0*inf, sqrt(<0)), FPE_Z (x/0), FPE_O (overflow to inf), FPE_VCMP (signaling compare
++// c.lt/c.le/c.seq... with NaN), FPE_VCVT (float->int of NaN or out of int32), NAN_IN (arith on NaN from memory),
++// UNALIGNED (lh/sh odd, lw/sw/lwc1/swc1/lv.s/sv.s not 4, lv.q/sv.q not 16), BADADDR (outside PSP memory map),
++// KMEM (user data access to kernel RAM 0x08000000-0x087fffff), BREAK (break: integer division by zero etc).
++// Real PSP: each thread starts with FCR31 0x00000e00 (PPSSPP sceKernelThread.cpp) = traps for V, Z, O enabled.
++#pragma once
++#include "Common/CommonTypes.h"
++namespace HwCheck {
++enum Kind { FPE_V, FPE_Z, FPE_O, FPE_VCMP, FPE_VCVT, NAN_IN, UNALIGNED, BADADDR, KMEM, BREAK_, STACKOVF, KIND_N };
++bool On();
++void Report(int kind, u32 pc, const char *fmt, ...);
++inline bool Trap(int kind, u32 fcr31) {   // does hardware trap for this kind with this FCR31 (enable bits 7..11: I U O Z V)
++	u32 en = (fcr31 >> 7) & 0x1F;
++	switch (kind) {
++	case FPE_V: case FPE_VCMP: case FPE_VCVT: return (en & 0x10) != 0;
++	case FPE_Z: return (en & 0x08) != 0;
++	case FPE_O: return (en & 0x04) != 0;
++	default: return true;
++	}
++}
++void Mem(u32 pc, u32 addr, int size, bool write);
++extern unsigned long long g_calls[4];   // FPU3op, FPU2op, FPUComp, Mem
++}
+diff -ruN a/Core/MIPS/MIPSInt.cpp b/Core/MIPS/MIPSInt.cpp
+--- a/Core/MIPS/MIPSInt.cpp	2026-10-03 22:55:01
++++ b/Core/MIPS/MIPSInt.cpp	2026-10-03 22:55:01
+@@ -34,6 +34,7 @@
+ #include "Core/HLE/HLE.h"
+ #include "Core/HLE/HLETables.h"
+ #include "Core/HLE/ReplaceTables.h"
++#include "Core/MIPS/HwCheck.h"
+ 
+ #define R(i) (currentMIPS->r[i])
+ #define F(i) (currentMIPS->f[i])
+@@ -176,6 +177,7 @@
+ 
+ 	void Int_Break(MIPSOpcode op)
+ 	{
++		if (HwCheck::On()) HwCheck::Report(HwCheck::BREAK_, PC, "code=%u", (op >> 6) & 0xFFFFF);
+ 		Reporting::ReportMessage("BREAK instruction hit");
+ 		Core_BreakException(PC);
+ 		PC += 4;
+@@ -429,6 +431,12 @@
+ 			return;
+ 		}
+ 
++		if (HwCheck::On()) {
++			int hsz = 0; bool hw = false;
++			switch (op >> 26) { case 32: case 36: hsz = 1; break; case 40: hsz = 1; hw = true; break; case 33: case 37: hsz = 2; break; case 41: hsz = 2; hw = true; break;
++			case 35: hsz = 4; break; case 43: hsz = 4; hw = true; break; default: hsz = 0; }
++			if (hsz) HwCheck::Mem(PC, addr, hsz, hw);
++		}
+ 		switch (op >> 26)
+ 		{
+ 		case 32: R(rt) = SignExtend8ToU32(Memory::Read_U8(addr)); break; //lb
+@@ -492,6 +500,7 @@
+ 		int ft = _FT;
+ 		int rs = _RS;
+ 		u32 addr = R(rs) + offset;
++		if (HwCheck::On()) HwCheck::Mem(PC, addr, 4, (op >> 26) == 57);
+ 
+ 		switch(op >> 26)
+ 		{
+@@ -878,6 +887,17 @@
+ 	{
+ 		int fs = _FS;
+ 		int fd = _FD;
++		if (HwCheck::On()) {
++			HwCheck::g_calls[1]++;
++			float a = F(fs); int sub = op & 0x3f;
++			if (sub == 4) {
++				if (my_isnan(a)) HwCheck::Report(HwCheck::NAN_IN, PC, "sqrt.s a=%08x", FI(fs));
++				else if (a < 0.0f) HwCheck::Report(HwCheck::FPE_V, PC, "sqrt.s a=%g", a);
++			} else if ((sub >= 12 && sub <= 15) || sub == 36) {
++				if (my_isnan(a) || a >= 2147483648.0f || a < -2147483648.0f)
++					HwCheck::Report(HwCheck::FPE_VCVT, PC, "cvt/trunc op=%d a=%g (%08x)", sub, a, FI(fs));
++			}
++		}
+ 
+ 		switch (op & 0x3f)
+ 		{
+@@ -941,6 +961,11 @@
+ 		int fs = _FS;
+ 		int ft = _FT;
+ 		bool cond;
++		if (HwCheck::On()) HwCheck::g_calls[2]++;
++		if (HwCheck::On() && (my_isnan(F(fs)) || my_isnan(F(ft)))) {
++			if (op & 8) HwCheck::Report(HwCheck::FPE_VCMP, PC, "c.cond=%d a=%08x b=%08x", (int)(op & 0xf), FI(fs), FI(ft));
++			else HwCheck::Report(HwCheck::NAN_IN, PC, "c.cond=%d (quiet) a=%08x b=%08x", (int)(op & 0xf), FI(fs), FI(ft));
++		}
+ 		switch (op & 0xf)
+ 		{
+ 		case 0: //f
+@@ -997,6 +1022,21 @@
+ 		int ft = _FT;
+ 		int fs = _FS;
+ 		int fd = _FD;
++		if (HwCheck::On()) {
++			HwCheck::g_calls[0]++;
++			float a = F(fs), b = F(ft); int sub = op & 0x3f; static const char *nm[4] = {"add.s", "sub.s", "mul.s", "div.s"};
++			if (sub < 4) {
++				if (my_isnan(a) || my_isnan(b)) HwCheck::Report(HwCheck::NAN_IN, PC, "%s a=%08x b=%08x", nm[sub], FI(fs), FI(ft));
++				else {
++					float r = sub == 0 ? a + b : sub == 1 ? a - b : sub == 2 ? a * b : a / b;
++					if (sub == 3 && b == 0.0f) {
++						if (a == 0.0f) HwCheck::Report(HwCheck::FPE_V, PC, "div.s 0/0");
++						else HwCheck::Report(HwCheck::FPE_Z, PC, "div.s a=%g / 0", a);
++					} else if (my_isnan(r)) HwCheck::Report(HwCheck::FPE_V, PC, "%s a=%g b=%g", nm[sub], a, b);
++					else if (my_isinf(r) && !my_isinf(a) && !my_isinf(b)) HwCheck::Report(HwCheck::FPE_O, PC, "%s a=%g b=%g", nm[sub], a, b);
++				}
++			}
++		}
+ 
+ 		switch (op & 0x3f)
+ 		{
+diff -ruN a/Core/MIPS/MIPSIntVFPU.cpp b/Core/MIPS/MIPSIntVFPU.cpp
+--- a/Core/MIPS/MIPSIntVFPU.cpp	2026-10-03 22:55:01
++++ b/Core/MIPS/MIPSIntVFPU.cpp	2026-10-03 22:55:01
+@@ -34,6 +34,7 @@
+ #include "Core/MIPS/MIPSInt.h"
+ #include "Core/MIPS/MIPSTables.h"
+ #include "Core/MIPS/MIPSVFPUUtils.h"
++#include "Core/MIPS/HwCheck.h"
+ 
+ #define R(i)   (currentMIPS->r[i])
+ #define V(i)   (currentMIPS->v[voffset[i]])
+@@ -209,6 +210,7 @@
+ 		u32 addr = R(rs) + imm;
+ 		float *f;
+ 		const float *cf;
++		if (HwCheck::On()) { int o = op >> 26; if (o == 54 || o == 62) HwCheck::Mem(PC, addr, 16, o == 62); else HwCheck::Mem(PC, addr, 4, o == 61); }
+ 
+ 		switch (op >> 26)
+ 		{
+@@ -1753,6 +1755,7 @@
+ 		int vt = ((op >> 16) & 0x1f) | ((op & 3) << 5);
+ 		int rs = _RS;
+ 		u32 addr = R(rs) + imm;
++		if (HwCheck::On()) HwCheck::Mem(PC, addr, 4, (op >> 26) == 58);
+ 
+ 		switch (op >> 26)
+ 		{

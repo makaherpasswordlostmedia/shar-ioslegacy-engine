@@ -1,0 +1,14 @@
+# №667/№666 TRF1: угон школьного автобуса L1 (tests/traffic/jack_bus.py, правка 285): ирис (нет шарнира двери), сиденье по dl автобуса
+wait 3
+flag msn
+wait 3
+scene schoolbu
+foot 298.0 179.5 -1.5708
+wait 6
+shot bus_pre
+press triangle
+wait 4
+flag seatlog 0
+shot bus_in
+wait 1
+end

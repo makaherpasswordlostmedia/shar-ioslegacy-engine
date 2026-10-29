@@ -1,0 +1,14 @@
+scene start
+wait 3
+scene L3_load
+flag golevel 3
+flag gatepre 0
+flag loadacc 1
+wait 22
+scene CH_nowarm
+flag repair
+flag hnr 100
+flag drive 75
+wait 22
+flag stop
+end

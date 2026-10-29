@@ -1,0 +1,64 @@
+# №920 (друг Роба, дополнение к №916): курс ходьбы в мире не уходит за камерой.
+# TW_down: идти на камеру со стиком вниз 6 с; камера разворачивается за спину, ход остаётся прежним (кадр держится).
+# WJ_cont: прыжки (tap ✕ — не отпускает стик) вдоль стены, камера прижата к стене и отходит от неё (L1, фасад z 180,9: перескок/облёт камеры), стик зажат непрерывно.
+# WJ_drop: то же, но «непрерывный» стик на 0,1 с уходит в ноль каждую секунду (палец на ✕, дрожь ниппеля в мёртвой зоне): раньше кадр сбрасывался и ход брался от ушедшего вида.
+wait 12
+flag cfgdefaults 1
+flag player
+flag camlog
+scene TW_down
+foot 252 176 -1.5708
+wait 3
+press down 6
+wait 7
+scene WJ_cont
+foot 254 180.2 3.1416
+wait 3
+press up 8
+wait 0.4
+tap cross 0.15
+wait 1.4
+tap cross 0.15
+wait 1.4
+tap cross 0.15
+wait 1.4
+tap cross 0.15
+wait 1.4
+tap cross 0.15
+wait 1.4
+wait 1
+scene WJ_drop
+foot 254 180.2 3.1416
+wait 3
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+press up 1.0
+wait 0.5
+tap cross 0.15
+wait 0.6
+wait 1
+scene Z_END
+wait 1
+end

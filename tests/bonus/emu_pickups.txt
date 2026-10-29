@@ -1,0 +1,34 @@
+# Гейт подборов/ловушек/огня/DEATH бонус-игры в безголовом эмуляторе (tests/bonus/emu_pickups.sh): меню -> MINI GAME -> гонка 1 круг
+# на b07 (шипы, огонь, DEATH, nitro, wrench) -> итоги (сами, flag bonusauto) -> гонка 1 круг на b04 (поршни, B04G, nitro, repair) -> меню.
+# Машиной игрока ведёт водитель ИИ (flag bonusauto), камера сверху; на b07 два снимка за машиной (модели подборов и шипов вблизи).
+flag menu
+flag bonusopen
+flag bonuslaps 1
+flag bonusauto 1
+flag bonustrack 7
+wait 2
+press left
+wait 0.6
+press cross
+wait 1.5
+flag bonusgo
+wait 8
+shot pick_b07_top
+flag bonuscam 1
+wait 3
+shot pick_b07_chase
+wait 3
+shot pick_b07_chase2
+flag bonuscam 0
+wait 56
+flag bonustrack 4
+flag bonusgo
+wait 8
+shot pick_b04_top
+wait 75
+press triangle
+wait 1
+press triangle
+wait 4
+shot pick_back
+end

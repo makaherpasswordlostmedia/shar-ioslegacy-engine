@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+project(optbench C)
+add_executable(optbench main.c)
+target_compile_options(optbench PRIVATE -O2 -Wall -Wextra -Wno-unused-parameter -Wno-misleading-indentation -fno-math-errno -fsingle-precision-constant)
+target_link_libraries(optbench pspgum pspgu pspdebug pspdisplay pspctrl psprtc psppower pspge m)
+create_pbp_file(TARGET optbench TITLE "SHAR Optimization Bench R2" BUILD_PRX MEMSIZE 1)

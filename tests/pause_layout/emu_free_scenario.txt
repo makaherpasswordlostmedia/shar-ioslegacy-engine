@@ -1,0 +1,18 @@
+# Пауза свободной езды после правок 150/151 (tests/pause_layout/emu.sh DIR emu_free_scenario.txt): игрок (RESET CAR скрыт) и
+# служебный режим (все строки в той же рамке) — снимки
+flag player
+scene car
+goto 220 172 1.5708
+wait 3
+press start
+wait 1
+shot pause_free
+press start
+wait 1
+flag service
+press start
+wait 1
+shot pause_free_svc
+press start
+wait 1
+end

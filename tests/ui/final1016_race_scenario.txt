@@ -1,0 +1,30 @@
+# №623/630/hudBlk: гонка sr1 Милхауса (как tests/missions/hud_scenario.txt): кадры после ✕ Continue — домик, отсчёт, кружок цели, блок таймера и кругов
+scene g623
+wait 3
+flag msn
+wait 2
+flag msnsel 8
+wait 11
+press cross
+shot c0
+wait 1
+shot c1
+wait 2.2
+shot d0
+wait 0.3
+shot d1
+wait 0.3
+shot d2
+wait 0.3
+shot d3
+wait 0.3
+shot d4
+wait 0.3
+shot d5
+wait 0.3
+shot d6
+wait 0.3
+shot d7
+wait 3
+shot c11
+end

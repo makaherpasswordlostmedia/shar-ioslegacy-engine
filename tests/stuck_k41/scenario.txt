@@ -1,0 +1,13 @@
+# Застревание автопилота TEST26 t 225,7: повтор на эмуляторе. Старт по курсу тура; у (206,8; 4,9; -505,8) машина встаёт при why=0
+scene spawn
+wait 3
+scene k41
+goto 231.5 -425.4 -2.9226
+flag drive 60
+wait 20
+shot k41a
+wait 2
+shot k41b
+wait 2
+shot k41c
+end

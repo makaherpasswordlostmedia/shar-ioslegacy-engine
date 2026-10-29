@@ -1,0 +1,145 @@
+# HLOD столбики L3: камера над городом 32 м; сцены 250 м | 150 м | 150 м + HLOD (по сцене на режим: треугольники и время кадра в summary)
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+scene HB_E3_init
+flag hlod 0
+flag repair
+goto 100 200 0
+wait 4
+flag eyex 100
+flag eyey 32
+flag eyez 200
+flag eyedx -0.7
+flag eyedy -0.12
+flag eyedz -0.7
+flag eyeon 1
+wait 2
+scene HB_E3_250
+flag drawdist 100
+flag hlod 0
+wait 5
+shot HB_E3_250
+scene HB_E3_150
+flag drawdist 60
+flag hlod 0
+wait 5
+shot HB_E3_150
+scene HB_E3_H1
+flag drawdist 60
+flag hlod 1
+wait 5
+shot HB_E3_H1
+flag hlod 4
+wait 1
+shot HB_E3_H4
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HB_E4_init
+flag hlod 0
+flag repair
+goto 0 300 0
+wait 4
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz -1
+flag eyeon 1
+wait 2
+scene HB_E4_250
+flag drawdist 100
+flag hlod 0
+wait 5
+shot HB_E4_250
+scene HB_E4_150
+flag drawdist 60
+flag hlod 0
+wait 5
+shot HB_E4_150
+scene HB_E4_H1
+flag drawdist 60
+flag hlod 1
+wait 5
+shot HB_E4_H1
+flag hlod 4
+wait 1
+shot HB_E4_H4
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HB_E5_init
+flag hlod 0
+flag repair
+goto -50 -20 0
+wait 4
+flag eyex -50
+flag eyey 32
+flag eyez -20
+flag eyedx 1
+flag eyedy -0.12
+flag eyedz 0
+flag eyeon 1
+wait 2
+scene HB_E5_250
+flag drawdist 100
+flag hlod 0
+wait 5
+shot HB_E5_250
+scene HB_E5_150
+flag drawdist 60
+flag hlod 0
+wait 5
+shot HB_E5_150
+scene HB_E5_H1
+flag drawdist 60
+flag hlod 1
+wait 5
+shot HB_E5_H1
+flag hlod 4
+wait 1
+shot HB_E5_H4
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HB_E6_init
+flag hlod 0
+flag repair
+goto 150 -300 0
+wait 4
+flag eyex 150
+flag eyey 32
+flag eyez -300
+flag eyedx -1
+flag eyedy -0.1
+flag eyedz 0.2
+flag eyeon 1
+wait 2
+scene HB_E6_250
+flag drawdist 100
+flag hlod 0
+wait 5
+shot HB_E6_250
+scene HB_E6_150
+flag drawdist 60
+flag hlod 0
+wait 5
+shot HB_E6_150
+scene HB_E6_H1
+flag drawdist 60
+flag hlod 1
+wait 5
+shot HB_E6_H1
+flag hlod 4
+wait 1
+shot HB_E6_H4
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+end

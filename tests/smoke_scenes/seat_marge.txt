@@ -1,0 +1,28 @@
+# №666 кадры: Мардж в marge_v (L4): изнутри кабины сбоку и 3/4 спереди, потом выход (дверь + анимация) снаружи со стороны водителя
+scene S_L4_load
+flag golevel 4
+wait 16
+foot 217.5 172.27 3.14
+wait 3
+press triangle
+wait 6
+scene S_L4_cab
+cam 216.2 5.2 172.1 -1 0 0 45
+wait 1
+shot cab_side
+cam 215.9 5.3 174.2 -1.7 -0.1 -2.0 50
+wait 1
+shot cab_34
+cam 207.5 5.0 172.3 1 0 0 40
+wait 0.5
+scene S_L4_exit
+press triangle
+wait 0.3
+shot exit_a
+wait 0.3
+shot exit_b
+wait 0.4
+shot exit_c
+wait 0.6
+shot exit_d
+end

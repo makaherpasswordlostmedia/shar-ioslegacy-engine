@@ -1,0 +1,67 @@
+wait 12
+flag cfgdefaults 1
+flag diaglog 1
+flag camin 1
+flag dropfix921 0
+scene P026o
+foot 223.7 203.0 0
+wait 1.6
+shot o026_0
+press r 1.0
+wait 1.15
+shot o026_1
+press r 1.0
+wait 1.15
+shot o026_2
+press r 1.0
+wait 1.15
+shot o026_3
+press r 1.0
+wait 1.15
+scene P027o
+foot -301.3 3.5 0
+wait 1.6
+shot o027_0
+press r 1.0
+wait 1.15
+shot o027_1
+press r 1.0
+wait 1.15
+shot o027_2
+press r 1.0
+wait 1.15
+shot o027_3
+press r 1.0
+wait 1.15
+flag dropfix921 MODE
+scene P026n
+foot 223.7 203.0 0
+wait 1.6
+shot n026_0
+press r 1.0
+wait 1.15
+shot n026_1
+press r 1.0
+wait 1.15
+shot n026_2
+press r 1.0
+wait 1.15
+shot n026_3
+press r 1.0
+wait 1.15
+scene P027n
+foot -301.3 3.5 0
+wait 1.6
+shot n027_0
+press r 1.0
+wait 1.15
+shot n027_1
+press r 1.0
+wait 1.15
+shot n027_2
+press r 1.0
+wait 1.15
+shot n027_3
+press r 1.0
+wait 1.15
+end

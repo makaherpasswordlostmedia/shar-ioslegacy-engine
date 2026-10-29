@@ -1,0 +1,72 @@
+{
+ "id": "b2_ped2",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 420,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "hnr_pause_ms",
+  "hnr_last",
+  "mat[12]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[2]",
+  {
+   "addr": "b39740",
+   "label": "kid_x"
+  },
+  {
+   "addr": "b39748",
+   "label": "kid_z"
+  }
+ ],
+ "writes": [
+  {
+   "value": 209.058,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 4.3,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -156.478,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 10,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 10,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": -2.94,
+   "at": 180,
+   "hold": 6,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 9.54,
+   "at": 180,
+   "hold": 6,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": [
+  260
+ ]
+}

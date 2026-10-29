@@ -1,0 +1,9 @@
+# №180/№184: горящая машина (урон 0,9 → стадия 3) повторяет W_Burn каждые 22–29 с (запись PS2 ps2_dlg_homer_drive); old
+flag burnrepold 1
+scene start
+wait 3
+flag testdmg 0.9
+scene B_burn
+wait 95
+flag saystat
+end

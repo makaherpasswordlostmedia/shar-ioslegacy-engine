@@ -1,0 +1,248 @@
+# Горизонт в интерьерах (16.10, Камера): каждый кадр камеры комнаты без/с flag horizon 1 (_a/_b), обязаны совпасть побайтно; STREET_ctrl: на улице _a/_b обязаны отличаться (положительный контроль)
+# Камеры комнат L7, глаз не в стене (tests/rooms/emu_cams_levels_gen.py): двери 4, камер 28; CAMIN eye/near на каждой точке
+scene start
+wait 3
+scene L7_load
+flag golevel 7
+wait 20
+scene SimpsonsHouse_door
+foot 228.94 180.42 0.0000 4.23
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Simp__path2
+foot 496.340 396.775 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Simp__path2_a
+flag horizon 1
+wait 1.5
+shot Simp__path2_b
+scene Simp__path1
+foot 500.316 398.080 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Simp__path1_a
+flag horizon 1
+wait 1.5
+shot Simp__path1_b
+scene KwikEMart_door
+foot 213.91 299.04 0.0000 5.56
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Kwik_01
+foot 499.431 304.290 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_01_a
+flag horizon 1
+wait 1.5
+shot Kwik_01_b
+scene Kwik_02
+foot 498.469 296.795 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_02_a
+flag horizon 1
+wait 1.5
+shot Kwik_02_b
+scene Kwik_03
+foot 502.200 299.330 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_03_a
+flag horizon 1
+wait 1.5
+shot Kwik_03_b
+scene Kwik_04
+foot 499.319 290.180 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_04_a
+flag horizon 1
+wait 1.5
+shot Kwik_04_b
+scene Kwik_05
+foot 503.918 296.160 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_05_a
+flag horizon 1
+wait 1.5
+shot Kwik_05_b
+scene Kwik_06
+foot 503.663 303.965 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_06_a
+flag horizon 1
+wait 1.5
+shot Kwik_06_b
+scene Kwik_07
+foot 506.691 303.732 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_07_a
+flag horizon 1
+wait 1.5
+shot Kwik_07_b
+scene Kwik_08
+foot 505.847 298.331 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_08_a
+flag horizon 1
+wait 1.5
+shot Kwik_08_b
+scene Kwik_09
+foot 495.000 297.094 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_09_a
+flag horizon 1
+wait 1.5
+shot Kwik_09_b
+scene Kwik_10
+foot 494.081 304.239 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_10_a
+flag horizon 1
+wait 1.5
+shot Kwik_10_b
+scene Kwik_11
+foot 494.802 289.804 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_11_a
+flag horizon 1
+wait 1.5
+shot Kwik_11_b
+scene Kwik_12
+foot 496.312 304.239 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Kwik_12_a
+flag horizon 1
+wait 1.5
+shot Kwik_12_b
+scene SpringfieldElementary_door
+foot -31.48 589.45 -1.5708 5.04
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Spri_03
+foot 504.958 354.389 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Spri_03_a
+flag horizon 1
+wait 1.5
+shot Spri_03_b
+scene Spri__path1
+foot 498.220 352.007 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Spri__path1_a
+flag horizon 1
+wait 1.5
+shot Spri__path1_b
+scene Spri_04
+foot 501.634 349.379 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Spri_04_a
+flag horizon 1
+wait 1.5
+shot Spri_04_b
+scene BartRoom_door
+foot 224.69 204.46 3.1416 7.00
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Bart_01
+foot 500.281 449.766 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Bart_01_a
+flag horizon 1
+wait 1.5
+shot Bart_01_b
+scene Bart_02
+foot 498.653 452.422 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Bart_02_a
+flag horizon 1
+wait 1.5
+shot Bart_02_b
+scene Bart_03
+foot 498.776 446.818 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Bart_03_a
+flag horizon 1
+wait 1.5
+shot Bart_03_b
+scene STREET_ctrl
+flag horizon 0
+foot 228.94 180.42 0.0000 4.23
+wait 2.5
+shot STREET_a
+flag horizon 1
+wait 2.5
+shot STREET_b
+end

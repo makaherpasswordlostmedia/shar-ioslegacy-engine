@@ -1,0 +1,24 @@
+# Правка 334, прогон 3 (новый запуск эмулятора, та же карта): RESUME GAME -> таран того же места: ящика нет, кошелёк не растёт
+flag menu
+flag saves
+wait 1.5
+press right
+wait 0.4
+press cross
+wait 5
+flag svlog
+flag svonce
+shot r1_resumed
+foot 212.5 168.5 0.8
+wait 1
+press triangle
+wait 3
+goto 184.26 211.0 3.1416
+wait 2
+shot r2_place
+press cross 2.5
+wait 3
+shot r3_ram
+flag svlog
+flag svonce
+end

@@ -1,0 +1,20 @@
+# №982: машина за спиной Гомера как стена. L1: автобус трафика (flag trfspawn 2) в 2,5 м сзади, Гомер лицом от него идёт вперёд 8 с. Прежнее (flag camcar982old 1) — камера перескакивает через героя (CAMFLIP), новое — нет
+wait 12
+flag cfgdefaults 1
+flag player
+flag caminlog
+flag camcar982old 1
+scene CARW_L1
+foot 160 279.9 1.5708
+wait 3
+flag trfspawn 2
+wait 1
+foot 160 279.9 3.1416
+wait 2
+flag camin 1
+press up 8
+wait 9
+flag camin
+scene Z_END
+wait 1
+end

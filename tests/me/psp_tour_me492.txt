@@ -1,0 +1,79 @@
+# Тур ME-доля (слово Роба 492, 10.10): SHARTEST4 — всё на главном процессоре + разрез по подсистемам (PHSEC), SHARTEST5 — адаптивный помощник (mepeak).
+# Одна и та же дорога для обеих апок; отличаются только флаг-файлы (tools/tour_me492.sh). Около 4-5 минут на апку, без ролика и бонус-гонки.
+# Смотреть в smoke.txt: PHSEC (мс на кадр по фазам: ph0 ввод, ph1 машина, ph2 Гомер и пропы, ph3 комнаты, ph4 миссии, ph6 трафик+камера+stream,
+# ph7 отсечение+респаун, build сборка списка GE, gesync ожидание видеочипа после нашего списка, vbl ожидание обратного хода),
+# MEPEAK on/off (SHARTEST5: когда ME включился, причина, кадр до и средний за пик), BBCPU (audio_mix исправлен), STAT по сценам.
+scene start
+flag meprof 1
+wait 6
+scene L1_spawn
+wait 4
+shot L1_spawn
+scene L1_drive
+flag autostraight 8
+wait 14
+shot L1_drive
+flag stop
+wait 2
+scene L1_traffic
+wait 10
+shot L1_traffic
+scene L1_fire
+flag testdmg 0.95
+flag autostraight 5
+wait 12
+shot L1_fire
+flag stop
+scene L1_boom
+flag testboom
+wait 3
+shot L1_boom
+wait 9
+flag repair
+wait 2
+scene L1_chase
+flag hnr 85
+flag autostraight 10
+wait 16
+shot L1_chase
+flag stop
+flag hnr 0
+wait 2
+scene L2_load
+flag golevel 2
+wait 20
+scene L2_drive
+flag autostraight 8
+wait 14
+shot L2_drive
+flag stop
+wait 2
+scene L2_boom
+flag testboom
+wait 3
+shot L2_boom
+wait 9
+flag repair
+wait 2
+scene L7_load
+flag golevel 7
+wait 20
+# L7 начинается внутри дома Симпсонов (room=SimpsonsHouse): выходим в город к месту старта машины (214,7 172,4) и садимся (repair), иначе измеряется интерьер, а не город
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+wait 3
+scene L7_drive
+flag autostraight 8
+wait 14
+shot L7_drive
+flag stop
+wait 2
+scene L7_boom
+flag testboom
+wait 3
+shot L7_boom
+wait 9
+flag repair
+wait 2
+end

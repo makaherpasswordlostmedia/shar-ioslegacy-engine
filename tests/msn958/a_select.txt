@@ -1,0 +1,46 @@
+# №958б путь A: L1 с активной целью «домой» (как f00_l1 тура) -> пауза -> MISSION SELECT -> ► на L6 -> ✕; снимки угла через 3, 10, 30 с и MSNHUD
+flag menu
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+shot a_l1_home
+press start
+wait 1
+shot a_pause
+press down
+wait 0.4
+press cross
+wait 1
+shot a_sel0
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.5
+press right
+wait 0.6
+shot a_sel_pick
+press cross
+wait 50
+flag msnhud 1
+wait 3
+shot a_l6_t3
+flag msnhud 1
+wait 7
+shot a_l6_t10
+flag msnhud 1
+wait 20
+shot a_l6_t30
+flag msnhud 1
+press start
+wait 1
+shot a_pause_new
+flag msnhud 1
+wait 1
+end

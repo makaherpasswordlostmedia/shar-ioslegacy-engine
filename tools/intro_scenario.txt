@@ -1,0 +1,20 @@
+# Интро в эмуляторе (tools/intro_gate.sh): служебный запуск с «flag intro» играет интро, потом главное меню (viewer/smoke.h).
+# Во время снимка ролик стоит (строка INTROSHOT: ролик и кадр), время ожидания снимка в ролик не идёт.
+# vuglogo: снимок на ~3 с, START; foxlogo: снимок на ~4 с, START; gracie: START через 1 с; radlogo доигрывается целиком
+# (4,04 с); intro: снимок на ~4,5 с, START; меню. Проверка — tools/intro_check.py
+flag menu
+flag intro
+wait 3
+shot intro_vug
+press start
+wait 4
+shot intro_fox
+press start
+wait 1
+press start
+wait 9
+shot intro_main
+press start
+wait 1.5
+shot menu
+end

@@ -1,0 +1,14 @@
+# Гейт счётчика нарисованных монет (PHSUB coin_drawn). Фон: монеты мира; затем 5 монет позади камеры (активны, не рисуются) и 5 впереди (рисуются)
+scene spawn
+goto 220 172 1.5708
+wait 3
+flag stop
+scene coin_none
+wait 3
+scene coin_back
+flag coindrop -5
+wait 3
+scene coin_front
+flag coindrop 5
+wait 3
+end

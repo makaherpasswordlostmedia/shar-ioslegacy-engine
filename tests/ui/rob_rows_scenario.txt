@@ -1,0 +1,58 @@
+# «press circle» рядом с ↑/↓/←/→ пешком: ○ зажат — Гомер бежит (раскладка оригинала ControllerPS2.pag: ○ DASH / SPRINT, 29.09); без ○ идёт 4 м/с
+# Правки Роба 22, 25, 26, 36, 38, 41 в эмуляторе одним прогоном (tests/ui/rob_rows.sh, разбор tests/ui/rob_rows_check.py).
+# 41 — дверь Kwik-E-Mart: Гомер снаружи (△ нет), шаг в триггер двери (△ показан и дышит), вход только по △, выход из центра
+#      триггера выхода (данные: exitTrig int_kwik_exit) тоже по △; △ у собеседника (Мардж) перед разговором.
+# 22 — аватар задания «TALK TO MARGE»: рамки аватара и пузыря, как ушли в GE (UIAVATAR / UIBUBBLE).
+# 48 — пузырь в пропорциях Hud.pag, текст задания (UIOBJTEXT) внутри — со значком и в сообщении без значка (uimsgnoicon).
+# 36 — кольцо Hit & Run по сценарию ударов (UIHNR — заливка, UIHNRBG — дорожка).
+# 26, 38 — разговор m0 (icecream, 2 реплики): места, курсы, жесты, рот (строки TALK раз в 0.5 с).
+# 25 — брифинг m0: одно нажатие X -> Continue; m0 заново (MISSION SELECT), разговор, брифинг: △ не закрывает (правка 52: Cancel нет), X -> Continue.
+scene door
+wait 3
+flag uipulsetrace
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.5
+shot door_prompt
+wait 0.5
+press triangle
+wait 2.5
+foot 499.43 305.25 0 -19.5
+wait 0.8
+press triangle
+wait 2.5
+flag uioff
+scene msn
+flag msn
+wait 2
+flag uipulsetrace
+wait 1.5
+flag uiavatar
+wait 1.5
+shot avatar
+flag uimsgnoicon
+wait 0.8
+shot msg_noicon
+flag uioff
+flag uihnr
+wait 3
+shot ring
+flag uioff
+press triangle
+wait 14
+shot briefing
+press cross
+wait 1.5
+shot getin
+flag msnsel 0
+wait 2
+press triangle
+wait 14
+shot brief_cancel
+press triangle
+wait 1
+press cross
+wait 2
+end

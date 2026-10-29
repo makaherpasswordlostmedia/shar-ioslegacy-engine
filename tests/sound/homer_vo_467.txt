@@ -1,0 +1,31 @@
+# №467: выкрики героя пешком (turbo — первый шаг бега после паузы 2 с, longjump — второй прыжок в воздухе); счётчики реплик: flag saystat, события 27 (turbo) и 29 (longjump)
+scene start
+wait 3
+foot 225 176 1.5708
+wait 2
+scene V_run
+press up 1.5
+press circle 1.5
+wait 3.5
+press up 1.5
+press circle 1.5
+wait 3.5
+press up 1.5
+press circle 1.5
+wait 3.5
+scene V_jump
+press cross 0.2
+wait 0.35
+press cross 0.2
+wait 3
+press cross 0.2
+wait 0.35
+press cross 0.2
+wait 3
+press cross 0.2
+wait 0.35
+press cross 0.2
+wait 3
+flag saystat
+wait 1
+end

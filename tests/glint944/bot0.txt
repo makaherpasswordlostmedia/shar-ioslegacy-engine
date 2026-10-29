@@ -1,0 +1,35 @@
+### №944 разведка: L1 миссия 1 ботом (flag msnbot), снимки каждые 8 с
+scene m0
+wait 3
+flag msn
+wait 2
+flag msnbot 1
+wait 8
+shot b1
+wait 8
+shot b2
+wait 8
+shot b3
+wait 8
+shot b4
+wait 8
+shot b5
+wait 8
+shot b6
+wait 8
+shot b7
+wait 8
+shot b8
+wait 8
+shot b9
+wait 8
+shot b10
+wait 8
+shot b11
+wait 8
+shot b12
+wait 8
+shot b13
+wait 8
+shot b14
+end

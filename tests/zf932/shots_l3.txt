@@ -1,0 +1,32 @@
+# №932б кадры двух проходов глубины (flag zf932 1) и одного (0), L3: улица с зеброй и набережная с досками (точки F_FLAT_L3S / F_FLAT_L3B тура TEST59)
+scene FK_L3_BOOT
+flag cfgdefaults 1
+flag bisect 4
+flag long
+flag golevel 3
+wait 40
+scene FK_L3_STREET
+foot 180.2 64.2 -1.571
+wait 14
+flag zf932 1
+wait 4
+shot z1_FK_L3_STREET
+flag zf932 0
+wait 4
+shot z0_FK_L3_STREET
+flag zf932 1
+wait 4
+shot z1b_FK_L3_STREET
+scene FK_L3_PIER
+foot -525.6 -40.7 0.28
+wait 14
+flag zf932 1
+wait 4
+shot z1_FK_L3_PIER
+flag zf932 0
+wait 4
+shot z0_FK_L3_PIER
+flag zf932 1
+wait 4
+shot z1b_FK_L3_PIER
+end

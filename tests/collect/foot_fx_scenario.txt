@@ -1,0 +1,18 @@
+scene footfx
+wait 3
+foot 228.567 201.097 0 5
+cam 228.567 4 207.097 0 0 -6 45
+wait 1
+shot base
+press square .05
+wait .28
+shot kick
+wait 1
+shot after
+# Authentic wasp w_bonuscar, attack through the state-machine event
+foot -99.01 219.73 3.14159 1.21
+cam -96 1 225 -3 -1.5 -5 45
+wait 6.3
+shot zap
+wait 2
+end

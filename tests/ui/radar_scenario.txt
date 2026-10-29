@@ -1,0 +1,16 @@
+# Радар (правка Роба 50, tests/ui/radar_emu.sh): старт m0 — цель «поговорить с Мардж»; Гомер пешком у Kwik-E-Mart (цель в
+# ~100 м: клин до синей точки) и у церкви (цель за краем: точка на ободе, клин до обода); прочие значки у обода не висят
+wait 3
+flag msn
+wait 3
+scene radar
+flag radarlog
+foot 209 279 0
+wait 3
+shot radar_near
+scene radarfar
+wait 1
+foot 194 570 0
+wait 3
+shot radar_far
+end

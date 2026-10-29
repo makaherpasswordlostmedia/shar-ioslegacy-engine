@@ -1,0 +1,233 @@
+# TEST59 тур = test58_game.txt + №923 стекло L1 J9 (F_G59_GLASS: удар в щит Buzz Cola с запада, осколки по ходу машины; звезда sparkle №937) + №925 пауза рядом с OPTIONS (f59_pause) + №922 (F_G59_SP4/SP7), №938 (F_G59_XFER), №928 (F_G59_PIER), №935 (F_G59_LAMP) + места под патчи очереди (929, диагностика flick/CITYSUB) в конце
+# TEST58 тур = test57_game.txt + №912 проверка на железе (окно «Мультик»: F_FLAT_* — пары Textures Off/On, 6 мест) + №919 A/B отсечения в езде (окно «Геометрия»: F_L4_CR0/1, F_L7_CR1/0)
+# №936б: строки PHSEC теперь считают кадры устаивания (пауза, телепорт, загрузка) отдельно (smkPhN): x_* не ×15–25, сцены с foot/goto/golevel сравнимы между собой. Сцен для него не нужно.
+# TEST35 · тур (Роб 18.10): плоское меню OPTIONS (№783), Draw Distance (№795); дальше как TEST34: Settings с подстраницами (№777), мультик крупно (№779–№781), переходы всех уровней (№775/№776) и подгрузка текстур на ходу (№778).
+# Переходы — тем же путём, что «уровень пройден» и MISSION SELECT (flag golevel); на каждом уровне: снимок пешком, в машину, автопилот по дорогам 20 с, снимок, выход, снимок.
+# Зависнет — экран сторожа и stall.txt называют шаг и ожидание; PSP перезагрузить (питание 10 с), данные на карте.
+scene F_L1
+# №851: настройки сборки по умолчанию в начале тура (прежние прогоны сдвигали Draw Distance/насыщенность/линию и сохраняли — туры не сравнить)
+flag cfgdefaults 1
+flag repair
+wait 6
+shot f00_l1
+flag msnhud 1
+### TEST59 вставка №923/№937: L1 J9, игрок в машине (начало уровня): щит Buzz Cola (127,4; 158,1), с запада курсом +X, автопилот 3 с; снимки каждые 0,15 с в момент разбития.
+### Осколки идут вперёд по ходу машины (не вдоль щита и не на камеру), звезда-блик — sparkle ✨ (поп 0,14 с). Сверка: кадры до/после, строка COINS krusty-glass в smoke.txt
+scene F_G59_GLASS
+flag repair
+goto 113.0 158.1 1.5708
+wait 2
+shot f59_glass_pre
+flag autostraight 3
+wait 1.9
+shot f59_glass_a
+wait 0.15
+shot f59_glass_b
+wait 0.15
+shot f59_glass_c
+wait 0.25
+shot f59_glass_d
+wait 0.5
+shot f59_glass_e
+wait 0.5
+flag stop
+flag repair
+wait 1
+# Settings (№783, плоское меню): пауза → OPTIONS (SOUND / CAMERA / GAME / PICTURE) → CAMERA, GAME, PICTURE (насыщенность +1, Draw Distance
+# 250 м) → CARTOON (Line Width +1); назад △ трижды и START. Нажатия держатся 0,2 с (короткое на PSP не перекрывает кадр)
+scene F_SET
+foot 214 210 -2.4
+wait 2
+press start 0.2
+wait 1
+shot f59_pause
+press up 0.2
+wait 0.4
+press up 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_options
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_camera
+press triangle 0.2
+wait 0.6
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_game
+press triangle 0.2
+wait 0.6
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_picture
+press right 0.2
+wait 0.5
+press down 0.2
+wait 0.4
+press down 0.2
+wait 0.4
+press down 0.2
+wait 0.4
+press right 0.2
+wait 1
+shot f_set_picture_on
+press down 0.2
+wait 0.4
+press cross 0.2
+wait 0.8
+shot f_set_cartoon
+press down 0.2
+wait 0.4
+press right 0.2
+wait 3
+shot f_set_cartoon_ch
+press triangle 0.2
+wait 0.6
+press triangle 0.2
+wait 0.6
+press triangle 0.2
+wait 0.6
+press start 0.2
+wait 3
+shot f_set_world
+# мультик включён меню выше; на случай, если строка не сработала, — флаг (тур не должен зависеть от одного нажатия)
+flag toon 1
+# №851: после проверки меню — снова по умолчанию (дальность 200 м, как тур TEST34), чтобы скорость уровней сравнивалась честно
+flag cfgdefaults 1
+flag toon 1
+wait 3
+shot f01_l1_toon
+scene F_GO1_L4
+flag golevel 4
+wait 40
+shot f02_l4_a
+flag msnhud 1
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f02_l4_b
+flag msnhud 1
+flag stop
+press triangle 0.2
+wait 4
+shot f02_l4_c
+flag msnhud 1
+# №919: A/B повтора отсечения на езде L4, один маршрут (goto + drive 18) дважды: CR0 (допуски B8), CR1 (широкие). Вставить после строки «shot f02_l4_c» блока F_GO1_L4, до следующей «scene».
+scene F_L4_CR0
+press triangle 0.2
+wait 2
+flag crmove 0
+goto 214.9 172.3 -3.0
+wait 3
+flag drive 18
+wait 19
+flag stop
+wait 1
+shot cr4_0
+scene F_L4_CR1
+flag crmove 1
+goto 214.9 172.3 -3.0
+wait 3
+flag drive 18
+wait 19
+flag stop
+wait 1
+shot cr4_1
+flag crmove 1
+### TEST59 вставка №922: L4, спавн в машине у дома (гараж): камера не в гараже и не в крыше, кадр не коричневый. Куда: в конец блока L4, перед «scene F_GO2_L5». flag repair = стартовое место за рулём, как спавн.
+scene F_G59_SP4
+flag camin 1
+flag repair
+wait 3
+shot f59_sp4_spawn
+wait 2
+flag camin
+scene F_GO2_L5
+flag golevel 5
+wait 40
+shot f03_l5_a
+flag msnhud 1
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f03_l5_b
+flag msnhud 1
+# ВСТАВКА В ТУР TEST57 (тур test56_game.txt): после «shot f03_l5_b», до «flag stop» блока F_GO2_L5 (машина под игроком, L5 уже загружен, golevel не нужен).
+# Проспект L5 F3-2 на скорости: телепорт машины на проспект (после goto 3 с прогрев, правило «телепорт сценария»), автопилот 24 с, снимок. Окно посадки в машину и вид вдоль проспекта — места пропусков TEST55 (L5 12–15 с)
+scene F_AVE_L5
+flag stop
+goto -157 -494 4.712
+wait 3
+flag drive 24
+wait 26
+shot f03_l5_d
+flag msnhud 1
+flag stop
+press triangle 0.2
+wait 4
+shot f03_l5_c
+flag msnhud 1
+### ВСТАВКА 4: L5. Куда: после «shot f03_l5_c» (блок F_GO2_L5, перед «scene F_GO3_L6»; в TEST57 перед ним стоит вставка AVE_L5 до «flag stop», порядок не мешает). Центр
+scene F_FLAT_L5
+flag flat912 1
+foot -154.9 -482.05 0.024
+wait 4
+shot f58_l5_centre_off
+flag flat912 0
+wait 4
+shot f58_l5_centre_on
+flag flat912 1
+wait 1
+### TEST59 вставка №935: L5 B2-9 (мост/эстакада): у фонарей на мосту пятна света на полу нет, конус остаётся; «flag lamppool935 1» против «0». Куда: после блока F_FLAT_L5, перед «scene F_GO3_L6».
+scene F_G59_LAMP
+flag lamppool935 1
+foot -516.7 -516.7 0
+wait 5
+shot f59_lamp_on
+flag lamppool935 0
+wait 3
+shot f59_lamp_off
+flag lamppool935 1
+wait 1
+scene F_GO3_L6
+flag golevel 6
+wait 40
+shot f04_l6_a
+flag msnhud 1
+press triangle 0.2
+wait 3
+flag drive 20
+wait 22
+shot f04_l6_b
+flag msnhud 1
+flag stop
+press triangle 0.2
+wait 4
+shot f04_l6_c
+flag msnhud 1
+### TEST59 вставка №928: L6, пирс C7-6, взгляд на холм с обсерваторией: ориентиры горизонта «flag hzlm 1» против «0» (силуэт ориентира). Куда: в конец блока L6, перед «scene F_GO4_L5».
+scene F_G59_PIER
+foot -417 -50 0.1
+wait 10
+cam -417 -30 -50 0.104 0.10 0.995
+wait 3
+flag hzlm 1
+wait 3
+shot f59_pier_lm_on
+flag hzlm 0
+wait 3
+shot f59_pier_lm_off
+flag hzlm 1
+cam off
+wait 1
+flag msnhud 1
+end

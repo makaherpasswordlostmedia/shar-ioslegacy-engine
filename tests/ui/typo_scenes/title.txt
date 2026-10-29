@@ -1,0 +1,27 @@
+# Титульный Press START (правка Роба 500): меню без нажатий, «flag idle 2» держит первый экран, снимок до START
+flag menu
+flag intro
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1
+press start
+wait 1.5
+flag idle 2
+wait 3
+shot title_a
+flag uitypo 1
+wait 0.2
+shot title_b
+flag uitypo 2
+wait 0.2
+shot title_c
+flag uitypo 0
+wait 0.2
+shot title_a2
+end

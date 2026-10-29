@@ -1,0 +1,24 @@
+# Правка 249 (tests/skid/emu.sh): улица перед Kwik-E-Mart (полоса 12, курс +x, как tests/traffic). Газ 2 с с места (пробуксовка —
+# короткие следы задних колёс), резкий тормоз на ~45 % TopSpeed (следы всех колёс, уровень 1), стоп; потом немного вперёд —
+# снимок следов перед камерой. Строка SKID: квады в кольце, нарисовано, уровень заноса машины игрока
+scene skid
+goto 188 279.9 1.5708
+wait 3
+flag skidlog
+press cross 2.0
+wait 2.05
+flag skidlog
+flag carv
+press circle 0.7
+wait 0.3
+flag skidlog
+shot skid_brake
+wait 1.2
+flag carv
+flag skidlog
+shot skid_after
+press cross 0.6
+wait 1.8
+flag skidlog
+shot skid_view
+end

@@ -1,0 +1,154 @@
+# мягкий туман: 250 | 150 жёсткий | 150 + fogsoft 3 | 150 + fogsoft 3 + HLOD(3) + лента 8
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+scene HZ_E3_init
+flag hlod 0
+flag repair
+goto 100 200 1.57
+wait 4
+flag eyex 100
+flag eyey 32
+flag eyez 200
+flag eyedx -0.7
+flag eyedy -0.12
+flag eyedz -0.7
+flag eyeon 1
+wait 2
+scene HZ_E3_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot HZ_E3_250
+scene HZ_E3_150
+flag drawdist 60
+wait 4
+shot HZ_E3_150
+scene HZ_E3_soft
+flag fogsoft 3
+wait 4
+shot HZ_E3_soft
+scene HZ_E3_full
+flag hlod 3
+flag horizon 8
+wait 4
+shot HZ_E3_full
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene HZ_E4_init
+flag hlod 0
+flag repair
+goto 0 300 1.57
+wait 4
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz -1
+flag eyeon 1
+wait 2
+scene HZ_E4_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot HZ_E4_250
+scene HZ_E4_150
+flag drawdist 60
+wait 4
+shot HZ_E4_150
+scene HZ_E4_soft
+flag fogsoft 3
+wait 4
+shot HZ_E4_soft
+scene HZ_E4_full
+flag hlod 3
+flag horizon 8
+wait 4
+shot HZ_E4_full
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene HZ_E5_init
+flag hlod 0
+flag repair
+goto -50 -20 1.57
+wait 4
+flag eyex -50
+flag eyey 32
+flag eyez -20
+flag eyedx 1
+flag eyedy -0.12
+flag eyedz 0
+flag eyeon 1
+wait 2
+scene HZ_E5_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot HZ_E5_250
+scene HZ_E5_150
+flag drawdist 60
+wait 4
+shot HZ_E5_150
+scene HZ_E5_soft
+flag fogsoft 3
+wait 4
+shot HZ_E5_soft
+scene HZ_E5_full
+flag hlod 3
+flag horizon 8
+wait 4
+shot HZ_E5_full
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene HZ_S1_init
+flag hlod 0
+flag repair
+goto 60 -30 1.57
+wait 4
+wait 2
+scene HZ_S1_250
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 4
+shot HZ_S1_250
+scene HZ_S1_150
+flag drawdist 60
+wait 4
+shot HZ_S1_150
+scene HZ_S1_soft
+flag fogsoft 3
+wait 4
+shot HZ_S1_soft
+scene HZ_S1_full
+flag hlod 3
+flag horizon 8
+wait 4
+shot HZ_S1_full
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+end

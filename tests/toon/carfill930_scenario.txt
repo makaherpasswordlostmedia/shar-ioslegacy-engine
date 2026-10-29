@@ -1,0 +1,35 @@
+wait 12
+flag cfgdefaults 1
+flag repair
+wait 4
+flag toon 1
+wait 4
+flag flat912 1
+flag carfill930 0
+scene G_ON
+foot 295.5 166 3.14
+wait 22
+flag trfgo 3.8
+wait 2
+flag carfill930 1
+flag trfgo 3.8
+wait 2
+shot g_on
+scene G_PL
+flag carfillplayer 1
+flag trfgo 3.8
+wait 2
+shot g_pl
+scene G_TEX
+flag carfillplayer 0
+flag flat912 0
+flag trfgo 3.8
+wait 3
+shot g_tex
+scene G_OFF
+flag flat912 1
+flag carfill930 0
+flag trfgo 3.8
+wait 3
+shot g_off
+wait 2

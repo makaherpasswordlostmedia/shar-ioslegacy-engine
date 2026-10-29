@@ -1,0 +1,9 @@
+Package: com.example.shar.armv7
+Name: The Simpsons Hit & Run (armv7)
+Version: 0.1.0-1
+Architecture: iphoneos-arm
+Description: Native armv7 port of the SHAR-PSP engine for iOS 7-9.3.5. Requires game data converted from your own disc.
+Maintainer: You
+Author: SHAR-PSP engine authors
+Section: Games
+Depends: firmware (>= 7.0)

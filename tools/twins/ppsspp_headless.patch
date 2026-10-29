@@ -1,0 +1,80 @@
+diff --git a/headless/Headless.cpp b/headless/Headless.cpp
+index 293878d..a476e9a 100644
+--- a/headless/Headless.cpp
++++ b/headless/Headless.cpp
+@@ -51,6 +51,67 @@
+ 
+ #include "Compare.h"
+ #include "HeadlessHost.h"
++#include "GPU/Common/GPUDebugInterface.h"
++
++// ---- SHAR twins (tools/twins, 01.10.2026): кадр без окна по строке "SHOT имя" в smoke.txt движка ----
++// TWINS_SMOKE=путь к smoke.txt рядом с EBOOT, TWINS_SHOTDIR=куда класть имя.bmp (512x272, 32 бит, снизу вверх) и twins_shots.tsv.
++// После снимка — shot_имя.ok рядом с smoke.txt: движок (viewer/smoke.h) ждёт его, как от tools/ppsspp_run.sh.
++// Без переменных ничего не делает (обычный PPSSPPHeadless).
++static void TwinsFrame() {
++	static const char *smoke = getenv("TWINS_SMOKE");
++	static const char *shotdir = getenv("TWINS_SHOTDIR");
++	static long off = 0;
++	static long frame = 0;
++	static std::string partial;
++	frame++;
++	if (!smoke)
++		return;
++	FILE *f = fopen(smoke, "rb");
++	if (!f)
++		return;
++	fseek(f, 0, SEEK_END);
++	long n = ftell(f);
++	if (n < off) {  // файл начат заново (smokeInit обнуляет)
++		off = 0;
++		partial.clear();
++	}
++	if (n > off) {
++		fseek(f, off, SEEK_SET);
++		std::string buf((size_t)(n - off), '\0');
++		size_t got = fread(&buf[0], 1, (size_t)(n - off), f);
++		buf.resize(got);
++		off += (long)got;
++		partial += buf;
++	}
++	fclose(f);
++	size_t pos;
++	while ((pos = partial.find('\n')) != std::string::npos) {
++		std::string line = partial.substr(0, pos);
++		partial.erase(0, pos + 1);
++		char name[64];
++		if (sscanf(line.c_str(), "SHOT %63s", name) != 1)
++			continue;
++		std::string dir = shotdir ? shotdir : ".";
++		GPUDebugBuffer buffer;
++		bool ok = gpuDebug && gpuDebug->GetCurrentFramebuffer(buffer, GPU_DBG_FRAMEBUF_DISPLAY);
++		if (ok) {
++			std::vector<u32> px = TranslateDebugBufferToCompare(&buffer, 512, 272);
++			ScreenshotComparer cmp(px, 512, 480, 272);
++			ok = cmp.SaveActualBitmap(Path(dir + "/" + name + ".bmp"));
++		}
++		std::string sdir = smoke;
++		size_t sl = sdir.find_last_of('/');
++		sdir = sl == std::string::npos ? std::string(".") : sdir.substr(0, sl);
++		FILE *okf = fopen((sdir + "/shot_" + name + ".ok").c_str(), "wb");
++		if (okf)
++			fclose(okf);
++		FILE *lg = fopen((dir + "/twins_shots.tsv").c_str(), "ab");
++		if (lg) {
++			fprintf(lg, "%s\t%ld\t%.4f\t%d\n", name, frame, (double)CoreTiming::GetGlobalTimeUs() / 1e6, ok ? 1 : 0);
++			fclose(lg);
++		}
++	}
++}
+ #if defined(_WIN32)
+ #include "WindowsHeadlessHost.h"
+ #elif defined(SDL)
+@@ -238,6 +299,7 @@ bool RunAutoTest(HeadlessHost *headlessHost, CoreParameter &coreParameter, const
+ 		if (coreState == CORE_NEXTFRAME) {
+ 			coreState = CORE_RUNNING_CPU;
+ 			headlessHost->SwapBuffers();
++			TwinsFrame();
+ 		}
+ 		if (coreState == CORE_STEPPING_CPU && !coreParameter.startBreak) {
+ 			break;

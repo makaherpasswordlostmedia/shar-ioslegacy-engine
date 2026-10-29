@@ -1,0 +1,31 @@
+scene L2_load
+flag golevel 2
+wait 20
+scene Moes_door
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Moes_01
+foot 45.516 196.241 0 -17.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Moes_01
+scene m05_y-19.5
+foot 51.860 201.371 0 -19.5
+wait 2.5
+shot m05_y-19.5
+scene m05_y-18.5
+foot 51.860 201.371 0 -18.5
+wait 2.5
+shot m05_y-18.5
+scene m05_y-17.5
+foot 51.860 201.371 0 -17.5
+wait 2.5
+shot m05_y-17.5
+end

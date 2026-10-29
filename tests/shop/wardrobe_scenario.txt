@@ -1,0 +1,55 @@
+# Гардероб Гомера (правка Роба 107, tests/shop/wardrobe_emu.sh): Kwik-E-Mart — дверь (213.9, 299) △, внутри к локатору PurchaseSkin
+# int_kwik_skin (493.61, 290.42; build/skins.txt, y −20 — пол комнаты) -> △ -> страница (обычный Гомер) -> ► трусы 100 монет ->
+# ✕ купить и надеть -> экран снят, Гомер в костюме -> △ снова -> ◄ обычный -> ✕ надеть обратно -> пауза, LEVEL PROGRESS:
+# «Character Clothing» 2/4 (обычный + купленный). Монеты: +300
+scene wardrobe
+flag msn
+wait 3
+flag coinadd 300
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene wr_room
+foot 493.61 291.4 3.1416 -19.5
+wait 1.5
+shot wr_before
+press triangle
+wait 0.3
+shot wr_dark
+wait 1
+shot wr_open
+press right
+wait 0.6
+shot wr_undr
+press cross
+wait 1.5
+shot wr_worn
+wait 1
+press triangle
+wait 1.2
+shot wr_again
+press left
+wait 0.6
+press cross
+wait 1.5
+shot wr_back
+press start
+wait 0.8
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot wr_progress
+press triangle
+wait 0.5
+press start
+wait 1
+end

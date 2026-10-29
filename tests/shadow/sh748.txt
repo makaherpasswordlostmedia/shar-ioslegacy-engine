@@ -1,0 +1,33 @@
+# №748/749 (Роб 17.10, TEST31): тени людей миссий, прохожих и предметов прозрачнее машины; в прыжке тень меньше; у края опоры тень Гомера обрезается.
+# Эмулятор: tools/../build/render_tools/emu_run.sh EBOOT tests/shadow/sh748.txt МЕТКА 120 [shadowpplold] — снимки было/стало, строка SHADOWSPR (ppl, props, rim_cut)
+wait 3
+scene sh_marge
+foot 228.94 180.5 3.1416 3.83
+wait 2.5
+shot sh_marge
+flag pedtest
+wait 1.5
+shot sh_ped
+press cross 0.1
+wait 0.3
+shot sh_jump
+wait 1.5
+scene sh_house
+foot 240 190 2.4
+wait 2
+shot sh_house
+scene sh_roof
+foot -50 590 0
+wait 2
+shot sh_roof0
+press up 3.5
+press circle 3.5
+wait 1
+shot sh_roof1
+wait 1
+shot sh_roof2
+wait 1
+shot sh_roof3
+wait 1
+shot sh_roof4
+end

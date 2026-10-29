@@ -1,0 +1,69 @@
+wait 12
+scene LOAD
+flag golevel 5
+wait 40
+flag cfgdefaults 1
+flag diaglog 1
+flag dropink922 MODE
+flag camin 1
+scene P014
+foot -600.5 -619.2 0
+wait 1.6
+shot e014_0
+press r 1.0
+wait 1.15
+shot e014_1
+press r 1.0
+wait 1.15
+shot e014_2
+press r 1.0
+wait 1.15
+shot e014_3
+press r 1.0
+wait 1.15
+scene P029
+foot -75.5 0.3 0
+wait 1.6
+shot e029_0
+press r 1.0
+wait 1.15
+shot e029_1
+press r 1.0
+wait 1.15
+shot e029_2
+press r 1.0
+wait 1.15
+shot e029_3
+press r 1.0
+wait 1.15
+scene P037
+foot -317.0 -293.7 0
+wait 1.6
+shot e037_0
+press r 1.0
+wait 1.15
+shot e037_1
+press r 1.0
+wait 1.15
+shot e037_2
+press r 1.0
+wait 1.15
+shot e037_3
+press r 1.0
+wait 1.15
+scene P082
+foot -191.0 -136.2 0
+wait 1.6
+shot e082_0
+press r 1.0
+wait 1.15
+shot e082_1
+press r 1.0
+wait 1.15
+shot e082_2
+press r 1.0
+wait 1.15
+shot e082_3
+press r 1.0
+wait 1.15
+end

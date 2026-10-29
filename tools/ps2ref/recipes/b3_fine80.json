@@ -1,0 +1,89 @@
+{
+ "id": "b3_fine80",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 3200,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "chase",
+  "bust_near_ms",
+  "bust_ms",
+  "seq_9e79c0",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[2]",
+  {
+   "addr": "a25810",
+   "label": "pol_x"
+  },
+  {
+   "addr": "a25814",
+   "label": "pol_y"
+  },
+  {
+   "addr": "a25818",
+   "label": "pol_z"
+  },
+  {
+   "addr": "a25820",
+   "label": "pol_vx"
+  },
+  {
+   "addr": "a25828",
+   "label": "pol_vz"
+  }
+ ],
+ "writes": [
+  {
+   "value": 221.3,
+   "at": 150,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 4.11,
+   "at": 150,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -174.24,
+   "at": 150,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": -3.54,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 11.46,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[2]"
+  },
+  {
+   "name": "seq_9e79c0",
+   "value": 80,
+   "at": 700
+  },
+  {
+   "name": "hnr",
+   "value": 100.0,
+   "at": 700,
+   "hold": 2500,
+   "until": {
+    "name": "bust_ms",
+    "op": ">",
+    "value": 100.0
+   }
+  }
+ ],
+ "shots": [
+  690,
+  3150
+ ]
+}

@@ -1,0 +1,349 @@
+# Игровая камера в доме Симпсонов по сетке пола 2,5 м, 2 курса (ответ на вопрос о пурпуре, фон комнат пурпурным)
+scene start
+wait 3
+scene house_door
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene g01
+foot 495.5 388.0 0.0 -19.5
+wait 1.3
+shot g01
+scene g02
+foot 495.5 388.0 3.1416 -19.5
+wait 1.3
+shot g02
+scene g03
+foot 495.5 390.5 0.0 -19.5
+wait 1.3
+shot g03
+scene g04
+foot 495.5 390.5 3.1416 -19.5
+wait 1.3
+shot g04
+scene g05
+foot 495.5 393.0 0.0 -19.5
+wait 1.3
+shot g05
+scene g06
+foot 495.5 393.0 3.1416 -19.5
+wait 1.3
+shot g06
+scene g07
+foot 495.5 395.5 0.0 -19.5
+wait 1.3
+shot g07
+scene g08
+foot 495.5 395.5 3.1416 -19.5
+wait 1.3
+shot g08
+scene g09
+foot 495.5 398.0 0.0 -19.5
+wait 1.3
+shot g09
+scene g10
+foot 495.5 398.0 3.1416 -19.5
+wait 1.3
+shot g10
+scene g11
+foot 495.5 400.5 0.0 -19.5
+wait 1.3
+shot g11
+scene g12
+foot 495.5 400.5 3.1416 -19.5
+wait 1.3
+shot g12
+scene g13
+foot 498.0 388.0 0.0 -19.5
+wait 1.3
+shot g13
+scene g14
+foot 498.0 388.0 3.1416 -19.5
+wait 1.3
+shot g14
+scene g15
+foot 498.0 390.5 0.0 -19.5
+wait 1.3
+shot g15
+scene g16
+foot 498.0 390.5 3.1416 -19.5
+wait 1.3
+shot g16
+scene g17
+foot 498.0 393.0 0.0 -19.5
+wait 1.3
+shot g17
+scene g18
+foot 498.0 393.0 3.1416 -19.5
+wait 1.3
+shot g18
+scene g19
+foot 498.0 395.5 0.0 -19.5
+wait 1.3
+shot g19
+scene g20
+foot 498.0 395.5 3.1416 -19.5
+wait 1.3
+shot g20
+scene g21
+foot 498.0 398.0 0.0 -19.5
+wait 1.3
+shot g21
+scene g22
+foot 498.0 398.0 3.1416 -19.5
+wait 1.3
+shot g22
+scene g23
+foot 498.0 400.5 0.0 -19.5
+wait 1.3
+shot g23
+scene g24
+foot 498.0 400.5 3.1416 -19.5
+wait 1.3
+shot g24
+scene g25
+foot 500.5 388.0 0.0 -19.5
+wait 1.3
+shot g25
+scene g26
+foot 500.5 388.0 3.1416 -19.5
+wait 1.3
+shot g26
+scene g27
+foot 500.5 390.5 0.0 -19.5
+wait 1.3
+shot g27
+scene g28
+foot 500.5 390.5 3.1416 -19.5
+wait 1.3
+shot g28
+scene g29
+foot 500.5 393.0 0.0 -19.5
+wait 1.3
+shot g29
+scene g30
+foot 500.5 393.0 3.1416 -19.5
+wait 1.3
+shot g30
+scene g31
+foot 500.5 395.5 0.0 -19.5
+wait 1.3
+shot g31
+scene g32
+foot 500.5 395.5 3.1416 -19.5
+wait 1.3
+shot g32
+scene g33
+foot 500.5 398.0 0.0 -19.5
+wait 1.3
+shot g33
+scene g34
+foot 500.5 398.0 3.1416 -19.5
+wait 1.3
+shot g34
+scene g35
+foot 500.5 400.5 0.0 -19.5
+wait 1.3
+shot g35
+scene g36
+foot 500.5 400.5 3.1416 -19.5
+wait 1.3
+shot g36
+scene g37
+foot 503.0 388.0 0.0 -19.5
+wait 1.3
+shot g37
+scene g38
+foot 503.0 388.0 3.1416 -19.5
+wait 1.3
+shot g38
+scene g39
+foot 503.0 390.5 0.0 -19.5
+wait 1.3
+shot g39
+scene g40
+foot 503.0 390.5 3.1416 -19.5
+wait 1.3
+shot g40
+scene g41
+foot 503.0 393.0 0.0 -19.5
+wait 1.3
+shot g41
+scene g42
+foot 503.0 393.0 3.1416 -19.5
+wait 1.3
+shot g42
+scene g43
+foot 503.0 395.5 0.0 -19.5
+wait 1.3
+shot g43
+scene g44
+foot 503.0 395.5 3.1416 -19.5
+wait 1.3
+shot g44
+scene g45
+foot 503.0 398.0 0.0 -19.5
+wait 1.3
+shot g45
+scene g46
+foot 503.0 398.0 3.1416 -19.5
+wait 1.3
+shot g46
+scene g47
+foot 503.0 400.5 0.0 -19.5
+wait 1.3
+shot g47
+scene g48
+foot 503.0 400.5 3.1416 -19.5
+wait 1.3
+shot g48
+scene g49
+foot 505.5 388.0 0.0 -19.5
+wait 1.3
+shot g49
+scene g50
+foot 505.5 388.0 3.1416 -19.5
+wait 1.3
+shot g50
+scene g51
+foot 505.5 390.5 0.0 -19.5
+wait 1.3
+shot g51
+scene g52
+foot 505.5 390.5 3.1416 -19.5
+wait 1.3
+shot g52
+scene g53
+foot 505.5 393.0 0.0 -19.5
+wait 1.3
+shot g53
+scene g54
+foot 505.5 393.0 3.1416 -19.5
+wait 1.3
+shot g54
+scene g55
+foot 505.5 395.5 0.0 -19.5
+wait 1.3
+shot g55
+scene g56
+foot 505.5 395.5 3.1416 -19.5
+wait 1.3
+shot g56
+scene g57
+foot 505.5 398.0 0.0 -19.5
+wait 1.3
+shot g57
+scene g58
+foot 505.5 398.0 3.1416 -19.5
+wait 1.3
+shot g58
+scene g59
+foot 505.5 400.5 0.0 -19.5
+wait 1.3
+shot g59
+scene g60
+foot 505.5 400.5 3.1416 -19.5
+wait 1.3
+shot g60
+scene g61
+foot 508.0 388.0 0.0 -19.5
+wait 1.3
+shot g61
+scene g62
+foot 508.0 388.0 3.1416 -19.5
+wait 1.3
+shot g62
+scene g63
+foot 508.0 390.5 0.0 -19.5
+wait 1.3
+shot g63
+scene g64
+foot 508.0 390.5 3.1416 -19.5
+wait 1.3
+shot g64
+scene g65
+foot 508.0 393.0 0.0 -19.5
+wait 1.3
+shot g65
+scene g66
+foot 508.0 393.0 3.1416 -19.5
+wait 1.3
+shot g66
+scene g67
+foot 508.0 395.5 0.0 -19.5
+wait 1.3
+shot g67
+scene g68
+foot 508.0 395.5 3.1416 -19.5
+wait 1.3
+shot g68
+scene g69
+foot 508.0 398.0 0.0 -19.5
+wait 1.3
+shot g69
+scene g70
+foot 508.0 398.0 3.1416 -19.5
+wait 1.3
+shot g70
+scene g71
+foot 508.0 400.5 0.0 -19.5
+wait 1.3
+shot g71
+scene g72
+foot 508.0 400.5 3.1416 -19.5
+wait 1.3
+shot g72
+scene g73
+foot 510.5 388.0 0.0 -19.5
+wait 1.3
+shot g73
+scene g74
+foot 510.5 388.0 3.1416 -19.5
+wait 1.3
+shot g74
+scene g75
+foot 510.5 390.5 0.0 -19.5
+wait 1.3
+shot g75
+scene g76
+foot 510.5 390.5 3.1416 -19.5
+wait 1.3
+shot g76
+scene g77
+foot 510.5 393.0 0.0 -19.5
+wait 1.3
+shot g77
+scene g78
+foot 510.5 393.0 3.1416 -19.5
+wait 1.3
+shot g78
+scene g79
+foot 510.5 395.5 0.0 -19.5
+wait 1.3
+shot g79
+scene g80
+foot 510.5 395.5 3.1416 -19.5
+wait 1.3
+shot g80
+scene g81
+foot 510.5 398.0 0.0 -19.5
+wait 1.3
+shot g81
+scene g82
+foot 510.5 398.0 3.1416 -19.5
+wait 1.3
+shot g82
+scene g83
+foot 510.5 400.5 0.0 -19.5
+wait 1.3
+shot g83
+scene g84
+foot 510.5 400.5 3.1416 -19.5
+wait 1.3
+shot g84
+end

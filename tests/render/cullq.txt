@@ -1,0 +1,21 @@
+# Периферия (CULL_MARGIN, c55b361c): медленный поворот камеры на 360° на перекрёстке L1 пешком + проезд вдоль домов;
+# CULLQ: тестов отсечения, отсечено хотя виден в истинном кадре (wrong, в скольких кадрах), оставлено хотя вне кадра (extra), треугольников в кадре
+flag caminlog
+wait 3
+scene turn360
+foot 232 275 0
+wait 2
+flag cullq
+press r 14
+wait 14.5
+flag cullq
+scene drive_evg
+goto 223 253 1.5708
+flag repair
+wait 1.5
+flag cullq
+flag autostraight 8
+wait 8.5
+flag stop
+flag cullq
+end

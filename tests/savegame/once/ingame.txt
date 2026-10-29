@@ -1,0 +1,36 @@
+# Правка 334, прогон 1 (tests/savegame/once/run.py): ящик Buzz Cola, экземпляр 30 SPR1 уровня 1 (184,3; 202,9) — таран машиной -> монеты;
+# уехать за 200 м на 8 с (дальше 60 м и вне вида) -> вернуться -> снова таран того же места: монет больше не прибавляется
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 5
+flag svlog
+flag svonce
+shot m_start
+foot 212.5 168.5 0.8
+wait 1
+press triangle
+wait 3
+flag svlog
+flag svonce
+shot m_incar
+goto 184.26 211.0 3.1416
+wait 2
+shot c0_before
+press cross 2.5
+wait 3
+shot c1_after
+flag svlog
+flag svonce
+goto 330 70 2.36
+wait 8
+goto 184.26 211.0 3.1416
+wait 2
+shot c2_back
+press cross 2.5
+wait 3
+shot c3_after2
+flag svlog
+flag svonce
+end

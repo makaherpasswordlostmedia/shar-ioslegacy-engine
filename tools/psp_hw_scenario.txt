@@ -1,0 +1,161 @@
+# Замер на настоящей PSP без кабеля (ведущий, 30.09.2026): смоук + школа (правка 103, вылет) + объезд уровня + комната школы.
+# На карту: этот файл как PSP/GAME/SHARVIEW/scenario.txt и пустой файл smokelog рядом. Игра сама проходит сцены и в конце
+# выходит в меню PSP. smoke.txt пишется раз в секунду (дозапись) — при зависании последняя строка покажет место и память.
+# Снимков (shot) нет: на PSP их некому делать. После замера оба служебных файла убрать, иначе игра снова пойдёт в замер.
+scene spawn
+wait 4
+scene drive
+wait 1
+flag autostraight
+wait 6
+flag stop
+flag repair
+scene testdmg
+goto 220 172 1.5708
+flag testdmg
+wait 4
+scene testboom
+wait 1
+flag testboom
+wait 4
+flag repair
+scene crate
+goto 393.3 152.8 -1.8326
+flag autostraight 3
+wait 5
+flag stop
+scene long
+goto 345 -81 1
+flag long
+wait 6
+# школа: подъезд и объезд с четырёх сторон (правка 103: «доехал к школе — не прогрузился кусок карты и выбило приставку»)
+scene sch_n
+goto 60 470 0
+wait 2
+flag autostraight 6
+wait 8
+flag stop
+scene sch_c0
+goto -17 583 0
+wait 2
+flag autostraight 5
+wait 7
+flag stop
+scene sch_c1
+goto -17 583 1.5708
+wait 2
+flag autostraight 5
+wait 7
+flag stop
+scene sch_c2
+goto -17 583 3.1416
+wait 2
+flag autostraight 5
+wait 7
+flag stop
+scene sch_c3
+goto -17 583 -1.5708
+wait 2
+flag autostraight 5
+wait 7
+flag stop
+scene sch_far
+goto -120 650 0.8
+wait 2
+flag autostraight 6
+wait 8
+flag stop
+# езда вокруг школы 3 × 30 с (подгрузка и выгрузка клеток на ходу)
+scene sch_drive1
+goto -17 583 1.5708
+wait 2
+flag autodrive
+wait 30
+flag stop
+flag repair
+scene sch_drive2
+goto 60 470 3.1416
+wait 2
+flag autodrive
+wait 30
+flag stop
+flag repair
+scene sch_drive3
+goto -120 650 -0.8
+wait 2
+flag autodrive
+wait 30
+flag stop
+flag repair
+# объезд уровня: худшие виды бенча PSP 27.09 и дальние районы (переносы = пачки подгрузки клеток)
+scene t_395_-130
+goto 395 -130 1.5708
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_-199_-328
+goto -199 -328 0
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_-249_117
+goto -249 117 3.1416
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_197_315
+goto 197 315 -1.5708
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_246_365
+goto 246 365 3.1416
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_98_662
+goto 98 662 1.5708
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_-100_365
+goto -100 365 0
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_444_68
+goto 444 68 3.1416
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+scene t_246_-180
+goto 246 -180 1.5708
+wait 3
+flag autostraight 6
+wait 7
+flag stop
+flag repair
+scene view60
+goto 220 172 1.5708
+flag view60
+wait 6
+# комната школы (блоб комнаты ~0,65 МБ — проверка памяти)
+scene school
+foot -31.5 589.45 -1.5708 4.64
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene school_in
+wait 5
+end

@@ -1,0 +1,26 @@
+# Правка 309: окно утилиты отвергло все варианты («svdlgfail» — как если бы прошивка не приняла параметры окна): запись идёт прежним
+# тихим путём (AUTOSAVE цепочкой + файл save00.bin) с сообщениями оригинала — сохранение живо и без окна
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 4
+flag svmark
+flag svdialog
+flag svdlgfail
+wait 0.5
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 1
+press cross
+wait 2.5
+shot df_saved
+press cross
+wait 1
+flag svlog
+end

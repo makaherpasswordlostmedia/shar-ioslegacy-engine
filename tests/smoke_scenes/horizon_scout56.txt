@@ -1,0 +1,96 @@
+# разведка видов L5, L6: 8 кандидатов на уровень, лента вкл (flag horizon 1)
+scene start
+wait 3
+scene SC_L5_load
+flag golevel 5
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 1
+scene SC_L5_0
+flag repair
+goto 60 -84 3.238
+wait 3
+shot SC_L5_0
+scene SC_L5_1
+flag repair
+goto -372 -852 0.707
+wait 3
+shot SC_L5_1
+scene SC_L5_2
+flag repair
+goto -660 -876 1.440
+wait 3
+shot SC_L5_2
+scene SC_L5_3
+flag repair
+goto -84 -12 3.185
+wait 3
+shot SC_L5_3
+scene SC_L5_4
+flag repair
+goto 252 -132 3.875
+wait 3
+shot SC_L5_4
+scene SC_L5_5
+flag repair
+goto -132 -204 2.365
+wait 3
+shot SC_L5_5
+scene SC_L5_6
+flag repair
+goto 372 -84 3.927
+wait 3
+shot SC_L5_6
+scene SC_L5_7
+flag repair
+goto -372 -300 1.981
+wait 3
+shot SC_L5_7
+scene SC_L6_load
+flag golevel 6
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 1
+scene SC_L6_0
+flag repair
+goto -588 -132 2.566
+wait 3
+shot SC_L6_0
+scene SC_L6_1
+flag repair
+goto -156 -228 0.576
+wait 3
+shot SC_L6_1
+scene SC_L6_2
+flag repair
+goto -300 -60 1.457
+wait 3
+shot SC_L6_2
+scene SC_L6_3
+flag repair
+goto -756 -132 1.326
+wait 3
+shot SC_L6_3
+scene SC_L6_4
+flag repair
+goto -60 -396 1.946
+wait 3
+shot SC_L6_4
+scene SC_L6_5
+flag repair
+goto -228 276 1.911
+wait 3
+shot SC_L6_5
+scene SC_L6_6
+flag repair
+goto -828 -12 1.780
+wait 3
+shot SC_L6_6
+scene SC_L6_7
+flag repair
+goto -804 228 1.632
+wait 3
+shot SC_L6_7
+end

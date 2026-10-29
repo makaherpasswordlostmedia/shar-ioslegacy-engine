@@ -1,0 +1,53 @@
+# VIEW CARDS и MISSION SELECT (экраны паузы pextra.shr, tests/ui/pextra.sh).
+# VIEW CARDS: собраны карточки 1 и 3 (flag cardsset 5) -> пауза -> ↓×4 VIEW CARDS, X -> сетка (снимок) -> X на карточке 1 — крупно
+# (снимок) -> X — к сетке -> ► карточка 2 (не собрана), X — не открывается -> △ в паузу -> START в игру.
+# MISSION SELECT: m1, m2 пройдены (flag uimsndone 6), текущая m3 (flag msnsel 3) -> пауза -> ↓↓ MISSION SELECT, X -> список
+# (снимок) -> ↑ на Petty Theft Homer (m2), X — миссия m2
+scene msn
+flag msn
+wait 2
+flag cardsset 5
+wait 0.5
+press start
+wait 0.8
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot vc_grid
+press cross
+wait 0.8
+shot vc_zoom
+press cross
+wait 0.5
+press right
+wait 0.3
+press cross
+wait 0.5
+press triangle
+wait 0.5
+press start
+wait 1
+flag uimsndone 6
+flag msnsel 3
+wait 2
+press start
+wait 0.8
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot ms_list
+press up
+wait 0.3
+press cross
+wait 3
+end

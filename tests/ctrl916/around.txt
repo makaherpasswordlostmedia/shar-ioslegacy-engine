@@ -1,0 +1,62 @@
+# №916: проходы вокруг машины в L1 (машина 219.9,172.0 курс +x): 8 заходов с разных сторон, стик вперёд и поворот на 45° в середине
+wait 12
+flag cfgdefaults 1
+flag player
+flag camlog
+scene AR0
+foot 219.90 181.00 3.1416
+wait 3
+press up 7
+wait 1.2
+press right 1.2
+wait 6.5
+scene AR1
+foot 226.26 178.36 -2.3562
+wait 3
+press up 7
+wait 1.2
+press left 1.2
+wait 6.5
+scene AR2
+foot 228.90 172.00 -1.5708
+wait 3
+press up 7
+wait 1.2
+press right 1.2
+wait 6.5
+scene AR3
+foot 226.26 165.64 -0.7854
+wait 3
+press up 7
+wait 1.2
+press left 1.2
+wait 6.5
+scene AR4
+foot 219.90 163.00 0.0000
+wait 3
+press up 7
+wait 1.2
+press right 1.2
+wait 6.5
+scene AR5
+foot 213.54 165.64 0.7854
+wait 3
+press up 7
+wait 1.2
+press left 1.2
+wait 6.5
+scene AR6
+foot 210.90 172.00 1.5708
+wait 3
+press up 7
+wait 1.2
+press right 1.2
+wait 6.5
+scene AR7
+foot 213.54 178.36 2.3562
+wait 3
+press up 7
+wait 1.2
+press left 1.2
+wait 6.5
+end

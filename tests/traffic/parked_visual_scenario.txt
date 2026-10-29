@@ -1,0 +1,18 @@
+# Keep the level car near a parked school bus, hijack, then return with Triangle.
+wait 3
+flag msn
+wait 3
+scene back
+goto 300 180 0
+wait 2
+foot 298.0 179.5 -1.5708
+wait 2
+press triangle
+wait 3
+shot jacked
+foot 300 181.5 0
+wait 1
+press triangle
+wait 3
+shot own_back
+end

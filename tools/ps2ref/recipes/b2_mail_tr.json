@@ -1,0 +1,52 @@
+{
+ "id": "b2_mail_tr",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 820,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "hnr_view",
+  "hnr_pause_ms",
+  "hnr_last",
+  "car_vel[0]",
+  "car_vel[2]",
+  "mat[12]",
+  "mat[14]"
+ ],
+ "writes": [
+  {
+   "value": 221.3,
+   "at": 150,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 4.11,
+   "at": 150,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -174.24,
+   "at": 150,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": -3.54,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 11.46,
+   "at": 164,
+   "hold": 4,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": [
+  450,
+  520,
+  820
+ ]
+}

@@ -1,0 +1,59 @@
+# Гейт правки 413а (tests/hover/carsnd.sh): L7, дорога 2. Игрок ведёт ship (угон трафика), frink_v и hbike_v (как из будки):
+# разгон и торможение с ручником — журнал звуков: каким профилем звучит машина (CARSND) и какой клип заноса пошёл (SFX … skid).
+# gramR_v (машина будки L7) — свой мотор gramR, наложение rocket, гудок ↑ (gramR_horn);
+# Потом то же для frink_v прежним путём (carsndold — всегда машина уровня, красный контроль)
+scene start
+wait 6
+scene L7_load
+flag golevel 7
+wait 25
+scene ship
+goto 200 155.1 1.5708
+foot 210 161.1 1.5708
+wait 3
+flag jackplace
+flag trfmodel 2
+flag trfstill
+wait 1
+flag sfxlog
+press triangle 0.2
+wait 6
+flag autostraight 3
+wait 6
+scene frink
+goto 200 161.1 1.5708
+flag phonecar_frink_v
+wait 3
+flag autostraight 3
+wait 6
+scene hbike
+goto 200 161.1 1.5708
+flag phonecar_hbike_v
+wait 3
+flag autostraight 3
+wait 6
+scene gramr
+goto 200 161.1 1.5708
+flag phonecar_gramR_v
+wait 3
+press up 0.5
+wait 1
+flag autostraight 3
+wait 6
+scene frink_old
+flag carsndold 1
+goto 200 161.1 1.5708
+flag phonecar_frink_v
+wait 3
+flag autostraight 3
+wait 6
+scene gramr_old
+flag hornold 1
+goto 200 161.1 1.5708
+flag phonecar_gramR_v
+wait 3
+press up 0.5
+wait 1
+flag autostraight 3
+wait 6
+end

@@ -1,0 +1,172 @@
+# Горизонт в интерьерах (16.10, Камера): каждый кадр камеры комнаты без/с flag horizon 1 (_a/_b), обязаны совпасть побайтно; STREET_ctrl: на улице _a/_b обязаны отличаться (положительный контроль)
+# Камеры комнат L2, глаз не в стене (tests/rooms/emu_cams_levels_gen.py): двери 2, камер 19; CAMIN eye/near на каждой точке
+scene start
+wait 3
+scene L2_load
+flag golevel 2
+wait 20
+scene DMV_door
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene DMV_02
+foot -0.028 208.744 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_02_a
+flag horizon 1
+wait 1.5
+shot DMV_02_b
+scene DMV_03
+foot -2.672 196.670 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_03_a
+flag horizon 1
+wait 1.5
+shot DMV_03_b
+scene DMV_04
+foot 6.315 208.699 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_04_a
+flag horizon 1
+wait 1.5
+shot DMV_04_b
+scene DMV_01
+foot -2.484 203.556 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_01_a
+flag horizon 1
+wait 1.5
+shot DMV_01_b
+scene DMV_05
+foot 3.391 198.160 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_05_a
+flag horizon 1
+wait 1.5
+shot DMV_05_b
+scene DMV_06
+foot -5.911 206.815 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot DMV_06_a
+flag horizon 1
+wait 1.5
+shot DMV_06_b
+scene Moes_door
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Moes_01
+foot 45.516 196.241 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_01_a
+flag horizon 1
+wait 1.5
+shot Moes_01_b
+scene Moes_02
+foot 54.015 206.037 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_02_a
+flag horizon 1
+wait 1.5
+shot Moes_02_b
+scene Moes_03
+foot 48.698 205.534 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_03_a
+flag horizon 1
+wait 1.5
+shot Moes_03_b
+scene Moes_04
+foot 49.359 200.293 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_04_a
+flag horizon 1
+wait 1.5
+shot Moes_04_b
+scene Moes_05
+foot 51.860 201.371 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_05_a
+flag horizon 1
+wait 1.5
+shot Moes_05_b
+scene Moes_06
+foot 45.602 200.293 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_06_a
+flag horizon 1
+wait 1.5
+shot Moes_06_b
+scene Moes_07qq
+foot 47.064 203.172 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_07qq_a
+flag horizon 1
+wait 1.5
+shot Moes_07qq_b
+scene Moes_08
+foot 53.362 196.143 0 -19.50
+wait 0.5
+wait 1.5
+flag horizon 0
+wait 0.7
+shot Moes_08_a
+flag horizon 1
+wait 1.5
+shot Moes_08_b
+scene STREET_ctrl
+flag horizon 0
+foot -256.99 -350.72 1.5708 7.25
+wait 2.5
+shot STREET_a
+flag horizon 1
+wait 2.5
+shot STREET_b
+end

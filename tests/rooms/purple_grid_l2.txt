@@ -1,0 +1,321 @@
+# Пурпур ходячей камерой, L2: сетка пола 2,5 м, два курса (tests/rooms/purple_grid_gen.py); пакет интерфейса комнат закрашен (фон 0xFFFF00FF)
+scene start
+wait 3
+scene L2_load
+flag golevel 2
+wait 20
+scene DMV_door
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene DMV_001
+foot -6.250 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_001
+scene DMV_002
+foot -6.250 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_002
+scene DMV_003
+foot -3.750 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_003
+scene DMV_004
+foot -3.750 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_004
+scene DMV_005
+foot -1.250 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_005
+scene DMV_006
+foot -1.250 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_006
+scene DMV_007
+foot 1.250 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_007
+scene DMV_008
+foot 1.250 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_008
+scene DMV_009
+foot 3.750 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_009
+scene DMV_010
+foot 3.750 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_010
+scene DMV_011
+foot 6.250 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_011
+scene DMV_012
+foot 6.250 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_012
+scene DMV_013
+foot 8.750 192.750 0.0000 -19.50
+wait 1.0
+shot DMV_013
+scene DMV_014
+foot 8.750 192.750 3.1416 -19.50
+wait 1.0
+shot DMV_014
+scene DMV_015
+foot -6.250 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_015
+scene DMV_016
+foot -6.250 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_016
+scene DMV_017
+foot -1.250 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_017
+scene DMV_018
+foot -1.250 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_018
+scene DMV_019
+foot 1.250 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_019
+scene DMV_020
+foot 1.250 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_020
+scene DMV_021
+foot 3.750 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_021
+scene DMV_022
+foot 3.750 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_022
+scene DMV_023
+foot 6.250 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_023
+scene DMV_024
+foot 6.250 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_024
+scene DMV_025
+foot 8.750 195.250 0.0000 -19.50
+wait 1.0
+shot DMV_025
+scene DMV_026
+foot 8.750 195.250 3.1416 -19.50
+wait 1.0
+shot DMV_026
+scene DMV_027
+foot -1.250 197.750 0.0000 -19.50
+wait 1.0
+shot DMV_027
+scene DMV_028
+foot -1.250 197.750 3.1416 -19.50
+wait 1.0
+shot DMV_028
+scene DMV_029
+foot 1.250 197.750 0.0000 -19.50
+wait 1.0
+shot DMV_029
+scene DMV_030
+foot 1.250 197.750 3.1416 -19.50
+wait 1.0
+shot DMV_030
+scene DMV_031
+foot 3.750 197.750 0.0000 -19.50
+wait 1.0
+shot DMV_031
+scene DMV_032
+foot 3.750 197.750 3.1416 -19.50
+wait 1.0
+shot DMV_032
+scene DMV_033
+foot 6.250 197.750 0.0000 -19.50
+wait 1.0
+shot DMV_033
+scene DMV_034
+foot 6.250 197.750 3.1416 -19.50
+wait 1.0
+shot DMV_034
+scene DMV_035
+foot -3.750 202.750 0.0000 -19.50
+wait 1.0
+shot DMV_035
+scene DMV_036
+foot -3.750 202.750 3.1416 -19.50
+wait 1.0
+shot DMV_036
+scene DMV_037
+foot 8.750 202.750 0.0000 -19.50
+wait 1.0
+shot DMV_037
+scene DMV_038
+foot 8.750 202.750 3.1416 -19.50
+wait 1.0
+shot DMV_038
+scene DMV_039
+foot -3.750 205.250 0.0000 -19.50
+wait 1.0
+shot DMV_039
+scene DMV_040
+foot -3.750 205.250 3.1416 -19.50
+wait 1.0
+shot DMV_040
+scene DMV_041
+foot 8.750 205.250 0.0000 -19.50
+wait 1.0
+shot DMV_041
+scene DMV_042
+foot 8.750 205.250 3.1416 -19.50
+wait 1.0
+shot DMV_042
+scene DMV_043
+foot -6.250 207.750 0.0000 -19.50
+wait 1.0
+shot DMV_043
+scene DMV_044
+foot -6.250 207.750 3.1416 -19.50
+wait 1.0
+shot DMV_044
+scene DMV_045
+foot -3.750 207.750 0.0000 -19.50
+wait 1.0
+shot DMV_045
+scene DMV_046
+foot -3.750 207.750 3.1416 -19.50
+wait 1.0
+shot DMV_046
+scene DMV_047
+foot -1.250 207.750 0.0000 -19.50
+wait 1.0
+shot DMV_047
+scene DMV_048
+foot -1.250 207.750 3.1416 -19.50
+wait 1.0
+shot DMV_048
+scene DMV_049
+foot 1.250 207.750 0.0000 -19.50
+wait 1.0
+shot DMV_049
+scene DMV_050
+foot 1.250 207.750 3.1416 -19.50
+wait 1.0
+shot DMV_050
+scene DMV_051
+foot 3.750 207.750 0.0000 -19.50
+wait 1.0
+shot DMV_051
+scene DMV_052
+foot 3.750 207.750 3.1416 -19.50
+wait 1.0
+shot DMV_052
+scene Moes_door
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Moes_001
+foot 45.750 195.911 0.0000 -19.50
+wait 1.0
+shot Moes_001
+scene Moes_002
+foot 45.750 195.911 3.1416 -19.50
+wait 1.0
+shot Moes_002
+scene Moes_003
+foot 48.250 195.911 0.0000 -19.50
+wait 1.0
+shot Moes_003
+scene Moes_004
+foot 48.250 195.911 3.1416 -19.50
+wait 1.0
+shot Moes_004
+scene Moes_005
+foot 50.750 195.911 0.0000 -19.50
+wait 1.0
+shot Moes_005
+scene Moes_006
+foot 50.750 195.911 3.1416 -19.50
+wait 1.0
+shot Moes_006
+scene Moes_007
+foot 53.250 195.911 0.0000 -19.50
+wait 1.0
+shot Moes_007
+scene Moes_008
+foot 53.250 195.911 3.1416 -19.50
+wait 1.0
+shot Moes_008
+scene Moes_009
+foot 45.750 198.411 0.0000 -19.50
+wait 1.0
+shot Moes_009
+scene Moes_010
+foot 45.750 198.411 3.1416 -19.50
+wait 1.0
+shot Moes_010
+scene Moes_011
+foot 53.250 198.411 0.0000 -19.50
+wait 1.0
+shot Moes_011
+scene Moes_012
+foot 53.250 198.411 3.1416 -19.50
+wait 1.0
+shot Moes_012
+scene Moes_013
+foot 45.750 200.911 0.0000 -19.50
+wait 1.0
+shot Moes_013
+scene Moes_014
+foot 45.750 200.911 3.1416 -19.50
+wait 1.0
+shot Moes_014
+scene Moes_015
+foot 53.250 200.911 0.0000 -19.50
+wait 1.0
+shot Moes_015
+scene Moes_016
+foot 53.250 200.911 3.1416 -19.50
+wait 1.0
+shot Moes_016
+scene Moes_017
+foot 45.750 203.411 0.0000 -19.50
+wait 1.0
+shot Moes_017
+scene Moes_018
+foot 45.750 203.411 3.1416 -19.50
+wait 1.0
+shot Moes_018
+scene Moes_019
+foot 48.250 203.411 0.0000 -19.50
+wait 1.0
+shot Moes_019
+scene Moes_020
+foot 48.250 203.411 3.1416 -19.50
+wait 1.0
+shot Moes_020
+scene Moes_021
+foot 53.250 205.911 0.0000 -19.50
+wait 1.0
+shot Moes_021
+scene Moes_022
+foot 53.250 205.911 3.1416 -19.50
+wait 1.0
+shot Moes_022
+end

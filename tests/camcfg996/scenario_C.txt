@@ -1,0 +1,25 @@
+# №996 приёмка C: файл, записанный новым кодом, читается обратно: Height High, Distance Near
+scene C_BOOT
+wait 6
+scene L1
+flag golevel 1
+wait 40
+flag player
+press start
+wait 1
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press cross
+wait 1.2
+press down
+wait 0.4
+press down
+wait 0.4
+press cross
+wait 1.2
+shot cam_page
+end

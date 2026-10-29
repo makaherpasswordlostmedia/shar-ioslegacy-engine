@@ -1,0 +1,107 @@
+# Камеры комнат L6, глаз не в стене (tests/rooms/emu_cams_levels_gen.py): двери 2, камер 26; CAMIN eye/near на каждой точке
+scene start
+wait 3
+scene L6_load
+flag golevel 6
+wait 20
+scene AndroidsDungeon_door
+foot 19.79 3.59 0.7854 7.44
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Andr_1
+foot 3.327 349.407 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Andr_1
+scene Andr_2
+foot -2.653 348.111 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Andr_2
+scene Observatory_door
+foot 179.28 -484.62 -2.5307 4.67
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Obse_01
+foot 152.869 358.829 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_01
+scene Obse_02
+foot 159.100 347.043 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_02
+scene Obse_03
+foot 154.890 348.411 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_03
+scene Obse_04
+foot 149.629 359.882 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_04
+scene Obse_05
+foot 155.179 358.079 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_05
+scene Obse_07
+foot 146.799 343.636 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_07
+scene Obse_08
+foot 150.026 355.880 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_08
+scene Obse_09
+foot 153.425 340.884 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_09
+scene Obse_10
+foot 149.920 350.070 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_10
+scene Obse_11
+foot 154.428 364.270 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Obse_11
+end

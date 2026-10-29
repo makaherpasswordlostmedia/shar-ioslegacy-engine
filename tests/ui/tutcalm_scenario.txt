@@ -1,0 +1,12 @@
+# Правка Роба 60 (tests/ui/tutcalm_emu.sh): подсказка Барта не стопорит облёт старта — пешком у дома, подсказки включены,
+# облёт m0 (m0sd) пошёл: подсказка «ходьба» — только после конца облёта и секунды свободной игры
+flag msn
+wait 1
+flag tutorial
+wait 0.1
+flag flyin 0
+wait 0.3
+shot fly_mid
+wait 9
+shot fly_after
+end

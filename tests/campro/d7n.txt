@@ -1,0 +1,23 @@
+# №924: езда по маршруту тура F_L7_CR (goto 214.9 172.3 -3.0, drive 18), детерминированно (camdet 1), camlog: кадр в кадр новый и прежний (flag camnfreuseold 1, cgdirtyold 1)
+wait 12
+flag cfgdefaults 1
+flag player
+flag camdet 1
+flag camin 1
+
+flag golevel 7
+wait 40
+scene CR7_a
+press triangle 0.2
+wait 2
+goto 214.9 172.3 -3.0
+wait 3
+flag camlog
+flag drive 18
+wait 19
+flag stop
+flag camin 1
+wait 1
+scene Z_END
+wait 1
+end

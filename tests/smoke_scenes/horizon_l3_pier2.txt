@@ -1,0 +1,118 @@
+# L3 причал (gil_car, порт -375,-38): 8 направлений, выкл / 6 / 8
+scene start
+wait 3
+flag golevel 3
+wait 25
+scene PP_0
+flag horizon 0
+flag repair
+goto -375 -38 0.0
+wait 3
+flag horizon 0
+wait 1
+shot PP_0_off
+flag horizon 6
+wait 1
+shot PP_0_6
+flag horizon 8
+wait 1
+shot PP_0_8
+scene PP_1
+flag horizon 0
+flag repair
+goto -375 -38 0.785
+wait 3
+flag horizon 0
+wait 1
+shot PP_1_off
+flag horizon 6
+wait 1
+shot PP_1_6
+flag horizon 8
+wait 1
+shot PP_1_8
+scene PP_2
+flag horizon 0
+flag repair
+goto -375 -38 1.571
+wait 3
+flag horizon 0
+wait 1
+shot PP_2_off
+flag horizon 6
+wait 1
+shot PP_2_6
+flag horizon 8
+wait 1
+shot PP_2_8
+scene PP_3
+flag horizon 0
+flag repair
+goto -375 -38 2.356
+wait 3
+flag horizon 0
+wait 1
+shot PP_3_off
+flag horizon 6
+wait 1
+shot PP_3_6
+flag horizon 8
+wait 1
+shot PP_3_8
+scene PP_4
+flag horizon 0
+flag repair
+goto -375 -38 3.142
+wait 3
+flag horizon 0
+wait 1
+shot PP_4_off
+flag horizon 6
+wait 1
+shot PP_4_6
+flag horizon 8
+wait 1
+shot PP_4_8
+scene PP_5
+flag horizon 0
+flag repair
+goto -375 -38 3.927
+wait 3
+flag horizon 0
+wait 1
+shot PP_5_off
+flag horizon 6
+wait 1
+shot PP_5_6
+flag horizon 8
+wait 1
+shot PP_5_8
+scene PP_6
+flag horizon 0
+flag repair
+goto -375 -38 4.712
+wait 3
+flag horizon 0
+wait 1
+shot PP_6_off
+flag horizon 6
+wait 1
+shot PP_6_6
+flag horizon 8
+wait 1
+shot PP_6_8
+scene PP_7
+flag horizon 0
+flag repair
+goto -375 -38 5.498
+wait 3
+flag horizon 0
+wait 1
+shot PP_7_off
+flag horizon 6
+wait 1
+shot PP_7_6
+flag horizon 8
+wait 1
+shot PP_7_8
+end

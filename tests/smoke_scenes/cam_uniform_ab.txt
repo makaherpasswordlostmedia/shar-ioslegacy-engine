@@ -1,0 +1,191 @@
+# №554: камера за машиной A (сейчас, №494) / B (camuniformold 1, по данным машины) / C (camps2dist 1, числа PS2 Стенда3); дистанция по CARCAM
+scene U_load1
+flag golevel 1
+wait 14
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U1_A
+wait 1.5
+shot u1A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U1_B
+wait 1.5
+shot u1B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U1_C
+wait 1.5
+shot u1C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load2
+flag golevel 2
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U2_A
+wait 1.5
+shot u2A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U2_B
+wait 1.5
+shot u2B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U2_C
+wait 1.5
+shot u2C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load3
+flag golevel 3
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U3_A
+wait 1.5
+shot u3A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U3_B
+wait 1.5
+shot u3B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U3_C
+wait 1.5
+shot u3C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load4
+flag golevel 4
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U4_A
+wait 1.5
+shot u4A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U4_B
+wait 1.5
+shot u4B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U4_C
+wait 1.5
+shot u4C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load5
+flag golevel 5
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U5_A
+wait 1.5
+shot u5A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U5_B
+wait 1.5
+shot u5B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U5_C
+wait 1.5
+shot u5C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load6
+flag golevel 6
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U6_A
+wait 1.5
+shot u6A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U6_B
+wait 1.5
+shot u6B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U6_C
+wait 1.5
+shot u6C
+flag camuniformold 0
+flag camps2dist 0
+scene U_load7
+flag golevel 7
+wait 16
+flag player 1
+flag carcamlog 1
+flag repair
+wait 1
+flag camuniformold 0
+flag camps2dist 0
+wait 2
+scene U7_A
+wait 1.5
+shot u7A
+flag camuniformold 1
+flag camps2dist 0
+wait 2
+scene U7_B
+wait 1.5
+shot u7B
+flag camuniformold 0
+flag camps2dist 1
+wait 2
+scene U7_C
+wait 1.5
+shot u7C
+flag camuniformold 0
+flag camps2dist 0
+end

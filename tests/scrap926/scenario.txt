@@ -1,0 +1,16 @@
+flag menu
+flag scrapon 1
+wait 6
+press up
+wait 0.5
+press up
+wait 0.5
+press up
+wait 0.5
+press cross
+wait 4
+shot sb_l1
+press l
+wait 1.5
+shot sb_l7
+end

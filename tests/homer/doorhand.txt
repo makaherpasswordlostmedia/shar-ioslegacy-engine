@@ -1,0 +1,30 @@
+# Роб 17.10 (видео IMG_7282 3:21): рука Гомера сквозь дверь при посадке — кадры выхода и посадки; сравнение: flag doorout 0 (как было) и по умолчанию (0,15 м)
+wait 3
+scene dh
+goto 220 172 1.5708
+wait 2.5
+press triangle 0.1
+wait 3.5
+press triangle 0.1
+wait 0.15
+shot dh_01
+wait 0.12
+shot dh_02
+wait 0.12
+shot dh_03
+wait 0.12
+shot dh_04
+wait 0.12
+shot dh_05
+wait 0.12
+shot dh_06
+wait 0.12
+shot dh_07
+wait 0.12
+shot dh_08
+wait 0.12
+shot dh_09
+wait 0.12
+shot dh_10
+wait 2
+end

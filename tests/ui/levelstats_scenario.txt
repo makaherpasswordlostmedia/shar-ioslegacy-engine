@@ -1,0 +1,26 @@
+# LEVEL PROGRESS (LevelStats.scr) и конец уровня (LevelEnd.scr), tests/ui/levelstats.sh: пауза свободной езды -> ↓↓↓ LEVEL PROGRESS,
+# X (снимок) -> △ назад -> START в игру -> служебно «все сюжетные миссии пройдены» (flag lvwin) -> экран конца уровня (снимок) -> X
+scene msn
+flag msn
+wait 2
+press start
+wait 0.8
+press down
+wait 0.3
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 1
+shot ls_pause
+press triangle
+wait 0.5
+press start
+wait 1
+flag lvwin
+wait 1.5
+shot ls_end
+press cross
+wait 3
+end

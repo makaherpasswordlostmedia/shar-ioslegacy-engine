@@ -1,0 +1,94 @@
+# Тур «КАЛИБР» (16.10, Карта): подбор яркости/гаммы экрана PSP-2000 глазами Роба. Три места, в каждом пять вариантов по 6 с;
+# имя сцены = подпись внизу экрана (К1..К5 латиницей): K1 gamma 100 (как сейчас), K2 115, K3 130, K4 145, K5 gamma 130 + hzcachetone 150 (насыщенность).
+# Роб называет номер варианта, который ближе всего к PS2. Флаг gamma добавляет Сборка; в сборке без него строки молча пропускаются.
+# Места: GAR гараж АЭС L1 G4-7 (пол и стены), STR улица H5-2 вдоль асфальта, LAWN трава и небо у K9-7. Длина около 2 минут.
+scene CAL_L1_load
+flag golevel 1
+wait 15
+# --- место GAR
+scene GAR_K1_g100
+flag repair
+foot -84.63 -300.67 1.5708
+flag gamma 100
+flag hzcachetone 136
+wait 6
+shot GAR_K1
+scene GAR_K2_g115
+flag gamma 115
+flag hzcachetone 136
+wait 6
+shot GAR_K2
+scene GAR_K3_g130
+flag gamma 130
+flag hzcachetone 136
+wait 6
+shot GAR_K3
+scene GAR_K4_g145
+flag gamma 145
+flag hzcachetone 136
+wait 6
+shot GAR_K4
+scene GAR_K5_g130_s150
+flag gamma 130
+flag hzcachetone 150
+wait 6
+shot GAR_K5
+# --- место STR
+scene STR_K1_g100
+flag repair
+foot 50 -285 0.0
+flag gamma 100
+flag hzcachetone 136
+wait 6
+shot STR_K1
+scene STR_K2_g115
+flag gamma 115
+flag hzcachetone 136
+wait 6
+shot STR_K2
+scene STR_K3_g130
+flag gamma 130
+flag hzcachetone 136
+wait 6
+shot STR_K3
+scene STR_K4_g145
+flag gamma 145
+flag hzcachetone 136
+wait 6
+shot STR_K4
+scene STR_K5_g130_s150
+flag gamma 130
+flag hzcachetone 150
+wait 6
+shot STR_K5
+# --- место LAWN
+scene LAWN_K1_g100
+flag repair
+foot 205 165 2.0
+flag gamma 100
+flag hzcachetone 136
+wait 6
+shot LAWN_K1
+scene LAWN_K2_g115
+flag gamma 115
+flag hzcachetone 136
+wait 6
+shot LAWN_K2
+scene LAWN_K3_g130
+flag gamma 130
+flag hzcachetone 136
+wait 6
+shot LAWN_K3
+scene LAWN_K4_g145
+flag gamma 145
+flag hzcachetone 136
+wait 6
+shot LAWN_K4
+scene LAWN_K5_g130_s150
+flag gamma 130
+flag hzcachetone 150
+wait 6
+shot LAWN_K5
+flag gamma 100
+flag hzcachetone 136
+end

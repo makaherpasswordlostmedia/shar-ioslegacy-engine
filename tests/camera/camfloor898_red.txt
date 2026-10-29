@@ -1,0 +1,78 @@
+# №898 красный контроль: тот же проезд со старым правилом пола (flag camflooroverold 1) — camfloor898.py --red должен получить PASS (гейт видит рывки ~1,5 м)
+wait 12
+flag cfgdefaults 1
+flag camlog
+flag camflooroverold 1
+scene r0_333_-330_0.0
+goto 333 -330 0.0
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+scene r1_337_-330_0.0
+goto 337 -330 0.0
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+scene r2_335_-330_0.0
+goto 335 -330 0.0
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+scene r3_337_-100_3.1
+goto 337 -100 3.1416
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+scene r4_341_-100_3.1
+goto 341 -100 3.1416
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+scene r5_339_-100_3.1
+goto 339 -100 3.1416
+wait 2
+flag repair
+wait 1.5
+flag camin 1
+flag caminlog
+flag autostraight 13
+wait 12
+flag stop
+flag camin
+wait 0.5
+end

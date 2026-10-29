@@ -1,0 +1,99 @@
+# правка 331: трамплины на скорости, жёсткие посадки и удары (камера под асфальтом?)
+flag caminlog
+wait 3
+flag player 1
+flag camingeom 1
+flag diaglog 1
+scene j_f10_5
+flag wpclear
+goto -129 355 3.6
+flag repair
+wait 1.5
+flag camin 1
+flag wpv 28
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wp -166 180
+flag wpgo
+wait 4.5
+shot j_f10_5a
+wait 0.5
+shot j_f10_5b
+wait 5
+flag stop
+flag camin
+scene j_ramp4_30
+flag wpclear
+goto -117 540 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag wpv 32
+flag wp -117 506
+flag wp -118 483
+flag wp -120 458
+flag wp -120 432
+flag wp -120 408
+flag wp -120 381
+flag wp -129 355
+flag wpgo
+wait 9
+flag stop
+flag camin
+scene j_z1
+flag wpclear
+goto 215.2 366.6 -2.45
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 5
+wait 3
+shot j_z1a
+wait 0.6
+shot j_z1b
+wait 4
+flag stop
+flag camin
+scene j_z17
+flag wpclear
+goto 121.9 260 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 5
+wait 3
+shot j_z17a
+wait 0.6
+shot j_z17b
+wait 4
+flag stop
+flag camin
+scene j_z5b
+flag wpclear
+goto -166 330 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 6
+wait 3.5
+shot j_z5ba
+wait 0.6
+shot j_z5bb
+wait 5
+flag stop
+flag camin
+scene j_wall
+goto -121 615 3.1416
+flag repair
+wait 1.5
+flag camin 1
+flag autostraight 9
+wait 10
+flag stop
+flag camin
+end

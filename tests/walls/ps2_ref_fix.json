@@ -1,0 +1,30 @@
+{
+ "about": "Исправления эталона PS2 «постановка машины» (build/twins/placement/l<N>/orig.jsonl). Каждая запись заменяет ОДНУ сорванную пробу основного эталона на ту же пробу из другой записи PS2 (тот же протокол VERSION, та же точка). Замена срабатывает, только если в основном эталоне лежит ровно та сорванная строка (sha256 строки без перевода строки), иначе пропускается с предупреждением. Остальные пробы не трогаются. Выключить: PLACEMENT_REF_FIX=0. Применяет tools/twins/placement.py orig_records().",
+ "time": "2026-10-09 (ДОБИВКА п. 11; ПАРА_ЖУРНАЛ 16:25 дирижёр; СЕЙФ_ДИРИЖЁРА/архивы/помощники_и_codex.md, строка 1 таблицы)",
+ "fixes": [
+  {
+   "level": 1,
+   "id": "fence_f006_A",
+   "broken": {
+    "file": "build/twins/placement/l1/orig.jsonl",
+    "file_sha256": "180397a1f946b45d23e43095b6927c8deef74fff7a3eeb5d167dadf07fb1d6e9",
+    "line_sha256": "24e9c4bcef1124bd5ae51ebe2c77976c3d3bf9b6507cda84b431fde1e839ab13",
+    "session": "build/twins/placement/l1/sessions/20261005-144221_s12000",
+    "why": "запись 05.10 сорвана: «settled» при v 17,25 м/с в (279,75; 1,18; −409,93), в 73 м от точки P (262,82; −1,03; −480,93); курс before −0,34 рад против −1,74 у чистой записи; сессия оборвана «Гомер вышел из машины (машина разбита?)» (session.json abort). Задний ход 05.10 поставлен курсом сорванного газа (before2 −2,25 рад, settled2 −1,61: машину развернуло на 36° на покое)"
+   },
+   "source": {
+    "file": "/Users/USER/.claude/jobs/shar-0410/tmp/agentTWIN/build/twins/placement/l1/orig.jsonl",
+    "file_sha256": "acfdc1d35f94a7fbde637416c2bb1d46d11c26760f0218b80f7c0724b5f0c913",
+    "line_sha256": "fda7446bf098b3478b39299aed8210a2a5d35396125e5f920dd3f7164240830a",
+    "trace": "/Users/USER/.claude/jobs/shar-0410/tmp/agentTWIN/build/twins/placement/l1/sessions/20261004-173451_s12000_p1/trace.tsv",
+    "trace_sha256": "e811766ce704ad23a4d006c47b34212089d0adba2de0123fd9aff04c56563d66",
+    "session_json": "снимок o4/b2_loop/snap_12000.p2s, проб 5 из 5, abort null, lockstep 4, renderer null, 2026-10-04 17:35:48 EEST",
+    "why": "чистая запись 04.10: settled (258,99; −1,05; −482,14) v 0,02 у изгороди, gassed v 10,6, settled2 (262,93; −1,23; −480,92) v 0,005, reversed (264,09; −1,26; −480,75) v 0,12"
+   },
+   "record": "tests/walls/ps2_ref_fix/fence_f006_A.jsonl",
+   "record_line_sha256": "fda7446bf098b3478b39299aed8210a2a5d35396125e5f920dd3f7164240830a",
+   "session": "tests/walls/ps2_ref_fix/20261004-173451_s12000_p1",
+   "session_note": "trace.tsv — заголовок и только строки пробы fence_f006_A из исходной трассы (104 строки; sha256 выборки 89a85ef6c9c130e6fb35ad3a726c3cf7d8c101116caa113d5b8571b5fe2a3134)"
+  }
+ ]
+}

@@ -1,0 +1,249 @@
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+# TEST26 «ИГРОК» (16.10, Карта; основа tools/player_tour_scenario.txt Аудита-FPS, ветка claude/autotour-player-1016 30042316): единственный автотур, Роб только запускает и снимает.
+# Путь: логотипы (START) -> титул -> меню -> RESUME (сохранение Роба SLES5189700/03: L1 миссия 4, гараж АЭС) -> подсказка Барта (крест каждые 3 с) ->
+# в гараже стоя по 5 с: свет lspnew / конусы lightspr / без, гамма 100/130 -> две одинаковые ходьбы (порог шума) -> ходьба ME-город вкл/выкл -> тени shadowspr вкл/выкл ->
+# машина (flag repair: машины игрока в гараже в этой сборке нет, это ТЕЛЕПОРТ) и езда drive: даль пол 150 / ddfloor 200, texreg 1, texvram 168, mecity 1/0, на виде вдаль jitter 40/0 (№503).
+# Подпись сцены внизу экрана и метка для video_flash. Флаги, которых нет в сборке, молча пропускаются. Бабл задания с аватаром и подсказки (№638) возникают сами после RESUME (кадры pl_game0, 0b).
+# Свет и гамма: камера задана cam (в гараже вдоль коридора на подвесные лампы, как эталон PS2 ps2_light_garage_lamps.png; Гомер в кадре не нужен), после gamma130 cam off. PL_TELEPORT_car: flag repair = телепорт, для вердикта не путь игрока.
+# L1 only, около 6 минут. Пеший отрезок: press up/right, не к операторской как у PS2 (позже).
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+press right
+wait 2
+shot pl_menu_resume
+press cross
+wait 8
+scene PL_game_start
+shot pl_game0
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+shot pl_game0b
+scene PL_lsp_new
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+flag lspnew 1
+wait 5
+shot pl_lsp_new
+scene PL_lsp_cones
+flag lspnew 0
+flag lightspr 1
+wait 5
+shot pl_lsp_cones
+scene PL_lsp_none
+flag lightspr 0
+wait 5
+shot pl_lsp_none
+scene PL_gamma100
+flag gamma 100
+wait 4
+shot pl_gamma100
+scene PL_gamma130
+flag gamma 130
+wait 4
+shot pl_gamma130
+cam off
+flag gamma 100
+scene PL_game_walk
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_game_walk
+scene PL_game_walk2
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_game_walk2
+scene PL_walk_me1
+flag mecity 1
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_walk_me1
+scene PL_walk_me0
+flag mecity 0
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_walk_me0
+flag mecity 1
+scene PL_shadow_on
+flag shadowspr 1
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_shadow_on
+scene PL_shadow_off
+flag shadowspr 0
+press up 10
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_shadow_off
+scene PL_silh_on
+flag silh 1
+press cross 0.3
+wait 3
+press up 6
+wait 6
+shot pl_silh_on
+scene PL_silh_off
+flag silh 0
+press cross 0.3
+wait 3
+press up 6
+wait 6
+shot pl_silh_off
+scene PL_TELEPORT_car
+flag repair
+wait 3
+shot pl_car0
+scene PL_drive_dd0
+flag drive 100
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 1
+shot pl_drive_dd0
+scene PL_drive_dd200
+flag ddfloor 200
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 1
+shot pl_drive_dd200
+flag ddfloor 0
+scene PL_drive_texreg
+flag texreg 1
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_drive_texreg
+scene PL_drive_texvram
+flag texvram 168
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_drive_texvram
+scene PL_drive_me1
+flag mecity 1
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+shot pl_drive_me1
+scene PL_drive_me0
+flag mecity 0
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+shot pl_drive_me0
+flag mecity 1
+scene PL_far_jit40
+flag jitter 40
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_far_jit40
+scene PL_far_jit0
+flag jitter 0
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+wait 2
+shot pl_far_jit0
+flag stop
+wait 1
+end

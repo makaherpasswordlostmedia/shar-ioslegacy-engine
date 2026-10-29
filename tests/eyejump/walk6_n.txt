@@ -1,0 +1,16 @@
+# рывок глаза при ходьбе (flag walk 30, автопилот L6): CAMIN jmax — наибольший сдвиг глаза относительно опоры за кадр; журнал CAMINF/CAMJUMP — где
+wait 12
+flag cfgdefaults 1
+flag caminlog
+flag camsoftpplold 0
+scene WK_L6
+flag golevel 6
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+scene Z_END
+wait 1
+end

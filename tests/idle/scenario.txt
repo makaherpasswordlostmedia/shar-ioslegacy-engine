@@ -1,0 +1,16 @@
+# Простой меню как в оригинале (tests/idle/emu.sh, разбор tests/idle/check.py; правка Роба 33): меню без нажатий ->
+# титульный Splash «Press START button» -> без нажатий -> ролик простоя movies\demo.rmv в рамке-телевизоре с надписью
+# «- DEMO -» (frontend.p3d Demo.scr) -> любая кнопка -> сразу меню. «flag idle 2» / «flag demoidle 2» — простой по 2 с вместо
+# MENU_IDLE_S / DEMO_IDLE_S. Снимок demo — ролик стоит на время снимка (строка DEMOSHOT: кадр ролика); X — назад в меню.
+# emu.sh --negative подставляет «flag demodeaf» (ролик не слышит кнопок — возврата нет) и «flag demonolabel» (без надписи)
+flag menu
+wait 2
+flag idle 2
+flag demoidle 2
+wait 5.5
+shot demo
+wait 0.3
+press cross
+wait 1
+shot menu
+end

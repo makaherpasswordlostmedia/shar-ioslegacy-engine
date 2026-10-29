@@ -1,0 +1,18 @@
+# Падение с края площадки через линию забора 810 L1 (x 337,2; платформа x 337…346, y 4,9, внизу -0,57): наблюдение к тесту B pockets (КРАЙ)
+wait 3
+scene edge1
+goto 343.2 -369.4 -1.5708
+wait 1
+shot e0
+flag autostraight 3
+wait 0.8
+shot e1
+wait 0.5
+shot e2
+wait 0.5
+shot e3
+wait 0.7
+shot e4
+wait 1.5
+shot e5
+end

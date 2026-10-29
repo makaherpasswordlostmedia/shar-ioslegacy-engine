@@ -1,0 +1,11 @@
+# Гейт правки 412 (tests/menu/item_pulse.sh): главное меню, выбранный пункт пульсирует масштабом (SLES_518.97 CGuiMenu, флаги 2).
+# Строки MENUITEM — рамка строки по кадрам; смена пункта (down) обнуляет фазу: масштаб снова 1,0
+flag menu
+wait 6
+shot item_a
+wait 0.25
+shot item_b
+press down
+wait 3
+shot item_c
+end

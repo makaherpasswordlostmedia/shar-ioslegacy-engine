@@ -1,0 +1,29 @@
+# №602 (tests/camera/camocc.py): стоящая машина вплотную позади (между камерой и героем), потом разгон вдоль домов L1; короткий сценарий
+flag caminlog
+wait 3
+scene tail_kwik
+goto 232 292 0
+flag repair
+flag carbehind 4
+wait 1.5
+flag camin 1
+wait 1.5
+shot A
+flag autostraight 3
+wait 1.5
+shot B
+wait 2
+flag stop
+flag camin
+scene tail_evg
+goto 223 253 1.5708
+flag repair
+flag carbehind 5
+wait 1.5
+flag camin 1
+wait 1.5
+flag autostraight 3
+wait 3.5
+flag stop
+flag camin
+end

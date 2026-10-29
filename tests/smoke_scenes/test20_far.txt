@@ -1,0 +1,140 @@
+# TEST20 · Сборка: дальность и вода. A/B пола регулятора дальности (ddfloor 150 / 200 м) на L1, L2, L3, L5, L6 и вода причала L3 (tqskip 264). ≈ 3,5 мин.
+# Смотреть в логе: RFAST dd=, PHSEC x_city/x_fx, STAT p95, миссы; кадры X_*_150 / X_*_200 — «вид вдаль» было/стало.
+scene start
+wait 3
+scene T20_L1_load
+flag golevel 1
+wait 20
+scene T20_L1_far150
+flag ddfloor 150
+flag repair
+goto 220 172 1.5708
+wait 2
+flag autostraight 6
+wait 9
+shot T20_L1_150
+flag stop
+wait 0.5
+scene T20_L1_far200
+flag ddfloor 200
+flag repair
+goto 220 172 1.5708
+wait 2
+flag autostraight 6
+wait 9
+shot T20_L1_200
+flag stop
+wait 0.5
+scene T20_L2_load
+flag golevel 2
+wait 20
+scene T20_L2_far150
+flag ddfloor 150
+flag repair
+goto -206 -498 1.5708
+wait 2
+flag autostraight 6
+wait 9
+shot T20_L2_150
+flag stop
+wait 0.5
+scene T20_L2_far200
+flag ddfloor 200
+flag repair
+goto -206 -498 1.5708
+wait 2
+flag autostraight 6
+wait 9
+shot T20_L2_200
+flag stop
+wait 0.5
+scene T20_L3_load
+flag golevel 3
+wait 20
+scene T20_L3_far150
+flag ddfloor 150
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 9
+shot T20_L3_150
+flag stop
+wait 0.5
+scene T20_L3_far200
+flag ddfloor 200
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 9
+shot T20_L3_200
+flag stop
+wait 0.5
+scene T20_L3_wat_on
+flag ddfloor 150
+flag tqskip -1
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 7
+shot T20_L3_wat_on
+flag stop
+wait 0.5
+scene T20_L3_wat_off
+flag ddfloor 150
+flag tqskip 264
+flag repair
+goto -469.4 -35.9 3.927
+wait 2
+flag autostraight 4
+wait 7
+shot T20_L3_wat_off
+flag stop
+wait 0.5
+flag tqskip -1
+scene T20_L5_load
+flag golevel 5
+wait 20
+scene T20_L5_far150
+flag ddfloor 150
+flag repair
+flag hnr 100
+flag drive 75
+wait 14
+shot T20_L5_150
+flag stop
+wait 0.5
+flag hnr 0
+scene T20_L5_far200
+flag ddfloor 200
+flag repair
+flag hnr 100
+flag drive 75
+wait 14
+shot T20_L5_200
+flag stop
+wait 0.5
+flag hnr 0
+scene T20_L6_load
+flag golevel 6
+wait 20
+scene T20_L6_far150
+flag ddfloor 150
+flag repair
+flag drive 75
+wait 12
+shot T20_L6_150
+flag stop
+wait 0.5
+scene T20_L6_far200
+flag ddfloor 200
+flag repair
+flag drive 75
+wait 12
+shot T20_L6_200
+flag stop
+wait 0.5
+flag ddfloor 0
+end

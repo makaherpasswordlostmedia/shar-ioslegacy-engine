@@ -1,0 +1,15 @@
+flag player
+scene mselect363
+flag msn
+wait 3
+flag uimsndone 6
+flag msnsel 3
+wait 2
+press start
+wait .8
+press down
+wait .3
+press cross
+wait 1
+shot ms_l1
+end

@@ -1,0 +1,43 @@
+# №984: цена кэша персонажей по имени (значки продавцов): езда автопилотом по L3, L4, L6, L7, строки MARKSUB talk_sellers и MSNNPC984 (сверка с перебором). @OLD@ = 1 — перебор как было
+scene F_L1
+flag cfgdefaults 1
+flag msnnpc984old @OLD@
+flag msnnpctime 1
+wait 4
+scene F_GO3
+flag golevel 3
+wait 40
+flag msnnpcstat
+scene F_DR3
+flag drive 22
+wait 24
+flag msnnpcstat
+shot end3
+scene F_GO4
+flag golevel 4
+wait 40
+flag msnnpcstat
+scene F_DR4
+flag drive 22
+wait 24
+flag msnnpcstat
+shot end4
+scene F_GO6
+flag golevel 6
+wait 40
+flag msnnpcstat
+scene F_DR6
+flag drive 22
+wait 24
+flag msnnpcstat
+shot end6
+scene F_GO7
+flag golevel 7
+wait 40
+flag msnnpcstat
+scene F_DR7
+flag drive 22
+wait 24
+flag msnnpcstat
+shot end7
+end

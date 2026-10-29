@@ -1,0 +1,15 @@
+# HUD миссий (tests/missions/emu_hud.sh): гонка sr1 Милхауса (вступление — голос Гомера и Милхауса ~9 с, потом брифинг) — таймер и круги видны вместе; рамки оверлеев не должны
+# пересекаться (uiov). Тексты всех заданий уровня и провалов (причина + подсказка) обязаны влезать в рамку задания (uifit).
+scene hud
+wait 3
+flag msn
+wait 2
+flag uifit
+flag msnsel 8
+wait 11
+press cross
+wait 5
+flag uiov
+shot hud_race
+wait 1
+end

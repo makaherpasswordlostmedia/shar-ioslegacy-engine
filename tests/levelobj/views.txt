@@ -1,0 +1,39 @@
+# Виды объектов уровня 1 (пакет «Объекты уровня и миссий»): SMOKE_SCN=tests/levelobj/views.txt tools/smoke.sh DIR
+# Duff-грузовик у Kwik-E-Mart (AnimCollision truck1, l1z2), пожарная машина с лестницей (l1z2), площадка школы (l1z3),
+# платформы электростанции (AnimCollision l1z6)
+scene duff
+goto 186 300 1.5708
+wait 4
+shot duff
+scene duffside
+goto 214 300 -1.5708
+wait 3
+shot duffside
+scene firetruck
+goto 214 346 -1.5708
+wait 3
+shot firetruck
+scene ladder
+goto 170 318 1.9
+wait 3
+shot ladder
+scene playground
+goto -90 588 0
+wait 3
+shot playground
+scene powerplant
+goto -100 -300 1.5708
+wait 3
+shot powerplant
+scene duff_foot
+foot 203.0 292.2 0.6
+wait 2
+flag aolog
+shot duff_foot
+flag aoact
+wait 2.8
+flag aolog
+shot duff_lift_up
+wait 4
+flag aolog
+end

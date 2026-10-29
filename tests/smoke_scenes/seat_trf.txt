@@ -1,0 +1,26 @@
+# №666/№667 (TRF1 offSeat): угон машины трафика заданной модели: flag trfspawn N (0 minivanA, 1 glastruc, 2 schoolbu, 3 pickupA), △ (ирис, дверь не открывается), сидит (камера в кабине), выход (ирис)
+wait 3
+flag msn
+wait 3
+scene trf_walk
+foot 160 279.9 1.5708
+wait 3
+flag trfspawn 2
+wait 0.3
+shot trf_pre
+press triangle
+wait 4
+flag seatlog 0
+cam 160.0 5.0 283.6 0 -0.05 -1 50
+wait 1
+shot trf_side
+cam 162.6 5.4 283.8 -2.6 -0.4 -1.9 55
+wait 1
+shot trf_34
+cam 156.0 5.0 278.0 1 0 1.2 45
+press triangle
+wait 0.2
+shot trf_out0
+wait 3
+shot trf_out
+end

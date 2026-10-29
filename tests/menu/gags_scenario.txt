@@ -1,0 +1,44 @@
+# №404 гейт сценок главного меню (tests/menu/gags.sh). Порядок Gag0..Gag7 страницы 3dFEGags.pag:
+# 0 gaghomer (играет Гомер меню, отрезок fegagseg), 1 gaggrand, 2 gagmole, 3 gagfrink, 4 gagbarne, 5 gagnick, 6 gagsnake, 7 maggie.
+# 1) база без сценки (2 с меню); 2) расписание диска: первая сценка сама на 15 с (SLES_518.97, строка FEGAG forced=0);
+# 3) каждая сценка принудительно в позе fegagat (секунды клипа — где она лучше всего видна из кадра меню по данным, CPU-превью)
+flag menu
+wait 2
+shot gag_base
+wait 14.5
+shot gag_auto
+flag fegagauto 0
+flag fegagseg 1
+flag fegagat 3.5
+flag fegag 0
+wait 0.8
+shot gag_0
+flag fegagat 2.5
+flag fegag 1
+wait 0.8
+shot gag_1
+flag fegagat 3.5
+flag fegag 2
+wait 0.8
+shot gag_2
+flag fegagat 2.0
+flag fegag 3
+wait 0.8
+shot gag_3
+flag fegagat 2.5
+flag fegag 4
+wait 0.8
+shot gag_4
+flag fegagat 2.5
+flag fegag 5
+wait 0.8
+shot gag_5
+flag fegagat 4.5
+flag fegag 6
+wait 0.8
+shot gag_6
+flag fegagat 5.5
+flag fegag 7
+wait 0.8
+shot gag_7
+end

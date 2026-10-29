@@ -1,0 +1,200 @@
+# TEST30: дальность и HLOD. Каждый вид 6 с: «250 как сейчас» и «150 + мягкий туман + HLOD + лента» (подпись сцены на экране). Камера над городом 32 м (служебная, только тур).
+# Нужны файлы: hlod.shr и horizon.shr уровней 1 и 3 (build/horizon/test29/); дальность 150 м = flag drawdist 60 (в журнале HLOD cost drawDist=150)
+scene start
+wait 4
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+flag hlod 0
+flag fogsoft 1
+scene L1v0_prep
+flag repair
+goto 220 172 0
+wait 5
+flag eyex 220
+flag eyey 32
+flag eyez 172
+flag eyedx -1.00
+flag eyedy -0.10
+flag eyedz 0.00
+flag eyeon 1
+wait 2
+scene L1v0_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L1v0_250
+scene L1v0_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L1v0_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1v1_prep
+flag repair
+goto 300 400 0
+wait 5
+flag eyex 300
+flag eyey 32
+flag eyez 400
+flag eyedx -0.60
+flag eyedy -0.10
+flag eyedz -0.80
+flag eyeon 1
+wait 2
+scene L1v1_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L1v1_250
+scene L1v1_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L1v1_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1v2_prep
+flag repair
+goto -200 300 0
+wait 5
+flag eyex -200
+flag eyey 32
+flag eyez 300
+flag eyedx 0.55
+flag eyedy -0.10
+flag eyedz -0.83
+flag eyeon 1
+wait 2
+scene L1v2_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L1v2_250
+scene L1v2_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L1v2_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L1v3_prep
+flag repair
+goto 400 -300 0
+wait 5
+flag eyex 400
+flag eyey 32
+flag eyez -300
+flag eyedx -0.80
+flag eyedy -0.10
+flag eyedz 0.60
+flag eyeon 1
+wait 2
+scene L1v3_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L1v3_250
+scene L1v3_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L1v3_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L3_load
+flag golevel 3
+wait 25
+flag fogground 1
+scene L3v0_prep
+flag repair
+goto 100 200 0
+wait 5
+flag eyex 100
+flag eyey 32
+flag eyez 200
+flag eyedx -0.70
+flag eyedy -0.10
+flag eyedz -0.70
+flag eyeon 1
+wait 2
+scene L3v0_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L3v0_250
+scene L3v0_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L3v0_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+scene L3v1_prep
+flag repair
+goto 0 300 0
+wait 5
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0.00
+flag eyedy -0.10
+flag eyedz -1.00
+flag eyeon 1
+wait 2
+scene L3v1_250_сейчас
+flag drawdist 100
+flag fogsoft 1
+flag hlod 0
+flag horizon 0
+wait 6
+shot L3v1_250
+scene L3v1_150_HLOD
+flag drawdist 60
+flag fogsoft 3
+flag hlod 3
+flag horizon 8
+wait 6
+shot L3v1_150H
+flag hlod 0
+flag horizon 0
+flag fogsoft 1
+flag eyeon 0
+flag drawdist 100
+end

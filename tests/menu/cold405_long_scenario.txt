@@ -1,0 +1,22 @@
+flag menu
+flag fecold
+wait .5
+press start
+wait .5
+press start
+wait .5
+press start
+wait .5
+press start
+wait 120
+shot cold_idle
+press cross
+wait .3
+shot cold_cross
+press start
+wait 2
+shot cold_intro
+press start
+wait 3
+shot cold_room
+end

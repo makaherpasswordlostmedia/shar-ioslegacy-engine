@@ -1,0 +1,8 @@
+# Код места на паузе (правка Роба 58, tests/placecode/gate.sh --emu): у Kwik-E-Mart (телепорт Kwik E Mart, z зеркалим) пауза -> строка PLACE
+scene kwik
+goto 209 279 0
+wait 4
+press start
+wait 1.5
+shot kwik_pause
+end

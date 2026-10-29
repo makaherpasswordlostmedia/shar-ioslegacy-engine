@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.10)
+project(sharme_test C)
+add_executable(sharme_test main.c ../viewer/me_math.c ../viewer/msio.c ../viewer/me/meprobe.c ../viewer/me_gametask.c ../viewer/fxdsp.c)
+target_compile_options(sharme_test PRIVATE "SHELL:-include ${CMAKE_SOURCE_DIR}/../viewer/msio.h")
+target_compile_options(sharme_test PRIVATE -O2 -g -Wall -Wno-misleading-indentation -fno-math-errno -fsingle-precision-constant)
+set_source_files_properties(../viewer/me_math.c ../viewer/me_gametask.c ../viewer/fxdsp.c PROPERTIES COMPILE_OPTIONS "-G0;-fno-pic;-fno-tree-loop-distribute-patterns;-mno-check-zero-division")
+target_link_libraries(sharme_test pspkubridge pspdebug pspdisplay pspctrl psppower pspaudio pspge m)
+create_pbp_file(TARGET sharme_test TITLE "SHAR ME Test" BUILD_PRX)

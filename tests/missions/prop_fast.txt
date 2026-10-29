@@ -1,0 +1,12 @@
+# №prop-fast (tests/missions/prop_fast.sh): L1, езда 40 с через перекрёсток (сбиваются пропы, клетки пересобираются) — PBPROF: время скана подписей пропов и стейтпропов (мс/кадр)
+scene P_L1_load
+flag golevel 1
+wait 20
+scene P_drive
+flag repair
+goto 220 172 1.5708
+wait 2
+flag drive 75
+wait 40
+flag stop
+end

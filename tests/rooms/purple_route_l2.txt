@@ -1,0 +1,565 @@
+# Пурпур ходячей камерой по маршрутам кнопками, L2 (tests/rooms/purple_route_gen.py): 3 маршрута по 14 отрезков в каждой комнате; фон комнат закрашен пурпуром
+scene start
+wait 3
+scene L2_load
+flag golevel 2
+wait 20
+scene DMV_in0
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene DMV_0_00
+press down 0.35
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_0_00
+scene DMV_0_01
+press left 0.35
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_0_01
+scene DMV_0_02
+press left 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_02
+scene DMV_0_03
+press left 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_0_03
+scene DMV_0_04
+press down 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_04
+scene DMV_0_05
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_05
+scene DMV_0_06
+press down 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_0_06
+scene DMV_0_07
+press left 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_0_07
+scene DMV_0_08
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_08
+scene DMV_0_09
+press right 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_0_09
+scene DMV_0_10
+press left 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_10
+scene DMV_0_11
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_11
+scene DMV_0_12
+press right 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_0_12
+scene DMV_0_13
+press left 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_0_13
+scene DMV_in1
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene DMV_1_00
+press right 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_1_00
+scene DMV_1_01
+press left 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_1_01
+scene DMV_1_02
+press right 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_1_02
+scene DMV_1_03
+press left 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_03
+scene DMV_1_04
+press left 0.35
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_1_04
+scene DMV_1_05
+press left 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_05
+scene DMV_1_06
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_06
+scene DMV_1_07
+press down 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_1_07
+scene DMV_1_08
+press right 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_1_08
+scene DMV_1_09
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_09
+scene DMV_1_10
+press left 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_1_10
+scene DMV_1_11
+press left 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_11
+scene DMV_1_12
+press left 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_1_12
+scene DMV_1_13
+press right 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_1_13
+scene DMV_in2
+foot -256.99 -350.72 1.5708 7.25
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene DMV_2_00
+press left 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_2_00
+scene DMV_2_01
+press left 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_01
+scene DMV_2_02
+press right 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_2_02
+scene DMV_2_03
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_03
+scene DMV_2_04
+press down 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_2_04
+scene DMV_2_05
+press left 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_05
+scene DMV_2_06
+press left 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_06
+scene DMV_2_07
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_07
+scene DMV_2_08
+press right 0.35
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_2_08
+scene DMV_2_09
+press down 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_2_09
+scene DMV_2_10
+press right 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_2_10
+scene DMV_2_11
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot DMV_2_11
+scene DMV_2_12
+press left 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot DMV_2_12
+scene DMV_2_13
+press right 0.35
+wait 0.5
+press up 1.0
+wait 1.3
+shot DMV_2_13
+scene Moes_in0
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Moes_0_00
+press left 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_00
+scene Moes_0_01
+press left 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_01
+scene Moes_0_02
+press down 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_0_02
+scene Moes_0_03
+press down 0.35
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_03
+scene Moes_0_04
+press left 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_0_04
+scene Moes_0_05
+press right 0.35
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_0_05
+scene Moes_0_06
+press right 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_06
+scene Moes_0_07
+press left 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_0_07
+scene Moes_0_08
+press right 0.35
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_0_08
+scene Moes_0_09
+press left 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_09
+scene Moes_0_10
+press right 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_0_10
+scene Moes_0_11
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_0_11
+scene Moes_0_12
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_0_12
+scene Moes_0_13
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_0_13
+scene Moes_in1
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Moes_1_00
+press down 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_1_00
+scene Moes_1_01
+press down 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_1_01
+scene Moes_1_02
+press left 0.45
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_1_02
+scene Moes_1_03
+press right 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_03
+scene Moes_1_04
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_04
+scene Moes_1_05
+press right 0.45
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_1_05
+scene Moes_1_06
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_06
+scene Moes_1_07
+press right 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_07
+scene Moes_1_08
+press right 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_1_08
+scene Moes_1_09
+press down 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_09
+scene Moes_1_10
+press left 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_10
+scene Moes_1_11
+press down 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_1_11
+scene Moes_1_12
+press right 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_1_12
+scene Moes_1_13
+press left 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_1_13
+scene Moes_in2
+foot -169.90 -24.55 -1.5708 7.53
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Moes_2_00
+press right 0.55
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_2_00
+scene Moes_2_01
+press down 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_2_01
+scene Moes_2_02
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_02
+scene Moes_2_03
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_03
+scene Moes_2_04
+press down 0.35
+wait 0.5
+press up 2.2
+wait 2.5
+shot Moes_2_04
+scene Moes_2_05
+press right 0.35
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_2_05
+scene Moes_2_06
+press down 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_06
+scene Moes_2_07
+press down 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_07
+scene Moes_2_08
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_08
+scene Moes_2_09
+press down 0.55
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_09
+scene Moes_2_10
+press right 0.55
+wait 0.5
+press up 1.0
+wait 1.3
+shot Moes_2_10
+scene Moes_2_11
+press right 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_11
+scene Moes_2_12
+press down 0.35
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_12
+scene Moes_2_13
+press left 0.45
+wait 0.5
+press up 1.6
+wait 1.9
+shot Moes_2_13
+end

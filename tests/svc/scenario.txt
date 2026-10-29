@@ -1,0 +1,32 @@
+# Правки Роба 42 и 44 (tests/svc/emu.sh, разбор tests/svc/check.py): режим игрока — без служебных кнопок и строк,
+# ○ в машине — тормоз / назад, SELECT в машине — RESET CAR (раскладка оригинала, frontend.p3d ControllerPS2.pag).
+# Первая команда — режим (emu.sh --negative подставляет «flag service»: проверка обязана упасть).
+flag player
+scene car
+goto 220 172 1.5708
+wait 3
+flag carv
+# L+R+△ — у игрока обычный △ (выход из машины), не служебный полёт
+press l 0.4
+press r 0.4
+press triangle 0.4
+wait 2.5
+flag carv
+# снова за руль
+press triangle 0.3
+wait 3.5
+flag carv
+# R+SELECT — служебный счётчик не включается (и SELECT в машине — RESET CAR, строка SVC reset)
+press r 0.3
+press select 0.3
+wait 1.5
+# ○ в машине: газ X, потом ○ — тормоз и задний ход
+goto 220 172 1.5708
+wait 2
+press cross 2.5
+wait 2.6
+flag carv
+press circle 2
+wait 2.1
+flag carv
+end

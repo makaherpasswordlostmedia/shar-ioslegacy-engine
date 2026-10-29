@@ -1,0 +1,2 @@
+mode=data
+python3 {bin} frames --run {out_dir} --level-dir {package}

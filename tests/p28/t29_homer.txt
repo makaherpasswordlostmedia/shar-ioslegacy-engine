@@ -1,0 +1,22 @@
+scene start
+wait 3
+flag repair
+wait 4
+foot 220 176 3.1416
+wait 4
+flag eyex 5
+flag eyey 3.5
+flag eyez 3
+flag eyeon 3
+scene homer_now
+flag carshspr 0
+flag homerspot 0
+wait 3
+shot homer_now
+scene homer_new
+flag carshspr 1
+flag homerspot 1
+wait 3
+shot homer_new
+flag eyeon 0
+end

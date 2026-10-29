@@ -1,0 +1,47 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+flag msnhud 1
+wait 1
+scene F_GO6
+flag golevel 6
+wait 45
+flag msnhud 1
+wait 3
+shot go6_0
+flag msnhud 1
+wait 1
+scene F_GO2
+flag golevel 2
+wait 45
+flag msnhud 1
+wait 3
+shot go2_1
+flag msnhud 1
+wait 1
+scene F_GO6
+flag golevel 6
+wait 45
+flag msnhud 1
+wait 3
+shot go6_2
+flag msnhud 1
+wait 1
+scene F_GO3
+flag golevel 3
+wait 45
+flag msnhud 1
+wait 3
+shot go3_3
+flag msnhud 1
+wait 1
+scene F_GO6
+flag golevel 6
+wait 45
+flag msnhud 1
+wait 3
+shot go6_4
+flag msnhud 1
+wait 1
+end

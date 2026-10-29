@@ -1,0 +1,42 @@
+// Камеры разговора (правки Роба 40 и 38, видео с PSP 3:07–3:30: «Мардж за Гомером не видно»). Чистый C99 (проверка на Маке:
+// tests/camera/convcam.sh). Данные этапа диска: SetConversationCam(реплика, "npc_far" | "npc_near" | "pc_far" | "pc_near")
+// — какой план на реплику, SetCamBestSide(локатор) — с какой стороны оси «игрок — собеседник» стоит камера,
+// SetDialoguePositions — где стоят оба (viewer/game_msn.c). Смысл имён сверен с записью PS2 (tools/ps2ref, ролик
+// bziOipI4gDI): план всегда на ГОВОРЯЩЕМ этой реплики — npc_* снимает собеседника из-за плеча игрока, pc_* — игрока из-за
+// плеча собеседника; *_far — оба в рост, *_near — говорящий по колено, голова слушающего на переднем плане (m0sd 1:28 и 1:38,
+// m1sd 4:33 и 4:37, m2 10:50). Камера всегда по одну сторону оси (правило 180°): у m0sd Мардж слева, у m1sd — справа, как
+// у их SetCamBestSide.
+// Геометрия планов в данных диска не записана (она в коде оригинала) — ПРАВИЛО ПОРТА: числа подобраны по кадрам записи PS2
+// (tools/convcam_fit.py: положения собеседников из SetDialoguePositions, рост моделей, пиксели голов и ног; дальний план
+// сходится с m1sd до 10 px из 720 при зеркальной стороне). Разговор без SetConversationCam (m0 у Апу, m7sd с Карлом, m2 с
+// Недом): реплика 0 — npc_far, дальше план говорящего крупно (запись PS2 10:45, 39:30).
+#ifndef CONVCAM_H
+#define CONVCAM_H
+enum { CONV_NONE = 0, CONV_NPC_FAR, CONV_NPC_NEAR, CONV_PC_FAR, CONV_PC_NEAR };
+int convShot(const char *name);              // "npc_far" ... -> CONV_*, 0 — неизвестное имя
+const char *convShotName(int shot);
+int convShotOnPc(int shot);                  // 1 — план на игроке (pc_*), 0 — на собеседнике
+// план реплики line: из данных этапа (cams[i] — имя для реплики i, NULL — нет; действует последнее заданное <= line),
+// без данных — по правилу порта выше. pcSpeaks — говорит игрок. *fromData — 1, если план из данных
+int convShotFor(const char *const *cams, int ncam, int line, int pcSpeaks, int *fromData);
+
+typedef struct {
+  float pc[3], npc[3];      // ноги игрока и собеседника (мир движка)
+  float pcHead, npcHead;    // высота лица над ногами, м (сустав Head модели + 0.08; 0 — 1.5, как у Гомера): по ней
+                            // крупный план ребёнка (Лиза, 0.9 м) опускается — правило порта, у PS2 крупных планов детей нет
+  int hasBest; float best[3];   // SetCamBestSide: точка лучшей стороны
+} ConvScene;
+// сторона камеры: +1 — слева от оси игрок -> собеседник (взгляд сверху, up = +y), -1 — справа. Лучшая сторона из данных;
+// без неё — сторона, где стоит prevEye (глаз прошлой камеры: меньше скачок), prevEye NULL — +1
+int convSide(const ConvScene *s, const float prevEye[3]);
+// поза плана: глаз, точка взгляда, вертикальный FOV (градусы; кадр 16:9 — Hor+, вертикаль как у 4:3 оригинала)
+void convPose(const ConvScene *s, int shot, int side, float eye[3], float look[3], float *fovY);
+// ближняя плоскость для глаза eye: на крупном плане голова слушающего в 1.3–1.4 м от глаза, а ближняя плоскость города —
+// 1.5 м (main.c NEAR_Z): она срезала бы затылок, и лицо было бы видно «сквозь» голову. Возврат — расстояние по горизонтали
+// до ближнего из двоих минус 0.5 м (голова с причёской ~0.35 м и запас), не меньше 0.3 м
+float convNear(const ConvScene *s, const float eye[3]);
+// служебное (гейты): точка лица персонажа (who: 0 игрок, 1 собеседник) — ноги + высота лица, и проекция точки в кадр 16:9:
+// x, y в долях кадра [0..1] (0,0 — левый верх), глубина; 0 — за камерой
+void convFace(const ConvScene *s, int who, float out[3]);
+int convProject(const float eye[3], const float look[3], float fovY, const float p[3], float *x, float *y, float *depth);
+#endif

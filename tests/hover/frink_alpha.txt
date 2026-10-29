@@ -1,0 +1,43 @@
+# Гейт правки 413б (tests/hover/frink_alpha.sh). L7 у дома, дорога 2. (1) Игрок угоняет призрачный ship (трафик): он полупрозрачен
+# в данных (альфа текстуры) — правило его не трогает; (2) frink_v у игрока (как из будки): снимок с правилом и тот же кадр с прежним
+scene start
+wait 6
+scene L7_load
+flag golevel 7
+wait 25
+scene ship
+goto 200 155.1 1.5708
+foot 210 161.1 1.5708
+wait 3
+flag jackplace
+flag trfmodel 2
+flag trfstill
+wait 1
+press triangle 0.2
+wait 6
+flag carglass
+wait 1
+flag carglass
+shot ship_new
+flag carglassold 1
+wait 1
+flag carglass
+wait 1
+flag carglass
+shot ship_old
+flag carglassold 0
+scene frink
+flag phonecar_frink_v
+wait 5
+flag carglass
+wait 1
+flag carglass
+shot frink_new
+flag carglassold 1
+wait 1
+flag carglass
+wait 1
+flag carglass
+shot frink_old
+flag carglassold 0
+end

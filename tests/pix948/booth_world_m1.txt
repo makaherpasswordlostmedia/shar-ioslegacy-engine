@@ -1,0 +1,62 @@
+scene start
+wait 3
+scene L7_load
+flag golevel 7
+wait 40
+flag cfgdefaults 1
+flag diaglog 1
+flag camin 1
+flag dropfix921 1
+scene B0
+foot 144.5 83.0 3.1416
+wait 1.6
+shot b0_0
+press r 1.0
+wait 1.15
+shot b0_1
+press r 1.0
+wait 1.15
+shot b0_2
+press r 1.0
+wait 1.15
+shot b0_3
+scene B1
+foot 144.5 83.0 0
+wait 1.6
+shot b1_0
+press r 1.0
+wait 1.15
+shot b1_1
+press r 1.0
+wait 1.15
+shot b1_2
+press r 1.0
+wait 1.15
+shot b1_3
+scene B2
+foot 144.5 83.0 1.5708
+wait 1.6
+shot b2_0
+press r 1.0
+wait 1.15
+shot b2_1
+press r 1.0
+wait 1.15
+shot b2_2
+press r 1.0
+wait 1.15
+shot b2_3
+scene B3
+foot 144.5 83.0 -1.5708
+wait 1.6
+shot b3_0
+press r 1.0
+wait 1.15
+shot b3_1
+press r 1.0
+wait 1.15
+shot b3_2
+press r 1.0
+wait 1.15
+shot b3_3
+end

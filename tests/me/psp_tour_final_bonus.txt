@@ -1,0 +1,30 @@
+# Финальный тур, часть 2: бонус-трассы b02 (самая плотная) и b05 (самая длинная, 1299 м, 11 чекпойнтов), 1 круг, 3 ИИ на старте, игрока ведёт водитель ИИ. НЕ ЗАПУСКАТЬ без слова Роба.
+# Как tests/bonus/emu_pickups.txt: начинается с flag menu, после flag bonustrack N те же нажатия, что в emu_pickups (left, cross); итоги после заезда проходит flag bonusauto, старт flag bonusgo.
+flag menu
+flag bonusopen
+flag bonuslaps 1
+flag bonusauto 1
+flag meprof 1
+flag bonustrack 2
+wait 2
+press left
+wait 0.6
+press cross
+wait 1.5
+scene B02
+flag bonusgo
+wait 70
+shot B02
+wait 2
+flag bonustrack 5
+wait 2
+press left
+wait 0.6
+press cross
+wait 1.5
+scene B05
+flag bonusgo
+wait 110
+shot B05
+wait 2
+end

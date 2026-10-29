@@ -1,0 +1,20 @@
+# Комната Барта L4: поза рельсовой камеры int_br_camera01 из кадра BartRo_0_11 Камеры (окно «розовая панель»): eye (495,864; -18,219; 449,766), look (501,597; -19,0; 447,494) -> вектор (5,733; -0,781; -2,272), fov 36,0; cam берёт вектор
+wait 3
+flag golevel 4
+wait 20
+scene bart_in
+foot 224.7 204.4 3.1416 6.6
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene bw
+cam 495.864 -18.219 449.766 5.733 -0.781 -2.272 36.0
+wait 1.5
+shot bw
+cam 495.864 -18.219 449.766 5.733 -0.781 -2.272 50.0
+wait 1
+shot bw_wide
+end

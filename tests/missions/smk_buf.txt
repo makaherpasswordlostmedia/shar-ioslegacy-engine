@@ -1,0 +1,15 @@
+# №smk-buf (tests/missions/smk_buf.sh): L1, карточка миссии (всплеск строк «MSN plan»), старт, границы сцен — запись журнала смоука одной операцией на кадр
+scene B_L1_load
+flag golevel 1
+wait 20
+scene B_card_race_L1
+flag repair
+flag msn
+wait 3
+flag msnmainat 801
+wait 4
+press cross 0.3
+wait 1
+flag msngo
+wait 8
+end

@@ -1,0 +1,37 @@
+wait 12
+flag cfgdefaults 1
+flag piececull923 MODE
+flag diaglog 0
+flag camin 1
+scene P061
+foot 276.2 -511.0 0
+wait 1.6
+shot e061_0
+press r 1.0
+wait 1.15
+shot e061_1
+press r 1.0
+wait 1.15
+shot e061_2
+press r 1.0
+wait 1.15
+shot e061_3
+press r 1.0
+wait 1.15
+scene P063
+foot 402.2 -416.5 0
+wait 1.6
+shot e063_0
+press r 1.0
+wait 1.15
+shot e063_1
+press r 1.0
+wait 1.15
+shot e063_2
+press r 1.0
+wait 1.15
+shot e063_3
+press r 1.0
+wait 1.15
+
+end

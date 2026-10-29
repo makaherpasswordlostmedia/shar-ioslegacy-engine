@@ -1,0 +1,25 @@
+scene bubble_avatar
+flag player
+flag msn
+wait 0.2
+press cross 0.12
+wait 0.3
+flag uiavatar
+wait 0.7
+shot bubble_avatar
+scene bubble_noicon
+flag uimsgnoicon
+wait 0.9
+shot bubble_noicon
+scene tall_full
+flag msnmainat 301
+wait 0.3
+press cross 0.12
+wait 0.4
+press cross 0.12
+wait 1.0
+shot tall_full
+scene tall_top
+wait 5
+shot tall_top
+end

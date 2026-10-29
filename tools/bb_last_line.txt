@@ -1,0 +1,33 @@
+# Гейт «ящик после зависания хранит последнюю строку» (tools/bb_sync_gate.sh): путь игрока NEW GAME как в frame_gate_new.txt, затем bbOp(player, BBTEST_LAST_LINE, sync=1) и сразу
+# (после NEW GAME идёт ролик fmv1a ≈18 с, команды сценария в ролике не доходят до игры: ждём 32 с) зависание главного потока на 7 с (flag freeze: сторож «bbdog» через 5 с сам пишет blackbox.txt). Строка BBTEST_LAST_LINE обязана быть в ящике (шапка STALL … op= и кольцо).
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+scene PL_title
+shot pl_title
+press start
+wait 4
+scene PL_menu
+shot pl_menu
+press cross
+wait 20
+scene FG_new_start
+shot fg_new_0
+wait 32
+flag bbtest 1
+wait 1
+flag freeze 7
+wait 12
+shot fg_new_1
+end

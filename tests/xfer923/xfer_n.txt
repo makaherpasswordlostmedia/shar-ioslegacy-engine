@@ -1,0 +1,18 @@
+# №923: перенос героя на ~960 м (L2, «repair» = RESET CAR: из угла карты к стартовой машине): самый тяжёлый кадр правила глаза (CAMIN usmax) в сцене XF_b не больше 50 мс
+wait 12
+flag cfgdefaults 1
+flag player
+flag camxferold 0
+flag golevel 2
+wait 40
+scene XF_a
+foot -600 -735 0
+wait 3
+flag camin 1
+scene XF_b
+flag repair
+wait 4
+flag camin
+scene Z_END
+wait 1
+end

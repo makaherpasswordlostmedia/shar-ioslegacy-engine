@@ -1,0 +1,115 @@
+name: Build SHAR iOS armv7 (iOS 7+)
+
+# GitHub -> Actions -> "Build SHAR iOS armv7 (iOS 7+)" -> Run workflow. Artifact: SHAR-armv7.ipa (+ .deb).
+# No game data is needed or included: convert your own PS2 disc with the repo tools and copy the result into
+# the app's Documents/SHARVIEW folder (iTunes file sharing / Filza / scp).
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["ios/**", "viewer/**", ".github/workflows/ios-armv7.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  host-check:
+    name: Engine compiles against the PSP shim (x86_64, syntax only)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax-check engine + shim
+        working-directory: viewer
+        run: |
+          set -e
+          CF="-I../ios/shim -I. -std=gnu11 -fsyntax-only -w -include msio.h -include geguard.h -Dmain=shar_main"
+          SRC=$(grep -o 'add_executable(sharview [^)]*' CMakeLists.txt | sed 's/add_executable(sharview //')
+          for f in $SRC fxdsp.c collectfx.c camsafe.c; do
+            # savemenu.c has a sizeof()==1536 assert that only holds for 32-bit pointers
+            [ "$f" = savemenu.c ] && continue
+            gcc $CF "$f" || { echo "::error::$f"; exit 1; }
+          done
+          for f in ../ios/src/ge_list.c ../ios/src/psp_sys.c ../ios/src/me_stub.c; do gcc -fsyntax-only -w -I../ios/shim "$f"; done
+
+  build-ios-armv7:
+    name: iOS armv7 (Theos, iOS 7.0 - 9.3.5)
+    needs: host-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential perl curl ca-certificates zip unzip xz-utils bzip2 git fakeroot make
+
+      - name: Install Theos + iOS toolchain
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          set -euo pipefail
+          git clone --recursive https://github.com/theos/theos.git "$THEOS"
+          mkdir -p "$THEOS/toolchain/linux/iphone"
+          curl -fsSL "https://github.com/L1ghtmann/llvm-project/releases/download/main-update_3-eabca92/iOSToolchain-x86_64.tar.xz" -o /tmp/ios-toolchain.tar.xz
+          tar -xf /tmp/ios-toolchain.tar.xz -C "$THEOS/toolchain"
+          echo "THEOS=$THEOS" >> "$GITHUB_ENV"
+
+      - name: Install iPhoneOS 9.3 SDK
+        env:
+          THEOS: ${{ github.workspace }}/theos
+        run: |
+          set -euo pipefail
+          mkdir -p "$THEOS/sdks"
+          curl -fsSL -o /tmp/iphoneos9.3.sdk.tbz2 "https://raw.githubusercontent.com/Sn0wCooder/theos-sdks/master/iPhoneOS9.3.sdk.tbz2"
+          tar -xjf /tmp/iphoneos9.3.sdk.tbz2 -C "$THEOS/sdks"
+          SDK="$THEOS/sdks/iPhoneOS9.3.sdk"
+          for fw in "$SDK"/System/Library/Frameworks/*.framework; do
+            if [ -f "$fw/module.map" ]; then mkdir -p "$fw/Modules"; mv "$fw/module.map" "$fw/Modules/module.modulemap"; fi
+          done
+          find "$SDK/usr/include" -name module.map | while read -r m; do mv "$m" "$(dirname "$m")/module.modulemap"; done
+
+      - name: Build
+        working-directory: ios
+        env:
+          THEOS: ${{ github.workspace }}/theos
+          FINALPACKAGE: "1"
+        run: |
+          set -euo pipefail
+          make clean || true
+          make package FINALPACKAGE=1 2>&1 | tee ../build-theos.log
+          ls -la packages
+
+      - name: Verify Mach-O (armv7, min iOS 7.0)
+        working-directory: ios
+        run: |
+          BIN="$(find .theos -type f -name SHARArmv7 | head -n1)"
+          file "$BIN" || true
+          TOOLBIN="$THEOS/toolchain/linux/iphone/bin"
+          OTOOL="$(ls "$TOOLBIN"/*otool* 2>/dev/null | head -n1)"
+          [ -n "$OTOOL" ] && "$OTOOL" -hv -l "$BIN" | grep -E "cputype|ARM|version" | head -10 || true
+
+      - name: Pack .ipa
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          APP="$(find .theos -type d -name SHARArmv7.app | head -n1)"
+          [ -n "$APP" ] || { echo "::error::SHARArmv7.app not found"; exit 1; }
+          rm -rf ipa && mkdir -p ipa/Payload packages
+          cp -a "$APP" ipa/Payload/
+          (cd ipa && zip -rq "../packages/SHAR-armv7-$(git rev-parse --short HEAD).ipa" Payload)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SHAR-armv7-iOS
+          path: |
+            ios/packages/*.ipa
+            ios/packages/*.deb
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-log
+          path: build-theos.log
+          if-no-files-found: ignore

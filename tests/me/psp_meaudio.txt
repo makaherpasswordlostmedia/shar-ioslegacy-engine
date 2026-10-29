@@ -1,0 +1,45 @@
+# Тур «SHAR ME AUDIO» · звук на Media Engine (правка 276, пилот) — только ПОСЛЕ зелёной пробы ME (tests/me/psp_test8_me.txt). Сценарий тура SHARTOUR, ~3 мин.
+# Выкладка (терминал): make -C viewer/me && cp viewer/me/sharme.prx build/sharme.prx (или tools/ship.sh — правило sharme.prx);
+#   TOUR_TITLE="SHAR ME AUDIO" tools/tour_psp.sh --deploy; затем этот файл поверх сценария тура и флаг-файл meaudio:
+#   cp tests/me/psp_meaudio.txt /Volumes/PSP/PSP/GAME/SHARTOUR/scenario.txt && printf 1 > /Volumes/PSP/PSP/GAME/SHARTOUR/meaudio
+#   (следующий tools/tour_psp.sh --deploy файл meaudio стирает сам — звук на ME не остаётся в других турах)
+# Роб: в XMB «SHAR ME AUDIO» — запустить, слушать звук (музыка, мотор, удары — как всегда, без треска и пропаданий). После ролика
+#   Gracie машина поедет; потом минута стоя (сцена ME_sleep_window): усыпить PSP кнопкой питания и через 5–10 с разбудить.
+# Итог (tools/tour_psp.sh --fetch):
+#   smoke.txt/blackbox.txt — «ME audio on table=2 …» в начале; в строках ящика поле «meon86/0.0» (заданий ME в секунду / ожидание
+#     ответа, мс: ≈86 и 0 — ME считает звук), в секунду ролика заданий меньше (ролик — пауза ME звуку), после сна «meoff:sleep@N» (дальше звук на главном — так задумано);
+#     «meoff:timeout@N» — ME не ответил за 50 мс (звук продолжился на главном), «meoff:layout» — модуль от другой сборки
+#   me.txt — шаги «MEA 0…3» (служба поставлена)
+#   поле ящика «cpu a/b/c/d/e» — третье число: доля главного процессора у потока audio_mix (должна упасть против тура без meaudio)
+scene start
+flag trace 1
+wait 5
+scene MEA_drive1
+goto 246 -180 1.5708
+wait 2
+flag autostraight 8
+wait 15
+shot MEA_drive1_end
+flag stop
+scene MEA_movie
+flag mefmv 1
+wait 15
+shot MEA_after_movie
+scene MEA_drive2
+goto 444 68 3.1416
+wait 2
+flag autostraight 8
+wait 15
+shot MEA_drive2_end
+flag stop
+scene ME_sleep_window
+wait 60
+shot MEA_after_sleep
+scene MEA_drive3
+goto 345 68 1.5708
+wait 2
+flag autostraight 8
+wait 10
+shot MEA_drive3_end
+flag stop
+end

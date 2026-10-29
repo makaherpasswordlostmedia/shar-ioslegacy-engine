@@ -1,0 +1,12 @@
+# Ролик новой игры fmv1a (tests/movie/newgame.sh): главное меню -> × на NEW GAME -> перелёт к газете -> газета (уровень
+# читается) -> ролик fmv1a (снимок, START — пропустить) -> облёт улицы старта уровня (запрос камеры m0sd; в служебном запуске сама не играет)
+flag menu
+flag newgamefmv
+wait 1.5
+press cross
+wait 7
+shot fmv1a
+press start
+wait 4
+shot after_fmv1a
+end

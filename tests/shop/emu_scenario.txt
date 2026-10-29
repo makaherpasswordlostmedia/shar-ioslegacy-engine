@@ -1,0 +1,37 @@
+# Экран покупки PurchaseRewards (пункт 6, tests/shop/emu.sh): Барни (barney_loc 324.41, -121.88) — △, свет, □ звёзды, ✕ Plow King;
+# Гил (gil_loc 348.18, -323.34) — ► к фургону, △ отказ. Монеты: +200 (Plow King 150 -> останется 50)
+scene shop
+flag msn
+wait 3
+flag coinadd 200
+foot 325.5 -121.9 -1.5708 4
+wait 2
+shot barney
+press triangle
+wait 0.45
+shot shop_dark
+wait 1.8
+shot shop_lit
+press square
+wait 0.6
+shot shop_stats
+press square
+wait 0.4
+press cross
+wait 0.5
+shot shop_count
+wait 3.5
+shot shop_after
+scene gil
+foot 349.3 -323.3 -1.5708 0
+wait 2
+press triangle
+wait 2.5
+shot gil_lit
+press right
+wait 1.5
+shot gil_van
+press triangle
+wait 2.5
+shot gil_after
+end

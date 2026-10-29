@@ -1,0 +1,40 @@
+{
+ "id": "v1_gravity",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 260,
+ "every": 1,
+ "trace": [
+  "car_cm[1]",
+  "car_vel[1]",
+  "mat[13]"
+ ],
+ "writes": [
+  {
+   "value": 19.032899999999998,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 2,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 2,
+   "name": "car_vel[1]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 2,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": []
+}

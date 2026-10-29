@@ -1,0 +1,8 @@
+# Правка 252: служебная проба правила FPU (viewer/fpuguard.h) — 0/0 и сравнение с NaN в главном потоке (flag fpeprobe).
+# Новое: игра идёт, «FPE … V:m» в smoke.txt и событие FPE в ящике. С файлом fputrap (прежнее, ловушки как у PSP) проверяльщик
+# с HW_TRAP=1 останавливает игру на 0/0 — так встала бы PSP. Запуск: tests/crash_f10/hw.sh
+flag player
+wait 3
+flag fpeprobe
+wait 3
+end

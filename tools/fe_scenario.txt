@@ -1,0 +1,66 @@
+# Пункт 12а, гостиная (tools/fe_gate.sh): главное меню над 3D-гостиной оригинала (viewer/frontend3d.c, build/fe.shr).
+# Снимки на четырёх пунктах (flag feglow N: подсветка пункта N в полную силу): NEW GAME (4: газета), LOAD GAME (0: VCR),
+# MINI GAME (3: трек), OPTIONS (2: диван — Гомер поверх подсветки); потом 4 с меню для частоты кадров (строка FE).
+# Правка Роба 28.09 — перелёты камеры оригинала (tools/fe_check.py): с NEW GAME ► по кругу, × на каждом пункте:
+# RESUME (5), LOAD (0), SCRAP (1) — неготовые: туда и обратно (снимок у прилёта); OPTIONS (2): туда, экран Options,
+# △ — обратно (снимки в Options, на обратном пути, дома); MINI (3): см. ниже;
+# BONUS GAME (3, правка 420): туда к треку, выбор бонус-игры, △ — главный вид; NEW GAME (4): туда (снимок в полёте), загрузка, игра; память после выхода из меню (FEMEM), музыка меню (FEMUS)
+flag menu
+wait 2
+flag feglow 4
+wait 0.6
+shot fe_new
+flag feglow 0
+wait 0.6
+shot fe_load
+flag feglow 3
+wait 0.6
+shot fe_mini
+flag feglow 2
+wait 0.6
+shot fe_sofa
+flag feglow -1
+wait 4
+press right
+wait 0.3
+press cross
+wait 1.0
+shot fly_tv
+wait 1.8
+press right
+wait 0.3
+press cross
+wait 1.0
+shot fly_vcr
+wait 1.8
+press right
+wait 0.3
+press cross
+wait 1.0
+shot fly_book
+wait 1.8
+press right
+wait 0.3
+press cross
+wait 1.6
+shot fly_opt
+press triangle
+wait 0.5
+shot fly_opt_back
+wait 1.5
+shot fly_home
+press right
+wait 0.3
+press cross
+wait 1.6
+press triangle
+wait 1.0
+shot fly_mini
+press right
+wait 0.3
+press cross
+wait 0.9
+shot fly_new
+wait 3
+shot fe_game
+end

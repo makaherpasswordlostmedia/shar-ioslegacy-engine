@@ -1,0 +1,19 @@
+# №983 приёмка: кромка тротуара у дороги слоем и контур тропинок. L1, камера через улицу (H_street) и у угла (K_corner). «Было» — оба флага 0; «стало» — MODE (1 — новое, 0 — красный контроль)
+scene G983
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 4
+foot 220 172 0
+wait 3
+cam 228 4 158 -0.1 -0.25 -1
+wait 8
+flag edge983 0
+flag path983 0
+wait 1.5
+shot k_was
+flag edge983 MODE
+flag path983 MODE
+wait 1.5
+shot k_new

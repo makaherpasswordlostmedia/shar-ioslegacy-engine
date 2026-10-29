@@ -1,0 +1,11 @@
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag repair
+goto -330 90 4.71
+wait 3
+flag hlod 4
+wait 3
+shot HQ_m4
+end

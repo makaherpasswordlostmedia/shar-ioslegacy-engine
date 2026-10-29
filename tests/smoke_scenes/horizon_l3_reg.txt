@@ -1,0 +1,41 @@
+# Горизонт L3: цена в установившемся режиме (10 с с лентой) и смена дальности регулятором (ddfloor 150/250), пары выкл/вкл в один момент; гейт tools/horizon_gate.py
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 8
+scene HZ_cost
+flag repair
+goto -366 94 4.120
+wait 10
+scene HZ_reg150
+flag ddfloor 150
+wait 3
+flag horizon 0
+wait 1
+shot HZ_reg150_off
+flag horizon 8
+wait 1
+shot HZ_reg150_on
+scene HZ_reg250
+flag ddfloor 250
+wait 3
+flag horizon 0
+wait 1
+shot HZ_reg250_off
+flag horizon 8
+wait 1
+shot HZ_reg250_on
+scene HZ_reg150
+flag ddfloor 150
+wait 3
+flag horizon 0
+wait 1
+shot HZ_reg150_off
+flag horizon 8
+wait 1
+shot HZ_reg150_on
+end

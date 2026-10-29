@@ -1,0 +1,42 @@
+# КРАСНЫЙ КОНТРОЛЬ (режим не включается). Правка 428 (мультяшный режим, расширение порта): цена кадра выкл/вкл на одном пути. Сцены попарно: t0 — выкл, t1 — вкл
+scene start
+wait 3
+scene drive_t0
+goto 220 172 1.5708
+wait 1
+flag autostraight 6
+wait 7
+shot drive_t0
+flag stop
+scene drive_t1
+flag toon 0
+goto 220 172 1.5708
+wait 1
+flag autostraight 6
+wait 7
+shot drive_t1
+flag stop
+flag toon 0
+scene foot_t0
+foot 225 176 1.5708
+wait 6
+shot foot_t0
+wait 0.5
+shot foot_t0b
+scene foot_t1
+flag toon 0
+wait 6
+shot foot_t1
+flag toon 0
+scene L2_load
+flag golevel 2
+wait 20
+scene L2_t0
+wait 6
+shot L2_t0
+scene L2_t1
+flag toon 0
+wait 6
+shot L2_t1
+flag toon 0
+end

@@ -1,0 +1,86 @@
+# Правка 309: запись и загрузка системным окном утилиты сохранения PSP (tests/savegame/dialog/run.py). Один запуск эмулятора
+# с кнопками в окне (TWPAD -> контроллер эмулятора, tools/twins/ppsspp_headless_pad.patch):
+# новая игра -> отметка прогресса -> «svdialog» (окно и в служебном запуске) -> пауза -> SAVE GAME -> слот 1 -> окно PSP
+# «Сохранить эти данные?» -> ○ (отмена: ничего не пишется, снова слоты) -> слот 1 -> окно -> ✕ Да -> «Сохранение…» ->
+# «Сохранение завершено» -> ○ -> пауза -> SAVE GAME -> слот 1 (занят) -> окно «Перезаписать?» (по умолчанию «Нет») -> ← Да -> ✕ ->
+# «завершено» -> ○ -> пауза -> QUIT GAME -> NO -> главное меню -> LOAD GAME -> слот 1 -> «прогресс будет потерян» YES ->
+# окно PSP «Загрузить эти данные?» -> ✕ Да -> «Загрузка завершена» -> ○ -> игра с тем же прогрессом
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 4
+flag svmark
+flag svdialog
+wait 0.5
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 1
+shot d_slots
+press cross
+wait 1.5
+shot d_cancel_ask
+press circle
+wait 1.5
+shot d_cancel_back
+press cross
+wait 1.5
+shot d_confirm
+press cross
+wait 0.2
+shot d_saving
+wait 2
+shot d_done
+press circle
+wait 1.5
+shot d_after
+# перезапись того же слота: окно PSP «Перезаписать?», по умолчанию «Нет» (как на PSP) — стрелкой на «Да», ✕, «завершено», ○
+press cross
+wait 1
+shot d_slots_saved
+press cross
+wait 1.5
+shot d_overwrite_ask
+press left
+wait 0.4
+press cross
+wait 2
+shot d_overwrite_done
+press circle
+wait 1.5
+press down
+wait 0.4
+press cross
+wait 1
+press down
+wait 0.3
+press cross
+wait 3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2
+shot d_load_slots
+press cross
+# после QUIT игры нет: предупреждения «progress to be lost» нет (QUIT_NOGAME_OLD=1 — прежнее, тогда здесь ещё ✕ YES), сразу окно PSP «Загрузить эти данные?»
+wait 1.5
+shot d_load_ask
+press cross
+wait 2
+shot d_load_done
+press circle
+wait 5
+flag svlog
+shot d_loaded_game
+end

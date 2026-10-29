@@ -1,0 +1,18 @@
+scene typo_boom
+flag msn
+wait 2
+goto 220 172 1.5708
+wait 1
+flag testboom
+wait 6
+shot boom_a
+flag uitypo 1
+wait 0.1
+shot boom_b
+flag uitypo 2
+wait 0.1
+shot boom_c
+flag uitypo 0
+wait 0.1
+shot boom_a2
+end

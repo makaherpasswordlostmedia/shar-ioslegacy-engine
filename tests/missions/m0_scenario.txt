@@ -1,0 +1,46 @@
+# m0 «The Cola Caper» в эмуляторе (tests/missions/emu_m0.sh): старт миссий как NEW GAME (Гомер выходит к Мардж),
+# разговор по △ — голос Мардж и Гомера (icecream, 2 реплики ~12.5 с, viewer/msn_audio.c), брифинг (MissionLoad, X),
+# посадка по △ у двери, езда к Kwik-E-Mart, дверь магазина. Затем MISSION SELECT m1: разговор с Мардж (project, голос)
+# и после брифинга — музыка миссии M1_start (collection02, композиция l1_music.rms).
+# Перемещения — служебные msngo/msnfar (как goto); цели засчитывает рантайм миссий по настоящему положению.
+# Вход в Kwik-E-Mart — только когда комнаты подключены (крючок mvSetInterior), иначе сценарий честно стоит у двери.
+scene m0
+wait 3
+flag msn
+wait 3
+shot m0_marge
+press triangle
+wait 4
+shot m0_voice
+wait 10
+shot m0_briefing
+press cross
+wait 1
+shot m0_getin
+flag msngo
+wait 1
+press triangle
+wait 4
+shot m0_incar
+flag msnfar 25
+wait 3
+shot m0_sphere
+flag msngo
+wait 3
+shot m0_door
+flag msngo
+wait 2
+flag msnsel 1
+wait 3
+flag msngo
+wait 2
+flag msngo
+wait 2
+shot m1_marge
+press triangle
+wait 24
+shot m1_briefing
+press cross
+wait 3
+shot m1_music
+end

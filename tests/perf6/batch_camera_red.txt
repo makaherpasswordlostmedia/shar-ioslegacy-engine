@@ -1,0 +1,10 @@
+flag camlog
+scene warm
+wait 3
+foot 240 190 2.4
+wait 2
+scene frozen_house
+flag rfbreak 1
+flag ggbatchcompare
+wait 3
+end

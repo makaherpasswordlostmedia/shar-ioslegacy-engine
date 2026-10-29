@@ -1,0 +1,42 @@
+# №666/№667: герои уровней (1, 2, 3, 4) в своих машинах (SEAT замер)
+scene S_L1_load
+flag golevel 1
+wait 16
+scene S_L1_out
+foot 217.70 170.31 3.14
+wait 3
+press triangle
+wait 6
+flag seatlog 0
+wait 1
+scene S_L2_load
+flag golevel 2
+wait 16
+scene S_L2_out
+foot 154.60 -38.43 3.14
+wait 3
+press triangle
+wait 6
+flag seatlog 0
+wait 1
+scene S_L3_load
+flag golevel 3
+wait 16
+scene S_L3_out
+foot -0.75 -5.57 3.14
+wait 3
+press triangle
+wait 6
+flag seatlog 0
+wait 1
+scene S_L4_load
+flag golevel 4
+wait 16
+scene S_L4_out
+foot 217.48 172.27 3.14
+wait 3
+press triangle
+wait 6
+flag seatlog 0
+wait 1
+end

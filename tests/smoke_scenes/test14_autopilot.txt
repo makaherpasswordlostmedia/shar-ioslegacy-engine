@@ -1,0 +1,30 @@
+# TEST14 раздел 5: сцены автопилота (Физика). Формат smoke.h: scene / goto X Z HEADING / flag … / wait. Координаты стартов ориентировочные, Сборка3 уточняет.
+# Хост-проверка кода: tools/bots/pilot.c (езда: LEVEL PLAYER MSN SECS SEED; пешком: PILOT_WALK=1)
+scene D_L1_city
+goto 220 172 1.5708
+flag drive 75
+wait 76
+scene D_L1_walk
+foot 222 177 0
+flag walk 25
+wait 26
+# погоня: полный счётчик + езда (L3, L5 — сначала golevel N)
+scene D_L3_chase
+flag golevel 3
+flag hnr 100
+flag drive 75
+wait 76
+scene D_L5_chase
+flag golevel 5
+flag hnr 100
+flag drive 75
+wait 76
+scene D_L6_bridge
+flag golevel 6
+flag drive 75
+wait 76
+# трамплин L1 jumpzone9 (курс 45°) в ряд сбиваемых: старт за 40 м, газ прямо 8 с. Вариант без B1 — добавить «flag bisect 1» (команда в работе у Трасс)
+scene D_L1_ramp9
+goto 229.3 -536.0 0.785
+flag autostraight 8
+wait 9

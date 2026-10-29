@@ -1,0 +1,98 @@
+# №685: ходьба + посадки/выходы L1, SAY в журнале
+# №683: учёт реплик водителя: L1 ходьба+езда, L2 ходьба
+flag nosave 1
+flag player 1
+flag menu
+flag intro
+flag saves
+wait 3
+press start
+wait 4
+press start
+wait 1
+press start
+wait 9
+press start
+wait 4
+press start
+wait 4
+press right
+wait 2
+press cross
+wait 14
+press cross 0.3
+wait 2
+press cross 0.3
+wait 2
+press cross 0.3
+wait 2
+press cross 0.3
+wait 2
+press cross 0.3
+wait 2
+press cross 0.3
+wait 2
+flag saystat
+flag repair
+wait 3
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+press triangle 0.3
+wait 4
+flag saystat
+flag drive 100
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+press cross 0.3
+wait 3
+flag saystat
+flag saystat
+end

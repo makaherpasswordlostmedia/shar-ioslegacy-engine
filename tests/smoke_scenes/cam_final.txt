@@ -1,0 +1,44 @@
+# Камера финала 16.10 (№78, тень Гомера, конусы): пары кадров старое/новое. С TEST27 новое включено по умолчанию, сцена сама ставит «старое» (флаги 0) и «новое» (флаги 1).
+scene CF_L1_load
+flag golevel 1
+wait 15
+scene CF_road_old
+flag homerlit 0
+flag homerspot 0
+flag conewide 0
+flag repair
+foot 50 -285 0.0
+wait 3
+shot cf_road_old
+scene CF_road_new
+flag homerlit 1
+flag homerspot 1
+wait 3
+shot cf_road_new
+flag homerlit 0
+flag homerspot 0
+flag shadowspr 0
+scene CF_road2_old
+foot 20 -240 1.0
+wait 3
+shot cf_road2_old
+scene CF_road2_new
+flag homerlit 1
+flag homerspot 1
+wait 3
+shot cf_road2_new
+flag homerlit 0
+flag homerspot 0
+flag shadowspr 0
+scene CF_garage_old
+flag conewide 0
+foot -85 -300 1.5708
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+flag lightspr 1
+wait 4
+shot cf_garage_old
+scene CF_garage_new
+flag conewide 1
+wait 4
+shot cf_garage_new
+end

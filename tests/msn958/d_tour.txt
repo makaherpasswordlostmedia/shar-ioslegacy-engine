@@ -1,0 +1,21 @@
+# №958б путь D (как тур Роба): scene F_L1 (цель-значок «дом» в углу, как f00_l1), потом golevel 6; состояние значка в углу MSNICON и снимки через 3, 10, 30 с
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 8
+flag msnhud 1
+shot d_l1_home
+scene F_GO6
+flag golevel 6
+wait 45
+flag msnhud 1
+wait 3
+shot d_l6_t3
+flag msnhud 1
+wait 7
+shot d_l6_t10
+flag msnhud 1
+wait 20
+shot d_l6_t30
+flag msnhud 1
+end

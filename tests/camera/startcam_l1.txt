@@ -1,0 +1,10 @@
+# №645: камеры старта фаз миссий на L1 (flag startcam 1 — в служебном запуске по умолчанию они не играют: svcMode). Смотреть MSNCAM req/start/end
+flag startcam 1
+scene T_startcam
+flag msn
+wait 10
+shot sc_a
+flag msnmainat 502
+wait 6
+shot sc_b
+end

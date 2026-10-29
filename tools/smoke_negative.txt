@@ -1,0 +1,35 @@
+# Отрицательные контроли (tools/smoke.sh --negative): прогоняется ВЕСЬ tools/smoke_scenario.txt (без end), затем эти сцены.
+# Каждая сцена neg_* подбрасывает одну ошибку — смоук ОБЯЗАН её поймать; обычные сцены при этом должны пройти
+# (иначе контроль ничего не доказывает). Режим к этому моменту — view60 (последняя сцена основного сценария).
+scene neg_longframe
+wait 2
+flag longframe 80
+wait 2
+shot neg_longframe
+scene neg_delaycell
+wait 2
+flag delaycell 3
+wait 4
+shot neg_delaycell
+scene neg_badread
+wait 2
+flag badread
+wait 3
+shot neg_badread
+# правка 103: список GE как будто 24 КБ (обычный вид сейчас ~38 КБ, прежние 48 КБ уже не переполнялись)
+# Массив прежний — защита обязана пропускать куски и считать (geskip > 0), кадр идёт
+scene neg_gelist
+wait 1
+flag gelist 24
+wait 3
+shot neg_gelist
+# правка 103: у текстуры на экране пустая палитра (как у выгруженной модели) — кусок не рисуется, счётчик gebad обязан вырасти
+scene neg_gebad
+# Вернуть полный бюджет; проверять указатель текущей текстуры, а не ранее собранный дисплей-лист с прежним адресом
+flag gelist 256
+flag dloff 1
+wait 1
+flag gebad
+wait 2
+shot neg_gebad
+end

@@ -1,0 +1,67 @@
+# Загрузка 2: смена уровня L1 -> L2..L7 через меню (flag lvset N), время LOADSPIN/LOADREAD/FIRSTFRAME/MCPROBE по строкам smoke.txt
+flag menu
+wait 1.5
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 2
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 3
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 4
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 5
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 6
+press cross
+wait 14
+flag lvlog
+press start
+wait 1.2
+press up
+wait 0.6
+press cross
+wait 3
+flag lvset 7
+press cross
+wait 14
+flag lvlog
+end

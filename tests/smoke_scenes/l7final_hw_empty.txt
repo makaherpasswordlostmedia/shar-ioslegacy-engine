@@ -1,0 +1,37 @@
+# Тур для железа: финал L7 (№860, ENDING_SAVE860_OLD=0): финал -> диалог записи -> запись -> титры -> главное меню.
+# На PSP финал ни разу не проходил; 22.10 этот путь вешал эмулятор. Старт с финала L7 (msnmainat 701, как tests/content/ending_l7_checkpoint.txt).
+# «flag saves» ТОЛЬКО со своим SMOKE_HOME (иначе запись портит сейв Роба); на PSP запись идёт в сейв карты, перед туром сохранить копию SAVEDATA.
+# «flag svpickempty» (EBOOT с правкой SVPICK, окно «Меню» 23.10): запись только в первый ПУСТОЙ слот, занятые (слот 0 Роба SLES5189700) не трогаются;
+# пустого слота нет — запись отменяется, в журнале ENDSAVE skip, дальше титры. Выбор слота кнопкой в сценарии убран.
+# ВАРИАНТ ДЛЯ КАРТЫ БЕЗ ЦЕЛОЙ ЗАПИСИ (нет RESUME GAME); с записью — l7final_hw.txt (там «press up» перед NEW GAME).
+# Выжить должна каждая строка журнала: LEVELDONE code=2 -> ENDSAVE open=1 -> ENDSAVE closed -> CREDITS on -> FEBACK; конец — строка END.
+flag menu
+flag saves
+flag lvset 7
+scene ending_l7
+wait 1.5
+press cross
+wait 9
+flag lvlog
+flag svpickempty
+flag msnmainat 701
+wait 8
+shot fin_a_level
+wait 12
+shot fin_b_after
+wait 6
+shot fin_c_dialog
+press cross
+wait 3
+shot fin_d_slot
+wait 4
+shot fin_e_saved
+press cross
+wait 6
+shot fin_f_credits
+wait 20
+shot fin_g_credits2
+press triangle
+wait 6
+shot fin_h_menu
+end

@@ -1,0 +1,21 @@
+# TEST19 видео L2 4:08: скамья закрывает героя. Запуск на пакете test20_emu. Красный: flag campropold 1 + flag camraiseold 1 (герой за скамьёй в 3 кадрах из 6), зелёный — по умолчанию (герой виден в 4 из 6, ещё 2 — голова над скамьёй)
+flag player
+scene T20_L2_load
+flag golevel 2
+wait 20
+scene T20_L2_bench
+flag camin 1
+wait 2
+shot bn5_0
+wait 2
+shot bn5_1
+wait 2
+shot bn5_2
+wait 2
+shot bn5_3
+wait 2
+shot bn5_4
+wait 2
+shot bn5_5
+flag camin
+end

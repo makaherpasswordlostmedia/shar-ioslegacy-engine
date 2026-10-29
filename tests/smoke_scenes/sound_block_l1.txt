@@ -1,0 +1,93 @@
+# Звуковой блок L1 для общего теста (терминал игры 17.10; Роб: «тест вместе со звуком»). Без смены уровня (она висит — №700/находка 17.10).
+# Что слушать и что пишет журнал: наезды — крики прохожих и водителей, реплика героя после крика (№180/184/467, №183/685, STREETSAY);
+# пешком — шаги, прыжки, туба (№179); выход и посадка — W_GOC/W_GIC (№345); будка; Kwik-E-Mart — атмосфера комнаты (№345, ROOMAMB);
+# лавка — музыка muzak (№235); горящая машина — повтор W_Burn (№180); в конце SAYSTAT — счёт разных фраз (№685: не одна и та же)
+flag sfxlog 1
+scene S_L1_START
+flag repair
+flag warmhere
+wait 3
+scene S_L1_HITS
+flag repair
+flag warmhere
+wait 3
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag pedahead 7
+flag trfahead 7
+flag autostraight 4
+wait 5
+flag stop
+wait 1
+scene S_L1_GETOUTIN
+press triangle
+wait 3
+press triangle
+wait 3
+scene S_L1_FOOT
+press triangle
+wait 2
+flag walk 24
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 5
+press cross 0.3
+wait 4
+flag stop
+scene S_L1_BOOTH
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 2
+press triangle
+wait 4
+scene S_L1_KWIK
+foot 213.9 301.4 3.1416
+wait 1
+press triangle
+wait 8
+scene S_L1_SHOP
+flag coinadd 300
+wait 1
+flag sellergo 0
+wait 0.4
+press triangle
+wait 6
+press triangle
+wait 3
+scene S_L1_BURN
+flag repair
+flag warmhere
+wait 2
+goto 220 172 1.5708
+wait 3
+flag testboom
+wait 30
+scene S_L1_SAYSTAT
+flag saystat 1
+wait 1
+end

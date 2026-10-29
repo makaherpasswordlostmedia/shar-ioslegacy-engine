@@ -1,0 +1,26 @@
+# №958б путь F: тур-старт L1, flag msn (старт сюжетной миссии как NEW GAME), цель L1 -> golevel 6 -> lvwin на L6 -> golevel 2; MSNICON/MSNHUD
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+flag msn
+wait 6
+flag msnhud 1
+shot f_l1_msn
+scene F_GO6
+flag golevel 6
+wait 45
+flag msnhud 1
+wait 3
+shot f_l6_t3
+flag msnhud 1
+wait 7
+flag msnhud 1
+scene F_GO2
+flag golevel 2
+wait 45
+flag msnhud 1
+wait 3
+shot f_l2_t3
+flag msnhud 1
+end

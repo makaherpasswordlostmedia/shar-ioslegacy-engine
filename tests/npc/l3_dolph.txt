@@ -1,0 +1,10 @@
+flag level 3
+scene dolph
+flag msn
+wait 3
+foot -124.5 121.5 -.1 -32.6827
+wait 5
+shot dolph_idle
+wait .5
+shot dolph_walk
+end

@@ -1,0 +1,33 @@
+# мультик №675/№679: L1 улица, Гомер крупно, глаза два варианта. выкл / вкл (тонкие глаза) / вкл (глаза без обводки)
+scene T_load
+wait 3
+scene T_street_off
+foot 225 176 1.5708
+wait 6
+shot street_off
+cam 227.4 4.95 176 -1 -0.04 0 36
+wait 1.5
+shot homer_off
+cam off
+flag toon 1
+flag tooneyes 1
+scene T_street_on
+wait 3
+shot street_on
+cam 227.4 4.95 176 -1 -0.04 0 36
+wait 1.5
+shot homer_on
+cam 226.2 4.95 175.4 -0.5 -0.04 0.3 30
+wait 1
+shot homer_on_close
+cam off
+flag tooneyes 0
+scene T_street_noeyes
+cam 227.4 4.95 176 -1 -0.04 0 36
+wait 1.5
+shot homer_noeyes
+cam 226.2 4.95 175.4 -0.5 -0.04 0.3 30
+wait 1
+shot homer_noeyes_close
+cam off
+end

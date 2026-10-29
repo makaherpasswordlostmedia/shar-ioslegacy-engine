@@ -1,0 +1,10 @@
+flag level 7
+wait 2
+foot -150 616.667 0
+wait 2
+foot -150 645 3.14159
+wait 2
+foot -125 616.667 -1.5708
+wait 2
+shot field
+end

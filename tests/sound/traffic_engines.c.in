@@ -1,0 +1,74 @@
+// Real resident VAG engines, shared DSP job, and the actual main.c selector.
+#include "AUDIO_SOURCE"
+#include "traffic.h"
+#include "msncar.h"
+#include "skid.h"
+static const MsnCars *mvCars(void){return NULL;}
+static Traffic traffic;static int haveTraffic,smkOn;
+static float camx,camy,camz,smkT;
+static void smkWrite(const char *s){(void)s;}
+SELECTOR
+static short output[MIX_FRAMES*2];
+static int checks,fails;static unsigned pcmHash=2166136261u;
+static void check(int ok,const char *why){checks++;if(!ok){fails++;printf("FAIL %s\n",why);}}
+static void buffers(int n){for(int i=0;i<n;i++){audioHostMix(output,MIX_FRAMES);for(unsigned k=0;k<sizeof output;k++)pcmHash=(pcmHash^((unsigned char*)output)[k])*16777619u;}}
+static MixVoice *motorVoice(int slot){Engine*e=&worldEngine[slot];int h=e->idle?e->idle:e->eng;return h?&J->v[(h&255)-1]:NULL;}
+static int currentSource(int source){for(int i=0;i<AUDIO_WORLD_ENGINES;i++)if(worldSource[i]==source && worldEngine[i].eng)return i;return -1;}
+int main(int argc,char**argv){
+ if(argc!=2 || audioInit(argv[1]))return 2;
+ check(H->ncar==5,"hero plus four authored traffic profiles");
+ const SabCar *profiles=(const SabCar*)(bank+H->carOff);
+ for(unsigned p=1;p<H->ncar;p++) {
+  int index=audioCarProfile(profiles[p].name);
+  check(index==(int)p && profiles[p].engine>=0,"model resolves its own engine clip");
+  audioListener(0,0,0,1,0);
+  audioWorldEngine(0,10,index,10,0,0,0,120,0,1/60.f);buffers(3);
+  MixVoice*v=motorVoice(0);
+  check(v && v->point.on && v->point.p[0]==160,"source reaches shared DSP job");
+  check(v && v->gr>v->gl && v->gl>0,"right-hand engine pans right");
+  int handle=worldEngine[0].eng,idle=worldEngine[0].idle;
+  float bus=busVol[AUDIO_BUS_CAR];audioBus(AUDIO_BUS_CAR,0);buffers(2);
+  check(v && !v->gl && !v->gr,"traffic engine respects pause/car volume bus");
+  audioBus(AUDIO_BUS_CAR,bus);buffers(2);
+  check(v && v->gr>0 && worldEngine[0].eng==handle,"restoring volume keeps decoder");
+  audioListener(20,0,0,1,0);buffers(2);
+  check(v && v->gl>v->gr,"passing source changes stereo side");
+  check(worldEngine[0].eng==handle && worldEngine[0].idle==idle,"listener movement does not restart decoder");
+  audioListener(20,0,0,-1,0);buffers(2);
+  check(v && v->gr>v->gl,"camera rotation changes stereo side");
+  audioWorldEngine(0,10,index,30,0,0,0,120,0,1/60.f);buffers(2);
+  check(v && v->point.p[0]==480 && v->gl>v->gr,"engine follows the moving car");
+  audioListener(90,0,0,1,0);buffers(2);
+  check(v && !v->gl && !v->gr,"outside hearing range is silent");
+  audioListener(30,0,0,1,0);buffers(2);
+  check(v && v->gl>0 && v->gl==v->gr,"returning near source restores centered engine");
+  audioWorldEngine(0,-1,-1,0,0,0,0,1,0,1/60.f);buffers(3);
+  check(!audioPlaying(handle) && !audioPlaying(idle),"removed source fades and frees its voices");
+ }
+ check(audioCarProfile("not_on_disc")==-1,"missing model never substitutes hero engine");
+ // Exercise rank changes through the actual selector, with all five runtime cars.
+ TrHeader hd={0};TrModel model[4]={0};hd.nModel=4;traffic.hd=&hd;traffic.model=model;traffic.maxCars=TR_MAXCAR;
+ for(int i=0;i<4;i++)memcpy(model[i].name,profiles[i+1].name,16);
+ for(int i=0;i<TR_MAXCAR;i++){
+  TrCar*a=&traffic.car[i];a->mode=TRM_DRIVE;a->model=i%4;a->car.x=5.f*(i+1);a->car.p.topSpeed=30;a->v=10;
+ }
+ haveTraffic=1;camx=camy=camz=0;trafficMotorFrame(1/60.f,camx,camy,camz);buffers(3);
+ check(currentSource(0)>=0 && currentSource(1)>=0 && currentSource(2)>=0 && currentSource(3)<0 && currentSource(4)<0,"only the nearest three engines occupy slots");
+ int slot=currentSource(0),handle=slot>=0?worldEngine[slot].eng:0;
+ traffic.car[0].car.x=14;traffic.car[1].car.x=5;trafficMotorFrame(1/60.f,camx,camy,camz);buffers(2);
+ check(currentSource(0)==slot && slot>=0 && worldEngine[slot].eng==handle,"rank change retains actor's slot and decoder");
+ traffic.car[0].car.destroyed=1;trafficMotorFrame(1/60.f,camx,camy,camz);buffers(3);
+ check(currentSource(0)<0 && currentSource(3)>=0,"destroyed traffic engine stops; next nearby car replaces it");
+ for(int i=0;i<TR_MAXCAR;i++)traffic.car[i].car.x=100;
+ trafficMotorFrame(1/60.f,camx,camy,camz);buffers(3);
+ for(int i=0;i<AUDIO_WORLD_ENGINES;i++)check(!worldEngine[i].eng&&!worldEngine[i].idle,"no decoder work for distant traffic");
+ traffic.car[0].car.destroyed=0;traffic.car[0].car.x=5;trafficMotorFrame(1/60.f,camx,camy,camz);buffers(2);
+ haveTraffic=0;trafficMotorFrame(1/60.f,camx,camy,camz);buffers(3);
+ check(currentSource(0)<0,"level unload clears motor sources");
+ // Simultaneous moving engines remain inside the existing resident voice budget.
+ for(int i=0;i<AUDIO_WORLD_ENGINES;i++)audioWorldEngine(i,100+i,1+i,i*3,0,0,60,120,1,.016f);
+ buffers(3);int active=0;for(int i=0;i<NVOICE;i++)active+=voices[i].state!=V_FREE;
+ check(active<=AUDIO_WORLD_ENGINES*2,"at most six traffic voices in existing bank");
+ printf("%s traffic engine checks=%d failures=%d dropped=%d pcm=%08x\n",fails?"FAIL":"PASS",checks,fails,dropped,pcmHash);
+ audioShutdown();return fails?1:0;
+}

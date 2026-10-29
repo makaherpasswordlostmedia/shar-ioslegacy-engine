@@ -1,0 +1,17 @@
+# Чистая карта, навигация стрелками: NEW GAME -> ► -> (новая: LOAD GAME, RESUME GAME скрыт; старая: серый RESUME GAME) -> ► -> -> ◄◄ обратно
+flag menu
+flag saves
+wait 2.5
+shot e0_start
+press right
+wait 0.8
+shot e1_right
+press right
+wait 0.8
+shot e2_right2
+press left
+wait 0.8
+press left
+wait 0.8
+shot e3_back
+end

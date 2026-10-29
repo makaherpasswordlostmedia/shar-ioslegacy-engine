@@ -1,0 +1,193 @@
+# Тур 12 (11.10): сценарий 11A с поправкой разбора тура 11: после flag msnmainat брифинг миссии грузится 4,4-4,8 с и ждёт ✕ (мир стоит, кадры не считаются): wait 6, press cross, потом msngo
+# Финальный тур, часть 1: 8 худших точек каталога Бонуса (РЕСЁРЧ_ОПТ_ХУДШИЕ_СЦЕНЫ_2026-10-10.md, раздел 10). НЕ ЗАПУСКАТЬ без слова Роба.
+# Каждая точка ~20 с: миссия с нужного этапа (flag msnmainat МИССИЯ*100+ЭТАП), ведём к цели (msngo), розыск 85 там, где в каталоге полиция, езда прямо.
+# Индекс миссии взят из build/research/2026-10-03_стратегия/levelNN.msn.json (порядок missions); сверять по строке smoke.txt «MSN mainat <id> stage=<n>»:
+# tools/tour_final_gate.py проверяет совпадение id и этапа и останавливает вердикт, если индекс сдвинулся (в level01 есть m0, в L3-L6 в json её нет).
+# Гейт точки: ноль пропусков (missed), p95 <= 31 мс, строка причины ближней плоскости (NEARWHY, см. tools/tour_final_gate.py) не пустая.
+scene start
+flag meprof 1
+wait 6
+scene L3_load
+flag golevel 3
+wait 20
+# Тур 11 (зависание L3 после загрузки): 60 с простоя без ввода, затем езда 60 с, затем остальные точки
+scene L3_idle
+wait 60
+scene L3_drive
+flag repair
+flag autostraight 14
+wait 15
+flag autostraight 14
+wait 15
+flag autostraight 14
+wait 15
+flag autostraight 14
+wait 15
+shot L3_drive
+flag stop
+wait 1
+# P3_sr3: L3 sr3 этап 1: гонка 3 соперника, трафика нет
+scene P3_sr3
+flag msnmainat 901
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag autostraight 14
+wait 12
+shot P3_sr3
+flag stop
+wait 1
+scene L4_load
+flag golevel 4
+wait 20
+# P4_m1e5: L4 m1 этап 5: dump cDonut + cPolice, 10 предметов
+scene P4_m1e5
+flag msnmainat 5
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P4_m1e5
+flag stop
+flag hnr 0
+wait 1
+scene L5_load
+flag golevel 5
+wait 20
+# P5_m6e2: L5 m6 этап 2: losetail cPolice + cArmor, 10 машин
+scene P5_m6e2
+flag msnmainat 502
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e2
+flag stop
+flag hnr 0
+wait 1
+# P5_m6e4: L5 m6 этап 4: destroy cArmor, плотный город
+scene P5_m6e4
+flag msnmainat 504
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m6e4
+flag stop
+flag hnr 0
+wait 1
+# P5_m1e2: L5 m1 этап 2: dump cCola, 11 предметов, город 74 тыс.
+scene P5_m1e2
+flag msnmainat 2
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P5_m1e2
+flag stop
+flag hnr 0
+wait 1
+scene L6_load
+flag golevel 6
+wait 20
+# P6_bm1e5: L6 bm1 этап 5: destroy cMilk, 10 машин, взрыв цели
+scene P6_bm1e5
+flag msnmainat 1205
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_bm1e5
+flag stop
+flag hnr 0
+wait 1
+# P6_m2e1: L6 m2 этап 1: follow IStruck+cKlimo, 2 полиции
+scene P6_m2e1
+flag msnmainat 101
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m2e1
+flag stop
+flag hnr 0
+wait 1
+# P6_m7e1: L6 m7 этап 1: гонка cSedan + розыск
+scene P6_m7e1
+flag msnmainat 601
+wait 6
+press cross 0.3
+wait 2
+flag msngo
+wait 2
+flag hnr 85
+flag autostraight 14
+wait 12
+shot P6_m7e1
+flag stop
+flag hnr 0
+wait 1
+# Хвост: счётчик щелей (слово Роба): clearchk+seamchk включаются на лету, 3 точки по 10 с; скорость этих сцен (C_*) гейт не считает, смотреть SHOTFILE magenta=
+scene C_L1_load
+flag golevel 1
+wait 20
+scene C_L1
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L1
+flag stop
+scene C_L2_load
+flag clearchk 0
+flag golevel 2
+wait 20
+scene C_L2
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L2
+flag stop
+scene C_L7_load
+flag clearchk 0
+flag golevel 7
+wait 20
+foot 212.5 172.4 3.1416
+wait 3
+flag repair
+scene C_L7
+flag clearchk 1
+flag seamchk 1
+flag autostraight 8
+wait 10
+shot C_L7
+flag stop
+flag clearchk 0
+end

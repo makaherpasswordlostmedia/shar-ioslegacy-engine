@@ -1,0 +1,115 @@
+# Перепроверка TEST28 (Стены): кусты J9-4/J9-5 и изгородь на цоколе, реальная игра, езда прямо (flag autostraight = газ с места), скорость задаётся разгоном
+wait 3
+scene j94_slow
+goto 131.5 159.0 -1.5708
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot j94_slow_a
+wait 0.5
+shot j94_slow_b
+wait 0.5
+shot j94_slow_c
+wait 0.6
+shot j94_slow_d
+wait 1.5
+flag stop
+scene j94_fast
+goto 160.0 159.0 -1.5708
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot j94_fast_a
+wait 0.5
+shot j94_fast_b
+wait 0.5
+shot j94_fast_c
+wait 0.6
+shot j94_fast_d
+wait 1.5
+flag stop
+scene j95_slow
+goto 143.7 170.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot j95_slow_a
+wait 0.5
+shot j95_slow_b
+wait 0.5
+shot j95_slow_c
+wait 0.6
+shot j95_slow_d
+wait 1.5
+flag stop
+scene j95_fast
+goto 143.7 195.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot j95_fast_a
+wait 0.5
+shot j95_fast_b
+wait 0.5
+shot j95_fast_c
+wait 0.6
+shot j95_fast_d
+wait 1.5
+flag stop
+scene plinth_slow
+goto 213.0 154.5 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot plinth_slow_a
+wait 0.5
+shot plinth_slow_b
+wait 0.5
+shot plinth_slow_c
+wait 0.6
+shot plinth_slow_d
+wait 1.5
+flag stop
+scene plinth_fast
+goto 213.0 178.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot plinth_fast_a
+wait 0.5
+shot plinth_fast_b
+wait 0.5
+shot plinth_fast_c
+wait 0.6
+shot plinth_fast_d
+wait 1.5
+flag stop
+scene plinth_mid
+goto 216.0 166.0 3.1416
+wait 1.5
+flag stop
+flag repair
+flag autostraight 3.2
+wait 0.4
+shot plinth_mid_a
+wait 0.5
+shot plinth_mid_b
+wait 0.5
+shot plinth_mid_c
+wait 0.6
+shot plinth_mid_d
+wait 1.5
+flag stop
+end

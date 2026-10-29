@@ -1,0 +1,29 @@
+flag menu
+wait 11.8
+press left
+wait .3
+press left
+wait .3
+press cross
+wait 4
+shot options_pause
+wait 5
+shot options_still
+press triangle
+wait 4
+shot resumed
+wait 4
+flag idle 1
+wait 3
+shot idle_title
+press cross
+wait .8
+flag idle 1000
+wait 3
+shot title_return
+flag fegagauto 0
+flag fegagseg 4
+flag fegag 0
+wait 2
+shot homer_voice
+end

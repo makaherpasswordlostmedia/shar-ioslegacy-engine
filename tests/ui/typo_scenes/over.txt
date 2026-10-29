@@ -1,0 +1,22 @@
+# sr1 has a vehicle-damage failure condition. m1's first collect stage does
+# not; capture the actual failed state, never a damaged-car HUD or briefing.
+scene typo_over
+flag msn
+wait 2
+flag msnmain 8
+wait 1
+press cross
+wait 5
+flag testboom
+wait 6
+shot over_a
+flag uitypo 1
+wait .1
+shot over_b
+flag uitypo 2
+wait .1
+shot over_c
+flag uitypo 0
+wait .1
+shot over_a2
+end

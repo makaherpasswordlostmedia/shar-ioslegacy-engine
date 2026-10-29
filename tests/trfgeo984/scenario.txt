@@ -1,0 +1,83 @@
+# №984 трафик: проверки риска выброса GE (bigNear, carNear853) — отсев по квадратам. На каждом уровне L3, L5, L6, L7: езда автопилотом (flag drive 20) в трафике; сначала служебный режим trfgeocheck (каждая проверка двумя путями, расхождения должны быть 0), потом цена: окно с новым расчётом, окно со старым (flag trfgeo984 0)
+scene T
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 3
+scene L3
+flag golevel 3
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 8
+flag trfgeocheck 1
+wait 15
+flag trfgeocheck 1
+flag trfgeocheck 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 1
+scene L5
+flag golevel 5
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 8
+flag trfgeocheck 1
+wait 15
+flag trfgeocheck 1
+flag trfgeocheck 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 1
+scene L6
+flag golevel 6
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 8
+flag trfgeocheck 1
+wait 15
+flag trfgeocheck 1
+flag trfgeocheck 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 1
+scene L7
+flag golevel 7
+wait 40
+press triangle 0.2
+wait 3
+flag drive 20
+wait 8
+flag trfgeocheck 1
+wait 15
+flag trfgeocheck 1
+flag trfgeocheck 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 0
+flag trgdump 1
+wait 12
+flag trgdump 1
+flag trfgeo984 1

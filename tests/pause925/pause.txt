@@ -1,0 +1,8 @@
+scene P_load
+flag golevel 1
+wait 20
+scene P_pause
+press start
+wait 1.5
+shot pause_a
+end

@@ -1,0 +1,7 @@
+# Сцена тура К4 «список против полос» (вставить в тур TEST29 после езды, перед концом). Нужен stripbench.bin рядом с EBOOT (tools/strip_probe level.shr --emit stripbench.bin --cells 1).
+# Режимы A / A2 / B / B2 / C × V0 (обычный вьюпорт) / V1 (scissor 1×1), 20 кадров прогрева + 120 замера каждый; отчёт stripbench.txt рядом с EBOOT и строки STRIPBENCH в журнал смоука.
+scene STRIPBENCH
+wait 1
+flag stripbench 1
+wait 1
+shot stripbench_end

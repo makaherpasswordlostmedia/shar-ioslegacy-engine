@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.10)
+project(loadbench C)
+add_executable(loadbench main.c)
+target_compile_options(loadbench PRIVATE -O2 -Wall -Wextra -Werror)
+target_link_libraries(loadbench lz4 pspdebug pspdisplay pspctrl psppower pspge)
+create_pbp_file(TARGET loadbench TITLE "SHAR Loading Bench R3" BUILD_PRX MEMSIZE 1)

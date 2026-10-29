@@ -1,0 +1,26 @@
+# fogground на базе test28: L3 причал, глаз 30 м над причалом, взгляд вниз 0,2 рад; выкл / вкл
+scene start
+wait 3
+scene FG_load
+flag golevel 3
+wait 22
+flag repair
+goto -469.4 -35.9 3.927
+wait 3
+flag eyex -469.4
+flag eyey -38.4
+flag eyez -35.9
+flag eyedx -0.693
+flag eyedy -0.199
+flag eyedz -0.693
+flag eyeon 1
+scene FG_off
+flag fogground 0
+wait 4
+shot FG_off
+scene FG_on
+flag fogground 1
+wait 4
+shot FG_on
+flag eyeon 0
+end

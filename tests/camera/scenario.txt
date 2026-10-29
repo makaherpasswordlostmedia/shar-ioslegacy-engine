@@ -1,0 +1,73 @@
+# «press circle» рядом с ↑/↓/←/→ пешком: ○ зажат — Гомер бежит (раскладка оригинала ControllerPS2.pag: ○ DASH / SPRINT, 29.09); без ○ идёт 4 м/с
+# Правки Роба 40 и 27 (tests/camera/emu.sh, разбор tests/camera/check.py): камера пешком и за машиной не заходит в стены.
+# В каждой сцене — место у стены (спиной к зданию или к краю комнаты: без обхода глаз камеры оказывается внутри стены
+# или за полом комнаты), прогулка/стоянка; «flag camstat 1» — обнулить счётчик и пропустить 1 с (перелёт камеры после
+# переноса), «flag camstat» — строка CAMW: кадры и кадры, где луч от точки взгляда до глаза упирается в коллизию или
+# под глазом нет опоры (пустота за стеной комнаты). Камеры комнат из данных (рельсы, углы) стоят за стенами нарочно —
+# не в счёт (их проверяет tests/rooms/walls.py). Порядок: сначала машина (Гомер за рулём со старта), потом пешком.
+scene start
+wait 3
+# машина задом к фасаду школы
+scene car_school
+goto -28.5 580 1.5708
+flag camstat 1.5
+wait 2.5
+flag camstat
+shot car_school
+# машина задом к Kwik-E-Mart
+scene car_kwik
+goto 218 297 3.1416
+flag camstat 1.5
+wait 2.5
+flag camstat
+shot car_kwik
+# пешком: спиной к фасаду школы
+scene foot_school
+foot -33.2 580 1.5708
+flag camstat 1
+wait 2
+press up 1.2
+press circle 1.2
+wait 1.5
+flag camstat
+shot foot_school
+# пешком: спиной к Kwik-E-Mart (в стороне от двери)
+scene foot_kwik
+foot 219 300.4 3.1416
+flag camstat 1
+wait 2
+press up 1.2
+press circle 1.2
+wait 1.5
+flag camstat
+shot foot_kwik
+# пешком: у стены дома Симпсонов
+scene foot_house
+foot 240 190 2.4
+flag camstat 1
+wait 2
+press up 1.5
+press circle 1.5
+wait 1.8
+flag camstat
+shot foot_house
+# комната: дом Симпсонов, у южного края пола, там, где камеры комнаты нет (камера пешком)
+scene house_door
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.3
+press circle 0.3
+wait 1.5
+# правка Роба 41 (7ad2b70): в дом — только по △ в триггере двери
+press triangle
+wait 2.5
+scene room_house
+foot 497.0 388.0 0 -19.5
+flag camstat 1
+wait 2
+press left 0.6
+press circle 0.6
+wait 1
+flag camstat
+shot room_house
+end

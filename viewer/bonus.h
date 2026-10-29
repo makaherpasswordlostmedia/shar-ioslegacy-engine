@@ -1,0 +1,244 @@
+// Бонус-игра главного меню (мини-игра «Super Sprint», правка Роба 420): правила гонки на трассах b01..b07.
+// Чистый C99, без PSP-заголовков и без malloc: один код для EBOOT (viewer/bonus_play.h) и полигона ботов на Маке
+// (tools/bonus/race_host.c). Данные трассы — файл BNS1 (tools/bonus/export.py), коллизия — COL1 трассы (b0N.shr).
+//
+// Что из данных диска, что — правило порта (сверка: docs/handoff/БОНУС_ИГРА_2026-10-09.md, вопросы — knowledge/questions.tsv):
+//   ДАННЫЕ  финиш и чекпойнты (Event 2 b0Ndata, номер по порядку — второе слово, объём TriggerVolume): круг засчитан, когда
+//           машина вошла в объём финиша, пройдя все чекпойнты по порядку; старты car1..car4 с курсом из данных; точки пути ИИ
+//           WPR (по ходу) / WPL (обратный ход); ходовые соперников bonus/bgT_K.con; камера сверху sprint_camShape (направление,
+//           угол кадра); число кругов на выбор «x 0 … x 9», смена направления (CW/CCW) — страница MiniMenu.pag;
+//           таблица итогов: место, победы, очки, общее время, лучший круг (MiniSummary.pag); строка GO! (SLES_518.97)
+//   PS2     default3/range1..5, count3/2/1=2.96/1/1s; b01 native tPointCamera eye/lens (observer facts).
+//   ПОРТ    обратный ход — машины на тех же стартах, развёрнуты на π, чекпойнты в обратном
+//           порядке; очки за финиш4/3/2/1, DNF0; соперники доезжают до всех финишей или BR_DNF_S от первого победителя,
+//           иначе DNF; место в гонке — по кругам, пройденным чекпойнтам и расстоянию до следующего; застрявший соперник
+//           (нет продвижения BR_STUCK_S) — на последнюю пройденную точку пути; путь ИИ — точки WPR/WPL в порядке обхода
+//           (tools/bonus/track.py lap_cycle) + финиш последней точкой круга.
+#ifndef SHAR_BONUS_H
+#define SHAR_BONUS_H
+#include <stdint.h>
+#include "col.h"
+#include "car.h"
+#include "animobj.h"   // ловушки трасс: объекты ANM1 (pistons, spikes), живые объёмы COL1
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// файлы рядом с EBOOT (tools/bonus/export.py, правила tools/ship_rules.txt)
+#define BONUS_SHR "bonus/b%02d.shr"
+#define BONUS_BNS "bonus/b%02d.bns"
+#define BONUS_UI_PAK "bonus/mini.shr"      // родные экраны мини-игры (tools/bonus/screens_export.py, viewer/bonus_play.h)
+#define BONUS_FLYBY_CAM "bonus/flyby.cam"   // облёт minigamecam.p3d перед заездом (tools/bonus/flyby_export.py)
+#define BONUS_CARS "bonus/msncars-b.shr"
+#define BNS_MAXCP 16
+#define BNS_MAXWP 15
+#define BR_MAX 4
+#ifndef BONUS_SETUP_PS2_OLD
+#define BONUS_SETUP_PS2_OLD 0
+#endif
+#ifndef BR_LAPS_DEF
+#define BR_LAPS_DEF 3        // observer ps2-bonus-minimenu-native: default 3
+#endif
+#define BR_LAPS_MIN 1        // «x 0» — пункт есть в данных, но гонки без кругов нет: порт начинает с 1
+#define BR_LAPS_MAX (BONUS_SETUP_PS2_OLD ? 9 : 5) // measured native range 1..5
+#ifndef BONUS_COUNT_PS2_OLD
+#define BONUS_COUNT_PS2_OLD 0
+#endif
+#ifndef BR_COUNT_S
+#define BR_COUNT_S (BONUS_COUNT_PS2_OLD ? 3.f : 4.96f) // observer native: 3=2.96s, 2/1=1s each
+#endif
+static inline int brCountdownDigit(float remaining) {
+  return remaining > 2.f ? 3 : remaining > 1.f ? 2 : remaining > 0.f ? 1 : 0;
+}
+#ifndef BR_DNF_S
+#define BR_DNF_S 20.f        // observer native: ~20s from first winner, or earlier if all finish
+#endif
+#ifndef BR_STUCK_S
+#define BR_STUCK_S 6.f       // ПРАВИЛО ПОРТА: соперник без продвижения по гонке столько секунд — на свой путь впереди
+#endif
+#define BR_STUCK_PROG 0.15f  // продвижение: доля отрезка между чекпойнтами (мера места BrRacer.prog)
+
+typedef struct {               // 128 Б
+  char magic[4]; uint32_t ver, track, ncp, nstart, nwpf, nwpr, flags;
+  float fov, aspect, znear, zfar, pos[3], look[3], up[3], bbox[6];
+  uint32_t npathf, npathr;     // точек пути ИИ (tools/bonus/nav.py, правило порта) по ходу / обратно
+  uint32_t npick, nhaz, ntrapobj;   // версия 2 (09.10): подборов, зон (ловушки, B04G, свет), объектов ловушек (spikes/pistons); в версии 1 — 0
+} BnsHdr;
+typedef struct { float c[3], ax[3][3], h[3]; uint32_t rect, order; char name[16]; uint32_t pad[3]; } BnsCp;   // 96 Б
+typedef struct { float p[3], h; char name[16]; } BnsStart;   // 32 Б
+typedef struct { float p[3], r; } BnsWp;                     // 16 Б
+
+typedef struct { float p[3], tag; } BnsPath;               // 16 Б: точка пути ИИ, tag — номер остановки круга у точки или -1
+#define BNS_MAXPATH 256
+
+// ---- подборы, ловушки, свет (BNS версии 2, tools/bonus/export.py; правка 420, часть «подборы, ловушки, огонь, DEATH»)
+// ДАННЫЕ  подбор — ActionEvent b0Ndata с действием Nitro / Wrench (repair* — тоже Wrench), сфера TriggerVolume 5 м; модель —
+//         составной рисунок wrench (art/wrench.p3d) / nitro (art/missions/generic/nitro.p3d, его грузит ss.mfk) — тип SPR1 трассы;
+//         ловушка — Event 66 trap* (b04, b07): объёмы-датчики; объект ловушки — AnimCollision "pistons" (b04) / "spikes" (b07)
+//         (имена — строки SLES_518.97 у таблицы мини-игры), клип без цикла: поршни/шипы выходят из пола, их объёмы COL1 «живые»;
+//         B04G01..03 — Event 63 (b04): сфера r 3 м ровно на каждом поршне, второе слово 20;
+//         fire — Event 65 (b07): зона света, данные те же, что tirefirelight уровней 1/4/7 (0xBBFF9A3F, ARGB);
+//         DEATH — Event 4 (b03, b06, b07) в JMP1 трассы: объём и точка возврата с курсом (как у уровней, правки 86/349)
+//   ПОРТ  что делает подбор (в данных — только имя действия): Wrench чинит машину целиком (как ключ уровня, viewer/game.c);
+//         Nitro — разгон BR_NITRO_ACC × газ вдоль курса BR_NITRO_S с, пока колёса на земле (ускорение — как замеренный у оригинала
+//         разгон зоны «jump boost», car.c JUMP_ZONE_ACC; длительность — правило порта); взятый подбор пропадает и возвращается
+//         через BR_PICK_RESPAWN_S (как ключ уровня WRENCH_RESPAWN_T); ловушка: машина в объёме датчика — клип объекта вперёд до
+//         конца, BR_TRAP_HOLD_S наверху, назад к кадру 0, снова готова; B04G: машина в сфере, пока поршни выходят, получает
+//         вертикальную скорость не меньше второго слова (20, м/с — так прочитано: пик скорости поршня в клипе 21 м/с; вопрос В135);
+//         свет: машина в зоне рисуется с цветом зоны (lerp(белый, RGB, альфа)); DEATH — как у уровней: на точку возврата
+//         данных курсом локатора, развёрнутым по ходу гонки, если смотрит назад (вопрос В136).
+// BONUS_PICKUPS_OLD=1 — как до этой части: подборы, ловушки, свет и DEATH трасс не действуют, SPR1 трассы не рисуется
+#ifndef BONUS_PICKUPS_OLD
+#define BONUS_PICKUPS_OLD 0
+#endif
+typedef struct { float p[3], r; uint32_t kind; char name[12]; } BnsPick;   // 32 Б: kind 1 nitro, 2 wrench
+enum { BNS_PK_NITRO = 1, BNS_PK_WRENCH = 2 };
+typedef struct { uint32_t kind, arg, rect, pad; float c[3], ax[3][3], h[3], loc[3]; char name[16], obj[16]; uint32_t pad2[2]; } BnsHaz;   // 128 Б
+enum { BNS_HZ_TRAP = 1, BNS_HZ_LAUNCH = 2, BNS_HZ_LIGHT = 3 };
+#define BNS_MAXPICK 16
+#define BNS_MAXHAZ 16
+#define BR_MAXTRAP 2
+#ifndef BR_DEATH_AI_N
+#define BR_DEATH_AI_N 1          // соперник ИИ: с N-го DEATH подряд без нового чекпойнта — на свой путь вперёд (ПРАВИЛО ПОРТА, brDeath;
+                                 // 1 — всегда: полигон b06, 3 — точка данных дважды, гейт tests/bonus/race.sh (2) b06 падает)
+#endif
+#ifndef BR_NITRO_ACC
+#define BR_NITRO_ACC 9.f          // м/с² сверх тяги (ПРАВИЛО ПОРТА: как JUMP_ZONE_ACC car.c — замер разгона зоны оригинала)
+#endif
+#ifndef BR_NITRO_S
+#define BR_NITRO_S 2.f            // с (ПРАВИЛО ПОРТА)
+#endif
+#ifndef BR_PICK_RESPAWN_S
+#define BR_PICK_RESPAWN_S 5.f     // с (ПРАВИЛО ПОРТА: как ключ уровня WRENCH_RESPAWN_T)
+#endif
+#ifndef BR_TRAP_HOLD_S
+#define BR_TRAP_HOLD_S 2.f        // с наверху (ПРАВИЛО ПОРТА)
+#endif
+
+typedef struct { int state, obj; float f, hold, last, fps; } BrTrap;   // ловушка: BR_TRAP_*, объект ANM1, кадр, выдержка
+
+typedef struct {
+  const BnsHdr *h; const BnsCp *cp; const BnsStart *st; const BnsWp *wpf, *wpr; const BnsPath *pf, *pr;
+  const BnsPick *pk; const BnsHaz *hz; unsigned npick, nhaz;   // версия 2; в версии 1 — 0
+} BnsTrack;
+// разбор файла BNS1 (данные живут у вызывающего). 0 — ок, < 0 — ошибка (-1 магия/версия, -2 размер, -3 числа вне пределов)
+int bnsParse(BnsTrack *t, const void *data, unsigned size);
+// p внутри объёма чекпойнта (ящик — по осям, сфера — радиус h[0]); grow — запас, м
+int bnsInside(const BnsCp *c, const float p[3], float grow);
+
+enum { BR_COUNT = 0, BR_RACE, BR_DONE };
+typedef struct {
+  int next;            // номер (в порядке круга) следующего чекпойнта; 0 — финиш
+  int lap;             // кругов пройдено
+  int finished, dnf, place;
+  float lapT, bestLap, totalT, finishT;
+  float prog;          // мера места: круги * ncp + пройдено + доля пути к следующему
+  int cps;             // всего пройдено чекпойнтов (наблюдение)
+  float stuckT, lastPos[3], bestProg; int respawnN, respawnCp;   // возвратов подряд у того же чекпойнта
+  int deathN, deathCp;   // DEATH подряд без нового чекпойнта (соперник ИИ, BR_DEATH_AI_N, brDeath)
+} BrRacer;
+
+typedef struct {
+  BnsTrack t;
+  int laps, reverse, n;            // кругов, обратный ход, машин
+  int order[BNS_MAXCP], ncp;       // порядок чекпойнтов хода: order[0] — финиш
+  BrRacer r[BR_MAX];
+  int state; float time, count, sinceFirst;
+  int finishedN, human;            // сколько доехало; номер машины игрока (-1 — только боты)
+  float wp[BNS_MAXWP + 1][3]; float wpr[BNS_MAXWP + 1]; int nwp;   // путь ИИ этого хода (+ финиш последней точкой)
+  const BnsPath *path; int npath, stopAt[BNS_MAXWP + 1];          // плотный путь ИИ хода; номер точки пути у остановки k
+  float grow[BR_MAX];   // запас объёмов чекпойнтов на машину, м: кузов машины входит в объём (полуширина кузова; 0 — точка)
+  // водитель трассы (brDrive): профиль скорости по плотному пути на машину и состояние
+  float vprof[BR_MAX][BNS_MAXPATH]; unsigned char jump[BNS_MAXPATH];
+  struct { int idx; float stuckT, backT, backSteer, vt; } drv[BR_MAX];
+  // подборы, ловушки, свет, DEATH (часть «подборы»; данные — BNS2, ловушки — ANM1 трассы через brTrapBind)
+  uint32_t pickTaken; float pickAway[BNS_MAXPICK];       // взятые подборы (маска) и секунды до возврата
+  float boostT[BR_MAX];                                   // осталось нитро у машины, с
+  BrTrap trap[BR_MAXTRAP]; int ntrap;                    // объект ловушки ANM1: состояние и кадр клипа
+  unsigned launched;                                      // машины, подброшенные поршнями в этом выходе
+  unsigned nNitro, nWrench, nDeath, nTrap, nLaunch, nLight;   // счётчики (журнал, гейты)
+} BonusRace;
+enum { BR_TRAP_IDLE = 0, BR_TRAP_RISE, BR_TRAP_HOLD, BR_TRAP_LOWER };
+
+// старт гонки: машины ставит вызывающий по brStart (курс с учётом обратного хода)
+void brInit(BonusRace *b, const BnsTrack *t, int laps, int reverse, int n, int human);
+void brStart(const BonusRace *b, int i, float pos[3], float *h);
+// кадр: pos[i] — положения машин. Возврат: битовая маска машин, прошедших круг в этом кадре
+unsigned brUpdate(BonusRace *b, const float (*pos)[3], float dt);
+int brPlaceOf(const BonusRace *b, int i);
+// очки завершившего гонку: native PS2 4/3/2/1; DNF отдельно даёт 0
+int brPoints(int place);
+#ifndef BONUS_CAMERA_PS2_OLD
+#define BONUS_CAMERA_PS2_OLD 0
+#endif
+// Measured b01 lens; vertical field preserved on 16:9 PSP. Other tracks retain authored-fit policy.
+void brTopLens(const BnsTrack *t, float *fovyDeg, float *nearZ, float *farZ);
+// камера сверху: глаз и взгляд по направлению sprint_camShape, расстояние — чтобы прямоугольник трассы (bbox) вошёл в кадр
+// с вертикальным углом fovyDeg и соотношением aspect (ПРАВИЛО ПОРТА: дальность sprint_camShape 2212 м при zfar 1000 —
+// в кадр так трасса не попадает, значит игра ставит камеру сама; берём направление и угол из данных)
+void brTopCam(const BnsTrack *t, float fovyDeg, float aspect, float eye[3], float at[3], float up[3], float *dist);
+// маршрут ИИ к остановке goal (номер в b->wp, с кругами — по модулю nwp) от точки pos по плотному пути хода -> точек в out
+// (формат маршрута viewer/msncar.c: out[0] — первая точка, последняя — остановка). 0 — плотного пути нет (прямо к точке)
+int brPlan(const BonusRace *b, int goal, const float pos[3], float (*out)[3], int cap);
+// ПРАВИЛО ПОРТА: в бонус-гонке машина не разбивается (урон не выше BR_DMG_MAX: дым есть, взрыва нет) — разбитая машина выбыла бы из
+// гонки навсегда (вопрос В133). С 09.10 ключи трасс (brPick) чинят машину; у b01 ключей нет, поэтому правило остаётся
+#ifndef BR_DMG_MAX
+#define BR_DMG_MAX 0.9f
+#endif
+void brKeepAlive(Car *k);
+// застрявший соперник — куда его поставить: точка плотного пути на BR_RESPAWN_AHEAD точек впереди ближней к машине (к
+// остановке goal), курс — вдоль пути (ПРАВИЛО ПОРТА, как возврат машин миссий на свой путь). 0 — пути нет
+#ifndef BR_RESPAWN_AHEAD
+#define BR_RESPAWN_AHEAD 2
+#endif
+// цель ИИ машины i — остановка у её следующего чекпойнта с кругами (номер для McCar.wp: круг * nwp + остановка). Ведёт ИИ
+// правило гонки, а не счёт точек водителя: пропущенный чекпойнт — машина возвращается к нему (ПРАВИЛО ПОРТА)
+int brGoal(const BonusRace *b, int i);
+// третий возврат подряд у того же чекпойнта — прямо на остановку в его объёме (ПРАВИЛО ПОРТА: соперник не застревает навсегда)
+int brRespawn(BonusRace *b, int i, const float pos[3], float out[3], float *h);
+// Водитель трассы (09.10, вторая версия ИИ бонус-игры; прежний — водитель машин миссий viewer/msncar.c). ПРАВИЛО ПОРТА целиком:
+//   * едет по плотному пути круга (tools/bonus/nav.py) целиком, а не до следующей остановки: видит повороты за чекпойнтом;
+//   * профиль скорости на точку пути: поворот — sqrt(a_бок * R) по радиусу через ±2 точки (8 м), a_бок как у водителя машин миссий
+//     (7 м/с² × TireGrip/2.4, до 11); гребень (путь выпуклый вверх) — sqrt(g / кривизна), чтобы колёса не отрывались; в зоне прыжка
+//     данных (Event 48, блок JMP1) — полный ход (трамплину нужен разгон); торможение заранее — обратный проход с замедлением .con;
+//   * руль — догон точки пути впереди (4 м + 0,35 с × скорость), выбор ближней точки — с высотой (ярусы развязок не путаются);
+//   * в воздухе руль прямо; упёрлась (газ есть, скорости нет 1,5 с) — назад с обратным рулём 1,2 с; дальше — brStuck/brRespawn.
+// brDriverInit — после brInit, на каждую машину её ходовыми; brDrive — ввод машины i этого кадра
+void brDriverInit(BonusRace *b, int i, const CarParams *p, const ColWorld *w);
+void brDrive(BonusRace *b, int i, const Car *k, float dt, CarInput *in);
+// удары машин гонки между собой (carHitCar, как машины миссий друг с другом); 1 бит на машину — был удар
+unsigned brCollide(Car *const *cars, int n, const ColWorld *w);
+// застрявший соперник: мера пути (prog) не росла BR_STUCK_S — вернуть на путь (1 — вернуть; куда — brRespawn)
+int brStuck(BonusRace *b, int i, const float pos[3], float dt);
+
+// ---- подборы, ловушки, свет, DEATH (что из данных, что правило порта — выше, у BnsPick)
+// машина i (кузов k) у подбора: взять (эффект сразу: ключ — ремонт, нитро — BR_NITRO_S разгона). -> номер подбора или -1
+int brPick(BonusRace *b, int i, Car *k);
+void brPickTick(BonusRace *b, float dt);                  // раз в кадр: взятые подборы возвращаются через BR_PICK_RESPAWN_S
+int brPickShown(const BonusRace *b, int p);               // 1 — подбор p стоит (рисовать модель)
+// нитро машины i: разгон вдоль курса (thr — газ 0..1; водитель ИИ — 1), пока колёса на земле; 1 — действует
+int brBoost(BonusRace *b, int i, Car *k, float thr, float dt);
+// DEATH трассы (JMP1): машина в объёме — на точку возврата данных, курсом локатора; ПРАВИЛО ПОРТА: курс, смотрящий против хода
+// гонки у точки возврата (по плотному пути хода), развёрнут на π (b06 death/death1 по ходу смотрят назад; обратный ход). 1 — вернули.
+// ПРАВИЛО ПОРТА для соперников ИИ (не игрока b->human): с BR_DEATH_AI_N-го DEATH подряд без нового чекпойнта — не на точку данных,
+// а на свой путь вперёд (brRespawn, как возврат застрявшего), счёт «застрял» (brStuck) — заново. Почему: водитель ИИ порта не
+// берёт трамплины b06 и падает под эстакаду; с точки данных (до трамплина) он падал снова (полигон: возвратов 10–12 за 3 круга)
+int brDeath(BonusRace *b, int i, Car *k, const ColWorld *w);
+// ловушки: pos/grow — машины (как brUpdate). Машина в объёме датчика — выход объекта (если стоит внизу). -> маска сработавших
+unsigned brTrapStep(BonusRace *b, const float (*pos)[3], int n, float dt);
+// B04G: машина i в сфере поршня, пока поршни выходят, — вертикальная скорость не меньше данных. 1 — подбросило сейчас
+int brLaunch(BonusRace *b, int i, Car *k);
+// свет зоны в точке p (ARGB данных, 0 — вне зон); brLightMul — множитель цвета lerp(белый, RGB, альфа) как ABGR для GE
+uint32_t brLight(const BonusRace *b, const float p[3]);
+uint32_t brLightMul(uint32_t argb);
+// объекты ловушек трассы в ANM1: объекты с живыми объёмами, без действия, клип больше кадра (b04 — pistons, b07 — spikes;
+// экспорт проверяет, что такой объект на трассе один, BnsHdr.ntrapobj). -> сколько связано
+int brTrapBind(BonusRace *b, const AnimObjs *a);
+// кадр клипа ловушек -> позы экземпляров SPR1 и живые объёмы COL1 (aoPlace)
+void brTrapApply(const BonusRace *b, AnimObjs *a, StateProps *sp, ColWorld *w);
+
+#ifdef __cplusplus
+}
+#endif
+#endif

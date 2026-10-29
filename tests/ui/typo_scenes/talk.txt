@@ -1,0 +1,14 @@
+scene typo_talk
+flag msn
+wait 1.8
+shot talk_a
+flag uitypo 1
+wait 0.1
+shot talk_b
+flag uitypo 2
+wait 0.1
+shot talk_c
+flag uitypo 0
+wait 0.1
+shot talk_a2
+end

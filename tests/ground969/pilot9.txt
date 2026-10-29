@@ -1,0 +1,168 @@
+# №969/№977/№974 пилот 2, фиксированные камеры: Гомер стоит на месте (foot 220 172), камера «cam x y z fx fy fz» одна и та же во всех вариантах. Три прохода (после flag curb974 идёт задание тона, заливка на время выключена). 0 — было; 1 — «бумага» 8 м; 3 — фрагмент асфальта 6 м; 4 — 10 м; Б (curb974 2) — весь тротуар холодный серый
+scene G969
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 4
+foot 220 172 0
+wait 3
+scene G969_A
+flag ground969 0
+flag curb974 0
+wait 12
+cam 205 3.5 188 0 -0.3 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot B_lawn_s0
+cam 205 12 190 0 -0.45 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot E_lawnfar_s0
+cam 212 8 176 0 -0.5 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot C_walk_s0
+cam 212 4 168 0 -0.7 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot F_walkclose_s0
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot H_street_s0
+cam 228 4 158 -0.1 -0.25 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot K_corner_s0
+cam 229 3.5 157 -0.25 -0.2 -1
+wait 3
+flag ground969 0
+wait 2.5
+shot K2_corner_s0
+scene G969_B
+flag ground969 0
+flag curb974 1
+wait 12
+cam 205 3.5 188 0 -0.3 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot B_lawn_s1
+flag ground969 3
+wait 2.5
+shot B_lawn_s3
+flag ground969 4
+wait 2.5
+shot B_lawn_s4
+cam 205 12 190 0 -0.45 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot E_lawnfar_s1
+flag ground969 3
+wait 2.5
+shot E_lawnfar_s3
+flag ground969 4
+wait 2.5
+shot E_lawnfar_s4
+cam 212 8 176 0 -0.5 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot C_walk_s1
+flag ground969 3
+wait 2.5
+shot C_walk_s3
+flag ground969 4
+wait 2.5
+shot C_walk_s4
+cam 212 4 168 0 -0.7 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot F_walkclose_s1
+flag ground969 3
+wait 2.5
+shot F_walkclose_s3
+flag ground969 4
+wait 2.5
+shot F_walkclose_s4
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot H_street_s1
+flag ground969 3
+wait 2.5
+shot H_street_s3
+flag ground969 4
+wait 2.5
+shot H_street_s4
+cam 228 4 158 -0.1 -0.25 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot K_corner_s1
+flag ground969 3
+wait 2.5
+shot K_corner_s3
+flag ground969 4
+wait 2.5
+shot K_corner_s4
+cam 229 3.5 157 -0.25 -0.2 -1
+wait 3
+flag ground969 1
+wait 2.5
+shot K2_corner_s1
+flag ground969 3
+wait 2.5
+shot K2_corner_s3
+flag ground969 4
+wait 2.5
+shot K2_corner_s4
+scene G969_C
+flag ground969 0
+flag curb974 2
+wait 12
+cam 205 3.5 188 0 -0.3 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot B_lawn_sB
+cam 205 12 190 0 -0.45 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot E_lawnfar_sB
+cam 212 8 176 0 -0.5 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot C_walk_sB
+cam 212 4 168 0 -0.7 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot F_walkclose_sB
+cam 226 3.5 166 0.2 -0.15 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot H_street_sB
+cam 228 4 158 -0.1 -0.25 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot K_corner_sB
+cam 229 3.5 157 -0.25 -0.2 -1
+wait 3
+flag ground969 3
+wait 2.5
+shot K2_corner_sB

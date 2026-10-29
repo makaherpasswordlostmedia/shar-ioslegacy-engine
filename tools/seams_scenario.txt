@@ -1,0 +1,52 @@
+# Правка Роба 106 «стыки рябят, проступают швы»: дальние виды уровня 1 для замера непокрытых пикселей (tools/seams_emu.py).
+# Точки — худшие по нагрузке виды bench (build/bench_v8_psp.txt, bench_psp_20260927-1714_prev.txt): много города дальше
+# LOD_DIST 50 м (дальние версии кусков). Камера за машиной смотрит вдоль улицы; снимок после догрузки клеток.
+scene v01
+goto 246 -180 1.5708
+wait 3
+shot v01
+scene v02
+goto 444 68 3.1416
+wait 3
+shot v02
+scene v03
+goto 345 68 1.5708
+wait 3
+shot v03
+scene v04
+goto -199 68 -1.5708
+wait 3
+shot v04
+scene v05
+goto 197 167 -1.5708
+wait 3
+shot v05
+scene v06
+goto 345 266 3.1416
+wait 3
+shot v06
+scene v07
+goto 48 266 0
+wait 3
+shot v07
+scene v08
+goto 147 315 1.5708
+wait 3
+shot v08
+scene v09
+goto 246 365 3.1416
+wait 3
+shot v09
+scene v10
+goto 345 -81 1.5708
+wait 3
+shot v10
+scene v11
+goto -249 117 -1.5708
+wait 3
+shot v11
+scene v12
+goto 220 172 1.5708
+wait 3
+shot v12
+end

@@ -1,0 +1,17 @@
+# №985 приёмка: тротуар холодным серым. L1, камера над тротуаром (F_walk), «было» — walkcold985 0 (тёплый, как TEST67), «стало» — MODE (1 — умолчание, 0 — красный контроль)
+scene G985
+wait 3
+flag cfgdefaults 1
+flag toon 1
+flag flat912 1
+wait 4
+foot 220 172 0
+wait 3
+cam 212 4 168 0 -0.7 -1
+wait 8
+flag walkcold985 0
+wait 2.5
+shot w_was
+flag walkcold985 MODE
+wait 2.5
+shot w_new

@@ -1,0 +1,147 @@
+# Правка 103, повтор Роба 01.10 ~09:40 на 7dec8b30: «приехал на спортивную площадку у школы — игра зависла, приставка
+# выключилась». Площадка по данным диска (l1z3.p3d, jumps.p3d, level.p3d): бейсбольное поле за школой (базы -118…-141,
+# 598…623; ограждение z 551 и 644, x -160), детская площадка с автобусом (-100…-75, 595…625), трамплины jumpzone16 (-121, 559:
+# с поля через северный забор) и jumpzone2 (-50, 629: с крыши школы), фоновый Вилли (-126, 569), Луи (гонка на деньги, -8, 571),
+# осы w_schoolroof1/2, w_schoolstairs, w_playground (ATTACK_PLAYER 10 м). Въезды проверены миром ботов.
+# Как у Роба: режим игрока (flag player: камеры старта миссий), подсказки Барта (flag tutorial), миссии (NEW GAME), журнал
+# звуков (на карте Роба флаг sfxlog), медленная карта памяти (служебный файл slowio, 1,5 МБ/с) и куча как у железа (балласт).
+# v2 (01.10 12:4x): в начале каждой езды ✕ — подсказка Барта мир не держит (в v1 сцены jump16/roof_jump2 стояли под пузырём);
+# сцена dog_freeze — «flag freeze 7»: главный поток стоит 7 с там, где ждёт GE (как зависший список) — сторож самописца обязан
+# записать ящик сам (гейт tests/crash_school/check.py). Вторая половина — m6 «Bonestorm Storm» (старт у школы) и снова площадка.
+# Гейт: tests/crash_school/run.sh; тот же маршрут на железо — tests/crash_school/scenario_psp.txt
+flag sfxlog
+flag player
+wait 2
+flag msn
+wait 3
+flag tutorial
+flag tutnow
+wait 3
+press cross
+wait 3
+press cross
+scene sch_front
+goto -17 583 3.1416
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 4
+wait 6
+flag stop
+scene fld_east
+goto -63.5 597.8 4.843
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene fld_ne
+goto -79.1 566.1 5.498
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene fld_w
+goto -156.9 566.1 0.786
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene jump16
+goto -121 615 3.1416
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene roof_jump2
+goto -50 590 0
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 4
+wait 7
+flag stop
+scene playground
+goto -74.4 638.5 4.058
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 7
+flag stop
+scene dog_freeze
+goto -90 610 3.1416
+wait 2
+press cross
+wait 1
+flag freeze 7
+wait 10
+scene foot_field
+foot -118 600 3.1416
+wait 2
+press cross
+press up 3
+wait 4
+press cross
+scene foot_willie
+foot -124 571 4.71
+wait 2
+press triangle
+wait 4
+press cross
+wait 2
+press cross
+scene foot_louie
+foot -10 576 3.1416
+wait 3
+press cross
+wait 2
+scene m6
+flag msnmain 6
+wait 4
+press cross
+wait 8
+press cross
+wait 8
+scene m6_field
+goto -63.5 597.8 4.843
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene m6_jump
+goto -121 615 3.1416
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 5
+wait 8
+flag stop
+scene m6_front
+goto -17 583 3.1416
+flag repair
+wait 2
+press cross
+wait 1
+flag autostraight 4
+wait 8
+flag stop
+end

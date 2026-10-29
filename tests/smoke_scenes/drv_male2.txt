@@ -1,0 +1,28 @@
+# №314 п.1: водитель male2 в cNerd (L2 m3, L3 m1) и cCola (L4 m7, L5 m1): модель chars/male2.chr (art/chars/male2_m.p3d), поза ndr_in_car_idle
+scene M_L2_load
+flag golevel 2
+wait 16
+flag msn
+wait 3
+scene M_L2
+flag msnmain 2
+wait 3.5
+press cross
+wait 0.8
+flag msncarnear 0
+wait 1.7
+shot M_L2_nerd
+scene M_L4_load
+flag golevel 4
+wait 16
+flag msn
+wait 3
+scene M_L4
+flag msnmain 6
+wait 3.5
+press cross
+wait 0.8
+flag msncarnear 0
+wait 1.7
+shot M_L4_cola
+end

@@ -1,0 +1,32 @@
+viewer/build*/
+build/
+pspdev/
+.venv/
+hit-and-run-web/
+*.shr
+*.PBP
+*.at3
+*.pmf
+*.rcf
+*.p3d
+*.iso
+.DS_Store
+# baked sprites and other disc-derived files are never committed
+*.bin
+game/
+# binaries are built by the scripts (build_level.sh, tests) and never committed
+tools/pvs
+tools/wind
+tools/winid_pid
+tools/missions/dryrun/dryrun
+tests/*/host/*_host
+*.bak
+*.bak_*
+*.dylib
+*.log
+!tests/savegame/fixtures/*.bin
+
+# iOS build
+ios/.theos/
+ios/packages/
+ios/ipa/

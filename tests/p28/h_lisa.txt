@@ -1,0 +1,52 @@
+scene start
+wait 3
+flag golevel 3
+wait 24
+flag repair
+wait 4
+foot -469.4 -35.9 3.927
+wait 4
+flag eyex 5
+flag eyey 3.5
+flag eyez 3
+flag eyeon 3
+scene lisa_s_now
+flag carshspr 0
+flag homerspot 0
+wait 3
+shot lisa_s_now
+scene lisa_s_tex
+flag carshspr 1
+flag homerspot 1
+flag shfanold 1
+wait 3
+shot lisa_s_tex
+scene lisa_s_fan
+flag carshspr 1
+flag homerspot 1
+flag shfanold 0
+wait 3
+shot lisa_s_fan
+flag eyex 0.5
+flag eyey 9
+flag eyez 0.5
+flag eyeon 3
+scene lisa_t_now
+flag carshspr 0
+flag homerspot 0
+wait 3
+shot lisa_t_now
+scene lisa_t_tex
+flag carshspr 1
+flag homerspot 1
+flag shfanold 1
+wait 3
+shot lisa_t_tex
+scene lisa_t_fan
+flag carshspr 1
+flag homerspot 1
+flag shfanold 0
+wait 3
+shot lisa_t_fan
+flag eyeon 0
+end

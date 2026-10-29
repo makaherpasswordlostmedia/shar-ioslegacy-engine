@@ -1,0 +1,50 @@
+# Правка Роба 361 (tests/camera/herocam.py): машина разбивается — на ходу (flag testboom), после прыжка F10-5 с почти разбитой машиной
+# (testdmg 0.97, жёсткая посадка) и у стены Kwik-E-Mart; Гомера выбрасывает, машина горит и взрывается. Камера пешком 4 с после выброса
+flag camlog
+wait 3
+scene hb_street
+goto 232 262 0
+flag repair
+wait 1.5
+flag autostraight 2
+wait 1.4
+flag testboom
+wait 1.2
+shot hb_street_a
+wait 1.5
+shot hb_street_b
+wait 3
+scene hb_f10
+flag wpclear
+goto -129 355 3.6
+flag repair
+wait 1.5
+flag testdmg 0.97
+flag wpv 28
+flag wp -143 332
+flag wp -152 310
+flag wp -163 290
+flag wp -166 269
+flag wp -166 248
+flag wp -166 238
+flag wp -166 215
+flag wp -166 180
+flag wpgo
+wait 7
+shot hb_f10_a
+wait 1.5
+shot hb_f10_b
+wait 3
+flag stop
+scene hb_kwik
+goto 218 262 0
+flag repair
+wait 1.5
+flag testdmg 0.97
+flag autostraight 6
+wait 4.5
+shot hb_kwik_a
+wait 1.5
+shot hb_kwik_b
+wait 3
+end

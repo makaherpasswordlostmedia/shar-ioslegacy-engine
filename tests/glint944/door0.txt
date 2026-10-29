@@ -1,0 +1,23 @@
+### №944 разведка: L1, миссия 1, цель у двери (msngo)
+scene m0
+wait 3
+flag msn
+wait 3
+press triangle
+wait 14
+press cross
+wait 1
+flag msngo
+wait 2
+shot d_a
+wait 2
+shot d_b
+press triangle
+wait 2
+shot d_c
+wait 2
+shot d_d
+flag msngo
+wait 3
+shot d_e
+end

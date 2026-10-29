@@ -1,0 +1,32 @@
+flag menu
+flag saves
+wait 1.5
+press right
+wait 0.4
+press cross
+wait 6
+scene booth
+flag msn
+wait 3
+foot 144.5 83.0 3.1416
+wait 1.5
+press triangle
+wait 1.5
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+press right
+wait 0.6
+shot ph_far
+end

@@ -1,0 +1,13 @@
+flag menu
+scene menu_idle
+wait 8
+shot menu_idle
+press down
+wait 0.5
+press down
+wait 0.5
+scene menu_flight
+press cross
+wait 8
+shot menu_options
+end

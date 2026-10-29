@@ -1,0 +1,25 @@
+# №957б/№935в (Небо): причал L6 у арки центра и фонарей — вид с двух сторон
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -421 -30 3.14
+wait 10
+cam -421 -63 -28 0 0.06 -1
+wait 4
+shot c_n
+cam -421 -63 -22 0.25 0.12 -1
+wait 3
+shot c_n2
+cam -414 -62 -75 0 0.1 1
+wait 3
+shot c_s
+cam -440 -58 -30 -0.3 0.25 -1
+wait 3
+shot c_n3
+cam off
+wait 1
+end

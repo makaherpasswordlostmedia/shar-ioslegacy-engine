@@ -1,0 +1,24 @@
+# №932 датчик мерцания, L3: улица с зеброй и набережная с досками (точки F_FLAT_L3S / F_FLAT_L3B тура TEST59)
+scene FK_L3_BOOT
+flag cfgdefaults 1
+flag bisect 4
+flag long
+flag golevel 3
+wait 40
+scene FK_L3_STREET
+foot 180.2 64.2 -1.571
+wait 12
+flag camyaw 0.4
+flag flick 1
+wait 32
+flag flick 0
+flag camyaw 0
+scene FK_L3_PIER
+foot -525.6 -40.7 0.28
+wait 12
+flag camyaw 0.4
+flag flick 1
+wait 32
+flag flick 0
+flag camyaw 0
+end

@@ -1,0 +1,19 @@
+# №647: гостиная L1, камера комнаты int_sh_path1; зелёный: CAMF fov=39,4 и кадр как у PS2 (картина над диваном вверху); красный: flag roomfovold 1 → fov=51,1
+scene start
+wait 3
+flag player
+flag camlog
+scene house
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene house_in
+wait 4
+shot house_in
+wait 2
+shot house_in2
+end

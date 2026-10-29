@@ -1,0 +1,53 @@
+### №976: точка цели L1 этап 9 (сфера у дома Фландерса): сначала камера на кружок (ровность края), потом на место входа 243,2 / 165,4 — серия кадров анимации столба звёзд, вход. @OLD@ = 1 — как TEST66 (flag glint976old)
+flag msn
+wait 2
+flag glint976old @OLD@
+flag msnmainat 209
+wait 3
+press cross
+wait 2
+press cross
+wait 2
+goto 222 154 1.08
+wait 1.5
+cam 252 6.2 169.4 12.1 -2.3 4.5 55
+wait 1.0
+shot ring_a
+wait 0.3
+shot ring_b
+wait 0.3
+cam 231 5.2 159.6 11.8 3.2 5.5 75
+wait 0.5
+shot a00
+wait 0.15
+shot a01
+wait 0.15
+shot a02
+wait 0.15
+shot a03
+wait 0.15
+goto 243.2 165.4 1.08
+wait 0.03
+shot e00
+wait 0.09
+shot e01
+wait 0.09
+shot e02
+wait 0.09
+shot e03
+wait 0.09
+shot e04
+wait 0.09
+shot e05
+wait 0.09
+shot e06
+wait 0.09
+shot e07
+wait 0.09
+shot e08
+wait 0.09
+shot e09
+wait 0.09
+wait 0.4
+shot e_end
+end

@@ -1,0 +1,126 @@
+# Лавка продавцов на L2–L7 (tests/shop/shops_levels.sh): Гомер рядом с каждым продавцом уровня там, где он СЕЙЧАС стоит (лавка идёт за самим продавцом, правка 288), △, кадр лавки
+# нужен EBOOT со служебной «flag sellergo N» и SHIP_LEVELS="2 3 4 5 6 7"
+scene start
+flag msn
+wait 3
+scene L2_load
+flag golevel 2
+wait 30
+scene L2_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L2_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L2_s1
+press circle
+wait 1.2
+scene L3_load
+flag golevel 3
+wait 30
+scene L3_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L3_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L3_s1
+press circle
+wait 1.2
+scene L4_load
+flag golevel 4
+wait 30
+scene L4_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L4_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L4_s1
+press circle
+wait 1.2
+scene L5_load
+flag golevel 5
+wait 30
+scene L5_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L5_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L5_s1
+press circle
+wait 1.2
+scene L6_load
+flag golevel 6
+wait 30
+scene L6_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L6_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L6_s1
+press circle
+wait 1.2
+scene L7_load
+flag golevel 7
+wait 30
+scene L7_shop
+flag coinadd 2000
+wait 6
+flag sellergo 0
+wait 0.4
+press triangle
+wait 2.3
+shot L7_s0
+press circle
+wait 1.2
+flag sellergo 1
+wait 0.4
+press triangle
+wait 2.3
+shot L7_s1
+press circle
+wait 1.2
+end

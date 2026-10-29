@@ -1,0 +1,1699 @@
+<!doctype html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Типографика SHAR</title>
+<link rel="icon" href="data:,">
+<style>
+/* house:tokens begin · правится только _arsenal/house/house.tokens.css, вписывается stamp_house.py */
+:root{
+  --nh:80;--brand-hue:182;
+  --bg:#f6f5f2;--side:rgba(246,245,242,.86);--card:#ecebe6;--field:#ffffff;--stage:#ffffff;
+  --ink:#1a1a1a;--ink2:#3d3c39;--ink3:#5c5b57;--on-ink:#ffffff;--on-ink-muted:rgba(255,255,255,.72);--knob:#ffffff;
+  --fill:rgba(26,26,26,.07);--fill-hover:rgba(26,26,26,.10);--fill-strong:rgba(26,26,26,.15);--fill-active:rgba(26,26,26,.24);--line-strong:rgba(26,26,26,.28);
+  --line:rgba(26,26,26,.14);--line-ctl:rgba(26,26,26,.28);--hair:rgba(26,26,26,.10);--hover:rgba(26,26,26,.055);
+  --sel:oklch(.49 .08 var(--brand-hue));--selfg:#ffffff;--ring:oklch(.49 .08 var(--brand-hue));--seg-on:#ffffff;--track-s:.02em;
+  --m-wait:oklch(.76 .12 78);--m-work:oklch(.52 .085 var(--brand-hue));--m-pause:#b9b8b2;--m-done:#d9d8d2;
+  --st-ok:oklch(.6 .09 145);--st-run:oklch(.55 .09 var(--brand-hue));--st-wait:oklch(.74 .13 75);--st-bad:oklch(.56 .15 40);--st-sched:oklch(.6 .05 230);--st-info:oklch(.66 .07 205);
+  --t-bad:oklch(.52 .12 45);--t-wait:oklch(.5 .09 70);--on-wait:oklch(.26 .05 75);
+  --scrim:rgba(20,20,20,.36);--shadow:rgba(20,20,20,.28);--shadow-s:rgba(20,20,20,.10);
+  --bt:.24;--btc:.03;
+  --ground-light:#ffffff;--ground-light-muted:rgba(0,0,0,.55);--ground-dark:#141414;--ground-dark-muted:rgba(255,255,255,.62);
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  --display:"Inter Tight",-apple-system,BlinkMacSystemFont,"SF Pro Display",system-ui,sans-serif;
+  --t1:11.67px;--t2:14px;--t3:16.8px;--t4:20.16px;--t5:24.19px;--t6:29.03px;--t7:34.84px;--t8:41.8px;
+  --r-ctl:4px;--r:6px;--r-card:6px;--r-pill:999px;--ease:cubic-bezier(.23,1,.32,1);--dur-press:140ms;--dur-pop:180ms;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#161615;--side:rgba(22,22,21,.86);--card:#21211f;--field:#2b2b29;--stage:#2b2b29;
+  --ink:#ecebe6;--ink2:#cfcec8;--ink3:#a6a59f;--on-ink:#161615;--on-ink-muted:rgba(22,22,21,.68);--knob:#ecebe6;
+  --fill:rgba(255,255,255,.07);--fill-hover:rgba(255,255,255,.10);--fill-strong:rgba(255,255,255,.16);--fill-active:rgba(255,255,255,.26);--line-strong:rgba(255,255,255,.30);
+  --line:rgba(255,255,255,.14);--line-ctl:rgba(255,255,255,.30);--hair:rgba(255,255,255,.10);--hover:rgba(255,255,255,.06);
+  --sel:oklch(.78 .09 var(--brand-hue));--selfg:#161615;--ring:oklch(.78 .09 var(--brand-hue) / .7);--seg-on:#3d3d3a;--track-s:.025em;
+  --m-wait:oklch(.78 .12 78);--m-work:oklch(.74 .09 var(--brand-hue));--m-pause:#5d5c57;--m-done:#3b3b38;
+  --st-ok:oklch(.76 .08 145);--st-run:oklch(.78 .09 var(--brand-hue));--st-wait:oklch(.8 .12 78);--st-bad:oklch(.72 .13 45);--st-sched:oklch(.72 .05 230);--st-info:oklch(.76 .07 205);
+  --t-bad:oklch(.74 .11 50);--t-wait:oklch(.82 .1 78);--on-wait:oklch(.22 .04 75);
+  --scrim:rgba(0,0,0,.55);--shadow:rgba(0,0,0,.5);--shadow-s:rgba(0,0,0,.3);
+  --bt:.95;--btc:.012;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#161615;--side:rgba(22,22,21,.86);--card:#21211f;--field:#2b2b29;--stage:#2b2b29;
+  --ink:#ecebe6;--ink2:#cfcec8;--ink3:#a6a59f;--on-ink:#161615;--on-ink-muted:rgba(22,22,21,.68);--knob:#ecebe6;
+  --fill:rgba(255,255,255,.07);--fill-hover:rgba(255,255,255,.10);--fill-strong:rgba(255,255,255,.16);--fill-active:rgba(255,255,255,.26);--line-strong:rgba(255,255,255,.30);
+  --line:rgba(255,255,255,.14);--line-ctl:rgba(255,255,255,.30);--hair:rgba(255,255,255,.10);--hover:rgba(255,255,255,.06);
+  --sel:oklch(.78 .09 var(--brand-hue));--selfg:#161615;--ring:oklch(.78 .09 var(--brand-hue) / .7);--seg-on:#3d3d3a;--track-s:.025em;
+  --m-wait:oklch(.78 .12 78);--m-work:oklch(.74 .09 var(--brand-hue));--m-pause:#5d5c57;--m-done:#3b3b38;
+  --st-ok:oklch(.76 .08 145);--st-run:oklch(.78 .09 var(--brand-hue));--st-wait:oklch(.8 .12 78);--st-bad:oklch(.72 .13 45);--st-sched:oklch(.72 .05 230);--st-info:oklch(.76 .07 205);
+  --t-bad:oklch(.74 .11 50);--t-wait:oklch(.82 .1 78);--on-wait:oklch(.22 .04 75);
+  --scrim:rgba(0,0,0,.55);--shadow:rgba(0,0,0,.5);--shadow-s:rgba(0,0,0,.3);
+  --bt:.95;--btc:.012;color-scheme:dark}
+/* house:tokens end */
+/* Твик-панель типографики SHAR PSP (правка Роба 312). Тёмная тема: цвета игры читаются честно на нейтральном тёмном. Панель v2 по SVEN
+   (_arsenal/podacha/kit): ряд «подпись · контрол», число — скраб-полоса, клик — ввод, Shift — шаг ×0,1, стрелки ±шаг */
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 var(--t2)/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:2px solid var(--ring);outline-offset:1px}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;min-height:56px;padding:8px 24px;background:var(--side);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);box-shadow:0 1px 0 var(--hair)}
+.who{display:flex;flex-direction:column;min-width:0;margin-right:8px}
+.who b{font:600 var(--t3)/1.2 var(--display);white-space:nowrap}
+.who span{font-size:var(--t1);letter-spacing:var(--track-s);color:var(--ink3);white-space:nowrap}
+.grow{flex:1}
+.btn{appearance:none;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:var(--r);height:32px;padding:0 14px;font:500 var(--t2)/1 var(--sans);color:var(--ink);background:var(--fill);white-space:nowrap;transition:background-color var(--dur-pop) var(--ease),transform var(--dur-press) var(--ease)}
+.btn.ghost{background:transparent;color:var(--ink3)}
+.btn.small{height:26px;padding:0 10px;font-size:var(--t1)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--ink);color:var(--on-ink)}
+@media (hover:hover) and (pointer:fine){.btn:hover{background:var(--fill-strong)}.btn.pri:hover{background:var(--ink);opacity:.88}.btn.ghost:hover{background:var(--fill);color:var(--ink)}}
+.idx{display:flex;gap:6px;overflow-x:auto;padding:12px 24px 4px;scrollbar-width:none}
+.idx::-webkit-scrollbar{display:none}
+.idx button{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:32px;padding:0 12px;border:0;border-radius:var(--r-pill);background:var(--fill);color:var(--ink2);font-weight:500;white-space:nowrap;transition:background-color var(--dur-pop) var(--ease),color var(--dur-pop) var(--ease)}
+.idx button[aria-current="true"]{background:var(--fill-active);color:var(--ink)}
+.idx .dot{width:6px;height:6px;border-radius:50%;background:var(--sel)}
+@media (hover:hover) and (pointer:fine){.idx button:hover{background:var(--fill-strong);color:var(--ink)}}
+.sk{font:500 var(--t1)/1 var(--mono);letter-spacing:.02em;color:var(--ink3);font-variant-numeric:tabular-nums}
+.main{display:grid;grid-template-columns:minmax(0,auto) minmax(360px,1fr);gap:28px;align-items:start;padding:16px 24px 80px;max-width:1720px}
+.stagecol{min-width:0;position:sticky;top:76px}
+.screen{position:relative;display:block;width:calc(480px * var(--z));height:calc(272px * var(--z));background:#000;border-radius:2px;overflow:hidden}
+.screen canvas{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;margin:10px 0 0;color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s)}
+.meta b{font:600 var(--t4)/1.2 var(--display);color:var(--ink);letter-spacing:0}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:14px 0 0}
+.ctl .lab{color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s)}
+.seg{display:inline-flex;gap:2px;background:var(--fill);border-radius:var(--r-pill);padding:2px;height:28px}
+.seg button{border:0;border-radius:var(--r-pill);background:transparent;font:500 var(--t1)/1 var(--sans);letter-spacing:var(--track-s);color:var(--ink3);padding:0 10px;white-space:nowrap;transition:background-color var(--dur-pop) var(--ease),color var(--dur-pop) var(--ease)}
+.seg button[aria-checked="true"]{background:var(--seg-on);color:var(--ink);box-shadow:0 1px 1px var(--shadow-s)}
+.sw{position:relative;appearance:none;width:40px;height:24px;border-radius:var(--r-pill);border:0;padding:0;background:var(--fill-strong);transition:background-color var(--dur-pop) var(--ease);flex:none}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--knob);box-shadow:0 1px 1px var(--shadow-s);transition:transform var(--dur-pop) var(--ease)}
+.sw[aria-checked="true"]{background:var(--ink)}
+.sw[aria-checked="true"]::after{transform:translateX(16px);background:var(--on-ink)}
+.swl{display:inline-flex;align-items:center;gap:8px;color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s)}
+.sum{margin:22px 0 0;padding-top:12px;border-top:1px solid var(--line)}
+.sum h3{margin:0 0 4px;font:600 var(--t4)/1.2 var(--display)}
+.sum p{margin:0 0 10px;color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s)}
+.sumt{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:0 14px;padding:4px 10px;border-radius:var(--r-card);background:var(--card);font-size:var(--t1)}
+.sumt div{padding:5px 0;border-top:1px solid var(--hair);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sumt div:nth-child(-n+3){border-top:0;color:var(--ink3);letter-spacing:var(--track-s)}
+.sumt .n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.sumt .low{color:var(--t-wait)}
+.sumt button{all:unset;cursor:pointer}
+.sumt button:hover{text-decoration:underline}
+.side{min-width:0}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.card{margin:0 0 12px;padding:12px 14px 14px;border-radius:var(--r-card);background:var(--card);transition:box-shadow var(--dur-pop) var(--ease)}
+.card.on{box-shadow:inset 0 0 0 1px var(--ring)}
+.ch{display:flex;align-items:baseline;gap:8px;margin:0 0 2px}
+.ch b{font:600 var(--t3)/1.25 var(--display);cursor:pointer}
+.ch .chg{width:7px;height:7px;border-radius:50%;background:var(--sel);align-self:center;flex:none}
+.ch .grow{flex:1}
+.why{margin:0 0 10px;color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s)}
+.stat{margin:8px 0 0;color:var(--ink3);font:400 var(--t1)/1.4 var(--mono);font-variant-numeric:tabular-nums}
+.rows{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row{display:grid;grid-template-columns:minmax(0,4fr) minmax(0,6fr);align-items:center;gap:8px;min-height:28px}
+.lab{display:block;font:400 var(--t1)/1.2 var(--sans);color:var(--ink3);letter-spacing:var(--track-s);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info{display:inline-grid;place-items:center;vertical-align:-3px;margin-left:6px;width:16px;height:16px;padding:0;border:0;border-radius:50%;background:var(--fill-strong);color:var(--ink);font:600 var(--t1)/1 var(--sans);cursor:help}
+.hint{grid-column:1/-1;margin:2px 0 4px;font-size:var(--t1);letter-spacing:var(--track-s);color:var(--ink3)}
+.scrub{position:relative;height:26px;border-radius:var(--r-ctl);background:var(--fill);overflow:hidden;cursor:ew-resize;touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:background-color var(--dur-pop) var(--ease)}
+.scrub .fill{position:absolute;inset:0;background:var(--fill-strong);transform-origin:0 50%;transform:scaleX(0);pointer-events:none}
+.scrub .mark{position:absolute;top:3px;bottom:3px;width:1px;background:var(--line-strong);pointer-events:none}
+.scrub.active .fill{background:var(--fill-active)}
+.scrub .sval{position:absolute;inset:0;width:100%;height:100%;border:0;margin:0;background:transparent;padding:0 8px;text-align:right;font:500 var(--t1)/26px var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);-webkit-text-fill-color:var(--ink);pointer-events:none;outline:none}
+.scrub.editing{background:var(--field);box-shadow:inset 0 0 0 1px var(--line-strong);cursor:text}
+.scrub.editing .fill,.scrub.editing .mark{opacity:0}
+.scrub.editing .sval{text-align:left}
+.tin{height:26px;width:100%;min-width:0;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--field);font:500 var(--t1) var(--sans);letter-spacing:var(--track-s);padding:0 6px;color:var(--ink)}
+.cg{margin:18px 0 8px;font:500 var(--t1)/1 var(--sans);letter-spacing:.07em;text-transform:uppercase;color:var(--ink3)}
+.note{margin:18px 0 0;padding-top:12px;border-top:1px solid var(--line);color:var(--ink3);font-size:var(--t1);letter-spacing:var(--track-s);max-width:72ch}
+.note code{font-family:var(--mono);color:var(--ink2)}
+textarea.json{width:100%;height:160px;margin:10px 0 0;border-radius:var(--r-ctl);border:1px solid var(--line-strong);background:var(--field);font:400 var(--t1)/1.4 var(--mono);color:var(--ink);padding:8px}
+.toast{position:fixed;left:50%;bottom:20px;z-index:50;max-width:calc(100% - 32px);padding:10px 14px;border-radius:var(--r);background:var(--ink);color:var(--on-ink);font-weight:500;opacity:0;transform:translate(-50%,10px);pointer-events:none;transition:opacity var(--dur-pop) var(--ease),transform 300ms var(--ease);box-shadow:0 8px 24px var(--shadow)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (hover:hover) and (pointer:fine){.scrub:hover{background:var(--fill-hover)}.seg button:hover{color:var(--ink)}}
+@media (max-width:1180px){.main{grid-template-columns:minmax(0,1fr)}.stagecol{position:static}}
+@media (max-width:760px){.bar{padding:8px 16px}.idx{padding:10px 16px 2px}.main{padding:12px 16px 64px}.screen{width:100%;height:auto;aspect-ratio:480/272}}
+@media (pointer:coarse){.btn{min-height:44px}.row{min-height:44px}.scrub,.tin{height:44px}.scrub .sval{line-height:44px;font-size:var(--t3)}.idx button{min-height:44px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+
+.screen{outline:none}.screen:focus-visible{box-shadow:0 0 0 2px var(--ring)}
+.meas{margin:10px 0 0;padding:8px 12px;border-radius:var(--r);background:var(--card);font:400 var(--t1)/1.5 var(--mono);color:var(--ink2);min-height:22px;display:grid;gap:2px}
+.meas b{font-weight:600;color:var(--ink)}
+.meas .gp{color:#f24822}
+.notes{margin:14px 0 0;padding:12px 14px;border-radius:var(--r-card);background:var(--card);display:grid;gap:8px}
+.notes h3{margin:0;font:600 var(--t2)/1.3 var(--sans)}
+.notes .selinfo{font:400 var(--t1)/1.4 var(--mono);color:var(--ink3);min-height:18px}
+.notes textarea{width:100%;min-height:54px;resize:vertical;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--field);color:var(--ink);font:400 var(--t2)/1.4 var(--sans);padding:8px 10px;box-sizing:border-box}
+.notes .nrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.notes ul{margin:0;padding:0;list-style:none;display:grid;gap:4px;font:400 var(--t1)/1.35 var(--sans)}
+.notes li{display:flex;gap:8px;align-items:flex-start}.notes li span{flex:1}.notes li button{flex:none}
+.nmodal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px}
+.nmodal[hidden]{display:none}
+.nmodal .box{width:min(820px,100%);max-height:86vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:var(--r-card);padding:16px 18px;display:grid;gap:10px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
+.nmodal ol{margin:0;padding-left:22px;display:grid;gap:8px;font:400 var(--t2)/1.4 var(--sans)}
+.nmodal ol small{display:block;color:var(--ink3);font:400 var(--t1)/1.3 var(--mono)}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="who"><b>Типографика SHAR · PSP 480×272</b><span id="built"></span></div>
+  <div class="grow"></div>
+  <button class="btn ghost" id="bOriginal" title="исходная раскладка без настроек JSON">Сброс к оригиналу</button>
+  <button class="btn ghost" id="bReset" title="все группы — как в игре сейчас">Как в игре</button>
+  <button class="btn" id="bTaste" title="единая шкала кеглей по ролям (заголовки 18, названия и пункты 14, подписи 11 px) поверх ваших значений; ещё раз — вернуть">Предложение вкуса 11.10</button>
+  <button class="btn" id="bProp" title="правки 310 и 311: штраф и мелкие места крупнее на несколько пикселей">Предложение 310/311</button>
+  <button class="btn" id="bNotes" title="все замечания по всем экранам одним списком">Все замечания</button>
+  <button class="btn" id="bCopy" title="настройки текстом — прислать в чат">Скопировать JSON</button>
+  <button class="btn pri" id="bSave" title="сохранить настройки в build/ui_typo.json через локальный мост">Сохранить ui_typo.json</button>
+  <button class="btn ghost" id="bLoad" title="продолжить с сохранённого файла">Загрузить…</button>
+  <input type="file" id="fLoad" accept=".json,application/json" hidden>
+  <span id="saveState" role="status" aria-live="polite">Настройки ещё не сохранены</span>
+</header>
+<nav class="idx" id="scenes" aria-label="Экраны"></nav>
+<main class="main">
+  <section class="stagecol">
+    <div class="screen" id="screen" style="--z:2" tabindex="0" aria-label="Экран PSP: клик выбирает элемент, перетаскивание и стрелки двигают его группу">
+      <canvas id="cv" width="480" height="272"></canvas>
+      <canvas id="ov" width="960" height="544"></canvas>
+    </div>
+    <div class="meta"><b id="stitle"></b><span id="snote"></span></div>
+    <div class="ctl">
+      <span class="lab">Масштаб</span><span class="seg" id="zoom" role="radiogroup" aria-label="Масштаб экрана"></span>
+      <span class="lab">Показать</span><span class="seg" id="view" role="radiogroup" aria-label="Что на экране"></span>
+      <label class="swl"><button class="sw" id="tStatic" role="switch" aria-checked="true"></button>статичные элементы</label>
+      <label class="swl"><button class="sw" id="tBoxes" role="switch" aria-checked="false"></button>рамки строк</label>
+      <label class="swl"><button class="sw" id="tMeas" role="switch" aria-checked="true"></button>измерения</label>
+    </div>
+    <div class="meas" id="meas" aria-live="polite"></div>
+    <div class="notes" id="notes"></div>
+    <div class="sum">
+      <h3>Размеры текста по всем экранам</h3>
+      <p>заглавная H и шаг строки в пикселях PSP; жёлтым — мельче 8 px (правка 311: нигде не мелко). Клик — к группе</p>
+      <div class="sumt" id="sumt"></div>
+    </div>
+  </section>
+  <section class="side" id="side"></section>
+</main>
+<div class="nmodal" id="nmodal" hidden role="dialog" aria-label="Все замечания"><div class="box" id="nbox"></div></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+/*@@DATA@@*/
+</script>
+<script id="core">
+(function (W) {
+'use strict';
+var T = W.TYPO, S = T.S, FONT_MIN_PX = T.FONT_MIN_PX;
+var T_RECT = 0, T_POLY = 1, T_IMG = 2, T_TEXT = 3, T_NUM = 4, T_SLOT = 7;
+var GROUP = {}; T.groups.forEach(function (g) { GROUP[g.id] = g; });
+
+// ---------------------------------------------------------------- арифметика Python / C
+var f32 = Math.fround;
+function pyRound(x) {                       // round() Python: половина — к чётному
+  var f = Math.floor(x), d = x - f;
+  if (d > 0.5) return f + 1; if (d < 0.5) return f;
+  return f % 2 === 0 ? f : f + 1;
+}
+var npRound = pyRound;                      // np.round — тоже к чётному
+function floordiv(a, b) { return Math.floor(a / b); }
+function b64(s) { var bin = atob(s), u = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; }
+
+// ---------------------------------------------------------------- грани диска: порт tools/ui_export.py FontCache('psp')
+var SRC = {};
+function srcFont(name) {
+  if (SRC[name]) return SRC[name];
+  var F = T.fonts[name]; if (!F) return null;
+  var a = b64(F.alpha), af = new Float32Array(a.length);
+  for (var i = 0; i < a.length; i++) af[i] = f32(a[i] / 255);
+  var gl = {}; F.glyphs.forEach(function (g) { gl[g[0]] = {x: g[1], y: g[2], w: g[3], h: g[4], adv: g[5], left: g[6]}; });
+  return (SRC[name] = {F: F, a: af, glyphs: gl});
+}
+function coeffs(inSize, outSize, bil) {     // PIL Resample.c precompute_coeffs, фильтр BOX (bil — BILINEAR: №601, толстые Boulder)
+  var scale = inSize / outSize, filterscale = scale < 1 ? 1 : scale, support = (bil ? 1.0 : 0.5) * filterscale;
+  var ksize = Math.ceil(support) * 2 + 1, bounds = new Int32Array(outSize * 2), kk = new Float64Array(outSize * ksize);
+  for (var xx = 0; xx < outSize; xx++) {
+    var center = (xx + 0.5) * scale, ww = 0, ss = 1.0 / filterscale;
+    var xmin = Math.trunc(center - support + 0.5); if (xmin < 0) xmin = 0;
+    var xmax = Math.trunc(center + support + 0.5); if (xmax > inSize) xmax = inSize; xmax -= xmin;
+    for (var x = 0; x < xmax; x++) { var v = (x + xmin - center + 0.5) * ss, w = bil ? (Math.abs(v) < 1 ? 1 - Math.abs(v) : 0.0) : ((v > -0.5 && v <= 0.5) ? 1.0 : 0.0); kk[xx * ksize + x] = w; ww += w; }
+    for (x = 0; x < xmax; x++) if (ww !== 0) kk[xx * ksize + x] /= ww;
+    bounds[2 * xx] = xmin; bounds[2 * xx + 1] = xmax;
+  }
+  return {b: bounds, k: kk, n: ksize};
+}
+function boxResize(src, w, h, tw, th, bil) {      // Image.fromarray(.., 'F').resize((tw, th), BOX): горизонталь, потом вертикаль, float32
+  var cur = src, cw = w;
+  if (tw !== w) {
+    var c = coeffs(w, tw, bil), out = new Float32Array(tw * h);
+    for (var y = 0; y < h; y++) for (var xx = 0; xx < tw; xx++) {
+      var xmin = c.b[2 * xx], xmax = c.b[2 * xx + 1], ss = 0, ko = xx * c.n;
+      for (var x = 0; x < xmax; x++) ss += cur[y * cw + x + xmin] * c.k[ko + x];
+      out[y * tw + xx] = ss;
+    }
+    cur = out; cw = tw;
+  }
+  if (th !== h) {
+    var c2 = coeffs(h, th, bil), out2 = new Float32Array(cw * th);
+    for (var yy = 0; yy < th; yy++) {
+      var ymin = c2.b[2 * yy], ymax = c2.b[2 * yy + 1], ko2 = yy * c2.n;
+      for (var x2 = 0; x2 < cw; x2++) {
+        var s2 = 0; for (var y2 = 0; y2 < ymax; y2++) s2 += cur[(y2 + ymin) * cw + x2] * c2.k[ko2 + y2];
+        out2[yy * cw + x2] = s2;
+      }
+    }
+    cur = out2;
+  }
+  return cur;
+}
+function parseFace(face) {
+  var core = face, lead = null, trk = null, i = core.indexOf('^');
+  if (i >= 0) { lead = parseInt(core.slice(i + 1), 10); core = core.slice(0, i); }
+  var core2 = core; i = core2.indexOf('+');
+  if (i >= 0) { trk = parseInt(core2.slice(i + 1), 10); core2 = core2.slice(0, i); }
+  var base = core2, mul = null, at = false; i = base.indexOf('*');
+  if (i >= 0) { mul = base.slice(i + 1); base = base.slice(0, i); }
+  i = base.indexOf('@'); if (i >= 0) { at = true; base = base.slice(0, i); }
+  return {face: face, core: core, core2: core2, base: base, mul: mul, at: at, trk: trk, lead: lead};
+}
+var FACES = {};
+function getFace(face) {
+  if (FACES[face]) return FACES[face];
+  var p = parseFace(face), res;
+  if (p.lead !== null) {                     // '^N': строка +N, ячейка буквы прежняя (gh), атлас общий
+    var f0 = getFace(p.core);
+    res = Object.assign({}, f0, {face: face, lh: Math.max(1, f0.lh + p.lead), gh: f0.gh || f0.lh});
+  } else if (p.trk !== null) {               // '+N': шаг +N, отступ +N//2
+    var f1 = getFace(p.core2), t = p.trk, g2 = {};
+    Object.keys(f1.glyphs).forEach(function (c) { var g = f1.glyphs[c]; g2[c] = Object.assign({}, g, {adv: g.adv + t, left: g.left + floordiv(t, 2)}); });
+    res = Object.assign({}, f1, {face: face, glyphs: g2});
+  } else res = rasterFace(p);
+  return (FACES[face] = res);
+}
+function rasterHinted(s, p, fs) {            // зеркало tools/ui_export.py FontCache._native_hinted (№566): заглавная ровно CAP px, база на целой строке, двухцветный знак (тонкие: контрастный серый)
+  var F = s.F, P = 2, hg = s.glyphs[72], hx = pyRound(hg.x), hy = pyRound(hg.y), hw = pyRound(hg.w), hh = pyRound(hg.h), r0 = -1, r1 = -1, x, y;
+  for (y = 0; y < hh; y++) { var mm = 0; for (x = 0; x < hw; x++) { var vv = s.a[(hy + y) * F.w + hx + x]; if (vv > mm) mm = vv; } if (mm > f32(0.3)) { if (r0 < 0) r0 = y; r1 = y; } }
+  var caph = r1 - r0 + 1, cap = Math.max(1, pyRound(caph * fs)), k = cap / caph;
+  var lh = Math.max(1, pyRound(F.height * fs)), base = pyRound(F.baseline * fs), thin = (T.native_thin || []).indexOf(p.base) >= 0, glyphs = {};
+  Object.keys(s.glyphs).forEach(function (code) {
+    code = +code; if (code > 255) return;
+    var g = s.glyphs[code], gw = pyRound(g.w), bm = null, bw = 0, bh = 0, left = g.left * k;
+    if (gw) {
+      var x0 = pyRound(g.x), y0 = pyRound(g.y), gh = pyRound(g.h);
+      var ya = Math.max(0, y0), yb = Math.min(F.h, y0 + gh), xa = Math.max(0, x0), xb = Math.min(F.w, x0 + gw);
+      var cw = Math.max(0, xb - xa), chh = Math.max(0, yb - ya), pw = cw + 2 * P, pad = new Float32Array(pw * chh);
+      for (y = 0; y < chh; y++) for (x = 0; x < cw; x++) pad[y * pw + x + P] = s.a[(ya + y) * F.w + xa + x];
+      var tw = Math.max(1, pyRound((gw + 2 * P) * k)), hk = Math.max(1, pyRound(gh * k)), r = boxResize(pad, pw, chh, tw, hk);
+      var oy = base - pyRound(F.baseline * k), cv = new Uint8Array(tw * lh), colMax = new Uint8Array(tw);
+      for (y = 0; y < hk; y++) { var yy = y + oy; if (yy < 0 || yy >= lh) continue;
+        for (x = 0; x < tw; x++) {
+          var v = r[y * tw + x], q;
+          if (thin) { var t = f32(f32(f32(v - f32(0.08)) / f32(0.55))); t = t < 0 ? 0 : (t > 1 ? 1 : t); q = npRound(f32(t * 15)); } else q = v >= f32(0.5) ? 15 : 0;
+          cv[yy * tw + x] = q; if (q > colMax[x]) colMax[x] = q;
+        } }
+      var c0 = -1, c1 = -1; for (x = 0; x < tw; x++) if (colMax[x] > 0) { if (c0 < 0) c0 = x; c1 = x + 1; }
+      if (c0 >= 0) {
+        bw = c1 - c0; bh = lh; bm = new Uint8Array(bw * bh);
+        for (y = 0; y < lh; y++) for (x = 0; x < bw; x++) bm[y * bw + x] = cv[y * tw + c0 + x];
+        left = g.left * k - P * k + c0;
+      }
+    }
+    glyphs[code] = {bm: bm, w: bw, h: bh, left: Math.floor(left + 0.5), adv: Math.max(1, pyRound(g.adv * k)), flags: bm ? 1 : 2};
+  });
+  return {face: p.face, lh: lh, gh: 0, scale: fs, glyphs: glyphs, base: p.base, kern: F.kern || null};
+}
+function rasterFace(p) {
+  var s = srcFont(p.base); if (!s) return null;
+  var F = s.F, P = 2, fs = p.at ? 1.0 : F.gscale * (p.mul ? parseFloat(p.mul) : 1.0);
+  var PX = !!F.pixel; if (PX) fs = Math.max(1, Math.round(fs));     // пиксельный шрифт: только целые кратные
+  if (!PX && fs !== 1.0 && T.native_pix) return rasterHinted(s, p, fs);   // №566: чистый растр родных граней при дробном масштабе (зеркало ui_export FontCache._native_hinted)
+  var PX = !!F.pixel; if (PX) fs = Math.max(1, Math.round(fs));     // пиксельный шрифт: только целые кратные
+  var lh = Math.max(1, pyRound(F.height * fs)), glyphs = {};
+  Object.keys(s.glyphs).forEach(function (code) {
+    code = +code; if (code > 255) return;
+    var g = s.glyphs[code], gw = pyRound(g.w), bm = null, bw = 0, bh = 0, left = g.left * fs;
+    if (gw) {
+      var x0 = pyRound(g.x), y0 = pyRound(g.y), ch = pyRound(g.h);
+      var ya = Math.max(0, y0), yb = Math.min(F.h, y0 + ch), xa = Math.max(0, x0), xb = Math.min(F.w, x0 + gw);
+      var cw = Math.max(0, xb - xa), chh = Math.max(0, yb - ya), cell = new Float32Array(cw * chh);
+      for (var y = 0; y < chh; y++) for (var x = 0; x < cw; x++) cell[y * cw + x] = s.a[(ya + y) * F.w + xa + x];
+      if (PX && fs > 1) {                    // целое повторение пикселей без фильтра
+        var K = fs, ow = cw * K, oh = chh * K; bm = new Uint8Array(ow * oh);
+        for (var yy = 0; yy < oh; yy++) for (var xx = 0; xx < ow; xx++) bm[yy * ow + xx] = npRound(f32(cell[Math.floor(yy / K) * cw + Math.floor(xx / K)] * 15));
+        bw = ow; bh = oh; left = g.left * K;
+      } else if (fs === 1.0) {
+        bm = new Uint8Array(cw * chh); for (var i = 0; i < bm.length; i++) bm[i] = npRound(f32(cell[i] * 15));
+        bw = cw; bh = chh;
+      } else {
+        var pw = cw + 2 * P, pad = new Float32Array(pw * chh);
+        for (y = 0; y < chh; y++) for (x = 0; x < cw; x++) pad[y * pw + x + P] = cell[y * cw + x];
+        var tw = Math.max(1, pyRound((gw + 2 * P) * fs)), bil = p.base.indexOf('boulder') === 0 && !W.BOULDER_ORIG_OLD, r = boxResize(pad, pw, chh, tw, lh, bil);   // №601: толстые Boulder — билинейный масштаб без «жирности» (ui_export.py FontCache.get)
+        var lev = new Uint8Array(tw * lh), colMax = new Uint8Array(tw);
+        for (i = 0; i < r.length; i++) {
+          var v = r[i]; v = v < 0 ? 0 : (v > 1 ? 1 : v); v = f32(v);
+          var q = f32(1 - v), b = bil ? v : f32(1 - f32(q * q)), k = npRound(f32(b * 15));
+          lev[i] = k; if (k > colMax[i % tw]) colMax[i % tw] = k;
+        }
+        var c0 = -1, c1 = -1; for (x = 0; x < tw; x++) if (colMax[x] > 0) { if (c0 < 0) c0 = x; c1 = x + 1; }
+        if (c0 >= 0) {
+          bw = c1 - c0; bh = lh; bm = new Uint8Array(bw * bh);
+          for (y = 0; y < lh; y++) for (x = 0; x < bw; x++) bm[y * bw + x] = lev[y * tw + c0 + x];
+          left = g.left * fs - P * fs + c0;
+        }
+      }
+    }
+    var adv = fs === 1.0 ? g.adv * fs : Math.max(1, pyRound(g.adv * fs));
+    glyphs[code] = {bm: bm, w: bw, h: bh, left: Math.floor(left + 0.5), adv: Math.trunc(adv), flags: bm ? 1 : 2};
+  });
+  return {face: p.face, lh: lh, gh: 0, scale: fs, glyphs: glyphs, base: p.base, kern: F.kern || null};
+}
+function capPx(f) {                         // заглавная H: строки, где буква плотнее половины
+  var g = f.glyphs[72]; if (!g || !g.bm) return 0; var r0 = -1, r1 = -1;
+  for (var y = 0; y < g.h; y++) { var m = 0; for (var x = 0; x < g.w; x++) if (g.bm[y * g.w + x] > m) m = g.bm[y * g.w + x]; if (m >= 8) { if (r0 < 0) r0 = y; r1 = y; } }
+  return r0 < 0 ? 0 : r1 - r0 + 1;
+}
+
+// ---------------------------------------------------------------- грань pix8 (viewer/ui_layout.h, ui.c pix8Variant)
+var PIX8 = {};
+function pix8Font(trk, lead) {
+  var key = trk + ',' + lead; if (PIX8[key]) return PIX8[key];
+  var gl = {};
+  Object.keys(T.pix8.map).forEach(function (code) {
+    var k = T.pix8.map[code], c = T.pix8.cells[k], rows = c[0], l = c[1], w = c[2], bm = new Uint8Array(w * 8);
+    for (var y = 0; y < 8; y++) for (var x = 0; x < w; x++) if (rows[y] & (0x80 >> (l + x))) bm[y * w + x] = 15;
+    var adv = c[3], left = 0;
+    if (trk || lead) { adv = Math.max(1, adv + trk); left = trk >= 0 ? Math.trunc(trk / 2) : -Math.trunc((-trk + 1) / 2); }
+    gl[code] = {bm: +code === 32 ? null : bm, w: w, h: 8, left: left, adv: adv, flags: +code === 32 ? 2 : 1};
+  });
+  return (PIX8[key] = {face: 'pix8', lh: Math.max(1, 10 + (lead || 0)), gh: 8, glyphs: gl, pix8: true});
+}
+
+// ---------------------------------------------------------------- перенос и строка (viewer/ui_layout.h uiWrap, ui.c textGlyphs)
+function gOf(f, c) { var g = f.glyphs[c]; if (!g || !g.flags) g = f.glyphs[63]; return g; }
+function codes(s) { var a = []; for (var i = 0; i < s.length; i++) { var c = s.charCodeAt(i); a.push(c > 255 ? 63 : c); } return a; }
+function upc(c) { return c >= 97 && c <= 122 ? c - 32 : c; }
+function kernAt(f, cs, i, end) { var k = f.kern; return k && i + 1 < end && upc(cs[i]) === k[0] && upc(cs[i + 1]) === k[1] ? k[2] : 0; }   // парный кернинг (pixel_fonts.KERN, viewer/ui.c kernAdj)
+function lineW(f, cs, a, n) { var w = 0; for (var i = 0; i < n; i++) { var g = gOf(f, cs[a + i]); w += g ? g.adv + kernAt(f, cs, a + i, a + n) : 0; } return w; }
+function wrapPara(cs, base, n, maxw, wrap, f, st, len, maxL) {
+  var nl0 = st.length; if (st.length >= maxL) return;
+  if (!wrap || maxw <= 0 || lineW(f, cs, base, n) <= maxw) { st.push(base); len.push(n); return; }
+  var ls = 0, i = 0, cur = -1;
+  while (i <= n && st.length < maxL) {
+    var we = i; while (we < n && cs[base + we] !== 32) we++;
+    for (var ws = i; we < n && shortWord(cs, base + ws, we - ws);) {
+      ws = we + 1; we = ws; while (we < n && cs[base + we] !== 32) we++;
+    }
+    if (cur < 0 || lineW(f, cs, base + ls, we - ls) <= maxw) cur = we;
+    else { st.push(base + ls); len.push(cur - ls); ls = i; cur = we; }
+    i = we + 1;
+  }
+  if (st.length < maxL) { st.push(base + ls); len.push((cur < 0 ? n : cur) - ls); }
+  if ((wrap & 4) && st.length - nl0 >= 2) {   // №548: наименьшая ширина с тем же числом строк (зеркало uiWrapPara, UI_WRAP_BALANCE)
+    var want = st.length - nl0, lo = 1, hi = maxw, bw = wrap & ~4;
+    while (lo < hi) { var mid = (lo + hi) >> 1, ts = [], tl = []; wrapPara(cs, base, n, mid, bw, f, ts, tl, maxL - nl0); if (ts.length <= want) hi = mid; else lo = mid + 1; }
+    st.length = nl0; len.length = nl0; wrapPara(cs, base, n, lo, bw, f, st, len, maxL); return;
+  }
+  var nl = st.length;
+  if ((wrap & 2) && nl - nl0 >= 2) {
+    var a0 = st[nl - 2], al = len[nl - 2], b0 = st[nl - 1], bl = len[nl - 1], k = a0 + al - 1, sp = 0;
+    for (var j = b0; j < b0 + bl; j++) if (cs[j] === 32) sp = 1;
+    while (k > a0 && cs[k] !== 32) k--;
+    if (!sp && k > a0 && lineW(f, cs, k + 1, b0 + bl - (k + 1)) <= maxw) { len[nl - 2] = k - a0; st[nl - 1] = k + 1; len[nl - 1] = b0 + bl - (k + 1); }
+  }
+}
+function shortWord(cs, offset, n) {
+  if (n < 1 || n > 4) return false;
+  var word = ''; for (var i = 0; i < n; i++) word += String.fromCharCode(cs[offset + i]);
+  return (T.short_words || []).indexOf(word.toUpperCase()) >= 0;
+}
+function uiWrap(cs, maxw, wrap, f) {
+  var st = [], len = [], n = cs.length, a = 0;
+  for (var i = 0; i <= n && st.length < 8; i++) if (i === n || cs[i] === 10 || cs[i] === 92) { wrapPara(cs, a, i - a, maxw, wrap, f, st, len, 8); a = i + 1; }
+  return {st: st, len: len};
+}
+function textGlyphs(out, f, s, x, y, w, h, ha, va, wrap, dx, dy, col) {
+  var cs = codes(s), L = uiWrap(cs, w, wrap, f), nl = L.st.length, lh = f.lh, bh = lh * nl, gh = f.pix8 ? 8 : (f.gh || lh);
+  var y0 = va === 0 ? y : (va === 2 ? y + h - bh : y + floordiv(h - bh, 2)), box = null;
+  for (var l = 0; l < nl; l++) {
+    var lw = lineW(f, cs, L.st[l], L.len[l]);
+    var x0 = ha === 0 ? x : (ha === 2 ? x + w - lw : f32(x + f32((w - lw) * 0.5)));
+    var pen = Math.floor(x0 + 0.5);
+    for (var i = 0; i < L.len[l]; i++) {
+      var g = gOf(f, cs[L.st[l] + i]); if (!g) continue;
+      if (g.flags & 1) {
+        var gx = pen + g.left + dx, gy = y0 + l * lh + dy;
+        out.push([g, gx, gy, Math.min(gh, g.h), col]);
+        if (!box) box = [gx, gy, gx + g.w, gy + gh]; else { box[0] = Math.min(box[0], gx); box[1] = Math.min(box[1], gy); box[2] = Math.max(box[2], gx + g.w); box[3] = Math.max(box[3], gy + gh); }
+      }
+      pen += g.adv + kernAt(f, cs, L.st[l] + i, L.st[l] + L.len[l]);
+    }
+  }
+  return {lines: nl, box: box, y0: y0, lh: lh};
+}
+
+// ---------------------------------------------------------------- состояние: группы
+var DEF = T.defaults;
+function defState(gid) {
+  var d = DEF[gid] || {}, g = GROUP[gid], s = {};
+  if (g.kind === 'face' || g.kind === 'pix8') {
+    var face = g.kind === 'pix8' ? d.face0 : d.face, p = parseFace(face || 'boulder_16');
+    s.font = g.kind === 'pix8' ? 'pix8' : p.base;
+    s.base = p.base; s.fs = p.at ? 1 : T.fonts[p.base].gscale * (p.mul ? parseFloat(p.mul) : 1);
+    s.ftrk = p.trk || 0; s.flead = p.lead || 0; s.face0 = face;
+    s.size = 8; s.trk = 0; s.lead = 0; s.padT = 0; s.padL = 0; s.padN = 0; s.padR = 0; s.dx = 0; s.dy = 0; s.w = null; s.va = null; s.sh = null;
+    if (g.pitch) s.pitch = d.pitch || 0;
+    if (g.icons) s.icon_k = 1;
+  } else if (g.kind === 'num') { s.gk = d.gk; s.trk = 0; s.dx = 0; s.dy = 0; }
+  else if (g.kind === 'img') { s.k = 1; s.dx = 0; s.dy = 0; s.show = 1; }
+  else if (g.kind === 'move') { s.dx = 0; s.dy = 0; }
+  else if (g.kind === 'board') { s.gw = 0; s.gh = 0; }
+  (g.parts || []).forEach(function (pt) { s[pt.id + '_dx'] = 0; s[pt.id + '_dy'] = 0; });
+  return s;
+}
+var ST = {}; Object.keys(DEF).forEach(function (g) { if (GROUP[g]) ST[g] = defState(g); });
+function fmtNum(v) { var s = (+v).toFixed(4); return s.replace(/0+$/, '').replace(/\.$/, ''); }
+function composeFace(gid) {                  // имя грани из состояния; равное нынешнему — дословно нынешнее (мост: «без изменений»)
+  var s = ST[gid], d = defState(gid), base = s.font && s.font !== 'pix8' ? s.font : s.base;
+  if (base === d.base && Math.abs(s.fs - d.fs) < 5e-5 && s.ftrk === d.ftrk && s.flead === d.flead && d.face0) return d.face0;
+  var PXF = T.fonts[base] && T.fonts[base].pixel, PXK = PXF ? Math.max(1, Math.round(s.fs / T.fonts[base].gscale)) : 0;
+  var core = PXF ? (PXK === 1 ? base + '@1' : base + '*' + PXK) : (Math.abs(s.fs - 1) < 5e-5 ? base + '@1' : base + '*' + fmtNum(s.fs / T.fonts[base].gscale));
+  return core + (s.ftrk ? '+' + s.ftrk : '') + (s.flead ? '^' + s.flead : '');
+}
+function settings(gid) {                     // настройки группы для ui_typo.json: только отличия от игры
+  var g = GROUP[gid], s = ST[gid], d = defState(gid), o = {};
+  if (!s) return o;
+  if (g.kind === 'face' && s.font === 'pix8') { o.font = 'pix8'; if (s.size !== 8) o.size = s.size; if (s.trk) o.trk = s.trk; if (s.lead) o.lead = s.lead; }
+  else if (g.kind === 'face') { var f = composeFace(gid); if (f !== d.face0) o.face = f; }
+  if (g.kind === 'pix8') {
+    if (s.font !== 'pix8') o.font = composeFace(gid);
+    else { if (s.size !== 8) o.size = s.size; if (s.trk) o.trk = s.trk; if (s.lead) o.lead = s.lead; }
+  }
+  if (g.kind === 'face' || g.kind === 'pix8') {
+    if (g.pads) { if (s.padT) o.padT = s.padT; if (s.padL) o.padL = s.padL; if (s.padN) o.padN = s.padN; if (s.padR) o.padR = s.padR; }
+    if (s.dx) o.dx = s.dx; if (s.dy) o.dy = s.dy; if (s.w !== null && s.w !== undefined) o.w = s.w;
+    if (s.va !== null && s.va !== undefined) o.va = s.va;
+    if (s.sh !== null && s.sh !== undefined) o.sh = s.sh;
+    if (g.pitch && s.pitch !== d.pitch) o.pitch = s.pitch;
+    if (g.icons && Math.abs(s.icon_k - 1) > 1e-9) o.icon_k = s.icon_k;
+  }
+  if (g.kind === 'num') { if (Math.abs(s.gk - d.gk) > 1e-9) o.gk = s.gk; if (s.trk) o.trk = s.trk; if (s.dx) o.dx = s.dx; if (s.dy) o.dy = s.dy; }
+  if (g.kind === 'img') { if (Math.abs(s.k - 1) > 1e-9) o.k = s.k; if (s.dx) o.dx = s.dx; if (s.dy) o.dy = s.dy; }
+  if (g.kind === 'move') { if (s.dx) o.dx = s.dx; if (s.dy) o.dy = s.dy; }
+  if (g.kind === 'board') { if (s.gw) o.gw = s.gw; if (s.gh) o.gh = s.gh; }
+  (g.parts || []).forEach(function (pt) { ['_dx', '_dy'].forEach(function (k) { if (s[pt.id + k]) o[pt.id + k] = s[pt.id + k]; }); });
+  return o;
+}
+var EL = {};   // настройки отдельных элементов (№574 вторая версия): ключ «экран|имя узла» -> {dx, dy}; применяются после групп (зеркало ui_typo.py _elements)
+// №596: составные экраны бонус-меню. В панели Back2/Accept2 нарисованы поверх выбора персонажа и трассы, но в игре это отдельный экран mmhints,
+// а остальные узлы сцены «подписи кнопок» (MiniMenu.pag) принадлежат mmtrack: ключ настройки элемента берём по настоящему экрану узла, как в tools/ui_typo.py _elements
+// строки итогов бонуса (MiniSummary.pag, имена с цифрой 0..3: Rank2, Row1, Face3) в игре — экраны msrow0..msrow3, шапка и Continue — msbase (tools/typo_panel.py extra_scenes)
+function elScr(sc, page, name) {
+  if (page === 'Back2.pag' || page === 'Accept2.pag') return 'mmhints';
+  if (sc.screen === 'msbase' && page === 'MiniSummary.pag') { var m = /([0-3])$/.exec(name || ''); if (m) return 'msrow' + m[1]; }
+  return sc.screen === 'mmhints' ? 'mmtrack' : sc.screen;
+}
+function elKey(sc, kind, name, page) { return (kind === 'rect' ? (sc.screen === 'mmhints' ? 'mmtrack' : sc.screen) : elScr(sc, page, name)) + '|' + (kind === 'stat' ? 'img' : kind) + '|' + name; }   // вид: text | num | img (подпись и значок с одним именем — разные элементы)
+function elJson() { var o = {}; Object.keys(EL).forEach(function (k) { var e = EL[k], r = {}; if (e.dx) r.dx = e.dx; if (e.dy) r.dy = e.dy; if (e.k && Math.abs(e.k - 1) > 1e-9) r.k = e.k; if (e.w && Math.abs(e.w - 1) > 1e-9) r.w = e.w; if (e.h && Math.abs(e.h - 1) > 1e-9) r.h = e.h; if (Object.keys(r).length) o[k] = r; }); return o; }
+function changed(gid) { return Object.keys(settings(gid)).length > 0; }
+function typoJson() {
+  var gs = {}, was = (T.initial && T.initial.groups) || {};   // пустой объект группы — явный сброс («как в игре» / «оригинал»): забиратель не вернёт её из прежнего файла, наследники не подхватят
+  T.groups.forEach(function (g) { if (!ST[g.id]) { if (was[g.id] !== undefined) gs[g.id] = was[g.id]; return; }   // группы, которых нет ни в одной сцене панели, едут как были
+    var o = settings(g.id); if (Object.keys(o).length || was[g.id] !== undefined) gs[g.id] = o; });   // 11.10: явный сброс {} остаётся в файле (группа была в сохранённом json — пустая запись, не отсутствие)
+  return {version: 1, target: 'shar-psp/build/ui_typo.json', made: new Date().toISOString().slice(0, 16).replace('T', ' '), note: 'твик-панель типографики SHAR (правка 312); мост tools/ui_typo.py', groups: gs, elements: elJson()};
+}
+// Правка 10.10: сохранённый json — правда. Страница берёт saved.json рядом (его пишет забиратель tools/ui_typo_save.py при каждом «Сохранить»), а не только память браузера;
+// без http (двойной клик по файлу) остаётся json, вшитый при сборке панели
+(function () { try { var x = new XMLHttpRequest(); x.open('GET', 'saved.json?t=' + Date.now(), false); x.send(); if (x.status === 200) { var sj = JSON.parse(x.responseText); if (sj && sj.groups) T.initial = sj; } } catch (e) { } })();
+function loadJson(j) {
+  if (j && j.elements) { EL = {}; Object.keys(j.elements).forEach(function (k) { var je = j.elements[k]; EL[k] = {dx: je.dx | 0, dy: je.dy | 0, k: je.k || 1, w: je.w || 1, h: je.h || 1}; }); }
+  Object.keys(ST).forEach(function (g) { ST[g] = defState(g); });
+  var gs0 = (j && j.groups) || {}, gs = {};
+  Object.keys(gs0).forEach(function (k) { gs[k] = gs0[k]; });
+  // новая группа без своих значений берёт значения прежней (inherit: «hints» → подписи кнопок по экранам); так прежние файлы и память браузера читаются без потерь
+  T.groups.forEach(function (g) { if (g.inherit && gs[g.id] === undefined && gs[g.inherit]) gs[g.id] = gs[g.inherit]; });
+  Object.keys(gs).forEach(function (gid) {
+    var g = GROUP[gid], o = gs[gid], s = ST[gid]; if (!g || !s) return;
+    var face = o.face || (g.kind === 'pix8' && o.font && o.font !== 'pix8' ? o.font : null);
+    if (g.kind === 'face' && o.font === 'pix8') s.font = 'pix8';
+    if (face) { var p = parseFace(face); s.base = p.base; if (g.kind === 'pix8') s.font = p.base; else s.font = p.base;
+                s.fs = p.at ? 1 : T.fonts[p.base].gscale * (p.mul ? parseFloat(p.mul) : 1); s.ftrk = p.trk || 0; s.flead = p.lead || 0; }
+    Object.keys(o).forEach(function (k) { if (k !== 'face' && k !== 'font' && typeof o[k] === 'number') s[k] = o[k]; });
+  });
+}
+loadJson(T.initial);
+var GAME_STATE = JSON.parse(JSON.stringify(ST));
+function resetGroup(gid) { ST[gid] = JSON.parse(JSON.stringify(GAME_STATE[gid] || defState(gid))); }
+function resetGame() { EL = {}; loadJson(T.initial); }
+
+// ---------------------------------------------------------------- мост: те же правила, что tools/ui_typo.py apply (зеркало)
+function typoRes(trk, lead, padT, padL, padR) { return {trk: Math.max(-8, Math.min(7, trk | 0)), lead: Math.max(-8, Math.min(7, lead | 0)), padT: padT | 0, padL: padL | 0, padR: padR | 0, padN: 0}; }
+function engineLh(t) { return t.pix8 ? 10 + (t.res ? t.res.lead : 0) : getFace(t.font).lh; }
+function nameOk(pat, name) { return pat === '*' || (pat.slice(-1) === '*' && name.indexOf(pat.slice(0, -1)) === 0) || pat === name; }
+function partOk(pt, sc, it) {
+  if (pt.screens && pt.screens.indexOf(sc.screen) < 0) return false;
+  return !pt.sel || pt.sel.some(function (q) { return it.page === q[0] && nameOk(q[1], it.name); });
+}
+function shift(r, dx, dy) { r[0] += dx; r[1] += dy; }
+function rowNo(name) { var m = /(\d+)$/.exec(name || ''); return m ? parseInt(m[1], 10) : null; }   // ui_typo._row_no
+function scaleRect(r, k) {                   // ui_typo._scale_img: размер x k (round Python), центр на месте (floor + .5)
+  var w1 = Math.max(1, pyRound(r[2] * k)), h1 = Math.max(1, pyRound(r[3] * k));
+  return [Math.floor(r[0] + r[2] / 2 - w1 / 2 + 0.5), Math.floor(r[1] + r[3] / 2 - h1 / 2 + 0.5), w1, h1];
+}
+function scaleRect2(r, kx, ky) {            // ui_typo._scale_img_xy: ширина x kx, высота x ky, центр на месте
+  var w1 = Math.max(1, pyRound(r[2] * kx)), h1 = Math.max(1, pyRound(r[3] * ky));
+  return [Math.floor(r[0] + r[2] / 2 - w1 / 2 + 0.5), Math.floor(r[1] + r[3] / 2 - h1 / 2 + 0.5), w1, h1];
+}
+var HUD_STACK = ['TIMER', 'PARTIME', 'LAP', 'POSITION', 'COLLECTIBLES'];
+function applyTypo(sc) {                     // зеркало tools/ui_typo.py apply: те же правила в том же порядке
+  sc._bgrow = 0;
+  var texts = sc.texts.map(function (t) { return Object.assign({}, t, {dst: t.dst.slice(), res: null}); });
+  var nums = sc.nums.map(function (n) { return Object.assign({}, n, {dst: n.dst.slice(), gk: n.gk0, trk: 0}); });
+  var stat = sc.statics.map(function (s) { return Object.assign({}, s, {cur: s.dst.slice(), k: 1, show: 1, stretch: false}); });
+  T.groups.forEach(function (g) {
+    var s = ST[g.id]; if (!s) return; var o = settings(g.id);
+    if (g.kind === 'face' || g.kind === 'pix8') {
+      var its = texts.filter(function (t) { return t.group === g.id; }); if (!its.length) return;
+      its.forEach(function (t) {
+        var x = t.dst[0], y = t.dst[1], w = t.dst[2], h = t.dst[3], lh0 = t.pix8 ? 10 : getFace(t.font).lh;
+        if (o.va === 0 || o.va === 1 || o.va === 2) t.va = o.va;   // правка 507: выравнивание в рамке строки (зеркало ui_typo.py)
+        var shv = o.sh !== undefined ? o.sh : (g.shadow || 0);   // №551: тёмная подложка (тень 1 px, как у подписи под △); по умолчанию — по группе (g.shadow)
+        if (shv === 1 && !t.sh) t.sh = [1, 1, [0, 0, 0, 200]]; else if (shv === 0 && o.sh === 0) t.sh = null;
+        if ((t.pix8Default || (t.pix8 && g.kind === 'face')) && o.face && o.font !== 'pix8') t.pix8 = false;
+        if (g.kind === 'pix8') { if (o.font && o.font !== 'pix8') { t.font = o.font; t.pix8 = false; } }
+        else if (o.font === 'pix8') t.pix8 = true;
+        if (t.pix8 && o.size && o.size !== 8) {
+          t.font = 'pix8_8*' + (Math.max(1, Math.min(64, o.size)) / 8 / T.fonts.pix8_8.gscale).toFixed(8) + (o.trk ? '+' + o.trk : '') + (o.lead ? '^' + o.lead : '');
+          t.pix8 = false;
+        }
+        if (t.pix8) { var r = typoRes(o.trk, o.lead, o.padT, o.padL, o.padR); if (r.trk || r.lead || r.padT || r.padL || r.padR) t.res = r; }
+        if (o.face && !t.pix8 && o.face !== t.font) t.font = o.face;
+        if (!t.pix8 && g.pads && (o.padT || o.padL || o.padR)) t.res = typoRes(0, 0, o.padT, o.padL, o.padR);
+        if (g.pads && o.padN) { t.res = t.res || typoRes(0, 0, 0, 0, 0); t.res.padN = o.padN | 0; }   // res[1] строки (TYPO_PADN)
+        var lh1 = t.pix8 ? 10 : getFace(t.font).lh;
+        if (lh1 !== lh0 && t.va === 0 && !t.wrap) y += floordiv(lh0 - lh1, 2);
+        if (o.w !== undefined && (o.w | 0) !== w) { var nw = o.w | 0; if (t.ha === 1) x += floordiv(w - nw, 2); else if (t.ha === 2) x += w - nw;
+          if (g.id.indexOf('hud_bubble') === 0 && nw > w) { var gr = 0; stat.forEach(function (q) { if (q.page === 'Hud.pag' && q.name === 'MessageBox' && !gr) { var over = Math.max(0, x + w - (q.cur[0] + q.cur[2])); var lim = 480 - 8; (sc.fit || []).forEach(function (b) { if (b[0] === 2 && b[1] === 'RADAR' && b[5] >= 40) lim = Math.min(lim, b[3] - 6); }); var d = Math.max(0, Math.min(nw - w + over, lim - (q.cur[0] + q.cur[2]))); q.cur = [q.cur[0], q.cur[1], q.cur[2] + d, q.cur[3]]; gr = 1; sc._bgrow = d; nw = w + Math.max(0, d - over); } }); }   // 11.10: ширина строки растит и рамку пузыря (зеркало ui_typo.py _bubble_grow)
+          w = nw; }
+        if (!g.corner) { x += o.dx | 0; y += o.dy | 0; }
+        t.dst = [x, y, w, h];
+      });
+      if (g.pitch && o.pitch) {
+        var ys = []; its.forEach(function (t) { if (ys.indexOf(t.dst[1]) < 0) ys.push(t.dst[1]); }); ys.sort(function (a, b) { return a - b; });
+        if (ys.length >= 2) { var p0 = pyRound((ys[ys.length - 1] - ys[0]) / (ys.length - 1)), p = o.pitch | 0;
+          if (p !== p0) { var y0 = ys[0] + floordiv((ys.length - 1) * (p0 - p), 2), dyr = {};
+            its.forEach(function (t) { var ny = y0 + ys.indexOf(t.dst[1]) * p, k = rowNo(t.name); if (k !== null) dyr[k] = ny - t.dst[1]; t.dst[1] = ny; });
+            // правка 348 (ui_typo rowcarry): значок и полоса выбора строки k едут за строкой k
+            stat.forEach(function (st) { var k = rowNo(st.name); if (st.group === g.id && k !== null && dyr[k] !== undefined) st.cur[1] += dyr[k]; }); } }
+      }
+      if (g.id === 'phone_damage' && its.length > 1) {   // ui_typo._pair_row: «DAMAGED» и «90%» подряд по ширине выбранной грани
+        its.sort(function (p, q) { return p.dst[0] - q.dst[0]; });
+        var ws = its.map(function (t) { var f = t.pix8 ? pix8Font(o.trk | 0, 0) : getFace(t.font), n = 0; t.strings.forEach(function (s2) { if (s2) n = Math.max(n, lineW(f, codes(s2), 0, s2.length)); }); return n; });
+        var l = its[0].dst[0], r = Math.max.apply(null, its.map(function (t) { return t.dst[0] + t.dst[2]; })), tot = ws.reduce(function (a2, b2) { return a2 + b2; }, 0) + 4 * (ws.length - 1);
+        var xx = pyRound((l + r) / 2 - tot / 2); its.forEach(function (t, i) { t.dst = [xx, t.dst[1], ws[i], t.dst[3]]; xx += ws[i] + 4; });
+      }
+      if (g.corner) {
+        var icons = corner(its, stat, o.trk | 0), ik = o.icon_k !== undefined ? o.icon_k : 1;
+        if (g.align) alignHints(its, stat, g.align, o.trk | 0);   // ui_typo._align (правило Роба 11.10: Accept не гуляет между экранами)
+        if (g.btn) btnRule(its, stat, sc);   // №555: общее правило кнопки (ui_typo._btn_rule)
+        its.forEach(function (t) { shift(t.dst, o.dx | 0, o.dy | 0); });
+        icons.forEach(function (q) { if (Math.abs(ik - 1) > 1e-9) { q.cur = scaleRect(q.cur, ik); q.k = ik; } shift(q.cur, o.dx | 0, o.dy | 0); });
+      }
+      if (g.btn && !g.corner) btnRule(its, stat, sc, o.dy | 0);   // №555: кнопки поверх мира (разговор, карточка)
+      (g.parts || []).forEach(function (pt) { var dx = o[pt.id + '_dx'] | 0, dy = o[pt.id + '_dy'] | 0; if (dx || dy) its.forEach(function (t) { if (partOk(pt, sc, t)) shift(t.dst, dx, dy); }); });
+    } else if (g.kind === 'num') {
+      var ns = nums.filter(function (n) { return n.group === g.id; });
+      ns.forEach(function (n) {
+        if (o.gk !== undefined) {
+          // зеркало ui_typo.py _num (правка 507): рамка числа стопки оверлеев HUD растёт вместе с буквами от своего центра
+          var tg = (sc.fit.filter(function (f) { return f[2] === n.name; })[0] || [])[1];
+          if (((sc.screen === 'hud' && HUD_STACK.indexOf(tg) >= 0) || ((sc.screen === 'pause' || sc.screen === 'pausemsn') && tg === 'COINS')) && Math.abs(o.gk - n.gk) > 1e-9) {   // №530: монеты паузы тоже от центра
+            var nh = Math.floor(n.dst[3] * o.gk / n.gk + 0.5); n.dst = [n.dst[0], n.dst[1] - floordiv(nh - n.dst[3], 2), n.dst[2], nh];
+          }
+          n.gk = o.gk;
+        }
+        n.trk = o.trk | 0; shift(n.dst, o.dx | 0, o.dy | 0); });
+      (g.parts || []).forEach(function (pt) { var dx = o[pt.id + '_dx'] | 0, dy = o[pt.id + '_dy'] | 0; if (dx || dy) ns.forEach(function (n) { if (partOk(pt, sc, n)) shift(n.dst, dx, dy); }); });
+    } else if (g.kind === 'img') {
+      var sts = stat.filter(function (st) { return st.group === g.id; }); if (!sts.length) return;
+      var k = o.k !== undefined ? o.k : 1, carry = texts.filter(function (t) { return (g.carry || []).indexOf(t.group) >= 0; });
+      var move = null;
+      if (g.block && Math.abs(k - 1) > 1e-9) {   // блок: размеры и промежутки x k от центра блока
+        var x0 = 1e9, y0b = 1e9, x1 = -1e9, y1 = -1e9;
+        sts.forEach(function (st) { x0 = Math.min(x0, st.cur[0]); y0b = Math.min(y0b, st.cur[1]); x1 = Math.max(x1, st.cur[0] + st.cur[2]); y1 = Math.max(y1, st.cur[1] + st.cur[3]); });
+        var cx = (x0 + x1) / 2, cy = (y0b + y1) / 2;
+        move = function (r) { var mx = r[0] + r[2] / 2, my = r[1] + r[3] / 2, nx = cx + (mx - cx) * k, ny = cy + (my - cy) * k;
+          r[0] = Math.floor(nx - r[2] / 2 + 0.5); r[1] = Math.floor(ny - r[3] / 2 + 0.5); };
+        sts.forEach(function (st) { st.cur = scaleRect(st.cur, k); st.k = k; move(st.cur); });
+        carry.forEach(function (t) {
+          if (g.carryfont && !W.TYPO_318_OLD) { // №318: same disc face and bounds as ui_typo.py
+            var p = parseFace(t.font), fs = p.at ? 1 : T.fonts[p.base].gscale * (p.mul ? parseFloat(p.mul) : 1);
+            t.font = p.base + '*' + fmtNum(fs * k / T.fonts[p.base].gscale) + (p.trk !== null ? '+' + p.trk : '') + (p.lead !== null ? '^' + p.lead : '');
+            t.dst = scaleRect(t.dst, k);
+          }
+          move(t.dst);
+        });
+      } else if (Math.abs(k - 1) > 1e-9) sts.forEach(function (st) { st.cur = scaleRect(st.cur, k); st.k = k; });
+      sts.forEach(function (st) { shift(st.cur, o.dx | 0, o.dy | 0); st.show = s.show; });
+      if (o.dx || o.dy) carry.forEach(function (t) { shift(t.dst, o.dx | 0, o.dy | 0); });
+    } else if (g.kind === 'move') {
+      texts.forEach(function (t) { if (partOk(g, sc, t)) shift(t.dst, o.dx | 0, o.dy | 0); });
+      nums.forEach(function (n) { if (partOk(g, sc, n)) shift(n.dst, o.dx | 0, o.dy | 0); });
+      stat.forEach(function (st) { if (partOk(g, sc, st)) shift(st.cur, o.dx | 0, o.dy | 0); });
+    } else if (g.kind === 'board') {
+      var gw = o.gw | 0, gh = o.gh | 0; if (!gw && !gh) return;
+      stat.forEach(function (st) {
+        if (st.group !== g.id) return; var r = st.cur, nm = st.name;
+        var sx = nm.indexOf('Left') >= 0 ? -gw : (nm.indexOf('Right') >= 0 ? gw : 0), sy = nm.indexOf('Top') >= 0 ? -gh : (nm.indexOf('Bottom') >= 0 ? gh : 0);
+        if (nm === 'Frame_Top' || nm === 'Frame_Bottom') { r[0] -= gw; r[2] += 2 * gw; r[1] += sy; st.stretch = true; }
+        else if (nm === 'Frame_Left' || nm === 'Frame_Right') { r[1] -= gh; r[3] += 2 * gh; r[0] += sx; st.stretch = true; }
+        else if (nm === 'Frame_Bgd') { r[0] -= gw; r[1] -= gh; r[2] += 2 * gw; r[3] += 2 * gh; st.stretch = true; }
+        else { r[0] += sx; r[1] += sy; }
+      });
+    }
+  });
+  if (sc.screen === 'hud') {                // №387: same visible-alpha top rule as viewer/ui.c drawScreen
+    var padding = 2, top = 1e9, obj = sc.obj;
+    if (obj && obj.ext) {
+      var e = obj.ext, k = obj.oiW && obj.oiH ? f32(Math.min(f32(e[2] / obj.oiW), f32(e[3] / obj.oiH))) : 0;
+      padding = Math.max(2, k > 0 ? f32(e[0] + f32((e[2] - f32(obj.oiW * k)) * .5) + f32((obj.oiVisL || 0) * k)) : e[0]);
+    }
+    stat.forEach(function (s) { if (s.tag === 'ACTION') top = Math.min(top, s.cur[1] + (s.alphaTop || 0)); });
+    if (top < 1e9) {
+      var dy = Math.floor(padding + 4 - top + .5);
+      texts.forEach(function (t) { if (t.tag === 'ACTION') t.dst[1] += dy; });
+      stat.forEach(function (s) { if (s.tag === 'ACTION') s.cur[1] += dy; });
+    }
+  }
+  if (sc.screen === 'hud') nums.forEach(function (n) {   // зеркало ui_typo.py apply (правка 507): «th» уходит вправо на прирост ширины цифры «4»
+    if (n.name !== 'Position' || Math.abs(n.gk - n.gk0) < 1e-9) return;
+    var a = n.sets[(+n.gk).toFixed(2)], b = n.sets[(+n.gk0).toFixed(2)];
+    if (a && b && a.glyphs['4'] && b.glyphs['4']) { var d = a.glyphs['4'][4] - b.glyphs['4'][4]; if (d) texts.forEach(function (t) { if (t.name === 'PositionOrdinal') t.dst[0] += d; }); }
+  });
+  Object.keys(EL).forEach(function (k) {   // №574: настройки отдельных элементов — после групп
+    var pr = k.split('|'); if (pr[0] !== sc.screen && !(sc.screen === 'mmchar' || sc.screen === 'mmtrack' || sc.screen === 'mmhints' || sc.screen === 'msbase')) return; var kd = pr[1], nm = pr.slice(2).join('|'), e = EL[k], dx = e.dx | 0, dy = e.dy | 0, ek = e.k || 1, ew = e.w || 1, eh = e.h || 1;
+    if (!dx && !dy && Math.abs(ek - 1) < 1e-9 && Math.abs(ew - 1) < 1e-9 && Math.abs(eh - 1) < 1e-9) return;
+    if (kd === 'text') texts.forEach(function (t) { if (t.name === nm && elScr(sc, t.page, t.name) === pr[0]) { if (Math.abs(ek - 1) > 1e-9 && !W.TYPO_ELTEXT_OLD) elTextScale(t, ek); shift(t.dst, dx, dy); } });   // №574 2b-2: масштаб надписи = размер шрифта x k (зеркало ui_typo._scale_text)
+    else if (kd === 'num') nums.forEach(function (n) { if (n.name === nm && elScr(sc, n.page, n.name) === pr[0]) { if (Math.abs(ek - 1) > 1e-9) n.gk = n.gk * ek; shift(n.dst, dx, dy); } });   // масштаб числа/надписи спрайтовым шрифтом: размер картинок букв x k
+    else if (kd === 'rect') stat.forEach(function (q) { if (q.flat && q.name === nm && (sc.screen === 'mmhints' ? 'mmtrack' : sc.screen) === pr[0]) { var kx = ek * ew, ky = ek * eh; if (Math.abs(kx - 1) > 1e-9 || Math.abs(ky - 1) > 1e-9) q.cur = scaleRect2(q.cur, kx, ky); shift(q.cur, dx, dy); } });   // №574 2b-3: плоская плашка (заливка): масштаб, ширина, высота от центра
+    else if (kd === 'img') stat.forEach(function (q) { if (!q.flat && q.name === nm && elScr(sc, q.page, q.name) === pr[0]) { var kx = ek * ew, ky = ek * eh; if (Math.abs(kx - 1) > 1e-9 || Math.abs(ky - 1) > 1e-9) { q.cur = scaleRect2(q.cur, kx, ky); q.k = kx; } shift(q.cur, dx, dy); } });
+  });
+  if (sc.screen === 'missionload' && !W.TYPO_BRIEFCENTER_OLD) briefCenter(texts, stat);   // №632
+  return {texts: texts, nums: nums, stat: stat};
+}
+function briefCenter(texts, stat) {           // ui_typo._brief_center: Continue (значок + 5 px + слово) и LOADING по центру карточки, dx групп поверх центра
+  var bg = stat.filter(function (q) { return q.flat && q.name === 'background'; })[0]; if (!bg) return;
+  var cx = bg.cur[0] + bg.cur[2] / 2;
+  function gdx(gid) { var o = settings(gid); return (o && o.dx | 0) || 0; }
+  texts.forEach(function (t) { if (t.name === 'BriefLoading') { var w = t.dst[2]; t.ha = 1; t.dst = [Math.floor(cx + gdx('brief_loading') - w / 2 + 0.5), t.dst[1], w, t.dst[3]]; } });
+  var tx = texts.filter(function (t) { return t.name === 'Continue'; })[0], ic = stat.filter(function (q) { return !q.flat && q.name === 'Continue'; })[0];
+  if (tx && ic && tx.strings && tx.strings.length) {
+    var f = tx.pix8 ? pix8Font(0, 0) : getFace(tx.font), ww = 0; tx.strings.forEach(function (s2) { if (s2) ww = Math.max(ww, lineW(f, codes(s2), 0, s2.length)); });
+    var qw = ic.cur[2], x0 = Math.floor(cx + gdx('brief_btn') - (qw + 5 + ww) / 2 + 0.5);
+    ic.cur = [x0, ic.cur[1], qw, ic.cur[3]]; tx.ha = 0; tx.dst = [x0 + qw + 5, tx.dst[1], ww, tx.dst[3]];
+  }
+}
+function elTextScale(t, k) {
+  var lh0 = t.pix8 ? 10 : getFace(t.font).lh;
+  if (t.pix8) { t.font = 'pix8_8*' + (k / T.fonts.pix8_8.gscale).toFixed(8); t.pix8 = false; }
+  else { var p = parseFace(t.font), fs = p.at ? 1 : T.fonts[p.base].gscale * (p.mul ? parseFloat(p.mul) : 1);
+    t.font = p.base + '*' + fmtNum(fs * k / T.fonts[p.base].gscale) + (p.trk !== null ? '+' + p.trk : '') + (p.lead !== null ? '^' + p.lead : ''); }
+  var lh1 = getFace(t.font).lh;
+  if (lh1 !== lh0 && t.va === 0 && !t.wrap) t.dst = [t.dst[0], t.dst[1] + floordiv(lh0 - lh1, 2), t.dst[2], t.dst[3]];
+}
+var BTN_GAP = 4, CAPMID = {};
+function capMidOf(t) {                         // середина заглавных от верха строки грани (ui_typo._cap_mid)
+  if (t.pix8) return 3.5;
+  var key = t.font; if (CAPMID[key] !== undefined) return CAPMID[key];
+  var f = getFace(t.font), g = f && f.glyphs[72], r0 = -1, r1 = -1;
+  if (g && g.bm) for (var y = 0; y < g.h; y++) { var m = 0; for (var x = 0; x < g.w; x++) if (g.bm[y * g.w + x] > m) m = g.bm[y * g.w + x]; if (m >= 8) { if (r0 < 0) r0 = y; r1 = y; } }
+  return (CAPMID[key] = r0 < 0 ? f.lh / 2 : (r0 + r1 + 1) / 2);
+}
+function btnRule(its, stat, sc, dy) {              // ui_typo._btn_rule: заглавные подписи на середине значка, зазор значок -> подпись BTN_GAP, двигается значок
+  its.forEach(function (t) {
+    var ics = stat.filter(function (q) { return q.page === t.page && (T.hint_pages.indexOf(t.page) >= 0 || q.name === t.name); });
+    if (!ics.length) ics = (sc.fit || []).filter(function (b) { return b[0] === 2 && b[2] === t.name; }).map(function (b) { return {cur: b.slice(3, 7), fitOnly: 1}; });   // значок запечён в кадр игры (карточка): положение по раскладке, как в ui_typo
+    if (!ics.length) return;
+    var x = t.dst[0], w = t.dst[2], lh = t.pix8 ? 10 : getFace(t.font).lh;
+    ics.forEach(function (q) {
+      var cy = q.cur[1] + q.cur[3] / 2;
+      t.dst = [x, Math.floor(cy - capMidOf(t) + 0.5) + (dy | 0), w, lh]; t.va = 0;
+      q.cur = [x - BTN_GAP - q.cur[2], q.cur[1]].concat(q.cur.slice(2));
+    });
+  });
+}
+function alignHints(its, stat, al, trk) {     // ui_typo._align: right/bottom — правый край подписи и нижняя строка от краёв экрана; x/y — левый верх нижней строки; значок едет с подписью
+  var ys = []; its.forEach(function (t) { if (ys.indexOf(t.dst[1]) < 0) ys.push(t.dst[1]); }); ys.sort(function (a, b) { return b - a; });
+  var pitch = al.pitch !== undefined ? al.pitch | 0 : 20;
+  its.forEach(function (t) {
+    var x = t.dst[0], y = t.dst[1], h = t.dst[3], i = ys.indexOf(y), f = t.pix8 ? pix8Font(trk, 0) : getFace(t.font), nw = 0, nx, ny;
+    t.strings.forEach(function (s) { if (s) nw = Math.max(nw, lineW(f, codes(s), 0, s.length)); });
+    if (al.right !== undefined) { nx = 480 - (al.right | 0) - nw; ny = 272 - (al.bottom | 0) - h - i * pitch; } else { nx = al.x | 0; ny = (al.y | 0) - i * pitch; }
+    stat.forEach(function (q) { if (q.page === t.page && T.hint_pages.indexOf(q.page) >= 0) q.cur = [q.cur[0] + nx - x, q.cur[1] + ny - y].concat(q.cur.slice(2)); });
+    t.dst = [nx, ny, nw, h];
+  });
+}
+function corner(its, stat, trk) {            // ui_typo._corner: строка подсказок в правом нижнем углу — правый край на месте -> значки
+  var units = its.map(function (t) { return [t, stat.filter(function (q) { return q.page === t.page && T.hint_pages.indexOf(q.page) >= 0; })]; });
+  var icons = []; units.forEach(function (u) { icons = icons.concat(u[1]); });
+  var right = 0; units.forEach(function (u) { right = Math.max(right, u[0].dst[0] + u[0].dst[2]); });
+  if (right < 480 - 8 - 1) return icons;
+  units.sort(function (a, b) { return b[0].dst[0] - a[0].dst[0]; });
+  var acc = 0;
+  units.forEach(function (u) {
+    var t = u[0], f = t.pix8 ? pix8Font(trk, 0) : getFace(t.font), nw = 0;
+    t.strings.forEach(function (s) { if (s) nw = Math.max(nw, lineW(f, codes(s), 0, s.length)); });
+    acc += nw - t.dst[2]; t.dst = [t.dst[0] - acc, t.dst[1], nw, t.dst[3]];
+    u[1].forEach(function (q) { q.cur = [q.cur[0] - acc].concat(q.cur.slice(1)); });
+  });
+  return icons;
+}
+
+// ---------------------------------------------------------------- раскладка строк движка (viewer/ui.c drawScreen, objTextStart, fitW)
+function fitW(sc, t) {
+  var best = null, bw = 0, bh = 0, padT = t.res ? t.res.padT : 0, padR = t.res ? t.res.padR : 0;
+  sc._fit.forEach(function (b) {
+    if (b[0] !== T_IMG || b[1] !== t.tag || b[5] * 2 < t.dst[2]) return;
+    var x = t.dst[0], y = t.dst[1];
+    if (x < b[3] || y < b[4] || x >= b[3] + b[5] || y >= b[4] + b[6]) return;
+    if (!best || b[5] * b[6] < bw * bh) { best = b; bw = b[5]; bh = b[6]; }
+  });
+  if (!best) return t.dst[2];
+  var inset = t.dst[1] - best[4] - padT, right = best[3] + best[5] - inset - padR, w = right - t.dst[0];
+  return Math.min(w, t.dst[2]);
+}
+function objStart(sc, tx) {
+  var o = sc.obj, bubble = 0, field = 0, bubY = -1, bubH = 0, padL = tx.res ? tx.res.padL : 0, padN = tx.res ? tx.res.padN : 0;
+  sc._fit.forEach(function (b) {
+    if (b[0] !== T_IMG || b[1] !== tx.tag || b[5] * 2 < tx.dst[2]) return;
+    if (tx.dst[0] < b[3] || tx.dst[1] < b[4] || tx.dst[0] >= b[3] + b[5] || tx.dst[1] >= b[4] + b[6]) return;
+    var lo = b[3] + (tx.dst[1] - b[4]); if (!bubble || lo > field) { field = lo; bubY = b[4]; bubH = b[6]; } bubble = 1;
+  });
+  var r;
+  if (!o || !o.icon) { r = bubble ? f32(field + 6) : -1; return {x: r >= 0 ? f32(r + padN) : r, bubY: bubY, bubH: bubH}; }
+  else if (o.icon === 'ext' && o.oiW) {
+    var e = o.ext, k = f32(Math.min(f32(e[2] / o.oiW), f32(e[3] / o.oiH)));
+    var x = f32(f32(f32(e[0] + f32(f32(e[2] - f32(o.oiW * k)) * 0.5)) + f32(o.oiVisR * k)) + 4);
+    r = bubble && x < field ? field : x;
+  } else return {x: -1, bubY: bubY, bubH: bubH};
+  return {x: r >= 0 ? f32(r + padL) : r, bubY: bubY, bubH: bubH};
+}
+function layoutText(sc, t, out) {            // строка t (после моста) -> глифы в out; итог: рамка, строк
+  var f = t.pix8 ? pix8Font(t.res ? t.res.trk : 0, t.res ? t.res.lead : 0) : getFace(t.font);
+  if (!f || !t.text) return null;
+  var t2 = {dst: t.dst.slice(), tag: t.tag, res: t.res}, x = t.dst[0], y = t.dst[1], w = t.dst[2], h = t.dst[3], wrap = t.wrap ? 1 : 0;
+  var haUse = t.ha;
+  var padT = t.res ? t.res.padT : 0;
+  if (t.field === 'OBJECTIVE') {
+    var os = objStart(sc, t), ox = os.x;
+    if (ox >= 0 && ox < x) {
+      t2.dst[0] = Math.trunc(ox) - 1;
+      if (t.va === 0) { t2.dst[2] += Math.trunc(x - ox) + 1; t2.dst[1] += 3 + padT; }
+      else if (!sc.obj || !sc.obj.icon) { t2.dst[2] += Math.trunc(x - ox) + 1; if (os.bubY >= 0 && os.bubH > 0) { t2.dst[1] = os.bubY; t2.dst[3] = os.bubH; } }
+    } else { t2.dst[0] -= 1; if (t.va === 0) t2.dst[1] += 3 + padT; }
+    if ((!sc.obj || !sc.obj.icon) && ox >= 0 && ox < x) haUse = 1;   // №616: пузырь без значка — строки по центру блока (viewer/ui.c BUBBLE_CENTER_OLD)
+    if (wrap) wrap |= 2;
+    if (wrap && (!sc.obj || !sc.obj.icon)) wrap |= 4;   // №548: пузырь без значка — ровные строки (ui.c UI_WRAP_BALANCE)
+  }
+  var ww = wrap ? fitW(sc, t2) : t2.dst[2];
+  if (t.sh) textGlyphs(out, f, t.text, t2.dst[0], t2.dst[1], ww, t2.dst[3], haUse, t.va, wrap, t.sh[0], t.sh[1], t.sh[2]);
+  var r = textGlyphs(out, f, t.text, t2.dst[0], t2.dst[1], ww, t2.dst[3], haUse, t.va, wrap, 0, 0, t.color);
+  r.frame = [t2.dst[0], t2.dst[1], ww, t2.dst[3]]; r.font = f;
+  return r;
+}
+
+function numLayout(n) {                  // viewer/ui.c drawNum / uiDrawTutorial: где рисовать картинки букв -> {draws, box}
+  var set = n.sets[(+n.gk).toFixed(2)] || n.sets[(+n.gk0).toFixed(2)]; if (!set) return {draws: [], box: null};
+  var G = set.glyphs, draws = [], lines = [];
+  if (n.tut) {                               // viewer/ui.c uiDrawTutorial (раскладка подсказок до правки 267)
+    var s = n.text, cur = '', i;
+    for (i = 0; i <= s.length && lines.length < 4; i++) {
+      var c = i < s.length ? s[i] : null;
+      if (c === '\\' || c === '\n' || c === null) { if (cur.length || c !== null) lines.push(cur); cur = ''; if (c === null) break; continue; }
+      if (cur.length < 95) cur += c;
+    }
+    var pitchF = f32(n.dst[3] * 0.5), pitch = Math.trunc(f32(pitchF + 0.5)), cy0 = f32(n.dst[1] + f32(n.dst[3] * 0.5));
+    lines = lines.map(function (ln, l) { return {s: ln, x: n.dst[0], w: n.dst[2], y: Math.trunc(f32(f32(f32(cy0 + f32(l * pitchF)) - f32(pitch * 0.5)) + 0.5)), h: pitch, ha: 1, va: 1}; });
+  } else lines = [{s: n.text, x: n.dst[0], y: n.dst[1], w: n.dst[2], h: n.dst[3], ha: n.ha, va: n.va}];
+  var box = null;
+  lines.forEach(function (L) {
+    var cs = L.s.toUpperCase(), tw = 0, k;
+    var trk = n.trk | 0;
+    for (k = 0; k < cs.length; k++) { var g = G[cs[k]]; if (g) tw += Math.max(1, g[4] + trk); }
+    var x0 = L.ha === 0 ? L.x : (L.ha === 2 ? L.x + L.w - tw : L.x + floordiv(L.w - tw, 2));
+    if (set.prefix && n.name === 'NumCoins') { var pw = set.prefix[1], ph = set.prefix[2]; draws.push([set.prefix[0], x0 - pw - 2, L.y + floordiv(L.h - ph, 2)]); }
+    for (k = 0; k < cs.length; k++) {
+      var gg = G[cs[k]]; if (!gg) continue;
+      if (gg[0]) { var gy = L.va === 1 ? L.y + floordiv(L.h - gg[2], 2) : (L.va === 0 ? L.y : L.y + L.h - gg[2]); draws.push([gg[0], x0 + gg[3], gy]);
+        var b = [x0 + gg[3], gy, x0 + gg[3] + gg[1], gy + gg[2]]; box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : b; }
+      x0 += Math.max(1, gg[4] + trk);
+    }
+  });
+  return {draws: draws, box: box};
+}
+function sceneLayout(sc, M) {               // строки сцены после моста -> буквы (out), картинки цифр (nums), рамки групп (info)
+  sc._fit = sc._bgrow ? sc.fit.map(function (b) { return b[0] === 2 && b[2] === 'MessageBox' ? [b[0], b[1], b[2], b[3], b[4], b[5] + sc._bgrow, b[6]] : b; }) : sc.fit;   // рамка пузыря выросла (№548: перенос по выросшей рамке, как fitW игры)
+  if (sc.screen === 'hud') {                 // viewer/ui.c: оверлеи миссии стопкой вниз (OV_ORDER), шаг — высота числа предыдущего
+    var ORD = ['TIMER', 'PARTIME', 'LAP', 'POSITION', 'COLLECTIBLES'], ovy = {}, yy = 0;
+    ORD.forEach(function (tag) { if ((sc.show || []).indexOf(tag) < 0) return; var rowh = 0;
+      sc.fit.forEach(function (f) { if (f[1] === tag && f[0] === 4 && f[6] > rowh) rowh = f[6]; });
+      M.nums.forEach(function (n) { var tg = (sc.fit.filter(function (f) { return f[2] === n.name; })[0] || [])[1]; if (tg === tag && n.dst[3] > rowh) rowh = n.dst[3]; });   // правка 507: рамка выросшего числа
+      ovy[tag] = yy; yy += rowh; });
+    M.texts.forEach(function (t) { if (ovy[t.tag]) t.dst[1] += ovy[t.tag]; });
+    M.nums.forEach(function (n) { var tg = (sc.fit.filter(function (f) { return f[2] === n.name; })[0] || [])[1]; if (ovy[tg]) n.dst[1] += ovy[tg]; });
+  }
+  var info = {}, nums = [];
+  M.nums.forEach(function (n) { var r = numLayout(n); nums = nums.concat(r.draws); if (n.group) { var NI = (info[n.group] = info[n.group] || {boxes: []}); NI.boxes.push(r.box); (NI.refs = NI.refs || []).push(n); } });
+  var hid = M.texts.filter(function (t) { return t.hid && t.menu >= 0; });
+  if (hid.length) {                          // viewer/ui.c hideDy (правка 137): строки ниже скрытой — вверх на шаг, все — вниз на полшага
+    var dys = M.texts.map(function (t) {
+      if (t.menu < 0) return 0; var dy = 0;
+      hid.forEach(function (h) { var yh = h.dst[1], yn = 1e9, yp = -1e9;
+        M.texts.forEach(function (q) { if (q.menu < 0 || q.menu === h.menu) return; if (q.dst[1] > yh && q.dst[1] < yn) yn = q.dst[1]; if (q.dst[1] < yh && q.dst[1] > yp) yp = q.dst[1]; });
+        var step = yn !== 1e9 ? yn - yh : (yp !== -1e9 ? yh - yp : 0); if (t.dst[1] > yh) dy -= step; dy += Math.trunc(step / 2); });
+      return dy; });
+    M.texts.forEach(function (t, i) { t.dst[1] += dys[i]; });
+  }
+  var out = [];
+  if (sc.screen === 'missionover') {
+    var hint = M.texts.find(function (t) { return t.field === 'MSN_HINT' && t.text; });
+    if (hint) {
+      var lower = M.texts.filter(function (t) { return t.field === 'NONE' && t.dst[1] > hint.dst[1] &&
+        t.dst[0] < hint.dst[0] + hint.dst[2] && t.dst[0] + t.dst[2] > hint.dst[0]; });
+      var firstY = lower.reduce(function (y,t) { return Math.min(y,t.dst[1]); },272);
+      var hr = layoutText(sc,hint,[]);
+      if (hr) {
+        var dy = Math.max(0,hr.y0 + hr.lines*hr.lh + Math.trunc(hr.lh/2) - firstY);
+        lower.forEach(function (t) { t.dst[1] += dy; });
+      }
+    }
+  }
+  M.texts.forEach(function (t) {
+    if (!t.vis) return;
+    var r = layoutText(sc, t, out); if (!r || !t.group) return;
+    var I = (info[t.group] = info[t.group] || {boxes: []}); I.boxes.push(r.box); (I.refs = I.refs || []).push(t); I.frame = I.frame || r.frame; I.font = r.font; I.lines = Math.max(I.lines || 0, r.lines);
+  });
+  return {out: out, nums: nums, info: info};
+}
+function composite(out) {                     // буквы: альфа уровня атласа T4 (k/15) x альфа цвета, «поверх» как GE -> RGBA premultiplied 0..255
+  var acc = new Float32Array(480 * 272 * 4);
+  out.forEach(function (o) {
+    var g = o[0], gx = o[1], gy = o[2], rows = o[3], c = o[4], ca = c[3] / 255;
+    for (var y = 0; y < rows; y++) { var py = gy + y; if (py < 0 || py >= 272) continue;
+      for (var x = 0; x < g.w; x++) { var px = gx + x; if (px < 0 || px >= 480) continue; var k = g.bm[y * g.w + x]; if (!k) continue;
+        var a = ca * k / 15, i = (py * 480 + px) * 4, ia = 1 - a;
+        acc[i] = c[0] * a + acc[i] * ia; acc[i + 1] = c[1] * a + acc[i + 1] * ia; acc[i + 2] = c[2] * a + acc[i + 2] * ia; acc[i + 3] = a + acc[i + 3] * ia; } }
+  });
+  return acc;
+}
+
+
+// PSP preview: integer modulation/blending, per-primitive RGB565 and the
+// same 4x4 dither as main.c. Transparent texels never write (ui.c alpha test).
+// The arithmetic is also described by PPSSPP Software/Sampler and DrawPixel.
+var NATIVE_DITHER = [-4,0,-3,1,2,-2,3,-1,-3,1,-4,0,3,-1,2,-2];
+function nativePixel(acc, i, x, y, rgb, a) {
+  if (!a) return;
+  var d = NATIVE_DITHER[(y & 3) * 4 + (x & 3)];
+  for (var ch = 0; ch < 3; ch++) {
+    var bits = ch === 1 ? 6 : 5, sh = 8 - bits, q = Math.round(acc[i + ch] * ((1 << bits) - 1) / 255);
+    var dst = (q << sh) | (q >> (bits - sh));
+    var v = (((rgb[ch] * 2 + 1) * (a * 2 + 1)) >> 10) + (((dst * 2 + 1) * ((255 - a) * 2 + 1)) >> 10) + d;
+    q = Math.max(0, Math.min(255, v)) >> sh;
+    acc[i + ch] = (q << sh) | (q >> (bits - sh));
+  }
+  acc[i + 3] = 255;
+}
+function nativeBlit(acc, rgba, w, h, gx, gy) {
+  for (var y = 0; y < h; y++) { var py = gy + y; if (py < 0 || py >= 272) continue;
+    for (var x = 0; x < w; x++) { var px = gx + x; if (px < 0 || px >= 480) continue;
+      var j = (y * w + x) * 4;
+      nativePixel(acc, (py * 480 + px) * 4, px, py, [rgba[j], rgba[j + 1], rgba[j + 2]], rgba[j + 3]);
+    }
+  }
+}
+function compositeNative(out, bg) {
+  var acc = new Uint8Array(bg);
+  out.forEach(function (o) {
+    var g = o[0], gx = o[1], gy = o[2], rows = o[3], c = o[4];
+    var rgb = c.slice(0, 3).map(function (v) { return ((v + 1) * 255) >> 8; });
+    for (var y = 0; y < rows; y++) { var py = gy + y; if (py < 0 || py >= 272) continue;
+      for (var x = 0; x < g.w; x++) { var px = gx + x; if (px < 0 || px >= 480) continue;
+        var a = ((c[3] + 1) * g.bm[y * g.w + x] * 17) >> 8;
+        nativePixel(acc, (py * 480 + px) * 4, px, py, rgb, a);
+      }
+    }
+  });
+  return acc;
+}
+
+function setTextExample(sc, id) {
+  var example = id === 'sample' ? null : (sc.examples || []).find(function (e) { return e.id === id; });
+  if (id !== 'sample' && !example) throw new Error('Unknown text example: ' + id);
+  sc.texts.forEach(function (t) {
+    if (t.sampleText === undefined) t.sampleText = t.text;
+    t.text = example && Object.prototype.hasOwnProperty.call(example.text, t.field) ? example.text[t.field] : t.sampleText;
+  });
+  sc.textExample = id;
+}
+W.TC = {setTextExample: setTextExample, partOk: partOk, sceneLayout: sceneLayout, composite: composite, compositeNative: compositeNative, nativeBlit: nativeBlit, numLayout: numLayout, T: T, S: S, f32: f32, pyRound: pyRound, floordiv: floordiv, GROUP: GROUP, getFace: getFace, parseFace: parseFace, capPx: capPx,
+  pix8Font: pix8Font, codes: codes, lineW: lineW, uiWrap: uiWrap, textGlyphs: textGlyphs, DEF: DEF, defState: defState, ST: ST,
+  composeFace: composeFace, settings: settings, changed: changed, typoJson: typoJson, loadJson: loadJson, applyTypo: applyTypo,
+  resetGroup: resetGroup, resetGame: resetGame, scaleRect2: scaleRect2, elKey: elKey, elScr: elScr, getEL: function () { return EL; }, elOf: function (k) { return EL[k] || (EL[k] = {dx: 0, dy: 0, k: 1, w: 1, h: 1}); },
+  fitW: fitW, objStart: objStart, layoutText: layoutText, T_IMG: T_IMG};
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script>
+(function () {
+'use strict';
+var TC = window.TC, T = TC.T, S = TC.S, f32 = TC.f32, pyRound = TC.pyRound, floordiv = TC.floordiv, GROUP = TC.GROUP, getFace = TC.getFace,
+  parseFace = TC.parseFace, capPx = TC.capPx, pix8Font = TC.pix8Font, codes = TC.codes, lineW = TC.lineW, DEF = TC.DEF, defState = TC.defState,
+  ST = TC.ST, composeFace = TC.composeFace, settings = TC.settings, changed = TC.changed, typoJson = TC.typoJson, loadJson = TC.loadJson,
+  applyTypo = TC.applyTypo, layoutText = TC.layoutText, T_IMG = TC.T_IMG;
+// ---------------------------------------------------------------- картинки
+var IMG = {};
+function img(src, cb) {
+  if (!src) return null;
+  if (IMG[src]) return IMG[src].complete && IMG[src].naturalWidth ? IMG[src] : null;   // нет файла — не рисуем
+  // 11.10: картинка не пришла (сервер занят пачкой запросов при смене размера букв подсказок) — три повтора, иначе буквы M, K, G оставались пустыми навсегда
+  var im = new Image(), tries = 0; im.onload = function () { render(); };
+  im.onerror = function () { if (++tries <= 3) setTimeout(function () { im.src = src + (src.indexOf('?') < 0 ? '?' : '&') + 'r=' + tries; }, 250 * tries); };
+  im.src = src; IMG[src] = im; return null;
+}
+
+// ---------------------------------------------------------------- рисование
+var cv = document.getElementById('cv'), ctx = cv.getContext('2d'), ov = document.getElementById('ov'), octx = ov.getContext('2d');
+var mc = document.createElement('canvas'); mc.width = 480; mc.height = 272; var mctx = mc.getContext('2d');
+var UI = {scene: 0, zoom: 1, view: 'panel', statics: 1, boxes: 0, meas: 1, sel: null};
+var LAST = null;
+function sceneObj() { var sc = T.scenes[UI.scene]; sc._fit = sc.fit; return sc; }
+function drawLayer(st, x, y, scaled) {
+  var im = img(scaled ? (st.src || st.img) : st.img); if (!im) return;
+  if (!scaled) { ctx.drawImage(im, x, y); return; }
+  if (!st.src) {                              // нет исходника (плоская плашка/полоса): готовый слой тянется вместе с рамкой, смещение внутри рамки сохраняется
+    var sx = st.cur[2] / st.dst[2], sy = st.cur[3] / st.dst[3]; ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(im, st.cur[0] + (st.at[0] - st.dst[0]) * sx, st.cur[1] + (st.at[1] - st.dst[1]) * sy, im.naturalWidth * sx, im.naturalHeight * sy); ctx.imageSmoothingEnabled = false; return;
+  }
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+  var c = st.cur;
+  if (st.hs) {                               // 3-срез пузыря: концы по высоте, середина вширь (tools/ui_export.py hslice)
+    var iw = im.naturalWidth, ih = im.naturalHeight, cap = Math.max(1, Math.min(Math.floor(iw / 2) - 1, Math.floor(ih / 2))), capW = Math.max(1, pyRound(cap * c[3] / ih));
+    ctx.drawImage(im, 0, 0, cap, ih, c[0], c[1], capW, c[3]);
+    ctx.drawImage(im, iw - cap, 0, cap, ih, c[0] + c[2] - capW, c[1], capW, c[3]);
+    if (c[2] - 2 * capW > 0) ctx.drawImage(im, cap, 0, iw - 2 * cap, ih, c[0] + capW, c[1], c[2] - 2 * capW, c[3]);
+  } else ctx.drawImage(im, c[0], c[1], c[2], c[3]);
+  ctx.imageSmoothingEnabled = false;
+}
+function erase(st, bgc) {                    // прежнее место картинки — пикселями кадра без интерфейса, по её альфе
+  var im = img(st.img); if (!im || !bgc) return;
+  mctx.clearRect(0, 0, 480, 272); mctx.globalCompositeOperation = 'source-over'; mctx.drawImage(im, st.at[0], st.at[1]);
+  mctx.globalCompositeOperation = 'source-in'; mctx.drawImage(bgc, 0, 0); mctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(mc, 0, 0);
+}
+function render() {
+  var sc = sceneObj(), M = applyTypo(sc), L;
+  ctx.imageSmoothingEnabled = false; ctx.globalCompositeOperation = 'source-over';
+  if (UI.view === 'game' && sc.bg_a && (!sc.textExample || sc.textExample === 'sample')) { var ga = img(sc.bg_a); ctx.clearRect(0, 0, 480, 272); if (ga) ctx.drawImage(ga, 0, 0); overlay(null); LAST = null; return; }
+  var bgb = img(sc.bg_b), bgc = img(sc.bg_c);
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 480, 272);
+  if (!UI.statics) { if (bgc) ctx.drawImage(bgc, 0, 0); }
+  else {
+    if (bgb) ctx.drawImage(bgb, 0, 0);
+    var hasFlat = M.stat.some(function (st) { return st.flat; }), movedAny = [], RG = null;
+    M.stat.forEach(function (st) {           // картинки, которые сдвинуты/увеличены/скрыты: стереть с прежнего места, нарисовать на новом
+      var moved = st.cur[0] !== st.dst[0] || st.cur[1] !== st.dst[1] || st.cur[2] !== st.dst[2] || st.cur[3] !== st.dst[3] || st.k !== 1 || !st.show;
+      if (moved) movedAny.push(st);
+      st.moved = moved || st.carry; if (moved && !st.carry && !hasFlat) erase(st, bgc);   // carry (правка 348): в фоне его нет — рисуется всегда
+    });
+    if (hasFlat && movedAny.length) {         // №574 2b-3: на экране есть плоские плашки — слои по порядку пакета: каждую сдвинутую область (старое и новое место отдельно) восстановить из кадра без интерфейса и перерисовать всё, что в неё попадает
+      var boxes = [], ordered = M.stat.slice().sort(function (a, b) { return a.i - b.i; });
+      movedAny.forEach(function (st) { [st.dst, st.cur].forEach(function (r) { boxes.push([Math.max(0, r[0] - 1), Math.max(0, r[1] - 1), Math.min(480, r[0] + r[2] + 1), Math.min(272, r[1] + r[3] + 1)]); }); });
+      boxes.forEach(function (R) {
+        if (R[2] <= R[0] || R[3] <= R[1]) return;
+        ctx.save(); ctx.beginPath(); ctx.rect(R[0], R[1], R[2] - R[0], R[3] - R[1]); ctx.clip();
+        if (bgc) ctx.drawImage(bgc, 0, 0); else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 480, 272); }
+        ordered.forEach(function (st) {
+          if (!st.show) return; var q = st.cur; if (!(q[0] < R[2] && q[0] + q[2] > R[0] && q[1] < R[3] && q[1] + q[3] > R[1])) return;
+          if (st.flat) { if (st.grad) { var g = ctx.createLinearGradient(0, q[1], 0, q[1] + q[3]); g.addColorStop(0, 'rgba(' + st.grad[0].slice(0, 3).join(',') + ',' + st.grad[0][3] / 255 + ')'); g.addColorStop(1, 'rgba(' + st.grad[1].slice(0, 3).join(',') + ',' + st.grad[1][3] / 255 + ')'); ctx.fillStyle = g; }
+            else ctx.fillStyle = 'rgba(' + st.flat.slice(0, 3).join(',') + ',' + st.flat[3] / 255 + ')'; ctx.fillRect(q[0], q[1], q[2], q[3]); }
+          else if (st.k !== 1 && st.src) drawLayer(st, 0, 0, true);
+          else if (st.stretch) { var si = img(st.img); if (si) ctx.drawImage(si, st.cur[0] + st.at[0] - st.dst[0], st.cur[1] + st.at[1] - st.dst[1], si.naturalWidth + st.cur[2] - st.dst[2], si.naturalHeight + st.cur[3] - st.dst[3]); }
+          else drawLayer(st, st.at[0] + st.cur[0] - st.dst[0], st.at[1] + st.cur[1] - st.dst[1], false);
+        });
+        ctx.restore();
+      });
+      RG = boxes;
+    }
+    M.stat.forEach(function (st) {
+      if (RG) { var q = st.dst; if (!st.carry || !st.show || RG.some(function (R) { return q[0] < R[2] && q[0] + q[2] > R[0] && q[1] < R[3] && q[1] + q[3] > R[1]; })) return; }   // области перерисованы выше; вне них только запечённые страницей (carry)
+      if (!st.moved || !st.show) return;
+      if (st.k !== 1 || st.cur[2] !== st.dst[2] || st.cur[3] !== st.dst[3]) drawLayer(st, 0, 0, true);
+      else if (st.stretch) { var si = img(st.img); if (si) ctx.drawImage(si, st.cur[0] + st.at[0] - st.dst[0], st.cur[1] + st.at[1] - st.dst[1],   // край рамки и заливка — тянутся
+                                                          si.naturalWidth + st.cur[2] - st.dst[2], si.naturalHeight + st.cur[3] - st.dst[3]); }
+      else drawLayer(st, st.at[0] + st.cur[0] - st.dst[0], st.at[1] + st.cur[1] - st.dst[1], false);
+    });
+  }
+  L = TC.sceneLayout(sc, M);
+  var id = ctx.getImageData(0, 0, 480, 272);
+  L.nums.forEach(function (d) {
+    var im = img(d[0]); if (!im) return;
+    if (!im.nativeRGBA) {
+      var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      var ic = c.getContext('2d'); ic.drawImage(im, 0, 0); im.nativeRGBA = ic.getImageData(0, 0, c.width, c.height).data;
+    }
+    TC.nativeBlit(id.data, im.nativeRGBA, im.naturalWidth, im.naturalHeight, d[1], d[2]);
+  });
+  id.data.set(TC.compositeNative(L.out, id.data)); ctx.putImageData(id, 0, 0);
+  LAST = {sc: sc, M: M, info: L.info};
+  overlay(L.info);
+  paintStats(); paintMeas();
+}
+function overlay(info) {
+  var z = UI.zoom; ov.width = 480 * z; ov.height = 272 * z; octx.clearRect(0, 0, ov.width, ov.height);
+  if (!info) return;
+  var ring = getComputedStyle(document.documentElement).getPropertyValue('--sel').trim() || '#7fd';
+  Object.keys(info).forEach(function (gid) {
+    var on = gid === UI.sel; if (!UI.boxes && !on) return;
+    octx.strokeStyle = on ? ring : 'rgba(255,255,255,.35)'; octx.lineWidth = 1; octx.setLineDash(on ? [] : [3, 3]);
+    info[gid].boxes.forEach(function (b) { if (b) octx.strokeRect(b[0] * z + .5, b[1] * z + .5, (b[2] - b[0]) * z - 1, (b[3] - b[1]) * z - 1); });
+  });
+  if (UI.meas) drawMeasure(z);
+  if (SELEL && SELEL.scene === UI.scene && SELEL.rect) {   // выбранный элемент: сплошная яркая рамка
+    var r = SELEL.rect; octx.setLineDash([]); octx.lineWidth = 2; octx.strokeStyle = '#ff4fa3';
+    octx.strokeRect(r[0] * z + 1, r[1] * z + 1, Math.max(2, r[2] * z - 2), Math.max(2, r[3] * z - 2)); octx.lineWidth = 1;
+  }
+}
+var SELEL = null;   // выбранный на превью элемент: {scene, kind, gid, name, rect, x, y}
+
+// ---------------------------------------------------------------- №596: измерения как в Figma
+// У выбранного (и у наведённого) элемента: X/Y на экране PSP, ширина/высота, высота строки текста, отступ до соседа слева/справа/сверху/снизу.
+// Числа — из реальной раскладки сцены (LAST): для текста пиксели букв, для картинок видимая часть (альфа), для узлов пакета рамка. Ничего не придумывается.
+var HOVER = null, HOVERKEY = '', ALPHA = {};
+function alphaBox(src) {                   // видимая часть картинки (альфа > 40): [x0, y0, x1, y1] в пикселях картинки; ещё не загружена — null
+  if (ALPHA[src] !== undefined) return ALPHA[src];
+  var im = img(src); if (!im) return null;
+  var c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+  var x = c.getContext('2d'); x.drawImage(im, 0, 0); var d = x.getImageData(0, 0, c.width, c.height).data, x0 = 1e9, y0 = 1e9, x1 = -1, y1 = -1;
+  for (var y = 0; y < c.height; y++) for (var xx = 0; xx < c.width; xx++) if (d[(y * c.width + xx) * 4 + 3] > 40) { if (xx < x0) x0 = xx; if (xx > x1) x1 = xx; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  return (ALPHA[src] = x1 < 0 ? [0, 0, 0, 0] : [x0, y0, x1 + 1, y1 + 1, im.naturalWidth, im.naturalHeight]);
+}
+function textInk(sc, t) {                  // пиксели букв строки (альфа атласа >= 8): рамка, верх первой строки, высота строки, число строк
+  var lo = [], r = layoutText(sc, t, lo); if (!r) return null; var x0 = 1e9, x1 = -1, y0 = 1e9, y1 = -1;
+  (t.sh ? lo.slice(lo.length / 2) : lo).forEach(function (e) { var g = e[0], gx = e[1], gy = e[2], gh = e[3]; if (!g.bm) return;
+    for (var y = 0; y < Math.min(g.h, gh); y++) for (var x = 0; x < g.w; x++) if (g.bm[y * g.w + x] >= 8) { if (gx + x < x0) x0 = gx + x; if (gx + x + 1 > x1) x1 = gx + x + 1; if (gy + y < y0) y0 = gy + y; if (gy + y + 1 > y1) y1 = gy + y + 1; } });
+  return x1 < 0 ? null : {rect: [x0, y0, x1 - x0, y1 - y0], lineTop: r.y0, lh: r.lh, lines: r.lines};
+}
+function measureCands() {
+  if (!LAST) return []; if (LAST.cands) return LAST.cands;
+  var sc = LAST.sc, M = LAST.M, out = [];
+  M.texts.forEach(function (t) { if (!t.vis || !t.text) return; var k = textInk(sc, t); if (!k) return;
+    out.push({kind: 'text', name: t.name, label: t.name + ' «' + String(t.text).slice(0, 24) + '»', rect: k.rect, lh: k.lh, lineTop: k.lineTop, lines: k.lines, key: elKey(sc, 'text', t.name, t.page)}); });
+  Object.keys(LAST.info).forEach(function (g) { var I = LAST.info[g]; (I.refs || []).forEach(function (t, k) { var b = I.boxes[k]; if (!b || t.strings) return;   // числа-картинки
+    out.push({kind: 'num', name: t.name, label: t.name, rect: [b[0], b[1], b[2] - b[0], b[3] - b[1]], key: elKey(sc, 'num', t.name, t.page)}); }); });
+  M.stat.forEach(function (st) { if (!(st.show !== 0 && st.show !== false) || !st.cur) return;
+    if (st.flat) { out.push({kind: 'rect', name: st.name, label: st.name + ' (плашка)', rect: st.cur.slice(), key: elKey(sc, 'rect', st.name, st.page)}); return; }
+    var ab = alphaBox(st.img), c = st.cur;
+    if (ab && !(ab[2] > ab[0])) return;
+    var kx = ab && ab[4] ? c[2] / (st.dst[2] || ab[4]) : 1, ky = ab && ab[5] ? c[3] / (st.dst[3] || ab[5]) : 1;
+    var ox = st.at[0] + c[0] - st.dst[0], oy = st.at[1] + c[1] - st.dst[1];
+    var r = ab ? [ox + ab[0] * kx, oy + ab[1] * ky, (ab[2] - ab[0]) * kx, (ab[3] - ab[1]) * ky] : [c[0], c[1], c[2], c[3]];
+    if (r[2] * r[3] > 480 * 272 * 0.3) return;
+    out.push({kind: 'stat', name: st.name || 'картинка', label: st.name || 'картинка', rect: r, key: elKey(sc, 'stat', st.name || '', st.page)}); });
+  return (LAST.cands = out);
+}
+function candOf(h) {                       // элемент под курсором (hitElement) -> запись для измерений
+  if (!h) return null; var cs = measureCands(), best = null;
+  cs.forEach(function (c) { if (c.key !== h.key || c.kind !== (h.kind === 'node' ? c.kind : h.kind)) return;
+    var ov = !(c.rect[0] > h.rect[0] + h.rect[2] || c.rect[0] + c.rect[2] < h.rect[0] || c.rect[1] > h.rect[1] + h.rect[3] || c.rect[1] + c.rect[3] < h.rect[1]);
+    if (ov && !best) best = c; });
+  return best || {kind: h.kind, name: h.name, label: h.label, rect: h.rect.slice(), key: h.key};
+}
+function selCand() {
+  if (!SELEL || SELEL.scene !== UI.scene || !SELEL.rect) return null;
+  return candOf({kind: SELEL.kind, key: SELEL.key, name: SELEL.name, label: SELEL.label, rect: SELEL.rect});
+}
+function neighbours(S) {                   // ближайший сосед в каждую сторону: {dir: {gap, c, a, b}} (a..b — перекрытие по другой оси, px)
+  var res = {}, sx0 = S.rect[0], sy0 = S.rect[1], sx1 = sx0 + S.rect[2], sy1 = sy0 + S.rect[3];
+  measureCands().forEach(function (c) {
+    if (c === S || (c.key === S.key && c.kind === S.kind && c.rect[0] === sx0 && c.rect[1] === sy0)) return;
+    var cx0 = c.rect[0], cy0 = c.rect[1], cx1 = cx0 + c.rect[2], cy1 = cy0 + c.rect[3];
+    var oy0 = Math.max(sy0, cy0), oy1 = Math.min(sy1, cy1), ox0 = Math.max(sx0, cx0), ox1 = Math.min(sx1, cx1);
+    function put(dir, gap, a, b) { if (gap < 0) return; if (!res[dir] || gap < res[dir].gap) res[dir] = {gap: gap, c: c, a: a, b: b}; }
+    if (oy1 > oy0) { put('R', cx0 - sx1, oy0, oy1); put('L', sx0 - cx1, oy0, oy1); }
+    if (ox1 > ox0) { put('D', cy0 - sy1, ox0, ox1); put('U', sy0 - cy1, ox0, ox1); }
+  });
+  return res;
+}
+function fmtN(v) { v = Math.round(v * 10) / 10; return String(v); }
+function pairGap(A, B) {                   // расстояние между двумя элементами по осям: {dx, dy} (0 — перекрываются по оси)
+  var ax0 = A.rect[0], ay0 = A.rect[1], ax1 = ax0 + A.rect[2], ay1 = ay0 + A.rect[3], bx0 = B.rect[0], by0 = B.rect[1], bx1 = bx0 + B.rect[2], by1 = by0 + B.rect[3];
+  return {dx: bx0 >= ax1 ? bx0 - ax1 : (ax0 >= bx1 ? ax0 - bx1 : 0), dy: by0 >= ay1 ? by0 - ay1 : (ay0 >= by1 ? ay0 - by1 : 0),
+          ox0: Math.max(ax0, bx0), ox1: Math.min(ax1, bx1), oy0: Math.max(ay0, by0), oy1: Math.min(ay1, by1), A: [ax0, ay0, ax1, ay1], B: [bx0, by0, bx1, by1]};
+}
+function drawMeasure(z) {
+  if (!LAST) return; var S = selCand(), H = HOVER && HOVER.scene === UI.scene ? HOVER.c : null; if (H && S && H.key === S.key && H.kind === S.kind && H.rect[0] === S.rect[0] && H.rect[1] === S.rect[1]) H = null;
+  var RED = '#f24822', BLUE = '#18a0fb';
+  function pill(txt, x, y, col) {          // подпись с плашкой (координаты экрана PSP -> overlay)
+    octx.font = '600 10px ui-monospace,Menlo,monospace'; var w = octx.measureText(txt).width + 8, px = Math.round(x * z - w / 2), py = Math.round(y * z - 7);
+    px = Math.max(1, Math.min(ov.width - w - 1, px)); py = Math.max(1, Math.min(ov.height - 15, py));
+    octx.fillStyle = col; octx.fillRect(px, py, w, 14); octx.fillStyle = '#fff'; octx.textBaseline = 'middle'; octx.fillText(txt, px + 4, py + 7.5);
+  }
+  function hline(x0, x1, y, col) { octx.strokeStyle = col; octx.lineWidth = z >= 2 ? 2 : 1; octx.setLineDash([]); octx.beginPath(); octx.moveTo(x0 * z, Math.round(y * z) + .5); octx.lineTo(x1 * z, Math.round(y * z) + .5); octx.stroke();
+    octx.beginPath(); octx.moveTo(Math.round(x0 * z) + .5, y * z - 3); octx.lineTo(Math.round(x0 * z) + .5, y * z + 4); octx.moveTo(Math.round(x1 * z) - .5, y * z - 3); octx.lineTo(Math.round(x1 * z) - .5, y * z + 4); octx.stroke(); }
+  function vline(y0, y1, x, col) { octx.strokeStyle = col; octx.lineWidth = z >= 2 ? 2 : 1; octx.setLineDash([]); octx.beginPath(); octx.moveTo(Math.round(x * z) + .5, y0 * z); octx.lineTo(Math.round(x * z) + .5, y1 * z); octx.stroke();
+    octx.beginPath(); octx.moveTo(x * z - 3, Math.round(y0 * z) + .5); octx.lineTo(x * z + 4, Math.round(y0 * z) + .5); octx.moveTo(x * z - 3, Math.round(y1 * z) - .5); octx.lineTo(x * z + 4, Math.round(y1 * z) - .5); octx.stroke(); }
+  function box(c, col, dash) { octx.strokeStyle = col; octx.lineWidth = 1; octx.setLineDash(dash || []); octx.strokeRect(c.rect[0] * z + .5, c.rect[1] * z + .5, Math.max(1, c.rect[2] * z - 1), Math.max(1, c.rect[3] * z - 1)); octx.setLineDash([]); }
+  if (H) box(H, BLUE, [4, 3]);
+  if (S) {
+    box(S, RED);
+    var r = S.rect; pill('x ' + fmtN(r[0]) + '  y ' + fmtN(r[1]), r[0] + r[2] / 2, r[1] - 9 < 8 ? r[1] + r[3] + 18 : r[1] - 9, RED);
+    pill(fmtN(r[2]) + ' × ' + fmtN(r[3]), r[0] + r[2] / 2, r[1] - 9 < 8 ? r[1] + r[3] + 6 : r[1] + r[3] + 9, RED);
+    if (S.lh) { var bx = r[0] - 4; vline(S.lineTop, S.lineTop + S.lh, bx, '#ff9d00'); pill('строка ' + S.lh, bx - 2, S.lineTop + S.lh / 2, '#ff9d00'); }
+    var N = neighbours(S);
+    if (H) {                               // выбранный и наведённый: расстояние между ними по обеим осям
+      var P = pairGap(S, H);
+      if (P.dx > 0) { var yy = P.oy1 > P.oy0 ? (P.oy0 + P.oy1) / 2 : (S.rect[1] + S.rect[3] / 2); var xa = S.rect[0] + S.rect[2] <= H.rect[0] ? S.rect[0] + S.rect[2] : H.rect[0] + H.rect[2], xb = xa + P.dx; hline(xa, xb, yy, RED); pill(String(P.dx), (xa + xb) / 2, yy - 8, RED); }
+      if (P.dy > 0) { var xx = P.ox1 > P.ox0 ? (P.ox0 + P.ox1) / 2 : (S.rect[0] + S.rect[2] / 2); var ya = S.rect[1] + S.rect[3] <= H.rect[1] ? S.rect[1] + S.rect[3] : H.rect[1] + H.rect[3], yb = ya + P.dy; vline(ya, yb, xx, RED); pill(String(P.dy), xx + 12, (ya + yb) / 2, RED); }
+    } else {
+      ['L', 'R'].forEach(function (d) { var n = N[d]; if (!n) return; var yy = (n.a + n.b) / 2, xa = d === 'R' ? r[0] + r[2] : r[0] - n.gap, xb = xa + n.gap; hline(xa, xb, yy, RED); pill(String(n.gap), (xa + xb) / 2, yy - 8, RED); });
+      ['U', 'D'].forEach(function (d) { var n = N[d]; if (!n) return; var xx = (n.a + n.b) / 2, ya = d === 'D' ? r[1] + r[3] : r[1] - n.gap, yb = ya + n.gap; vline(ya, yb, xx, RED); pill(String(n.gap), xx + 12, (ya + yb) / 2, RED); });
+    }
+  } else if (H) {                          // ничего не выбрано: наведённый — его X/Y, размер и соседи
+    var q = H.rect; pill('x ' + fmtN(q[0]) + '  y ' + fmtN(q[1]) + '  ' + fmtN(q[2]) + '×' + fmtN(q[3]), q[0] + q[2] / 2, q[1] - 9 < 8 ? q[1] + q[3] + 9 : q[1] - 9, BLUE);
+  }
+}
+function paintMeas() {
+  var host = document.getElementById('meas'); if (!host) return; host.innerHTML = '';
+  var S = selCand(), H = HOVER && HOVER.scene === UI.scene ? HOVER.c : null;
+  function line(tag, C) {
+    var r = C.rect, d = el('div'); var b = el('b', null, tag + ' ' + C.label); d.appendChild(b);
+    var txt = '  X ' + fmtN(r[0]) + ' · Y ' + fmtN(r[1]) + ' · ' + fmtN(r[2]) + '×' + fmtN(r[3]) + ' px' + (C.lh ? ' · строка ' + C.lh + ' px' + (C.lines > 1 ? ' × ' + C.lines : '') : '');
+    d.appendChild(document.createTextNode(txt)); host.appendChild(d);
+    var N = neighbours(C), parts = [];
+    [['L', '←'], ['R', '→'], ['U', '↑'], ['D', '↓']].forEach(function (p) { var n = N[p[0]]; if (n) parts.push(p[1] + ' ' + n.gap + ' до ' + n.c.name); });
+    if (parts.length) { var g = el('div'); g.className = 'gp'; g.textContent = 'отступы: ' + parts.join(' · '); host.appendChild(g); }
+    return d;
+  }
+  if (S) line('выбрано', S);
+  if (H && !(S && H.key === S.key && H.rect[0] === S.rect[0] && H.rect[1] === S.rect[1])) {
+    line('наведено', H);
+    if (S) { var P = pairGap(S, H), g2 = el('div'); g2.className = 'gp'; g2.textContent = 'между выбранным и наведённым: по X ' + P.dx + ' px · по Y ' + P.dy + ' px'; host.appendChild(g2); }
+  }
+  if (!S && !H) host.textContent = 'Наведите курсор на элемент или кликните: появятся X/Y на экране PSP, ширина и высота, высота строки и отступы до соседей (px)';
+}
+
+var SELEL = null;   // выбранный на превью элемент: {scene, kind, gid, name, rect, x, y}
+
+// ---------------------------------------------------------------- сводка размеров (правка 311)
+function groupCap(gid) {
+  var g = GROUP[gid], s = ST[gid]; if (!s) return null;
+  if ((g.kind === 'pix8' || g.kind === 'face') && s.font === 'pix8') {
+    var pf = s.size === 8 ? pix8Font(s.trk, s.lead) : getFace('pix8_8*' + (Math.max(1, Math.min(64, s.size)) / 8 / T.fonts.pix8_8.gscale).toFixed(8) + (s.lead ? '^' + s.lead : ''));
+    return {cap: capPx(pf), lh: pf.lh, face: 'пиксельный · ' + s.size + ' px'};
+  }
+  if (g.kind !== 'face' && g.kind !== 'pix8') return null;
+  var f = getFace(composeFace(gid)); return f ? {cap: capPx(f), lh: f.lh, face: composeFace(gid)} : null;
+}
+function summary() {
+  var host = document.getElementById('sumt'), rows = [];
+  T.groups.forEach(function (g) { var c = groupCap(g.id); if (c && DEF[g.id]) rows.push([g, c]); });
+  rows.sort(function (a, b) { return a[1].cap - b[1].cap || a[1].lh - b[1].lh; });
+  host.innerHTML = '<div>группа</div><div class="n">загл.</div><div class="n">строка</div>';
+  rows.forEach(function (r) {
+    var b = document.createElement('div'), btn = document.createElement('button'); btn.textContent = r[0].title; btn.title = r[1].face;
+    btn.onclick = function () { goGroup(r[0].id); }; b.appendChild(btn);
+    var c = document.createElement('div'); c.className = 'n' + (r[1].cap < 8 ? ' low' : ''); c.textContent = r[1].cap;
+    var l = document.createElement('div'); l.className = 'n'; l.textContent = r[1].lh;
+    host.appendChild(b); host.appendChild(c); host.appendChild(l);
+  });
+}
+function goGroup(gid) {
+  for (var i = 0; i < T.scenes.length; i++) {
+    var sc = T.scenes[i]; if (groupsOf(sc).indexOf(gid) >= 0) {
+      UI.scene = i; UI.sel = gid; build(); var el = document.getElementById('card-' + gid); if (el) el.scrollIntoView({block: 'nearest', behavior: 'smooth'}); return; }
+  }
+}
+
+// ---------------------------------------------------------------- панель (Podacha.Panel v2, перенос из _arsenal/podacha/kit/panel.js)
+function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function decimals(step) { return step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function mkLabel(text, hint) {
+  var lab = el('span', 'lab'); lab.appendChild(el('span', null, text));
+  if (hint) { var i = el('button', 'info', 'i'); i.type = 'button'; i.title = hint; i.setAttribute('aria-label', hint);
+    i.addEventListener('click', function (e) { e.stopPropagation(); var row = lab.parentNode, h = row.nextSibling;
+      if (h && h.classList && h.classList.contains('hint')) h.remove(); else row.parentNode.insertBefore(el('p', 'hint', hint), row.nextSibling); });
+    lab.appendChild(i); }
+  return lab;
+}
+function mkScrub(text, p, get, set, hint, fmt) {
+  var row = el('div', 'row'), lab = mkLabel(text, hint), sc = el('div', 'scrub'), fill = el('i', 'fill'), mark = el('i', 'mark'), num = el('input', 'sval');
+  num.type = 'text'; num.inputMode = 'decimal'; num.tabIndex = -1; num.readOnly = true; num.setAttribute('aria-label', text);
+  sc.tabIndex = 0; sc.setAttribute('role', 'slider'); sc.setAttribute('aria-label', text);
+  sc.appendChild(fill); sc.appendChild(mark); sc.appendChild(num); row.appendChild(lab); row.appendChild(sc);
+  function show(v) { return fmt ? fmt(v) : (+v).toFixed(decimals(p.step)); }
+  function paint() { var v = +get(), k = (v - p.min) / ((p.max - p.min) || 1); fill.style.transform = 'scaleX(' + clamp(k, 0, 1) + ')';
+    var m = p.def != null ? (p.def - p.min) / ((p.max - p.min) || 1) : -1; mark.style.left = (clamp(m, 0, 1) * 100) + '%'; mark.hidden = m < 0;
+    if (document.activeElement !== num) num.value = show(v); sc.setAttribute('aria-valuenow', v); }
+  function commit(v) { v = parseFloat(String(v).replace(',', '.')); if (!isFinite(v)) { paint(); return; }
+    v = p.step >= 1 ? Math.round(v) : +v.toFixed(4); if (p.lo != null) v = Math.max(p.lo, v); if (p.hi != null) v = Math.min(p.hi, v);
+    if (v > p.max) p.max = v; if (v < p.min) p.min = v; set(v); paint(); }
+  var drag = null;
+  sc.addEventListener('pointerdown', function (e) { if (sc.classList.contains('editing') || e.button > 0) return; e.preventDefault(); sc.focus();
+    try { sc.setPointerCapture(e.pointerId); } catch (er) { } drag = {x: e.clientX, v: +get(), moved: false, w: sc.getBoundingClientRect().width || 1}; });
+  sc.addEventListener('pointermove', function (e) { if (!drag) return; var dx = e.clientX - drag.x; if (!drag.moved && Math.abs(dx) < 3) return;
+    drag.moved = true; sc.classList.add('active');
+    var v = drag.v + dx / drag.w * (p.max - p.min) * (e.shiftKey ? 0.1 : 1); v = clamp(v, Math.min(p.min, drag.v), Math.max(p.max, drag.v));
+    v = Math.round(v / p.step) * p.step; set(+v.toFixed(4)); paint(); });
+  function end() { if (!drag) return; var d = drag; drag = null; sc.classList.remove('active'); if (!d.moved) edit(); }
+  sc.addEventListener('pointerup', end); sc.addEventListener('pointercancel', function () { drag = null; sc.classList.remove('active'); });
+  function edit() { sc.classList.add('editing'); num.readOnly = false; num.style.pointerEvents = 'auto'; num.value = (+get()).toFixed(decimals(p.step)); num.focus(); num.select(); }
+  function close() { sc.classList.remove('editing'); num.readOnly = true; num.style.pointerEvents = 'none'; paint(); }
+  num.addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); commit(num.value); close(); sc.focus(); }
+    else if (e.key === 'Escape') { e.preventDefault(); close(); sc.focus(); } });
+  num.addEventListener('blur', function () { if (sc.classList.contains('editing')) { commit(num.value); close(); } });
+  sc.addEventListener('keydown', function (e) { if (sc.classList.contains('editing')) return; var st = p.step * (e.shiftKey ? 0.1 : 1);
+    if (p.step >= 1) st = p.step;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowUp') { e.preventDefault(); commit(+get() + st); }
+    else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') { e.preventDefault(); commit(+get() - st); }
+    else if (e.key === 'Enter') { e.preventDefault(); edit(); } });
+  row.paint = paint; paint(); return row;
+}
+function mkSelect(text, opts, labels, get, set, hint) {
+  var row = el('div', 'row'), lab = mkLabel(text, hint), s = el('select', 'tin');
+  opts.forEach(function (o, i) { var op = el('option', null, labels[i]); op.value = o; s.appendChild(op); });
+  s.addEventListener('change', function () { set(s.value); });
+  row.appendChild(lab); row.appendChild(s); row.paint = function () { s.value = get(); }; row.paint(); return row;
+}
+function mkSwitch(text, get, set, hint) {
+  var row = el('div', 'row'), lab = mkLabel(text, hint), b = el('button', 'sw'); b.type = 'button'; b.setAttribute('role', 'switch');
+  b.addEventListener('click', function () { set(get() ? 0 : 1); paint(); });
+  function paint() { b.setAttribute('aria-checked', get() ? 'true' : 'false'); }
+  row.appendChild(lab); row.appendChild(b); row.paint = paint; paint(); return row;
+}
+
+var FONT_OPTS = ['boulder_16', 'boulder_24', 'Tt2001m__14', 'swz721n_10', 'swz721mi_12', 'msx_thin', 'bart_16bit', 'simpsons_pix', 'boulder_px11', 'boulder_px14', 'boulder_px18', 'swz721_px8', 'swz721_px10', 'swz721_px12', 'swz721_px8i', 'swz721_px10i', 'swz721_px12i'];
+var NATIVE_FACE = {msx_thin: 1, bart_16bit: 1, simpsons_pix: 1, boulder_px11: 1, boulder_px14: 1, boulder_px18: 1, swz721_px8: 1, swz721_px10: 1, swz721_px12: 1, swz721_px8i: 1, swz721_px10i: 1, swz721_px12i: 1};   // родной размер 1:1 при выборе (@1), кратные только целые
+var FONT_LAB = {boulder_16: 'Boulder 16 · жирный мультяшный', boulder_24: 'Boulder 24 · крупный жирный', Tt2001m__14: 'Tt2001 · тонкий',
+                swz721n_10: 'Swiss 721 узкий', swz721mi_12: 'Swiss 721 курсив', pix8: 'пиксельный 8×8 (как сейчас)',
+                msx_thin: 'Дисклеймер при запуске · тонкий 8×8 (msx)',
+                bart_16bit: 'Bart vs the Space Mutants · 16-bit (Lauke, CC BY 3.0)', simpsons_pix: 'The Simpsons · пиксельный (Lauke, CC BY 3.0)',
+                boulder_px11: 'Boulder пиксельный · заглавная 11 px', boulder_px14: 'Boulder пиксельный · заглавная 14 px', boulder_px18: 'Boulder пиксельный · заглавная 18 px',
+                swz721_px8: 'Swiss 721 пиксельный · 8 px', swz721_px10: 'Swiss 721 пиксельный · 10 px', swz721_px12: 'Swiss 721 пиксельный · 12 px',
+                swz721_px8i: 'Swiss 721 курсив пиксельный · 8 px', swz721_px10i: 'Swiss 721 курсив пиксельный · 10 px', swz721_px12i: 'Swiss 721 курсив пиксельный · 12 px'};
+function changedAny() { return T.groups.some(function (g) { return ST[g.id] && changed(g.id); }); }
+function onChange() { render(); summary(); paintCards(); saveLocal(); }
+var CARDS = [];
+var PXF = function (v) { return (v > 0 ? '+' : '') + v + ' px'; };
+function card(gid, scene) {
+  var g = GROUP[gid], s = ST[gid], d = defState(gid), c = el('div', 'card'); c.id = 'card-' + gid; if (UI.sel === gid) c.classList.add('on');
+  var h = el('div', 'ch'), t = el('b', null, g.title), dot = el('span', 'chg'), grow = el('span', 'grow'), rs = el('button', 'btn ghost small', 'как в игре');
+  t.addEventListener('click', function () { UI.sel = UI.sel === gid ? null : gid; paintCards(); render(); });
+  rs.title = 'вернуть только эту группу как в игре'; rs.addEventListener('click', function () { TC.resetGroup(gid); build(); onChange(); });
+  var original = el('button', 'btn ghost small', 'оригинал'); original.title = 'исходная группа без JSON'; original.addEventListener('click', function () { ST[gid] = TC.defState(gid); build(); onChange(); });
+  h.appendChild(original); h.appendChild(t); h.appendChild(dot); h.appendChild(grow); h.appendChild(rs); c.appendChild(h);
+  c.appendChild(el('p', 'why', g.why));
+  var rows = el('div', 'rows'), list = []; c.appendChild(rows);
+  function add(r) { rows.appendChild(r); list.push(r); }
+  function setv(k) { return function (v) { s[k] = v; onChange(); }; }
+  function getv(k) { return function () { return s[k]; }; }
+  var multi = scene.texts.some(function (x) { return x.group === gid && x.wrap; });
+  if (g.kind === 'pix8') {
+    add(mkSelect('Шрифт', ['pix8'].concat(FONT_OPTS), ['pix8'].concat(FONT_OPTS).map(function (o) { return FONT_LAB[o]; }), getv('font'),
+      function (v) { s.font = v; if (v !== 'pix8') { s.base = v; if (NATIVE_FACE[v]) { s.fs = 1; s.ftrk = 0; s.flead = 0; } else if (!s.fs || s.fs === d.fs) s.fs = +(T.fonts[v].gscale * 1.0).toFixed(4); } build(); onChange(); },
+      'пиксельный 8×8 — правка 126: чёткий шрифт PSP без мыла; другая грань — шрифтом диска'));
+  } else if (g.kind === 'face') {
+    add(mkSelect('Шрифт', FONT_OPTS.concat(['pix8']), FONT_OPTS.map(function (o) { return FONT_LAB[o]; }).concat(['пиксельный 8×8 (как в пузыре задания)']),
+      function () { return s.font === 'pix8' ? 'pix8' : s.base; },
+      function (v) { if (v === 'pix8') s.font = 'pix8'; else { s.base = v; s.font = v; if (NATIVE_FACE[v]) { s.fs = 1; s.ftrk = 0; s.flead = 0; } } build(); onChange(); },   // msx_thin — сразу родной размер 1:1 (@1), как на экране дисклеймера
+      'грань диска Scrooby (все пять — с диска игры) или пиксельный шрифт PSP 8×8 движка: тонкий и чёткий на мелком размере'));
+  }
+  if ((g.kind === 'face' && s.font !== 'pix8') || (g.kind === 'pix8' && s.font !== 'pix8')) {
+    function sizePx() { return TC.capPx(TC.getFace(TC.composeFace(gid))); }
+    add(mkScrub('Размер', {min: 4, max: 32, step: 1, def: sizePx()}, sizePx, function (v) {
+      v = Math.max(1, Math.min(64, Math.round(v)));
+      var old = s.fs, f = TC.getFace(TC.composeFace(gid));
+      var guess = Math.round((f.lh - (s.flead || 0)) * v / Math.max(1, sizePx()));
+      var best = old, error = 1000;
+      for (var i = 0; i < 25; i++) {
+        var delta = i === 0 ? 0 : (i % 2 ? -Math.ceil(i / 2) : i / 2);
+        s.fs = Math.max(1, guess + delta) / T.fonts[s.base].height;
+        var e = Math.abs(sizePx() - v);
+        if (e < error) { best = s.fs; error = e; }
+        if (e === 0) break;
+      }
+      s.fs = +best.toFixed(8); onChange();
+    }, 'высота заглавной буквы в пикселях PSP; один шаг = 1 px', function (v) { return v + ' px'; }));
+    add(mkScrub('Межбуквенное', {min: -3, max: 6, step: 1, def: d.ftrk}, getv('ftrk'), setv('ftrk'), 'целые пиксели PSP к шагу каждой буквы', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+    add(mkScrub('Межстрочное', {min: -4, max: 8, step: 1, def: d.flead}, getv('flead'), setv('flead'), 'пиксели к шагу строки (перенос в 2–3 строки)', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+  }
+  if (s.font === 'pix8' && (g.kind === 'pix8' || g.kind === 'face')) {
+    add(mkScrub('Размер', {min: 4, max: 32, step: 1, def: 8}, getv('size'), setv('size'), 'размер той же пиксельной грани, px PSP', function (v) { return v + ' px'; }));
+    add(mkScrub('Межбуквенное', {min: -2, max: 4, step: 1, lo: -8, hi: 7, def: 0}, getv('trk'), setv('trk'), 'целые пиксели к шагу буквы 8×8 (в игре −8…7)', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+    add(mkScrub('Межстрочное', {min: -2, max: 6, step: 1, lo: -8, hi: 7, def: 0}, getv('lead'), setv('lead'), 'шаг строки 10 px + это число', function (v) { return (10 + (+v)) + ' px'; }));
+  }
+  if (g.pads) {
+    add(mkScrub('Поле сверху', {min: -6, max: 12, step: 1, def: 0}, getv('padT'), setv('padT'), 'отступ первой строки от верха пузыря; правое поле не меняется', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+    var gap0 = 3; T.scenes.forEach(function (q) { if (q.obj && q.obj.oiW) gap0 = Math.trunc(q.obj.ext[0] + (q.obj.ext[2] - q.obj.oiW) * 0.5 + q.obj.oiVisR + 4) - 1 - (q.obj.ext[0] + q.obj.oiVisR); });
+    add(mkScrub('Отступ от аватарки', {min: -8, max: 24, step: 1, def: 0}, getv('padL'), setv('padL'), 'когда слева аватарка (Мардж): просвет от видимого края круга до первой буквы; в игре сейчас ' + gap0 + ' px', function (v) { return (gap0 + (+v)) + ' px' + (+v ? ' (' + (v > 0 ? '+' : '') + v + ')' : ' · как в игре'); }));
+    add(mkScrub('Отступ без аватарки', {min: -8, max: 24, step: 1, def: 0}, getv('padN'), setv('padN'), 'когда значка нет (Vehicle destroyed): от скругления пузыря до первой буквы; 0 — как в игре', function (v) { return +v ? (v > 0 ? '+' : '') + v + ' px' : '0 · как в игре'; }));
+    add(mkScrub('Поле справа', {min: -8, max: 24, step: 1, def: 0}, getv('padR'), setv('padR'), 'где строка переносится у правого края пузыря', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+  }
+  if (g.kind === 'face' || g.kind === 'pix8') {
+    if (!g.pads) {
+      add(mkSelect('Выравнивание в рамке', ['', '0', '1', '2'], ['как в раскладке экрана', 'по верху рамки', 'по центру рамки', 'по низу рамки'],
+        function () { return s.va === null || s.va === undefined ? '' : String(s.va); },
+        function (v) { s.va = v === '' ? null : +v; build(); onChange(); },
+        'правка 507: где строка стоит в своей рамке по вертикали; общий центр или низ у всех текстов таблицы — они на одной линии при любом размере грани'));
+      add(mkSelect('Подложка под буквами', ['', '1', '0'], [g.shadow ? 'как задано группой (вкл)' : 'как в игре', 'вкл (тёмная тень 1 px)', 'выкл'],
+        function () { return s.sh === null || s.sh === undefined ? '' : String(s.sh); },
+        function (v) { s.sh = v === '' ? null : +v; build(); onChange(); },
+        '№551: тёмная подложка под буквами, как у подписи под △; для надписей поверх мира (кнопки разговора и карточки) включена по умолчанию, внутри пузырей и плашек выключена'));
+      add(mkScrub('Сдвиг X', {min: -40, max: 40, step: 1, def: 0}, getv('dx'), setv('dx'), 'вся группа вправо/влево, px PSP', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+      add(mkScrub('Сдвиг Y', {min: -40, max: 40, step: 1, def: 0}, getv('dy'), setv('dy'), 'вся группа вниз/вверх, px PSP', function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+    }
+    if (multi) {
+      var w0 = scene.texts.filter(function (x) { return x.group === gid; })[0].dst[2];
+      add(mkScrub('Ширина строки', {min: 60, max: 470, step: 1, def: w0}, function () { return s.w == null ? w0 : s.w; }, function (v) { s.w = v === w0 ? null : v; onChange(); },
+        'рамка строки: где перенос (в пузыре правее не бывает — край пузыря)', function (v) { return v + ' px'; }));
+    }
+    if (g.pitch) add(mkScrub('Шаг строк', {min: 12, max: 40, step: 1, def: d.pitch}, getv('pitch'), setv('pitch'), 'расстояние между пунктами списка, центр списка на месте', function (v) { return v + ' px'; }));
+    if (g.icons) add(mkScrub('Значки: масштаб', {min: 0.5, max: 2, step: 0.01, def: 1}, getv('icon_k'), setv('icon_k'), 'значки ✕ △ у подписей, от своего центра; сдвиг X/Y двигает значок вместе с подписью', function (v) { return '×' + (+v).toFixed(2); }));
+  }
+  if (g.kind === 'num') {
+    var ks = Object.keys((scene.nums.filter(function (n) { return n.group === gid; })[0] || {sets: {}}).sets).map(Number);
+    add(mkScrub('Размер цифр', {min: Math.min.apply(null, ks), max: Math.max.apply(null, ks), step: 0.05, def: d.gk}, getv('gk'), function (v) {
+      var best = ks.reduce(function (a, b) { return Math.abs(b - v) < Math.abs(a - v) ? b : a; }); s.gk = best; onChange(); },
+      'масштаб картинок букв диска (мультяшные цифры)', function (v) { return '×' + (+v).toFixed(2); }));
+    add(mkScrub('Межбуквенное', {min: -4, max: 6, step: 1, def: 0}, getv('trk'), setv('trk'), 'целые пиксели к шагу каждой буквы', PXF));
+    add(mkScrub('Сдвиг X', {min: -40, max: 40, step: 1, def: 0}, getv('dx'), setv('dx'), 'вся группа, px PSP', PXF));
+    add(mkScrub('Сдвиг Y', {min: -40, max: 40, step: 1, def: 0}, getv('dy'), setv('dy'), 'вся группа, px PSP', PXF));
+  }
+  (g.parts || []).forEach(function (pt) {
+    if (!scene.texts.concat(scene.nums).some(function (it) { return it.group === gid && TC.partOk(pt, scene, it); })) return;
+    add(mkScrub(pt.title + ': X', {min: -40, max: 40, step: 1, def: 0}, getv(pt.id + '_dx'), setv(pt.id + '_dx'), 'только эта часть группы, px PSP', PXF));
+    add(mkScrub(pt.title + ': Y', {min: -40, max: 40, step: 1, def: 0}, getv(pt.id + '_dy'), setv(pt.id + '_dy'), 'только эта часть группы, px PSP', PXF));
+  });
+  if (g.kind === 'move') {
+    add(mkScrub('Сдвиг X', {min: -60, max: 60, step: 1, def: 0}, getv('dx'), setv('dx'), 'подписи и звёзды вместе, px PSP', PXF));
+    add(mkScrub('Сдвиг Y', {min: -60, max: 60, step: 1, def: 0}, getv('dy'), setv('dy'), 'подписи и звёзды вместе, px PSP', PXF));
+  }
+  if (g.kind === 'board') {
+    add(mkScrub('Шире', {min: 0, max: 60, step: 1, def: 0}, getv('gw'), setv('gw'), 'на столько px с каждой стороны: углы рамки наружу, края длиннее, заливка больше', function (v) { return '+' + (2 * v) + ' px (по ' + v + ')'; }));
+    add(mkScrub('Выше', {min: 0, max: 40, step: 1, def: 0}, getv('gh'), setv('gh'), 'на столько px сверху и снизу', function (v) { return '+' + (2 * v) + ' px (по ' + v + ')'; }));
+  }
+  if (g.kind === 'img') {
+    add(mkSwitch('Показывать', getv('show'), setv('show'), 'только в панели: убрать картинку, чтобы видеть текст отдельно'));
+    add(mkScrub('Масштаб', {min: 0.5, max: 3, step: 0.01, def: 1}, getv('k'), setv('k'), g.block ? 'все звёзды и промежутки от центра блока, строки над ними едут следом; в панели — превью, точный пиксель даст выпуск' : 'от центра картинки; в панели — превью, точный пиксель даст выпуск', function (v) { return '×' + (+v).toFixed(2); }));
+    add(mkScrub('Сдвиг X', {min: -40, max: 40, step: 1, def: 0}, getv('dx'), setv('dx'), null, function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+    add(mkScrub('Сдвиг Y', {min: -40, max: 40, step: 1, def: 0}, getv('dy'), setv('dy'), null, function (v) { return (v > 0 ? '+' : '') + v + ' px'; }));
+  }
+  var stat = el('p', 'stat'); c.appendChild(stat);
+  CARDS.push({gid: gid, el: c, dot: dot, stat: stat, rows: list});
+  return c;
+}
+function paintCards() {
+  CARDS.forEach(function (C) {
+    C.el.classList.toggle('on', UI.sel === C.gid); C.dot.hidden = !changed(C.gid);
+    C.rows.forEach(function (r) { r.paint(); });
+  });
+  paintStats();
+  var dots = document.querySelectorAll('#scenes button'); T.scenes.forEach(function (sc, i) {
+    var ch = groupsOf(sc).some(changed); var d = dots[i] && dots[i].querySelector('.dot'); if (d) d.hidden = !ch; });
+}
+function paintStats() {
+  CARDS.forEach(function (C) {
+    var gc = groupCap(C.gid), I = LAST && LAST.info[C.gid], txt = '';
+    if (gc) txt = 'заглавная ' + gc.cap + ' px · строка ' + gc.lh + ' px · ' + gc.face;
+    if (I && I.lines > 1) txt += ' · строк ' + I.lines;
+    if (C.gid === 'hud_bubble' && I && I.boxes[0] && I.frame) txt += ' · текст ' + (I.boxes[0][2] - I.boxes[0][0]) + '×' + (I.boxes[0][3] - I.boxes[0][1]) + ' px';
+    C.stat.textContent = txt;
+  });
+}
+function groupsOf(sc) {
+  var partOk = TC.partOk;
+  var ids = [];
+  sc.texts.forEach(function (t) { if (t.group && t.vis && ids.indexOf(t.group) < 0 && ST[t.group]) ids.push(t.group); });
+  sc.nums.forEach(function (n) { if (n.group && ids.indexOf(n.group) < 0 && ST[n.group]) ids.push(n.group); });
+  sc.statics.forEach(function (s) { if (s.group && ids.indexOf(s.group) < 0 && ST[s.group]) ids.push(s.group); });
+  T.groups.forEach(function (g) { if (g.kind === 'move' && ST[g.id] && ids.indexOf(g.id) < 0 &&
+    sc.texts.concat(sc.nums, sc.statics).some(function (it) { return partOk(g, sc, it); })) ids.push(g.id); });
+  return ids;
+}
+function build() {
+  var sc = sceneObj(), side = document.getElementById('side'); side.innerHTML = ''; CARDS = []; if (typeof buildNotes === 'function') buildNotes();
+  document.getElementById('stitle').textContent = sc.title;
+  document.getElementById('snote').textContent = 'фон: ' + sc.bg_note + (sc.textExample && sc.textExample !== 'sample' ? ' · текст из оригинала, предпросмотр' : '');
+  if (sc.examples) {
+    side.appendChild(mkSelect('Пример текста', ['sample'].concat(sc.examples.map(function (e) { return e.id; })),
+      ['Как в кадре игры'].concat(sc.examples.map(function (e) { return e.title; })),
+      function () { return sc.textExample || 'sample'; }, function (id) {
+        TC.setTextExample(sc, id); render();
+        document.getElementById('snote').textContent = 'фон: ' + sc.bg_note + (id === 'sample' ? '' : ' · текст из оригинала, предпросмотр');
+      }, 'Все родные причины и подсказки; меняют только пример для настройки шрифта'));
+  }
+  var isImg = function (g) { return GROUP[g].kind === 'img' || GROUP[g].kind === 'board'; };
+  var ids = groupsOf(sc), txt = ids.filter(function (g) { return !isImg(g); }), im = ids.filter(isImg);
+  // 11.10 (№528): элемент игры один, а страниц панели с ним несколько (подпись под △ в будке и после взрыва, баннеры, штраф и Hit & Run, подписи бонус-меню): управление — только на первой странице,
+  // на остальных серая подпись со ссылкой; иначе правка на одной странице тихо двигала бы другую
+  var owner = {}; T.scenes.forEach(function (s2, i2) { groupsOf(s2).forEach(function (g2) { if (owner[g2] === undefined) owner[g2] = i2; }); });
+  var shared = function (g) { return owner[g] !== undefined && owner[g] !== UI.scene; };
+  var sharedNote = function (g) {
+    var d = el('div', 'card shared'); d.id = 'card-' + g; d.style.cssText = 'opacity:.75;padding:10px 12px;margin:8px 0;border-radius:8px;border:1px dashed #666;color:#aaa;font-size:12px;line-height:1.4';
+    var o = owner[g]; d.appendChild(el('div', null, GROUP[g].title + ': тот же элемент игры, настраивается на странице ' + (o + 1) + ' «' + T.scenes[o].title.split(' · ')[0] + '»'));
+    var b = el('button'); b.type = 'button'; b.textContent = 'Перейти к настройке →'; b.style.cssText = 'margin-top:6px;padding:3px 10px;border-radius:6px;border:0;cursor:pointer;font:inherit';
+    b.addEventListener('click', function () { UI.scene = o; UI.sel = g; build(); saveLocal(); var c = document.getElementById('card-' + g); if (c) c.scrollIntoView({block: 'nearest'}); });
+    d.appendChild(b); return d; };
+  side.appendChild(el('div', 'cg', 'Текст на этом экране'));
+  txt.forEach(function (g) { side.appendChild(shared(g) ? sharedNote(g) : card(g, sc)); });
+  if (im.length) { side.appendChild(el('div', 'cg', 'Статичные картинки')); im.forEach(function (g) { side.appendChild(shared(g) ? sharedNote(g) : card(g, sc)); }); }
+  var n = el('div', 'note');
+  n.innerHTML = '«Сохранить» передаёт настройки в игру; статус сверху подтверждает запись. ' +
+    'Размер, межбуквенное и межстрочное задаются в пикселях PSP. «Как в игре» возвращает текущие настройки Роба, ' +
+    '«Сброс к оригиналу» возвращает исходную раскладку. «Кадр игры» показывает настоящий снимок для сравнения.';
+  side.appendChild(n);
+  paintScenes(); paintCards(); render();
+}
+function paintScenes() {
+  var nav = document.getElementById('scenes'); nav.innerHTML = '';
+  T.scenes.forEach(function (sc, i) {
+    var b = el('button'); b.type = 'button'; b.setAttribute('aria-current', i === UI.scene ? 'true' : 'false');
+    b.appendChild(el('span', 'sk', String(i + 1).padStart(2, '0'))); b.appendChild(el('span', null, sc.title.split(' · ')[0]));
+    var d = el('span', 'dot'); d.hidden = true; b.appendChild(d); b.title = sc.title;
+    b.addEventListener('click', function () { UI.scene = i; UI.sel = null; build(); saveLocal(); });
+    nav.appendChild(b);
+  });
+}
+function seg(host, opts, labels, get, set) {
+  host.innerHTML = '';
+  opts.forEach(function (o, i) { var b = el('button', null, labels[i]); b.type = 'button'; b.setAttribute('role', 'radio');
+    b.addEventListener('click', function () { set(o); paint(); }); host.appendChild(b); });
+  function paint() { Array.prototype.forEach.call(host.children, function (b, i) { b.setAttribute('aria-checked', String(opts[i]) === String(get()) ? 'true' : 'false'); }); }
+  paint(); return paint;
+}
+function toast(s) { var t = document.getElementById('toast'); t.textContent = s; t.classList.add('on'); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove('on'); }, 1800); }
+// Память браузера хранит и «основу» (json, на котором страница открылась): при следующем открытии правки поверх НОВОГО сохранённого json — только те группы, что изменены
+// относительно основы; остальные — из сохранённого json (иначе старая память перебивала бы сохранение). Старая память без основы: правки не теряются, а лежат в shar-typo-v1-backup
+var LS_BASE = JSON.parse(JSON.stringify(typoJson()));   // состояние сразу после открытия на сохранённом json, в той же (нормализованной) записи, что и правки
+function saveLocal() { try { localStorage.setItem('shar-typo-v1', JSON.stringify({json: typoJson(), base: LS_BASE, ui: {scene: UI.scene, zoom: UI.zoom}})); } catch (e) { } }
+function loadLocal() { try { var raw = localStorage.getItem('shar-typo-v1'), v = JSON.parse(raw || 'null'); if (v) {
+    if (v.base && v.json) {   // трёхсторонняя склейка: основа прошлого открытия, правки в памяти, нынешний сохранённый json
+      var base = v.base.groups || {}, cur = v.json.groups || {}, merged = JSON.parse(JSON.stringify(LS_BASE.groups || {})), seen = {};
+      Object.keys(base).concat(Object.keys(cur)).forEach(function (k) { if (seen[k]) return; seen[k] = 1;
+        if (JSON.stringify(cur[k]) !== JSON.stringify(base[k])) { if (cur[k] === undefined) delete merged[k]; else merged[k] = cur[k]; } });
+      loadJson({groups: merged});
+    } else if (v.json) { try { if (!localStorage.getItem('shar-typo-v1-backup')) localStorage.setItem('shar-typo-v1-backup', raw); } catch (e2) { } }
+    // память прежнего формата (без основы): сохранённый json главнее, а правки из памяти не пропадают, лежат в shar-typo-v1-backup, и на странице кнопка «Вернуть правки из памяти»
+    UI.scene = Math.min(v.ui.scene | 0, T.scenes.length - 1); UI.zoom = [1, 2, 3].indexOf(v.ui.zoom) >= 0 ? v.ui.zoom : 1; } } catch (e) { } }
+
+// кнопка возврата правок из резервной памяти (прежний формат): показывается, пока резерв отличается от открытого состояния и её не закрыли
+function restoreBar() { try {
+  var bk = localStorage.getItem('shar-typo-v1-backup'); if (!bk || localStorage.getItem('shar-typo-v1-backup-off')) return;
+  var bj = JSON.parse(bk).json, cur = typoJson().groups, gs = (bj && bj.groups) || {};
+  // 11.10: память браузера старше сохранённого json (по метке времени «made») — в ней нечего возвращать, плашка не нужна (Роб: «висит и мешает»); та же плашка со старой памятью теряла смысл после каждого нового сохранения
+  try { var ini = T.initial; if (bj && bj.made && ini && ini.made && String(ini.made) >= String(bj.made)) return; } catch (e0) { }
+  // 11.10 (слово Роба: плашка мешает): сравнивать надо действующие значения групп, не текст json (порядок ключей, {} против отсутствия, прежние имена граней давали «13 групп» на пустом месте):
+  // загрузить память и текущее по очереди и сверить settings(); плашка — только если действующее значение группы реально другое
+  var eff = function (j) { loadJson({groups: j}); var o = {}; Object.keys(GROUP).forEach(function (g) { try { o[g] = JSON.stringify(settings(g)); } catch (e) { } }); return o; };
+  var effBk = eff(gs), effCur = eff(cur); loadJson({groups: cur});
+  var diff = Object.keys(gs).filter(function (k) { return cur[k] !== undefined && GROUP[k] && effBk[k] !== effCur[k]; });   // прежние идентификаторы (hints) уже перенесены по экранам
+  if (!diff.length) return;
+  var bar = document.createElement('div'); bar.id = 'restoreBar';
+  bar.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:99;background:#191919;color:#fff;padding:8px 12px;border-radius:8px;font:13px/1.3 Inter,system-ui,sans-serif;display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.3)';
+  bar.innerHTML = '<span>В памяти браузера есть несохранённые правки прежней версии (' + diff.length + ' групп): ' + diff.join(', ') + '</span>';
+  function btn(t, f) { var b = document.createElement('button'); b.textContent = t; b.style.cssText = 'padding:4px 10px;border-radius:6px;border:0;cursor:pointer;font:inherit'; b.onclick = f; bar.appendChild(b); }
+  btn('Вернуть правки', function () { var m = {}; Object.keys(cur).forEach(function (k) { m[k] = cur[k]; }); diff.forEach(function (k) { m[k] = gs[k]; }); loadJson({groups: m}); paintCards(); render(); saveLocal(); bar.remove(); });
+  btn('Закрыть', function () { try { localStorage.setItem('shar-typo-v1-backup-off', '1'); } catch (e) { } bar.remove(); });
+  document.body.appendChild(bar);
+} catch (e) { } }
+
+// ---------------------------------------------------------------- запуск
+document.getElementById('built').textContent = 'пакеты и снимки от ' + T.built + ' · пиксели PSP 1:1';
+loadLocal();
+var scr = document.getElementById('screen');
+seg(document.getElementById('zoom'), [1, 2, 3], ['1:1', '×2', '×3'], function () { return UI.zoom; }, function (v) { UI.zoom = v; scr.style.setProperty('--z', v); render(); saveLocal(); });
+scr.style.setProperty('--z', UI.zoom);
+seg(document.getElementById('view'), ['panel', 'game'], ['Панель', 'Кадр игры'], function () { return UI.view; }, function (v) { UI.view = v; render(); });
+function sw(id, key) { var b = document.getElementById(id); function p() { b.setAttribute('aria-checked', UI[key] ? 'true' : 'false'); }
+  b.addEventListener('click', function () { UI[key] = UI[key] ? 0 : 1; p(); render(); }); p(); }
+sw('tStatic', 'statics'); sw('tBoxes', 'boxes'); sw('tMeas', 'meas');
+// ---------------------------------------------------------------- №-наряд 12.10: выбор любого элемента на превью, перетаскивание, стрелки, замечания
+function hitElement(x, y) {                // что под точкой (px PSP): текст (по рамке строки), число, картинка, прочие узлы пакета; меньшая площадь — выше
+  if (!LAST) return null; var M = LAST.M, best = null, sc = LAST.sc;
+  function consider(kind, gid, name, label, r, idx, page) { if (!r || x < r[0] - 1 || x > r[0] + r[2] + 1 || y < r[1] - 1 || y > r[1] + r[3] + 1) return;
+    var a = r[2] * r[3]; if (!best || a < best.a) best = {kind: kind, gid: gid || null, name: name || '', label: label || name || '', key: elKey(sc, kind, name || '', page), rect: [r[0], r[1], r[2], r[3]], idx: idx, a: a}; }
+  Object.keys(LAST.info).forEach(function (g) { var refs = LAST.info[g].refs || [];
+    LAST.info[g].boxes.forEach(function (b, k) { var t = refs[k]; if (b && t) consider(t.text !== undefined && t.field !== undefined && t.name && t.strings ? 'text' : 'num', g, t.name, t.text ? t.name + ' «' + String(t.text).slice(0, 28) + '»' : t.name, [b[0], b[1], b[2] - b[0], b[3] - b[1]], k, t.page); }); });
+  M.stat.forEach(function (st, k) { if (st.show !== 0 && st.show !== false && st.cur) consider(st.flat ? 'rect' : 'stat', st.group, st.name || 'картинка', st.name || 'картинка', st.cur, k, st.page); });
+  var known = {}; M.texts.concat(M.nums, M.stat).forEach(function (q) { if (q.name) known[q.name] = 1; });
+  var shown = (sc.show || []).concat(['ALWAYS']);
+  (sc.fit || []).forEach(function (b, k) {   // остальные узлы пакета на экране (рамки, плашки, запечённые в кадр картинки): выбор и замечания; сдвиг у них только через группу (нет группы)
+    if (known[b[2]] || (b[0] !== 0 && b[0] !== 2) || shown.indexOf(b[1]) < 0 || b[5] < 2 || b[6] < 2 || b[5] * b[6] > 480 * 272 * 0.9) return;
+    consider('node', null, b[2], b[2], [b[3], b[4], b[5], b[6]], k); });
+  return best;
+}
+function selectEl(h, px, py) {
+  SELEL = h ? {scene: UI.scene, kind: h.kind, gid: h.gid, name: h.name, label: h.label, key: h.key, rect: h.rect, x: px, y: py} : null;
+  if (h && h.gid) { UI.sel = h.gid; paintCards(); var c = document.getElementById('card-' + h.gid); if (c) c.scrollIntoView({block: 'nearest', behavior: 'smooth'}); }
+  render(); buildNotes();
+}
+var DRAG = null;
+var elKey = TC.elKey, elOf = TC.elOf;   // настройки отдельных элементов живут в ядре (EL), здесь только доступ
+function nudgeSel(ddx, ddy, elementOnly) {   // группа (те же X/Y, что ползунки группы) или только этот элемент: без группы или с Alt
+  if (!SELEL) return false;
+  if (SELEL.gid && ST[SELEL.gid] && !elementOnly) { var s = ST[SELEL.gid]; s.dx = (s.dx | 0) + ddx; s.dy = (s.dy | 0) + ddy; }
+  else if (SELEL.kind !== 'node' && SELEL.name) { var e = elOf(SELEL.key); e.dx = (e.dx | 0) + ddx; e.dy = (e.dy | 0) + ddy; }
+  else return false;
+  SELEL.rect = [SELEL.rect[0] + ddx, SELEL.rect[1] + ddy, SELEL.rect[2], SELEL.rect[3]]; onChange(); buildNotes(); return true;
+}
+scr.addEventListener('pointerdown', function (e) {
+  if (e.button > 0) return; var r = scr.getBoundingClientRect(), k = r.width / 480, x = (e.clientX - r.left) / k, y = (e.clientY - r.top) / k;
+  e.preventDefault(); scr.focus(); var h = hitElement(x, y); selectEl(h, Math.round(x), Math.round(y));
+  var grp = h && h.gid && ST[h.gid] && !e.altKey, el1 = h && h.kind !== 'node' && h.name && (!grp);
+  if (grp || el1) { var cur = grp ? ST[h.gid] : elOf(h.key); DRAG = {x: e.clientX, y: e.clientY, k: k, dx0: cur.dx | 0, dy0: cur.dy | 0, rect0: SELEL.rect.slice(), moved: false, elOnly: !grp}; try { scr.setPointerCapture(e.pointerId); } catch (e1) { } }
+  else DRAG = null;
+});
+scr.addEventListener('pointermove', function (e) {
+  if (!DRAG || !SELEL) return; var mx = e.clientX - DRAG.x, my = e.clientY - DRAG.y;
+  if (!DRAG.moved && Math.abs(mx) < 3 && Math.abs(my) < 3) return; DRAG.moved = true;
+  var ddx = Math.round(mx / DRAG.k), ddy = Math.round(my / DRAG.k), s = DRAG.elOnly ? elOf(SELEL.key) : ST[SELEL.gid];
+  if ((s.dx | 0) === DRAG.dx0 + ddx && (s.dy | 0) === DRAG.dy0 + ddy) return;
+  s.dx = DRAG.dx0 + ddx; s.dy = DRAG.dy0 + ddy; SELEL.rect = [DRAG.rect0[0] + ddx, DRAG.rect0[1] + ddy, DRAG.rect0[2], DRAG.rect0[3]]; onChange();
+});
+function endDrag(e) { if (DRAG) { try { scr.releasePointerCapture(e.pointerId); } catch (e1) { } } DRAG = null; }
+scr.addEventListener('pointerup', endDrag); scr.addEventListener('pointercancel', endDrag);
+scr.addEventListener('pointermove', function (e) {   // №596: наведение — измерения без клика
+  if (DRAG || !LAST || !UI.meas) return; var r = scr.getBoundingClientRect(), k = r.width / 480, h = hitElement((e.clientX - r.left) / k, (e.clientY - r.top) / k);
+  var key = h ? h.kind + '|' + h.key + '|' + h.rect.join(',') : ''; if (key === HOVERKEY) return; HOVERKEY = key;
+  HOVER = h ? {scene: UI.scene, c: candOf(h)} : null; overlay(LAST.info); paintMeas();
+});
+scr.addEventListener('pointerleave', function () { if (!HOVER) return; HOVER = null; HOVERKEY = ''; if (LAST) overlay(LAST.info); paintMeas(); });
+scr.addEventListener('keydown', function (e) {    // стрелки ±1 px, Shift ±5; колесо экран не масштабирует
+  var st = e.shiftKey ? 5 : 1, d = {ArrowLeft: [-st, 0], ArrowRight: [st, 0], ArrowUp: [0, -st], ArrowDown: [0, st]}[e.key];
+  if (!d) { if (e.key === 'Escape' && SELEL) { SELEL = null; render(); buildNotes(); } return; }
+  e.preventDefault(); if (!nudgeSel(d[0], d[1], e.altKey)) toast(SELEL ? 'узел пакета без группы и без картинки: сдвиг пока недоступен, оставьте замечание' : 'выберите элемент на экране');
+});
+
+// замечания: к выбранному элементу и к странице; память браузера + файл ui_notes.json
+var NOTES = [], NOTES_KEY = 'shar-typo-notes-v1';
+try { NOTES = JSON.parse(localStorage.getItem(NOTES_KEY) || '[]') || []; } catch (e) { NOTES = []; }
+function saveNotes() { try { localStorage.setItem(NOTES_KEY, JSON.stringify(NOTES)); } catch (e) { } }
+function addNote(text, el) {
+  text = (text || '').trim(); if (!text) return false; var sc = T.scenes[UI.scene];
+  NOTES.push({id: Date.now() + '-' + NOTES.length, ts: new Date().toISOString().slice(0, 19).replace('T', ' '), scene: sc.id, sceneTitle: sc.title, about: el ? 'элемент' : 'страница',
+    group: el && el.gid ? el.gid : null, groupTitle: el && el.gid && GROUP[el.gid] ? GROUP[el.gid].title : null, element: el ? (el.label || el.name) : null, key: el ? el.key : null, kind: el ? el.kind : null,
+    rect: el ? el.rect : null, point: el ? [el.x, el.y] : null, shift: el && el.gid && ST[el.gid] ? [ST[el.gid].dx | 0, ST[el.gid].dy | 0] : null, text: text});
+  saveNotes(); return true;
+}
+function noteLine(n) { return '[' + n.ts + '] ' + n.sceneTitle + ' · ' + (n.about === 'страница' ? 'страница' : (n.groupTitle || 'без группы') + ' · «' + (n.element || '') + '»' + (n.rect ? ' (' + n.rect.join(', ') + ')' : '')) + ': ' + n.text; }
+function buildNotes() {
+  var host = document.getElementById('notes'); if (!host) return; var sc = T.scenes[UI.scene]; host.innerHTML = '';
+  host.appendChild(el('h3', null, 'Замечания'));
+  var info = el('div', 'selinfo'); info.textContent = SELEL && SELEL.scene === UI.scene ? 'выбрано: ' + (SELEL.gid && GROUP[SELEL.gid] ? GROUP[SELEL.gid].title : 'без группы') + ' · ' + SELEL.label + (SELEL.rect ? ' · ' + SELEL.rect.join(', ') : '') + ' (Esc — снять; перетаскивание двигает группу, Alt — только элемент)' : 'кликните по элементу на экране, чтобы оставить замечание к нему';
+  host.appendChild(info);
+  if (SELEL && SELEL.scene === UI.scene && SELEL.kind !== 'node' && SELEL.name) {   // настройки отдельного элемента (не группы): сдвиг X/Y; перетаскивание с Alt и стрелки с Alt двигают только его
+    var ek = SELEL.key;
+    host.appendChild(mkScrub('Элемент: сдвиг X', {min: -60, max: 60, step: 1, def: 0}, function () { return (TC.getEL()[ek] || {}).dx | 0; }, function (v) { var e = elOf(ek), d = Math.round(v) - (e.dx | 0); e.dx = Math.round(v); if (SELEL && SELEL.rect) SELEL.rect = [SELEL.rect[0] + d, SELEL.rect[1], SELEL.rect[2], SELEL.rect[3]]; onChange(); }, 'только этот элемент («' + SELEL.name + '»), поверх группы; Alt+перетаскивание и Alt+стрелки', function (v) { return (v > 0 ? '+' : '') + Math.round(v) + ' px'; }));
+    var scaleRows = function (lab, key, hint) { host.appendChild(mkScrub(lab, {min: 0.05, max: 4, step: 0.01, def: 1}, function () { var e = TC.getEL()[ek]; return e && e[key] ? e[key] : 1; }, function (v) { elOf(ek)[key] = Math.round(v * 1000) / 1000; SELEL.rect = null; onChange(); }, hint, function (v) { return '×' + (+v).toFixed(2); })); };
+    if (SELEL.kind === 'stat' || SELEL.kind === 'rect') { scaleRows('Элемент: масштаб', 'k', 'размер картинки целиком, центр на месте'); scaleRows('Элемент: ширина ×', 'w', 'ширина плашки/рамки отдельно, поверх масштаба'); scaleRows('Элемент: высота ×', 'h', 'высота плашки/рамки отдельно, поверх масштаба'); }
+    else if (SELEL.kind === 'num') scaleRows('Элемент: масштаб', 'k', 'размер букв-картинок надписи или числа');
+    else if (SELEL.kind === 'text') scaleRows('Элемент: размер текста', 'k', 'размер шрифта этой надписи (×1 — как у группы), центр строки на месте; пиксельные грани (Bart, MSX) растут только целыми ×1, ×2…');
+    host.appendChild(mkScrub('Элемент: сдвиг Y', {min: -60, max: 60, step: 1, def: 0}, function () { return (TC.getEL()[ek] || {}).dy | 0; }, function (v) { var e = elOf(ek), d = Math.round(v) - (e.dy | 0); e.dy = Math.round(v); if (SELEL && SELEL.rect) SELEL.rect = [SELEL.rect[0], SELEL.rect[1] + d, SELEL.rect[2], SELEL.rect[3]]; onChange(); }, 'только этот элемент («' + SELEL.name + '»), поверх группы', function (v) { return (v > 0 ? '+' : '') + Math.round(v) + ' px'; }));
+  }
+  function box(ph, getEl, btnText) {
+    var ta = el('textarea'); ta.placeholder = ph; ta.setAttribute('aria-label', ph); var row = el('div', 'nrow'), b = el('button', 'btn small', btnText);
+    b.addEventListener('click', function () { var e1 = getEl(); if (e1 === false) { toast('сначала выберите элемент на экране'); return; } if (addNote(ta.value, e1)) { ta.value = ''; toast('замечание записано'); buildNotes(); } else toast('напишите текст замечания'); });
+    row.appendChild(b); host.appendChild(ta); host.appendChild(row); return ta;
+  }
+  box('Замечание к выбранному элементу', function () { return SELEL && SELEL.scene === UI.scene ? SELEL : false; }, 'Добавить к элементу');
+  box('Замечание к странице «' + sc.title + '»', function () { return null; }, 'Добавить к странице');
+  var mine = NOTES.filter(function (n) { return n.scene === sc.id; });
+  if (mine.length) { var ul = el('ul'); mine.forEach(function (n) { var li = el('li'), sp = el('span'); sp.textContent = noteLine(n); var d = el('button', 'btn ghost small', 'удалить');
+      d.addEventListener('click', function () { NOTES = NOTES.filter(function (x) { return x.id !== n.id; }); saveNotes(); buildNotes(); }); li.appendChild(sp); li.appendChild(d); ul.appendChild(li); }); host.appendChild(ul); }
+}
+function notesJson() { return {version: 1, target: 'shar-psp/build/ТИПОГРАФИКА_ПАНЕЛЬ/notes.json', made: new Date().toISOString().slice(0, 16).replace('T', ' '), notes: NOTES}; }
+function showNotes() {
+  var m = document.getElementById('nmodal'), b = document.getElementById('nbox'); b.innerHTML = '';
+  b.appendChild(el('h3', null, 'Все замечания (' + NOTES.length + ')'));
+  if (!NOTES.length) b.appendChild(el('p', null, 'Замечаний пока нет.'));
+  else { var ol = el('ol'); NOTES.forEach(function (n) { var li = el('li'); li.textContent = n.text; var sm = el('small'); sm.textContent = n.ts + ' · ' + n.sceneTitle + (n.about === 'элемент' ? ' · ' + (n.groupTitle || 'без группы') + ' · «' + (n.element || '') + '» ' + (n.rect ? '[' + n.rect.join(', ') + ']' : '') : ' · страница'); li.appendChild(sm); ol.appendChild(li); }); b.appendChild(ol); }
+  var row = el('div', 'nrow'), cp = el('button', 'btn', 'Скопировать'), sv = el('button', 'btn pri', 'Сохранить ui_notes.json'), cl = el('button', 'btn ghost', 'Закрыть');
+  cp.addEventListener('click', function () { var t = NOTES.map(noteLine).join('\n'); if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(function () { toast('замечания скопированы'); }, function () { toast('не удалось скопировать'); }); else toast('нет доступа к буферу'); });
+  sv.addEventListener('click', function () { var bl = new Blob([JSON.stringify(notesJson(), null, 1) + '\n'], {type: 'application/json'}), a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'ui_notes.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); toast('Файл ui_notes.json скачан; забиратель положит в notes.json'); });
+  cl.addEventListener('click', function () { m.hidden = true; });
+  row.appendChild(cp); row.appendChild(sv); row.appendChild(cl); b.appendChild(row); m.hidden = false;
+}
+document.getElementById('bNotes').addEventListener('click', showNotes);
+document.getElementById('nmodal').addEventListener('click', function (e) { if (e.target === this) this.hidden = true; });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var m = document.getElementById('nmodal'); if (m && !m.hidden) m.hidden = true; } });
+buildNotes();
+document.getElementById('bOriginal').addEventListener('click', function () { loadJson({groups: {}}); build(); onChange(); toast('исходная раскладка без JSON'); });
+document.getElementById('bReset').addEventListener('click', function () { TC.resetGame(); build(); onChange(); toast('все группы — как в игре'); });
+var TASTE_PREV = null;
+document.getElementById('bTaste').addEventListener('click', function () {   // «Предложение вкуса»: поверх текущих значений, повторное нажатие возвращает прежние; в файлы ничего не пишется, пока не нажато «Сохранить»
+  var btn = document.getElementById('bTaste');
+  if (TASTE_PREV) { loadJson({groups: TASTE_PREV}); TASTE_PREV = null; btn.textContent = 'Предложение вкуса 11.10'; build(); onChange(); toast('предложение снято: значения вернулись'); return; }
+  var cur = JSON.parse(JSON.stringify(typoJson().groups)), mg = JSON.parse(JSON.stringify(cur)), n = 0;
+  Object.keys(T.taste || {}).forEach(function (gid) { if (!GROUP[gid]) return; var o = mg[gid] = mg[gid] || {}, pr = T.taste[gid];
+    Object.keys(pr).forEach(function (k) { if (pr[k] === null) delete o[k]; else o[k] = pr[k]; }); n++; });
+  TASTE_PREV = cur; loadJson({groups: mg}); btn.textContent = 'Вернуть мои значения'; build(); onChange(); toast('предложение вкуса: изменено ' + n + ' групп; «Вернуть» — прежнее');
+});
+document.getElementById('bProp').addEventListener('click', function () { loadJson({groups: T.proposal}); build(); onChange(); toast('предложение 310/311: группы с точкой изменены'); });
+document.getElementById('bCopy').addEventListener('click', function () {
+  var s = JSON.stringify(typoJson(), null, 1);
+  function fallback() { var ta = document.querySelector('textarea.json') || el('textarea', 'json'); ta.value = s; if (!ta.parentNode) document.getElementById('side').appendChild(ta); ta.focus(); ta.select(); toast('выделено — Cmd+C'); }
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(s).then(function () { toast('JSON скопирован'); }, fallback); else fallback();
+});
+document.getElementById('bSave').addEventListener('click', function () {
+  var b = new Blob([JSON.stringify(typoJson(), null, 1) + '\n'], {type: 'application/json'}), a = document.createElement('a');
+  a.href = URL.createObjectURL(b); a.download = 'ui_typo.json'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  toast('Файл скачан; ожидаю сохранение в игру');
+});
+document.getElementById('bLoad').addEventListener('click', function () { document.getElementById('fLoad').click(); });
+document.getElementById('fLoad').addEventListener('change', function (e) {
+  var f = e.target.files[0]; if (!f) return; var r = new FileReader();
+  r.onload = function () { try { loadJson(JSON.parse(r.result)); build(); onChange(); toast('загружено: ' + f.name); } catch (er) { toast('не JSON настроек'); } }; r.readAsText(f);
+});
+build(); summary();
+function checkSave() {
+  var script = document.createElement('script');
+  script.src = 'save-status.js?' + Date.now();
+  script.onload = function () {
+    var state = window.TYPO_SAVE_STATUS || {}, label = document.getElementById('saveState');
+    if (state.expires && Date.now()/1000 > state.expires) { label.textContent = 'Для сохранения открой ОТКРЫТЬ_ПАНЕЛЬ.command'; script.remove(); return; }
+    label.textContent = state.saved ? (JSON.stringify(state.groups) === JSON.stringify(typoJson().groups) ? 'Сохранено в build/ui_typo.json · ' + state.saved : 'Есть несохранённые изменения') : 'Сохранение в игру готово';
+    script.remove();
+  };
+  script.onerror = function () {
+    document.getElementById('saveState').textContent = 'Скачанный ui_typo.json нужно положить в build';
+    script.remove();
+  };
+  document.head.appendChild(script);
+}
+checkSave(); setInterval(checkSave, 2500);
+restoreBar();
+window.TYPO_DEBUG = {getFace: getFace, pix8Font: pix8Font, applyTypo: applyTypo, layoutText: layoutText, ST: ST, typoJson: typoJson, loadJson: loadJson, UI: UI, render: render};
+})();
+</script>
+</body>
+</html>

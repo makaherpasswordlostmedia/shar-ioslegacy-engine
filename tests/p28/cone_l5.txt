@@ -1,0 +1,97 @@
+scene start
+wait 3
+flag golevel 5
+wait 24
+flag repair
+wait 3
+foot -525.9 -576.0 0
+wait 8
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 0
+flag eyedy -0.04
+flag eyedz 1
+flag eyeon 1
+scene SN_old
+flag lightconeold 1
+wait 4
+shot SN_old
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 0
+flag eyedy -0.04
+flag eyedz 1
+flag eyeon 1
+scene SN_new
+flag lightconeold 0
+wait 4
+shot SN_new
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 1
+flag eyedy -0.04
+flag eyedz 0
+flag eyeon 1
+scene SE_old
+flag lightconeold 1
+wait 4
+shot SE_old
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 1
+flag eyedy -0.04
+flag eyedz 0
+flag eyeon 1
+scene SE_new
+flag lightconeold 0
+wait 4
+shot SE_new
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 0
+flag eyedy -0.04
+flag eyedz -1
+flag eyeon 1
+scene SS_old
+flag lightconeold 1
+wait 4
+shot SS_old
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx 0
+flag eyedy -0.04
+flag eyedz -1
+flag eyeon 1
+scene SS_new
+flag lightconeold 0
+wait 4
+shot SS_new
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx -1
+flag eyedy -0.04
+flag eyedz 0
+flag eyeon 1
+scene SW_old
+flag lightconeold 1
+wait 4
+shot SW_old
+flag eyex -525.9
+flag eyey 2.2
+flag eyez -576
+flag eyedx -1
+flag eyedy -0.04
+flag eyedz 0
+flag eyeon 1
+scene SW_new
+flag lightconeold 0
+wait 4
+shot SW_new
+end

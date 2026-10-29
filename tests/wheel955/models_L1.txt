@@ -1,0 +1,364 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+goto 113.0 158.1 1.5708
+wait 3
+press triangle
+wait 4
+scene W_foot
+wait 1
+scene W00
+flag trfwheel 0 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m00_a
+flag trfwheel 0 1.1
+wait 0.35
+shot m00_b
+scene W01
+flag trfwheel 1 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m01_a
+flag trfwheel 1 1.1
+wait 0.35
+shot m01_b
+scene W02
+flag trfwheel 2 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m02_a
+flag trfwheel 2 1.1
+wait 0.35
+shot m02_b
+scene W03
+flag trfwheel 3 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m03_a
+flag trfwheel 3 1.1
+wait 0.35
+shot m03_b
+scene W04
+flag trfwheel 4 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m04_a
+flag trfwheel 4 1.1
+wait 0.35
+shot m04_b
+scene W05
+flag trfwheel 5 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m05_a
+flag trfwheel 5 1.1
+wait 0.35
+shot m05_b
+scene W06
+flag trfwheel 6 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m06_a
+flag trfwheel 6 1.1
+wait 0.35
+shot m06_b
+scene W07
+flag trfwheel 7 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m07_a
+flag trfwheel 7 1.1
+wait 0.35
+shot m07_b
+scene W08
+flag trfwheel 8 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m08_a
+flag trfwheel 8 1.1
+wait 0.35
+shot m08_b
+scene W09
+flag trfwheel 9 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m09_a
+flag trfwheel 9 1.1
+wait 0.35
+shot m09_b
+scene W10
+flag trfwheel 10 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m10_a
+flag trfwheel 10 1.1
+wait 0.35
+shot m10_b
+scene W11
+flag trfwheel 11 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m11_a
+flag trfwheel 11 1.1
+wait 0.35
+shot m11_b
+scene W12
+flag trfwheel 12 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m12_a
+flag trfwheel 12 1.1
+wait 0.35
+shot m12_b
+scene W13
+flag trfwheel 13 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m13_a
+flag trfwheel 13 1.1
+wait 0.35
+shot m13_b
+scene W14
+flag trfwheel 14 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m14_a
+flag trfwheel 14 1.1
+wait 0.35
+shot m14_b
+scene W15
+flag trfwheel 15 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m15_a
+flag trfwheel 15 1.1
+wait 0.35
+shot m15_b
+scene W16
+flag trfwheel 16 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m16_a
+flag trfwheel 16 1.1
+wait 0.35
+shot m16_b
+scene W17
+flag trfwheel 17 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m17_a
+flag trfwheel 17 1.1
+wait 0.35
+shot m17_b
+scene W18
+flag trfwheel 18 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m18_a
+flag trfwheel 18 1.1
+wait 0.35
+shot m18_b
+scene W19
+flag trfwheel 19 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m19_a
+flag trfwheel 19 1.1
+wait 0.35
+shot m19_b
+scene W20
+flag trfwheel 20 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m20_a
+flag trfwheel 20 1.1
+wait 0.35
+shot m20_b
+scene W21
+flag trfwheel 21 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m21_a
+flag trfwheel 21 1.1
+wait 0.35
+shot m21_b
+scene W22
+flag trfwheel 22 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m22_a
+flag trfwheel 22 1.1
+wait 0.35
+shot m22_b
+scene W23
+flag trfwheel 23 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m23_a
+flag trfwheel 23 1.1
+wait 0.35
+shot m23_b
+scene W24
+flag trfwheel 24 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m24_a
+flag trfwheel 24 1.1
+wait 0.35
+shot m24_b
+scene W25
+flag trfwheel 25 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m25_a
+flag trfwheel 25 1.1
+wait 0.35
+shot m25_b
+scene W26
+flag trfwheel 26 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m26_a
+flag trfwheel 26 1.1
+wait 0.35
+shot m26_b
+scene W27
+flag trfwheel 27 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m27_a
+flag trfwheel 27 1.1
+wait 0.35
+shot m27_b
+scene W28
+flag trfwheel 28 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m28_a
+flag trfwheel 28 1.1
+wait 0.35
+shot m28_b
+scene W29
+flag trfwheel 29 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m29_a
+flag trfwheel 29 1.1
+wait 0.35
+shot m29_b
+scene W30
+flag trfwheel 30 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m30_a
+flag trfwheel 30 1.1
+wait 0.35
+shot m30_b
+scene W31
+flag trfwheel 31 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m31_a
+flag trfwheel 31 1.1
+wait 0.35
+shot m31_b
+scene W32
+flag trfwheel 32 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m32_a
+flag trfwheel 32 1.1
+wait 0.35
+shot m32_b
+scene W33
+flag trfwheel 33 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m33_a
+flag trfwheel 33 1.1
+wait 0.35
+shot m33_b
+scene W34
+flag trfwheel 34 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m34_a
+flag trfwheel 34 1.1
+wait 0.35
+shot m34_b
+scene W35
+flag trfwheel 35 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m35_a
+flag trfwheel 35 1.1
+wait 0.35
+shot m35_b
+scene W36
+flag trfwheel 36 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m36_a
+flag trfwheel 36 1.1
+wait 0.35
+shot m36_b
+scene W37
+flag trfwheel 37 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m37_a
+flag trfwheel 37 1.1
+wait 0.35
+shot m37_b
+scene W38
+flag trfwheel 38 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m38_a
+flag trfwheel 38 1.1
+wait 0.35
+shot m38_b
+scene W39
+flag trfwheel 39 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m39_a
+flag trfwheel 39 1.1
+wait 0.35
+shot m39_b
+scene W40
+flag trfwheel 40 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m40_a
+flag trfwheel 40 1.1
+wait 0.35
+shot m40_b
+scene W41
+flag trfwheel 41 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m41_a
+flag trfwheel 41 1.1
+wait 0.35
+shot m41_b
+scene W42
+flag trfwheel 42 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m42_a
+flag trfwheel 42 1.1
+wait 0.35
+shot m42_b
+scene W43
+flag trfwheel 43 0
+camrel 0 1.1 1 0 -0.12 -1
+wait 0.7
+shot m43_a
+flag trfwheel 43 1.1
+wait 0.35
+shot m43_b
+cam off
+end

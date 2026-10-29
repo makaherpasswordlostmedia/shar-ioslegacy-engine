@@ -1,0 +1,26 @@
+### №944 L3: звёзды входа (Android's / обсерватория: l3_doorstars, ad_mission_doorstar, obsv_mission_doorstar); как doors.txt
+scene L3D
+flag golevel 3
+wait 20
+flag msn
+wait 4
+flag g944art 3
+wait 10
+flag g944doors
+flag g944list
+flag g944draw 16
+flag g944door 0 5
+wait 3
+shot l3_a
+flag g944door 0 9
+wait 2
+shot l3_b
+flag g944draw 17
+flag g944door 0 6
+wait 2
+shot l3_c
+flag g944draw 18
+flag g944door 1 6
+wait 2
+shot l3_d
+end

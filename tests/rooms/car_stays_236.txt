@@ -1,0 +1,71 @@
+# №236: машина не должна уходить с места, пока Гомер в доме. Машину ставим (goto) у самой двери Kwik-E-Mart, школы и дома, Гомер выходит из неё пешком (foot), входит по △ и выходит;
+# в журнале строка CARJUMP (viewer/main_loop.h, d > 2 м) появляется, если машину перенесли. Ожидание: ни одной CARJUMP; положение машины после выхода — по RADARCAR
+scene start
+wait 3
+scene K_car
+goto 216.5 306.0 0
+wait 1.5
+shot k_car
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene K_in
+wait 3
+shot k_in
+foot 499.43 305.25 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+scene K_out
+shot k_out
+wait 2
+scene S_car
+goto -38.5 592.5 1.571
+wait 1.5
+foot -31.5 589.45 -1.5708 4.64
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene S_in
+wait 3
+shot s_in
+foot 499.98 344.6 0 -19.5
+wait 0.5
+foot 499.43 342.83 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+scene S_out
+shot s_out
+wait 2
+scene H_car
+goto 226.0 188.0 3.1416
+wait 1.5
+shot h_car
+foot 228.94 180.5 0 3.83
+wait 3
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 2
+scene H_in
+shot h_in
+wait 2
+foot 501.0 398.03 0 -19.5
+wait 0.5
+foot 502.97 398.67 0 -19.5
+wait 0.5
+press triangle
+wait 2.5
+scene H_out
+shot h_out
+wait 2
+end

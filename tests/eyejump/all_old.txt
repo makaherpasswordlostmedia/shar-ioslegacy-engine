@@ -1,0 +1,133 @@
+# рывки глаза при ходьбе (flag walk) и езде (flag drive) на всех уровнях: счётчик jump/jmax строки CAMIN (глаз относительно опоры > 0,5 м за кадр)
+wait 12
+flag cfgdefaults 1
+flag camcrossold 1
+scene WK_L1
+flag golevel 1
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L1
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L2
+flag golevel 2
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L2
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L3
+flag golevel 3
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L3
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L4
+flag golevel 4
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L4
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L5
+flag golevel 5
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L5
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L6
+flag golevel 6
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L6
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene WK_L7
+flag golevel 7
+wait 40
+flag camin 1
+flag walk 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene DR_L7
+press triangle 0.2
+wait 3
+flag camin 1
+flag drive 30
+wait 32
+flag camin
+flag stop
+wait 1
+scene Z_END
+wait 1
+end

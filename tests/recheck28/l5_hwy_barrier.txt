@@ -1,0 +1,27 @@
+# №460: L5 хайвей (C1): барьеры donotenter (l5r3) — машина въезжает, барьер ломается (обломки, звук); эталон: eBigBarrierBreaking, звук car_hit_crate
+wait 3
+flag golevel 5
+wait 20
+scene hwy
+goto -455.4 -538 3.1416
+wait 0.5
+foot -457.6 -538.4 3.1416
+wait 1
+press triangle
+wait 2.5
+cam -449 23.5 -532 -0.25 -0.12 -1 60
+wait 0.5
+shot b0
+flag autostraight 6
+wait 0.6
+shot b1
+wait 0.5
+shot b2
+wait 0.5
+shot b3
+wait 0.5
+shot b4
+wait 0.5
+shot b5
+wait 1
+end

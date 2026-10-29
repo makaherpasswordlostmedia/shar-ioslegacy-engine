@@ -1,0 +1,29 @@
+# №660: гараж АЭС светлее: средняя яркость кадра при garagelift 0 / 12 / 20 / 28 с двух точек (tools/luma.py); эталон PS2 40–58 из 255
+scene GL_L1_load
+flag golevel 1
+wait 15
+scene GL_garage
+flag repair
+foot -85 -300 1.5708
+flag lightspr 1
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+flag garagelift 0
+wait 3
+shot gl_a0
+flag garagelift 12
+wait 2
+shot gl_a12
+flag garagelift 20
+wait 2
+shot gl_a20
+flag garagelift 28
+wait 2
+shot gl_a28
+cam -80 2.0 -300 1.00 0.05 0.30 70
+flag garagelift 0
+wait 2
+shot gl_b0
+flag garagelift 20
+wait 2
+shot gl_b20
+end

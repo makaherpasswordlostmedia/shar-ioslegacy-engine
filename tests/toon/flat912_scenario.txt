@@ -1,0 +1,56 @@
+# №912: виды L1 с заливкой (new) и с текстурами (old) — гейт tests/toon/flat912.sh
+scene S_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+flag toon 1
+wait 8
+scene H0
+foot 227 161.1 1.571
+flag flat912 1
+wait 5
+shot h0_new
+flag flat912 0
+wait 4
+shot h0_old
+scene H1
+foot 338.1 103 0
+flag flat912 1
+wait 5
+shot h1_new
+flag flat912 0
+wait 4
+shot h1_old
+scene H2
+foot 278.6 322.4 0
+flag flat912 1
+wait 5
+shot h2_new
+flag flat912 0
+wait 4
+shot h2_old
+scene H3
+foot 235 155.1 -1.572
+flag flat912 1
+wait 5
+shot h3_new
+flag flat912 0
+wait 4
+shot h3_old
+scene H4
+foot 289.5 178 -1.5708
+flag flat912 1
+wait 5
+shot h4_new
+flag flat912 0
+wait 4
+shot h4_old
+scene H5
+foot -2.5 549.8 0
+flag flat912 1
+wait 5
+shot h5_new
+flag flat912 0
+wait 4
+shot h5_old
+end

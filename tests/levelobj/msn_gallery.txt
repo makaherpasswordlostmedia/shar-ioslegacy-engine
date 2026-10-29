@@ -1,0 +1,11 @@
+# Витрина предметов и маркеров миссий уровня 1 (msnart.shr): ряд перед машиной на пустой улице, два снимка с разницей
+# 0.5 с (анимация суставов PTRN). SMOKE_SCN=tests/levelobj/msn_gallery.txt tools/smoke.sh DIR
+scene gallery
+goto 250 150 1.5708
+wait 2
+flag artgal
+wait 3
+shot gal_a
+wait 0.5
+shot gal_b
+end

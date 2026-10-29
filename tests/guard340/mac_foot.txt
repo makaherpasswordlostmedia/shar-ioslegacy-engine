@@ -1,0 +1,80 @@
+# Правка Роба 340 (гейт tests/guard340/gate.sh, безголовый эмулятор): Гомер пешком у теней деревьев уровня 1, у каждой позы
+# два снимка подряд — прежнее (flag ggold 1: треугольники у края кадра как есть) и новое (срез по полосе). Позы a–f — камера
+# у стены/дерева/машины, ближняя плоскость 0,25–0,28 м (там GE выбрасывает треугольник у края); g, h — ближняя 1,5 м (контроль:
+# правило не включается, кадры прежнего и нового равны). Строки CAMF (flag camlog) — поза камеры для модели GE.
+flag camlog
+wait 2
+scene Pa
+foot 209.50 203.20 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pa_old
+flag ggold 0
+wait 0.05
+shot Pa_new
+scene Pb
+foot -170.33 168.64 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pb_old
+flag ggold 0
+wait 0.05
+shot Pb_new
+scene Pc
+foot 108.81 190.18 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pc_old
+flag ggold 0
+wait 0.05
+shot Pc_new
+scene Pd
+foot -190.51 252.80 3.5416
+wait 2
+flag ggold 1
+wait 0.05
+shot Pd_old
+flag ggold 0
+wait 0.05
+shot Pd_new
+scene Pe
+foot -326.67 29.80 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pe_old
+flag ggold 0
+wait 0.05
+shot Pe_new
+scene Pf
+foot 367.92 -350.74 5.1124
+wait 2
+flag ggold 1
+wait 0.05
+shot Pf_old
+flag ggold 0
+wait 0.05
+shot Pf_new
+scene Pg
+foot 209.50 203.20 0.4000
+wait 2
+flag ggold 1
+wait 0.05
+shot Pg_old
+flag ggold 0
+wait 0.05
+shot Pg_new
+scene Ph
+foot -170.33 168.64 0.4000
+wait 2
+flag ggold 1
+wait 0.05
+shot Ph_old
+flag ggold 0
+wait 0.05
+shot Ph_new
+flag gglog 1
+end

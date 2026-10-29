@@ -1,0 +1,72 @@
+{
+ "id": "c5_spot2",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 700,
+ "every": 1,
+ "trace": [
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[1]",
+  "car_vel[2]",
+  "hnr"
+ ],
+ "writes": [
+  {
+   "value": 223.885,
+   "at": 150,
+   "hold": 200,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 1.0,
+   "at": 150,
+   "hold": 200,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": 422.8,
+   "at": 150,
+   "hold": 200,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 200,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 200,
+   "name": "car_vel[1]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 200,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": 0.015,
+   "at": 380,
+   "hold": 260,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 10.0,
+   "at": 380,
+   "hold": 260,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": [
+  370,
+  510,
+  640
+ ]
+}

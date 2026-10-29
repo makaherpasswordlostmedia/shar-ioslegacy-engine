@@ -1,0 +1,116 @@
+# Пункт 12а: вход в игру через главное меню (tools/menu_gate.sh). Первая команда flag menu — сценарий идёт через меню
+# (viewer/smoke.h). 5 кругов «меню → NEW GAME → загрузка → игра → пауза → QUIT GAME → меню», снимки фаз — в первом круге.
+# Главное меню — карусель оригинала (Роб 28.09): ► 6 раз обходит все пункты по кругу со снимком каждого (светится предмет
+# гостиной: menu_0..menu_5), возвращаясь на NEW GAME; в кругах 2–5 шаг туда и обратно (◄/►, ↑/↓), X только на NEW GAME.
+# В паузе ↑ с CONTINUE — сразу QUIT GAME (затемнённые пропускаются). Куча сверяется при входе в меню: 1-й и 6-й.
+flag menu
+# круг 1
+wait 1.5
+shot menu
+press right
+wait 0.6
+shot menu_1
+press right
+wait 0.6
+shot menu_2
+press right
+wait 0.6
+shot menu_3
+press right
+wait 0.6
+shot menu_4
+press right
+wait 0.6
+shot menu_5
+press right
+wait 0.6
+shot menu_6
+press left
+wait 0.4
+press right
+wait 0.4
+wait 0.4
+flag loadshot
+press cross
+wait 2
+flag autostraight 1.5
+wait 2.5
+shot game
+press start
+wait 1
+shot pause
+press up
+wait 0.5
+shot pause_quit
+press cross
+wait 1
+# круг 2
+press down
+wait 0.4
+press up
+wait 0.4
+wait 0.4
+press cross
+wait 2
+flag autostraight 1.5
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1
+# круг 3
+press up
+wait 0.4
+press down
+wait 0.4
+wait 0.4
+press cross
+wait 2
+flag autostraight 1.5
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1
+# круг 4
+press down
+wait 0.4
+press up
+wait 0.4
+wait 0.4
+press cross
+wait 2
+flag autostraight 1.5
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1
+# круг 5
+press down
+wait 0.4
+press up
+wait 0.4
+wait 0.4
+press cross
+wait 2
+flag autostraight 1.5
+wait 2.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 1
+# после 5 кругов: меню 6 (сверка кучи с меню 1) и ещё один вход в игру
+shot menu6
+press cross
+wait 3
+shot game6
+end

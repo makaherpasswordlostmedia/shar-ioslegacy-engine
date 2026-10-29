@@ -1,0 +1,6 @@
+# Главное меню при старте процесса: с сохранением на карте (тот же SCEN_HOME после scn_save) курсор на RESUME GAME, на пустой карте на NEW GAME
+flag menu
+flag saves
+wait 2.5
+shot menu_default
+end

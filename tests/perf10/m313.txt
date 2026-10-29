@@ -1,0 +1,41 @@
+# Тур «SHAR ME 313» · звук, частицы и свечение на Media Engine (правка 313) — только ПОСЛЕ TEST 10 (лесенка, tests/me/psp_test10_ladder.txt),
+# по её итогам выбрана схема памяти: константа ME_MEM в viewer/me/mebox.h (или буква в флаг-файлах ниже — без пересборки). ~4 мин.
+# Выкладка (терминал): make -C viewer/me && cp viewer/me/sharme.prx build/sharme.prx; TOUR_TITLE="SHAR ME 313" tools/tour_psp.sh --deploy;
+#   cp tests/me/psp_me313.txt /Volumes/PSP/PSP/GAME/SHARTOUR/scenario.txt
+#   printf 1 > /Volumes/PSP/PSP/GAME/SHARTOUR/meaudio; printf 1 > /Volumes/PSP/PSP/GAME/SHARTOUR/mefx
+#   (вместо «1» — буква схемы по итогам лесенки: u — прошла ступень 9; b — прошли 3 и 7–8; c — прошла 4, а 3 нет; k — прошли 3 и 5;
+#    заглавная U/B/C/K — ступень 8 не прошла, только нижняя память). Замер «до»: тот же тур без файлов meaudio и mefx
+# Роб: в XMB «SHAR ME 313» — запустить, смотреть и слушать: дым, огонь машины, взрыв, блёстки монет — как всегда; звук без треска.
+#   В сцене ME_sleep_window усыпить PSP кнопкой питания и через 5–10 с разбудить (после сна ME больше не трогаем — так задумано).
+# Итог (tools/tour_psp.sh --fetch):
+#   smoke.txt — «ME audio on … scheme=N audio=on job=low data=low», «ME fx on … fx=on»; строки MEPROF раз в секунду:
+#     draw_us — частицы на главном (с ME — только команды GE и ожидание), fxjob_us — сколько счёт частиц занял бы главный,
+#     mefx=onN/M/W — заданий частиц на ME / посчитано на главном (ME был занят звуком) / худшее ожидание ME, мс;
+#     dsp_us — смешивание звука на главном (с ME — 0 или только запасные буферы), mixbuf_us — весь буфер звука на главном
+#   AUDV … me=on86/0.0 — звук на ME (заданий в секунду / ожидание); «off:timeout@N» — ME не ответил, дальше главный
+#   me.txt — шаги «MEA 0…3» (служба поставлена; kbox — ящики в памяти ядра)
+scene start
+flag trace 1
+flag meprof 1
+wait 5
+scene M313_drive
+goto 246 -180 1.5708
+wait 2
+flag autostraight 8
+wait 15
+shot M313_drive_end
+flag stop
+scene M313_smoke_fire
+goto 246 -180 1.5708
+wait 2
+flag testdmg 0.95
+flag autostraight 6
+wait 15
+shot M313_fire
+flag stop
+scene M313_boom
+flag testboom
+wait 2
+shot M313_boom
+wait 12
+end

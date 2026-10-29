@@ -1,0 +1,147 @@
+# Гейт №696 tests/levels/leak696.sh: цепочка уровней 1..7,1..7,1 (lvset + QUIT GAME + NEW GAME), строки LEVEL ev=load: heap0/mx0 до загрузки
+flag menu
+wait 1.5
+press cross
+wait 8
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 2
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 3
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 4
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 5
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 6
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 7
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 1
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 2
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 3
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 4
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 5
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 6
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 7
+press cross
+wait 9
+flag lvlog
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 1
+press cross
+wait 9
+flag lvlog
+end

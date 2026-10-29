@@ -1,0 +1,78 @@
+# Будка и гардероб на L2, L4, L7 (tests/shop/levels_sheet.sh): на каждом уровне своя будка (R1P2 из level.mfk, пол: ActionEvent SummonVehiclePhone), △ → страница PhoneBooth, ► следующая машина; гардероб уровня через wardtestopen (как tests/shop/wardrobe_levels_scenario.txt).
+# Нужен набор с l2..l7 рядом с EBOOT и SHIP_LEVELS="2 3 4 5 6 7" (иначе golevel молча не срабатывает)
+scene start
+wait 3
+scene L2_load
+flag golevel 2
+wait 30
+scene L2_booth
+foot 11.85 86.95 3.1416
+wait 1.5
+shot L2_booth_before
+press triangle
+wait 1.5
+shot L2_booth_open
+press right
+wait 0.8
+shot L2_booth_next
+press circle
+wait 2
+scene L2_ward
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot L2_ward_default
+press right
+wait .7
+shot L2_ward_costume
+press circle
+wait 1
+scene L4_load
+flag golevel 4
+wait 30
+scene L4_booth
+foot 144.5 83.0 3.1416
+wait 1.5
+shot L4_booth_before
+press triangle
+wait 1.5
+shot L4_booth_open
+press right
+wait 0.8
+shot L4_booth_next
+press circle
+wait 2
+scene L4_ward
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot L4_ward_default
+press right
+wait .7
+shot L4_ward_costume
+press circle
+wait 1
+scene L7_load
+flag golevel 7
+wait 30
+scene L7_booth
+foot 144.5 83.0 3.1416
+wait 1.5
+shot L7_booth_before
+press triangle
+wait 1.5
+shot L7_booth_open
+press right
+wait 0.8
+shot L7_booth_next
+press circle
+wait 2
+scene L7_ward
+flag coinadd 2000
+flag wardtestopen
+wait 1.2
+shot L7_ward_default
+press right
+wait .7
+shot L7_ward_costume
+end

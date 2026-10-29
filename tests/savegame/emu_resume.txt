@@ -1,0 +1,11 @@
+# Прогон 3: RESUME GAME (► от NEW GAME) — самое свежее сохранение, прочитанное при запуске (SVSCAN / SVLATEST)
+flag menu
+flag saves
+wait 1.5
+press right
+wait 0.4
+shot sv_menu_resume
+press cross
+wait 5
+flag svlog
+end

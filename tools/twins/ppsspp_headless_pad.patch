@@ -1,0 +1,33 @@
+--- a/headless/Headless.cpp
++++ b/headless/Headless.cpp
+@@ -52,6 +52,7 @@
+ #include "Compare.h"
+ #include "HeadlessHost.h"
+ #include "GPU/Common/GPUDebugInterface.h"
++#include "Core/HLE/sceCtrl.h"
+ 
+ // ---- SHAR twins (tools/twins, 01.10.2026): кадр без окна по строке "SHOT имя" в smoke.txt движка ----
+ // TWINS_SMOKE=путь к smoke.txt рядом с EBOOT, TWINS_SHOTDIR=куда класть имя.bmp (512x272, 32 бит, снизу вверх) и twins_shots.tsv.
+@@ -89,6 +90,13 @@
+ 		std::string line = partial.substr(0, pos);
+ 		partial.erase(0, pos + 1);
+ 		char name[64];
++		unsigned pad = 0;
++		// правка 309 (SHAR, 04.10): "TWPAD hex" — кнопки сценария движка в контроллер эмулятора (окна системной утилиты читают его,
++		// а не pad.Buttons игры): пока окно сохранения PSP на экране, viewer/main.c svmDialogFrame пишет нажатия сюда
++		if (sscanf(line.c_str(), "TWPAD %x", &pad) == 1) {
++			__CtrlUpdateButtons(pad & 0xFFFF, ~pad & 0xFFFF);
++			continue;
++		}
+ 		if (sscanf(line.c_str(), "SHOT %63s", name) != 1)
+ 			continue;
+ 		std::string dir = shotdir ? shotdir : ".";
+@@ -150,7 +158,7 @@
+ 		case SYSPROP_CAN_JIT:
+ 			return true;
+ 		case SYSPROP_SKIP_UI:
+-			return true;
++			return getenv("TWINS_PPGE") == nullptr;  // правка 309: TWINS_PPGE=1 — буквы окон утилиты (атлас PPGe) на снимках
+ 		default:
+ 			return false;
+ 	}

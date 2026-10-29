@@ -1,0 +1,45 @@
+### №970 ключ L1: блик крупно, потом серия кадров пульсации (шаг 0,15 с). @OLD@ = 1 — как TEST66
+scene start
+wait 3
+flag repair
+flag glint970old @OLD@
+wait 3
+flag wrencheye 5
+flag wrenchgo 7
+wait 8
+scene K7
+wait 1
+shot k7
+wait 0.15
+shot p00
+wait 0.15
+shot p01
+wait 0.15
+shot p02
+wait 0.15
+shot p03
+wait 0.15
+shot p04
+wait 0.15
+shot p05
+wait 0.15
+shot p06
+wait 0.15
+shot p07
+wait 0.15
+shot p08
+wait 0.15
+shot p09
+wait 0.15
+shot p10
+wait 0.15
+shot p11
+wait 0.15
+shot p12
+wait 0.15
+shot p13
+wait 0.15
+shot p14
+wait 0.15
+shot p15
+end

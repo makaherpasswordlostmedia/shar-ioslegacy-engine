@@ -1,0 +1,44 @@
+# №932б дальний вид (4 курса), L3: улица с зеброй и набережная с досками (точки F_FLAT_L3S / F_FLAT_L3B тура TEST59)
+scene FK_L3_BOOT
+flag cfgdefaults 1
+flag bisect 4
+flag long
+flag golevel 3
+wait 40
+scene V_PIER_0
+foot -525.6 -40.7 0
+wait 12
+flag zf932 1
+wait 4
+shot z1_PIER_0
+flag zf932 0
+wait 4
+shot z0_PIER_0
+scene V_PIER_1
+foot -525.6 -40.7 1.571
+wait 12
+flag zf932 1
+wait 4
+shot z1_PIER_1
+flag zf932 0
+wait 4
+shot z0_PIER_1
+scene V_PIER_2
+foot -525.6 -40.7 3.142
+wait 12
+flag zf932 1
+wait 4
+shot z1_PIER_2
+flag zf932 0
+wait 4
+shot z0_PIER_2
+scene V_PIER_3
+foot -525.6 -40.7 4.712
+wait 12
+flag zf932 1
+wait 4
+shot z1_PIER_3
+flag zf932 0
+wait 4
+shot z0_PIER_3
+end

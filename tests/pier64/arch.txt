@@ -1,0 +1,46 @@
+# №957б (Небо): арки причала L6 без блика на неоне; семейство: все уровни по 20 с, журнал GQ944 (квады свечения предметов, ставшие бликом)
+scene A_L1
+flag cfgdefaults 1
+flag repair
+wait 20
+scene A_L2
+flag golevel 2
+wait 22
+scene A_L3
+flag golevel 3
+wait 22
+scene A_L4
+flag golevel 4
+wait 22
+scene A_L5
+flag golevel 5
+wait 22
+scene A_L6
+flag golevel 6
+wait 30
+foot -337 -343 0
+wait 8
+camrel 0 3 7 0 0.55 -1
+wait 3
+shot a6_arch1
+camrel 8 3 7 -0.6 0.5 -1
+wait 3
+shot a6_arch1b
+cam off
+foot -372 -82 0
+wait 8
+camrel 0 3 7 0 0.55 -1
+wait 3
+shot a6_arch2
+cam off
+foot -484 125 3.14
+wait 8
+camrel 0 3 -9 0 0.5 1
+wait 3
+shot a6_arch3
+cam off
+wait 1
+scene A_L7
+flag golevel 7
+wait 22
+end

@@ -1,0 +1,23 @@
+# Правки Роба 134 + 136 (tests/fe_music/run.sh, tests/menu_font/run.sh): главное меню (снимки строки меню — шрифт 1:1),
+# × на NEW GAME: перелёт камеры к газете под темой меню, газета влетает — один Newspaper_Spin с доли (строки FEMUS / FESTING /
+# LOADSHOW для tools/fe_music_check.py), снимок экрана загрузки и первого кадра игры
+flag menu
+wait 1.5
+shot menu
+press right
+wait 0.6
+shot menu_1
+press right
+wait 0.6
+shot menu_2
+press left
+wait 0.4
+press left
+wait 0.6
+flag loadshot
+press cross
+wait 1.0
+shot fly_new
+wait 6
+shot game
+end

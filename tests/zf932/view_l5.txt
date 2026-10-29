@@ -1,0 +1,80 @@
+# №932б дальний вид (4 курса), L5: центр и эстакада (точки F_FLAT_L5 / F_G59_LAMP тура TEST59)
+scene FK_L5_BOOT
+flag cfgdefaults 1
+flag bisect 4
+flag long
+flag golevel 5
+wait 40
+scene V_BRIDGE_0
+foot -516.7 -516.7 0
+wait 12
+flag zf932 1
+wait 4
+shot z1_BRIDGE_0
+flag zf932 0
+wait 4
+shot z0_BRIDGE_0
+scene V_BRIDGE_1
+foot -516.7 -516.7 1.571
+wait 12
+flag zf932 1
+wait 4
+shot z1_BRIDGE_1
+flag zf932 0
+wait 4
+shot z0_BRIDGE_1
+scene V_BRIDGE_2
+foot -516.7 -516.7 3.142
+wait 12
+flag zf932 1
+wait 4
+shot z1_BRIDGE_2
+flag zf932 0
+wait 4
+shot z0_BRIDGE_2
+scene V_BRIDGE_3
+foot -516.7 -516.7 4.712
+wait 12
+flag zf932 1
+wait 4
+shot z1_BRIDGE_3
+flag zf932 0
+wait 4
+shot z0_BRIDGE_3
+scene V_CENTRE_0
+foot -154.9 -482.05 0
+wait 12
+flag zf932 1
+wait 4
+shot z1_CENTRE_0
+flag zf932 0
+wait 4
+shot z0_CENTRE_0
+scene V_CENTRE_1
+foot -154.9 -482.05 1.571
+wait 12
+flag zf932 1
+wait 4
+shot z1_CENTRE_1
+flag zf932 0
+wait 4
+shot z0_CENTRE_1
+scene V_CENTRE_2
+foot -154.9 -482.05 3.142
+wait 12
+flag zf932 1
+wait 4
+shot z1_CENTRE_2
+flag zf932 0
+wait 4
+shot z0_CENTRE_2
+scene V_CENTRE_3
+foot -154.9 -482.05 4.712
+wait 12
+flag zf932 1
+wait 4
+shot z1_CENTRE_3
+flag zf932 0
+wait 4
+shot z0_CENTRE_3
+end

@@ -1,0 +1,26 @@
+# Actual MISSION SELECT, last story mission current and preceding rows passed.
+scene typo_extra
+flag msn
+wait 2
+flag uimsndone 127
+flag msnmainat -700
+wait 2
+press start
+wait .8
+press down
+wait .3
+press down
+wait .3
+press cross
+wait 1
+shot msel_a
+flag uitypo 1
+wait .1
+shot msel_b
+flag uitypo 2
+wait .1
+shot msel_c
+flag uitypo 0
+wait .1
+shot msel_a2
+end

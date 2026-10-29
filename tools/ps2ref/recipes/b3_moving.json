@@ -1,0 +1,106 @@
+{
+ "id": "b3_moving",
+ "profile": 1,
+ "state": "build/ps2ref/state_l1_incar.p2s",
+ "state_sha256": "2ccea2a1356587a59269fad65e9056ea6ba5d6278cc09830e36c297d9c2afe44",
+ "frames": 1300,
+ "every": 1,
+ "trace": [
+  "hnr",
+  "chase",
+  "bust_near_ms",
+  "bust_ms",
+  "mat[12]",
+  "mat[13]",
+  "mat[14]",
+  "car_vel[0]",
+  "car_vel[2]",
+  {
+   "addr": "a25810",
+   "label": "pol_x"
+  },
+  {
+   "addr": "a25818",
+   "label": "pol_z"
+  },
+  {
+   "addr": "a25820",
+   "label": "pol_vx"
+  },
+  {
+   "addr": "a25828",
+   "label": "pol_vz"
+  }
+ ],
+ "writes": [
+  {
+   "name": "hnr",
+   "value": 100.0,
+   "at": 150,
+   "hold": 1600,
+   "until": {
+    "name": "bust_ms",
+    "op": ">",
+    "value": 100.0
+   }
+  },
+  {
+   "value": 124.8,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[0]"
+  },
+  {
+   "value": 10.0,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[1]"
+  },
+  {
+   "value": -235.0,
+   "at": 150,
+   "hold": 2,
+   "name": "car_cm[2]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 20,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 150,
+   "hold": 20,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": -1.2,
+   "at": 220,
+   "hold": 500,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 9.9,
+   "at": 220,
+   "hold": 500,
+   "name": "car_vel[2]"
+  },
+  {
+   "value": 0.0,
+   "at": 722,
+   "hold": 20,
+   "name": "car_vel[0]"
+  },
+  {
+   "value": 0.0,
+   "at": 722,
+   "hold": 20,
+   "name": "car_vel[2]"
+  }
+ ],
+ "shots": [
+  700,
+  1000
+ ]
+}

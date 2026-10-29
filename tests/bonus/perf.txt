@@ -1,0 +1,17 @@
+flag menu
+flag bonusopen
+flag bonusauto 1
+flag bonuslaps 3
+flag bonustrack 1
+wait 2
+press left
+wait .6
+press cross
+scene bonus_menu
+wait 12
+shot perf_menu
+flag bonusgo
+scene bonus_race
+wait 60
+shot perf_race
+end

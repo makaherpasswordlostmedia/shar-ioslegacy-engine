@@ -1,0 +1,41 @@
+# Гейт «после QUIT LOAD GAME не предупреждает о потере прогресса» (аудит чистой карты, Дирижёр 16.10): новая игра -> пауза -> QUIT GAME -> NO (без сохранения)
+# -> главное меню -> LOAD GAME: в журнале SVOPEN mode=load ... confirm=0 (новый код) / confirm=1 (QUIT_NOGAME_OLD=1, красный)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 6
+shot q_game
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 1.5
+press circle
+wait 1.5
+shot q_pause
+press down
+wait 0.4
+press cross
+wait 1.5
+shot q_quit_ask
+press down
+wait 0.3
+press cross
+wait 5
+shot q_menu
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2.5
+shot q_load
+end

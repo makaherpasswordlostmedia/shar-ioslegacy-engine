@@ -1,0 +1,70 @@
+# Горизонт L3: пары в один момент (стоим 5 с: выкл, вкл, выкл2) и 3 цвета ленты (1 тёмный x0,55, 4 дымка x0,85, 5 смесь дымки и неба)
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_s5_364
+flag horizon 0
+flag repair
+goto -402 278 3.626
+wait 5
+flag horizon 0
+wait 1
+shot HZ_s5_364_off
+flag horizon 1
+wait 1
+shot HZ_s5_364_c1
+flag horizon 4
+wait 1
+shot HZ_s5_364_c4
+flag horizon 5
+wait 1
+shot HZ_s5_364_c5
+flag horizon 0
+wait 1
+shot HZ_s5_364_off2
+scene HZ_s1_276
+flag horizon 0
+flag repair
+goto -330 90 4.205
+wait 5
+flag horizon 0
+wait 1
+shot HZ_s1_276_off
+flag horizon 1
+wait 1
+shot HZ_s1_276_c1
+flag horizon 4
+wait 1
+shot HZ_s1_276_c4
+flag horizon 5
+wait 1
+shot HZ_s1_276_c5
+flag horizon 0
+wait 1
+shot HZ_s1_276_off2
+scene HZ_s0_247
+flag horizon 0
+flag repair
+goto -366 94 4.120
+wait 5
+flag horizon 0
+wait 1
+shot HZ_s0_247_off
+flag horizon 1
+wait 1
+shot HZ_s0_247_c1
+flag horizon 4
+wait 1
+shot HZ_s0_247_c4
+flag horizon 5
+wait 1
+shot HZ_s0_247_c5
+flag horizon 0
+wait 1
+shot HZ_s0_247_off2
+end

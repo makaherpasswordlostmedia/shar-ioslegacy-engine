@@ -1,0 +1,13 @@
+# №957б (Небо): кто ставит блик на арки причала L6
+scene P_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene P_L6
+flag golevel 6
+wait 40
+foot -372 -85 0
+wait 8
+foot -337 -345 0
+wait 8
+end

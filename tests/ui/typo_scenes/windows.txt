@@ -1,0 +1,38 @@
+# Allow the initial game camera to finish before waiting for the reward popup.
+flag saves
+flag player
+scene typo_msg
+flag msn
+wait 2
+flag unlockmsg
+wait 6
+shot msg_a
+flag uitypo 1
+wait .1
+shot msg_b
+flag uitypo 2
+wait .1
+shot msg_c
+flag uitypo 0
+wait .1
+shot msg_a2
+press cross
+wait 1
+flag svmark
+press start
+wait 1
+press up
+wait .3
+press cross
+wait 1
+shot saveq_a
+flag uitypo 1
+wait .1
+shot saveq_b
+flag uitypo 2
+wait .1
+shot saveq_c
+flag uitypo 0
+wait .1
+shot saveq_a2
+end

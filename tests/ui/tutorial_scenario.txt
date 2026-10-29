@@ -1,0 +1,91 @@
+# Подсказки обучения Барта (Tutorial.scr, viewer/tutorial.c; гейт tests/ui/tutorial.sh, разбор tests/ui/tutorial_check.py).
+# flag msn — миссии уровня (EnableTutorialMode читается из пакета миссий); flag tutorial — подсказки в служебном запуске (иначе
+# сценарии смоука ждали бы X); tutnovoice — без реплики: Continue через 2 с (с репликой — когда она кончилась).
+#  1) Гомер пешком у спавна -> «ходьба» (msg 2); ↑ 1 с — мир стоит; X в первую секунду не закрывает, X после 2 с — закрывает
+#  2) Гомер у машины (с дальней от Мардж стороны) -> «△ — сесть» (msg 4), X -> △ — в машину -> «газ» (msg 3) -> □ Disable Tutorials
+#  3) выключены: у двери дома Симпсонов подсказки нет; пауза -> OPTIONS -> SETTINGS -> ↓ Radar (с правки 362 курсор на Invert Camera Control) -> ↓ Colour (правка 144) -> ↓ Tutorial -> ► On -> в игру
+#  4) шаг к двери дома -> «△ — войти» (msg 13), X; взрыв машины -> через 2 с «машина взорвана» (msg 15), X
+#  5) с репликой: машина цела, «△ — сесть» ещё раз (tutagain 1) -> звучит incarps2 (4,2 с) -> X на 2,5 с не закрывает, после — закрывает
+scene tut
+flag msn
+wait 2
+flag tutorial
+flag tutnovoice
+foot 230 172 1.5708
+wait 0.6
+press up 1
+wait 0.4
+shot tut_walk
+press cross
+wait 1.6
+shot tut_walk_cont
+press cross
+wait 1
+foot 213.3 170.9 1.5708
+wait 1.2
+shot tut_getin
+wait 1.2
+press cross
+wait 0.8
+press triangle
+wait 5
+shot tut_gas
+press square
+wait 1
+foot 228.94 180.5 0 3.83
+wait 0.3
+press up 0.3
+wait 2
+shot tut_off
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+press cross
+wait 0.8
+press down
+wait 0.3
+press cross
+wait 0.6
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press right
+wait 0.6
+shot tut_settings_on
+press triangle
+wait 0.4
+press triangle
+wait 0.4
+press start
+wait 1
+press up 0.3
+wait 0.8
+shot tut_inside
+wait 1.2
+press cross
+wait 1
+flag testboom
+wait 1
+shot tut_boom_wait
+wait 2.5
+shot tut_destroyed
+wait 0.5
+press cross
+wait 1
+flag repair
+flag tutvoice
+flag tutagain 1
+foot 213.3 170.9 1.5708
+wait 2.5
+shot tut_voice
+press cross
+wait 2.5
+press cross
+wait 1
+end

@@ -1,0 +1,7 @@
+scene g638
+flag msn
+wait 3
+flag uipopmsgl 1
+wait 1.5
+shot a1
+end

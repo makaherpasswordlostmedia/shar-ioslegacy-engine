@@ -1,0 +1,20 @@
+# TEST 14 · ME по схеме автора MIST (04.10 вечер). TEST 13: слово DMA в памяти игры — ячейка ставится и ME задание принимает (ME_STATE 0 → 1),
+# но не заканчивает: ящик | 0x40000000 ME, видимо, не видит. 13 — ящик кэшируемым адресом памяти игры, ME сам сбрасывает строку (как poc-mist);
+# 14 — тот же ящик через kseg0 0x88…. Слово DMA — в нижней памяти игры (в памяти ядра ячейка не ставится). ~1 мин.
+scene ME14_combo
+goto 220 172 1.5708
+wait 3
+flag melad 0
+wait 2
+flag melad 13
+wait 2
+flag melad 14
+wait 2
+scene ME14_drive
+goto 220 172 1.5708
+wait 2
+flag autostraight 8
+wait 10
+flag stop
+wait 3
+end

@@ -1,0 +1,42 @@
+wait 3
+flag repair
+flag warmhere
+wait 2
+flag player 1
+flag camingeom 1
+flag caminlog 1
+flag diaglog 1
+scene CAM_FAR
+flag camin 2
+flag drive 30
+wait 32
+shot cam_far
+scene CAM_BUMPER
+flag camin 1
+press select 0.2
+flag drive 30
+wait 32
+shot cam_bumper
+scene CAM_NEAR
+flag camin 1
+press select 0.2
+flag drive 30
+wait 32
+shot cam_near
+scene CAM_FOOT
+flag stop
+press select 0.2
+wait 1.5
+press triangle 0.2
+wait 3
+flag camin 1
+flag walk 25
+wait 27
+press r 2
+wait 2.5
+press l 2
+wait 2.5
+shot cam_foot
+scene CAM_END
+flag camin 0
+end

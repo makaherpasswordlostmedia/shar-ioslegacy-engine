@@ -1,0 +1,36 @@
+# Гейт сохранений в эмуляторе, прогон 1 (tests/savegame/emu.sh): новая игра -> отметка прогресса (flag svmark: m0 пройдена,
+# карточка 1, +7 монет, монета мира 0, музыка 300) -> пауза -> SAVE GAME -> слот 1 (пустой: запись сразу, проверка чтением)
+# -> «Save Successful» -> QUIT GAME -> «Do you want to save your game?» NO -> главное меню. Дальше эмулятор закрывается (выход)
+flag menu
+flag saves
+wait 1.5
+press cross
+wait 4
+flag svmark
+wait 0.5
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+shot sv_pause
+press cross
+wait 1
+shot sv_slots
+press cross
+wait 2.5
+shot sv_saved
+press cross
+wait 0.8
+press down
+wait 0.4
+press cross
+wait 1
+shot sv_quitask
+press down
+wait 0.3
+press cross
+wait 3
+shot sv_menu_after
+end

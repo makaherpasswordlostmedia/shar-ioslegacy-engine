@@ -1,0 +1,35 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+flag toon 1
+flag testdmg 0.35
+goto 113.0 158.1 1.5708
+wait 3
+flag smoke953 0
+scene SMo
+wait 1.5
+shot o0
+wait 0.7
+shot o1
+wait 0.7
+shot o2
+wait 0.7
+shot o3
+wait 0.7
+flag smoke953 1
+scene SMn
+wait 1.5
+shot n0
+wait 0.7
+shot n1
+wait 0.7
+shot n2
+wait 0.7
+shot n3
+wait 0.7
+flag testdmg 0
+scene SMref
+wait 7
+shot ref
+end

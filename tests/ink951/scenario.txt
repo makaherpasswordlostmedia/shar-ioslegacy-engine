@@ -1,0 +1,31 @@
+# №951 варианты контура: Ink 0 Indigo / 1 Black / 2 Tone. Герой пешком и машина у дороги L1, по снимку на стиль; строка INK951 в smoke.txt — цвета по категориям
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 4
+flag toon 1
+flag linew 8
+scene INK_CAR
+goto 220 172 1.5708
+wait 3
+flag ink 0
+wait 1.5
+shot ink0_car
+flag ink 1
+wait 1.5
+shot ink1_car
+flag ink 2
+wait 1.5
+shot ink2_car
+scene INK_FOOT
+foot 225 176 1.5708
+wait 4
+flag ink 0
+wait 1.5
+shot ink0_foot
+flag ink 1
+wait 1.5
+shot ink1_foot
+flag ink 2
+wait 1.5
+shot ink2_foot

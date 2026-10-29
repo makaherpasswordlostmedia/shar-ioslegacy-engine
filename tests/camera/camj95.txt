@@ -1,0 +1,21 @@
+# TEST19 видео 2:46 (J9-5): машина у стены дома, точка взгляда на 3 м впереди внутри стены. Глаз должен стоять ПОЗАДИ машины (camj95.py); flag camwallorgold 1 — красный (глаз впереди машины)
+flag player
+flag camlog
+wait 3
+scene T19_cam_houses_J95
+goto 150 150 1.5708
+wait 2
+flag autostraight 14
+wait 2
+shot a0
+wait 2
+shot a1
+wait 2
+shot a2
+wait 2
+shot a3
+wait 2
+shot a4
+wait 2
+shot a5
+end

@@ -1,0 +1,41 @@
+# Правка Роба 40 (tests/camera/startcam_emu.sh, разбор tests/camera/startcam_check.py): камеры старта фаз миссий через крючок
+# миссий — старт уровня (m0sd) и MISSION SELECT m1..m7 (сценарий ставит игрока на старт фазы -> её камера с диска).
+# «flag startcam 1» — в служебном запуске камеры старта играют (у игрока — всегда). На m2 — X: пропуск (MSNCAM skip).
+# Во время камеры — строки MSNCAMP (глаз, взгляд, где Гомер и машина) каждый кадр.
+scene startcam
+wait 3
+flag startcam 1
+flag msn
+wait 1.5
+shot start_m0sd
+wait 4
+flag msnsel 1
+wait 1.5
+shot start_m1sd
+wait 3.5
+flag msnsel 2
+wait 1.2
+shot start_m2sd
+press cross
+wait 3
+flag msnsel 3
+wait 1.5
+shot start_m3sd
+wait 4
+flag msnsel 4
+wait 1.5
+shot start_m4sd
+wait 4
+flag msnsel 5
+wait 1.5
+shot start_m5sd
+wait 4
+flag msnsel 6
+wait 1.5
+shot start_m6sd
+wait 4
+flag msnsel 7
+wait 1.5
+shot start_m7sd
+wait 4
+end

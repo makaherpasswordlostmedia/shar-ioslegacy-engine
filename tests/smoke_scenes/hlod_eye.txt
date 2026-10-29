@@ -1,0 +1,129 @@
+# HLOD L3: камера над городом (eye 32 м), A/B: 250 м | 150 м | 150 м + HLOD (4 пурпур, 1 без тумана, 2 туман города)
+scene start
+wait 3
+flag golevel 3
+wait 25
+flag fogground 1
+flag hlodcull 0
+flag horizon 0
+scene HE_E1
+flag hlod 0
+flag repair
+goto -380 60 0
+flag drawdist 100
+wait 4
+flag eyex -380
+flag eyey 32
+flag eyez 60
+flag eyedx 1
+flag eyedy -0.1
+flag eyedz 0
+flag eyeon 1
+wait 3
+shot HE_E1_250
+flag drawdist 60
+wait 3
+shot HE_E1_150
+flag hlod 4
+wait 1
+shot HE_E1_m4
+flag hlod 1
+wait 1
+shot HE_E1_m1
+flag hlod 2
+wait 1
+shot HE_E1_m2
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HE_E2
+flag hlod 0
+flag repair
+goto -380 60 0
+flag drawdist 100
+wait 4
+flag eyex -380
+flag eyey 32
+flag eyez 60
+flag eyedx 0.6
+flag eyedy -0.1
+flag eyedz -0.8
+flag eyeon 1
+wait 3
+shot HE_E2_250
+flag drawdist 60
+wait 3
+shot HE_E2_150
+flag hlod 4
+wait 1
+shot HE_E2_m4
+flag hlod 1
+wait 1
+shot HE_E2_m1
+flag hlod 2
+wait 1
+shot HE_E2_m2
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HE_E3
+flag hlod 0
+flag repair
+goto 100 200 0
+flag drawdist 100
+wait 4
+flag eyex 100
+flag eyey 32
+flag eyez 200
+flag eyedx -0.7
+flag eyedy -0.12
+flag eyedz -0.7
+flag eyeon 1
+wait 3
+shot HE_E3_250
+flag drawdist 60
+wait 3
+shot HE_E3_150
+flag hlod 4
+wait 1
+shot HE_E3_m4
+flag hlod 1
+wait 1
+shot HE_E3_m1
+flag hlod 2
+wait 1
+shot HE_E3_m2
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+scene HE_E4
+flag hlod 0
+flag repair
+goto 0 300 0
+flag drawdist 100
+wait 4
+flag eyex 0
+flag eyey 32
+flag eyez 300
+flag eyedx 0
+flag eyedy -0.1
+flag eyedz -1
+flag eyeon 1
+wait 3
+shot HE_E4_250
+flag drawdist 60
+wait 3
+shot HE_E4_150
+flag hlod 4
+wait 1
+shot HE_E4_m4
+flag hlod 1
+wait 1
+shot HE_E4_m1
+flag hlod 2
+wait 1
+shot HE_E4_m2
+flag hlod 0
+flag eyeon 0
+flag drawdist 100
+end

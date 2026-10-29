@@ -1,0 +1,20 @@
+flag level 3
+wait 3
+flag msn
+wait 3
+flag msnmain 4
+wait 3
+press cross
+wait 8
+scene dropped
+shot dropped_a
+flag uitypo 1
+wait .1
+shot dropped_b
+flag uitypo 2
+wait .1
+shot dropped_c
+flag uitypo 0
+wait .1
+shot dropped_a2
+end

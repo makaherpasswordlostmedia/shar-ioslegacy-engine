@@ -1,0 +1,433 @@
+# Пурпур ходячей камерой, L3: сетка пола 2,5 м, два курса (tests/rooms/purple_grid_gen.py); пакет интерфейса комнат закрашен (фон 0xFFFF00FF)
+scene start
+wait 3
+scene L3_load
+flag golevel 3
+wait 20
+scene AndroidsDungeon_door
+foot 19.79 3.59 0.7854 7.44
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Androi_001
+foot -2.563 344.939 0.0000 -19.50
+wait 1.0
+shot Androi_001
+scene Androi_002
+foot -2.563 344.939 3.1416 -19.50
+wait 1.0
+shot Androi_002
+scene Androi_003
+foot -2.563 347.439 0.0000 -19.50
+wait 1.0
+shot Androi_003
+scene Androi_004
+foot -2.563 347.439 3.1416 -19.50
+wait 1.0
+shot Androi_004
+scene Androi_005
+foot 4.937 347.439 0.0000 -19.50
+wait 1.0
+shot Androi_005
+scene Androi_006
+foot 4.937 347.439 3.1416 -19.50
+wait 1.0
+shot Androi_006
+scene Androi_007
+foot -2.563 349.939 0.0000 -19.50
+wait 1.0
+shot Androi_007
+scene Androi_008
+foot -2.563 349.939 3.1416 -19.50
+wait 1.0
+shot Androi_008
+scene Androi_009
+foot -0.063 349.939 0.0000 -19.50
+wait 1.0
+shot Androi_009
+scene Androi_010
+foot -0.063 349.939 3.1416 -19.50
+wait 1.0
+shot Androi_010
+scene Androi_011
+foot 2.437 349.939 0.0000 -19.50
+wait 1.0
+shot Androi_011
+scene Androi_012
+foot 2.437 349.939 3.1416 -19.50
+wait 1.0
+shot Androi_012
+scene Androi_013
+foot 4.937 349.939 0.0000 -19.50
+wait 1.0
+shot Androi_013
+scene Androi_014
+foot 4.937 349.939 3.1416 -19.50
+wait 1.0
+shot Androi_014
+scene Androi_015
+foot -5.063 354.939 0.0000 -19.50
+wait 1.0
+shot Androi_015
+scene Androi_016
+foot -5.063 354.939 3.1416 -19.50
+wait 1.0
+shot Androi_016
+scene Androi_017
+foot -2.563 354.939 0.0000 -19.50
+wait 1.0
+shot Androi_017
+scene Androi_018
+foot -2.563 354.939 3.1416 -19.50
+wait 1.0
+shot Androi_018
+scene Androi_019
+foot -0.063 354.939 0.0000 -19.50
+wait 1.0
+shot Androi_019
+scene Androi_020
+foot -0.063 354.939 3.1416 -19.50
+wait 1.0
+shot Androi_020
+scene Androi_021
+foot 2.437 354.939 0.0000 -19.50
+wait 1.0
+shot Androi_021
+scene Androi_022
+foot 2.437 354.939 3.1416 -19.50
+wait 1.0
+shot Androi_022
+scene Androi_023
+foot 4.937 354.939 0.0000 -19.50
+wait 1.0
+shot Androi_023
+scene Androi_024
+foot 4.937 354.939 3.1416 -19.50
+wait 1.0
+shot Androi_024
+scene Observatory_door
+foot 179.28 -484.62 -2.5307 4.67
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene Observ_001
+foot 150.642 341.173 0.0000 -19.50
+wait 1.0
+shot Observ_001
+scene Observ_002
+foot 150.642 341.173 3.1416 -19.50
+wait 1.0
+shot Observ_002
+scene Observ_003
+foot 153.142 341.173 0.0000 -19.50
+wait 1.0
+shot Observ_003
+scene Observ_004
+foot 153.142 341.173 3.1416 -19.50
+wait 1.0
+shot Observ_004
+scene Observ_005
+foot 143.142 343.673 0.0000 -19.50
+wait 1.0
+shot Observ_005
+scene Observ_006
+foot 143.142 343.673 3.1416 -19.50
+wait 1.0
+shot Observ_006
+scene Observ_007
+foot 148.142 343.673 0.0000 -19.50
+wait 1.0
+shot Observ_007
+scene Observ_008
+foot 148.142 343.673 3.1416 -19.50
+wait 1.0
+shot Observ_008
+scene Observ_009
+foot 150.642 343.673 0.0000 -19.50
+wait 1.0
+shot Observ_009
+scene Observ_010
+foot 150.642 343.673 3.1416 -19.50
+wait 1.0
+shot Observ_010
+scene Observ_011
+foot 153.142 343.673 0.0000 -19.50
+wait 1.0
+shot Observ_011
+scene Observ_012
+foot 153.142 343.673 3.1416 -19.50
+wait 1.0
+shot Observ_012
+scene Observ_013
+foot 140.642 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_013
+scene Observ_014
+foot 140.642 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_014
+scene Observ_015
+foot 143.142 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_015
+scene Observ_016
+foot 143.142 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_016
+scene Observ_017
+foot 145.642 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_017
+scene Observ_018
+foot 145.642 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_018
+scene Observ_019
+foot 148.142 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_019
+scene Observ_020
+foot 148.142 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_020
+scene Observ_021
+foot 153.142 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_021
+scene Observ_022
+foot 153.142 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_022
+scene Observ_023
+foot 155.642 346.173 0.0000 -19.50
+wait 1.0
+shot Observ_023
+scene Observ_024
+foot 155.642 346.173 3.1416 -19.50
+wait 1.0
+shot Observ_024
+scene Observ_025
+foot 140.642 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_025
+scene Observ_026
+foot 140.642 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_026
+scene Observ_027
+foot 143.142 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_027
+scene Observ_028
+foot 143.142 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_028
+scene Observ_029
+foot 145.642 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_029
+scene Observ_030
+foot 145.642 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_030
+scene Observ_031
+foot 148.142 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_031
+scene Observ_032
+foot 148.142 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_032
+scene Observ_033
+foot 150.642 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_033
+scene Observ_034
+foot 150.642 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_034
+scene Observ_035
+foot 155.642 348.673 0.0000 -19.50
+wait 1.0
+shot Observ_035
+scene Observ_036
+foot 155.642 348.673 3.1416 -19.50
+wait 1.0
+shot Observ_036
+scene Observ_037
+foot 140.642 351.173 0.0000 -19.50
+wait 1.0
+shot Observ_037
+scene Observ_038
+foot 140.642 351.173 3.1416 -19.50
+wait 1.0
+shot Observ_038
+scene Observ_039
+foot 143.142 351.173 0.0000 -19.50
+wait 1.0
+shot Observ_039
+scene Observ_040
+foot 143.142 351.173 3.1416 -19.50
+wait 1.0
+shot Observ_040
+scene Observ_041
+foot 145.642 351.173 0.0000 -19.50
+wait 1.0
+shot Observ_041
+scene Observ_042
+foot 145.642 351.173 3.1416 -19.50
+wait 1.0
+shot Observ_042
+scene Observ_043
+foot 148.142 351.173 0.0000 -19.50
+wait 1.0
+shot Observ_043
+scene Observ_044
+foot 148.142 351.173 3.1416 -19.50
+wait 1.0
+shot Observ_044
+scene Observ_045
+foot 155.642 351.173 0.0000 -19.50
+wait 1.0
+shot Observ_045
+scene Observ_046
+foot 155.642 351.173 3.1416 -19.50
+wait 1.0
+shot Observ_046
+scene Observ_047
+foot 140.642 353.673 0.0000 -19.50
+wait 1.0
+shot Observ_047
+scene Observ_048
+foot 140.642 353.673 3.1416 -19.50
+wait 1.0
+shot Observ_048
+scene Observ_049
+foot 143.142 353.673 0.0000 -19.50
+wait 1.0
+shot Observ_049
+scene Observ_050
+foot 143.142 353.673 3.1416 -19.50
+wait 1.0
+shot Observ_050
+scene Observ_051
+foot 145.642 353.673 0.0000 -19.50
+wait 1.0
+shot Observ_051
+scene Observ_052
+foot 145.642 353.673 3.1416 -19.50
+wait 1.0
+shot Observ_052
+scene Observ_053
+foot 148.142 353.673 0.0000 -19.50
+wait 1.0
+shot Observ_053
+scene Observ_054
+foot 148.142 353.673 3.1416 -19.50
+wait 1.0
+shot Observ_054
+scene Observ_055
+foot 155.642 353.673 0.0000 -19.50
+wait 1.0
+shot Observ_055
+scene Observ_056
+foot 155.642 353.673 3.1416 -19.50
+wait 1.0
+shot Observ_056
+scene Observ_057
+foot 143.142 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_057
+scene Observ_058
+foot 143.142 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_058
+scene Observ_059
+foot 145.642 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_059
+scene Observ_060
+foot 145.642 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_060
+scene Observ_061
+foot 148.142 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_061
+scene Observ_062
+foot 148.142 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_062
+scene Observ_063
+foot 150.642 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_063
+scene Observ_064
+foot 150.642 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_064
+scene Observ_065
+foot 153.142 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_065
+scene Observ_066
+foot 153.142 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_066
+scene Observ_067
+foot 155.642 356.173 0.0000 -19.50
+wait 1.0
+shot Observ_067
+scene Observ_068
+foot 155.642 356.173 3.1416 -19.50
+wait 1.0
+shot Observ_068
+scene Observ_069
+foot 145.642 358.673 0.0000 -19.50
+wait 1.0
+shot Observ_069
+scene Observ_070
+foot 145.642 358.673 3.1416 -19.50
+wait 1.0
+shot Observ_070
+scene Observ_071
+foot 148.142 358.673 0.0000 -19.50
+wait 1.0
+shot Observ_071
+scene Observ_072
+foot 148.142 358.673 3.1416 -19.50
+wait 1.0
+shot Observ_072
+scene Observ_073
+foot 150.642 358.673 0.0000 -19.50
+wait 1.0
+shot Observ_073
+scene Observ_074
+foot 150.642 358.673 3.1416 -19.50
+wait 1.0
+shot Observ_074
+scene Observ_075
+foot 153.142 358.673 0.0000 -19.50
+wait 1.0
+shot Observ_075
+scene Observ_076
+foot 153.142 358.673 3.1416 -19.50
+wait 1.0
+shot Observ_076
+scene Observ_077
+foot 153.142 363.673 0.0000 -19.50
+wait 1.0
+shot Observ_077
+scene Observ_078
+foot 153.142 363.673 3.1416 -19.50
+wait 1.0
+shot Observ_078
+end

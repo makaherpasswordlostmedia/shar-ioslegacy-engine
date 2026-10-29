@@ -1,0 +1,44 @@
+# OPTIONS главного меню: VIEW CREDITS и VIEW MOVIES (tests/ui/options_extra.sh, разбор tests/ui/options_extra_check.py).
+# Меню -> ◄◄ OPTIONS -> X (перелёт к дивану, курсор на SOUND) -> ↓↓ VIEW CREDITS -> X: титры, снимки через 3 и 7 с -> △ назад;
+# flag moviesseen 3 (видены GAME INTRODUCTION и LEVEL 1 INTRODUCTION) -> ↑ VIEW MOVIES -> X: список (остальные серые) ->
+# ↓↓ (серые пропускаются) -> X на GAME INTRODUCTION: ролик -> START — пропустить -> список -> △ △ — главное меню
+flag menu
+wait 1.5
+press left
+wait 0.3
+press left
+wait 0.4
+press cross
+wait 2
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 3
+shot cred_a
+wait 4
+shot cred_b
+press triangle
+wait 0.8
+flag moviesseen 3
+press up
+wait 0.3
+press cross
+wait 0.8
+shot movies_list
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 3
+shot movie_play
+press start
+wait 1
+shot movies_back
+press triangle
+wait 0.5
+press triangle
+wait 2
+end

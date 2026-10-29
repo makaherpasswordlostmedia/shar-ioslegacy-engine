@@ -1,0 +1,45 @@
+# №996 приёмка B: старый settings.bin (ver 10, 88 байт) читается; в меню CAMERA Height = High, Distance = Near, выход сохраняет файл
+scene C_BOOT
+wait 6
+scene L1
+flag golevel 1
+wait 40
+flag player
+press start
+wait 1
+press down
+wait 0.4
+press down
+wait 0.4
+press down
+wait 0.4
+press cross
+wait 1.2
+press down
+wait 0.4
+press down
+wait 0.4
+press cross
+wait 1.2
+shot cam_page
+press down
+wait 0.4
+press right
+wait 0.5
+press right
+wait 0.5
+shot cam_high
+press down
+wait 0.4
+press left
+wait 0.5
+press left
+wait 0.5
+shot cam_near
+press triangle
+wait 1.2
+press triangle
+wait 1.2
+press triangle
+wait 1.2
+end

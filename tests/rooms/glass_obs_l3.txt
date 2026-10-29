@@ -1,0 +1,36 @@
+# Окно обсерватории L3 до/после правила стекла (ROOM_GLASS_OLD): Гомер в точках, где в замере был пурпур (Observ_1_12/13: (151,358; 352,257), Observ_2_12: (155,807; 356,676)); пакеты закрашены пурпуром
+scene start
+wait 3
+scene L3_load
+flag golevel 3
+wait 20
+scene Observatory_door
+foot 179.28 -484.62 -2.5307 4.67
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+flag camlog
+scene g1
+foot 151.358 352.257 0 -19.5
+wait 1.5
+shot g1_a
+foot 151.358 352.257 1.5708 -19.5
+wait 1.5
+shot g1_b
+foot 151.358 352.257 3.1416 -19.5
+wait 1.5
+shot g1_c
+foot 151.358 352.257 -1.5708 -19.5
+wait 1.5
+shot g1_d
+scene g2
+foot 155.807 356.676 0 -19.5
+wait 1.5
+shot g2_a
+foot 155.807 356.676 3.1416 -19.5
+wait 1.5
+shot g2_b
+end

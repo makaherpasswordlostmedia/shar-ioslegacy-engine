@@ -1,0 +1,16 @@
+### №941 телефон: Гомер у будки L1 лицом к ней, кадры через 0,5 с
+scene BQ_load
+flag golevel 1
+wait 15
+flag player 1
+scene PH3
+foot 226.0 153.8 3.1416
+wait 2.5
+shot ph0
+wait 0.5
+shot ph1
+wait 0.5
+shot ph2
+wait 0.5
+shot ph3
+end

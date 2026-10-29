@@ -1,0 +1,32 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene F_GO6
+flag golevel 6
+wait 0.5
+shot ld00
+wait 0.5
+shot ld01
+wait 0.5
+shot ld02
+wait 0.5
+shot ld03
+wait 0.5
+shot ld04
+wait 0.5
+shot ld05
+wait 0.5
+shot ld06
+wait 0.5
+shot ld07
+wait 0.5
+shot ld08
+wait 0.5
+shot ld09
+wait 0.5
+shot ld10
+wait 0.5
+shot ld11
+wait 20
+end

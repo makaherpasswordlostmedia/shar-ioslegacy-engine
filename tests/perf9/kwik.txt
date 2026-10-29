@@ -1,0 +1,19 @@
+flag camlog
+flag renderfast
+scene warm
+wait 3
+scene kwik_entry
+foot 213.9 299 0 5.2
+wait 1.5
+press up 0.8
+press circle 0.8
+wait 1.2
+press triangle
+wait 1.5
+press up 0.5
+press circle 0.5
+wait 1
+scene kwik_inside
+wait 5
+shot kwik_inside
+end

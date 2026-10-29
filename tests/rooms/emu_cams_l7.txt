@@ -1,0 +1,179 @@
+# Камеры комнат L7, глаз не в стене (tests/rooms/emu_cams_levels_gen.py): двери 4, камер 28; CAMIN eye/near на каждой точке
+scene start
+wait 3
+scene L7_load
+flag golevel 7
+wait 20
+scene SimpsonsHouse_door
+foot 228.94 180.42 0.0000 4.23
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Simp__path2
+foot 496.340 396.775 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Simp__path2
+scene Simp__path1
+foot 500.316 398.080 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Simp__path1
+scene KwikEMart_door
+foot 213.91 299.04 0.0000 5.56
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Kwik_01
+foot 499.431 304.290 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_01
+scene Kwik_02
+foot 498.469 296.795 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_02
+scene Kwik_03
+foot 502.200 299.330 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_03
+scene Kwik_04
+foot 499.319 290.180 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_04
+scene Kwik_05
+foot 503.918 296.160 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_05
+scene Kwik_06
+foot 503.663 303.965 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_06
+scene Kwik_07
+foot 506.691 303.732 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_07
+scene Kwik_08
+foot 505.847 298.331 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_08
+scene Kwik_09
+foot 495.000 297.094 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_09
+scene Kwik_10
+foot 494.081 304.239 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_10
+scene Kwik_11
+foot 494.802 289.804 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_11
+scene Kwik_12
+foot 496.312 304.239 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Kwik_12
+scene SpringfieldElementary_door
+foot -31.48 589.45 -1.5708 5.04
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Spri_03
+foot 504.958 354.389 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Spri_03
+scene Spri__path1
+foot 498.220 352.007 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Spri__path1
+scene Spri_04
+foot 501.634 349.379 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Spri_04
+scene BartRoom_door
+foot 224.69 204.46 3.1416 7.00
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene Bart_01
+foot 500.281 449.766 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Bart_01
+scene Bart_02
+foot 498.653 452.422 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Bart_02
+scene Bart_03
+foot 498.776 446.818 0 -19.50
+wait 0.5
+flag camin 1
+wait 1.5
+flag camin 1
+shot Bart_03
+end

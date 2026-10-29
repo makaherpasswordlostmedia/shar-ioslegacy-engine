@@ -1,0 +1,56 @@
+# №965: блик монет крупно. Камера в D м от ближайшей монеты мира (flag coincam D); 4 снимка с шагом 0,37 с (разные фазы блика и оборота), потом дальше (5 м). Уровни L1, L2, L5
+scene K_BOOT
+flag cfgdefaults 1
+flag repair
+wait 6
+scene K_L1
+scene spawn
+goto 220 172 1.5708
+wait 4
+flag stop
+flag coincam 2.5
+wait 1.2
+shot k_l1_a
+wait 0.37
+shot k_l1_b
+wait 0.37
+shot k_l1_c
+wait 0.37
+shot k_l1_d
+wait 0.37
+flag coincam 5
+wait 1
+shot k_l1_e
+scene K_L2
+flag golevel 2
+wait 45
+flag coincam 2.5
+wait 1.2
+shot k_l2_a
+wait 0.37
+shot k_l2_b
+wait 0.37
+shot k_l2_c
+wait 0.37
+shot k_l2_d
+wait 0.37
+flag coincam 5
+wait 1
+shot k_l2_e
+scene K_L5
+flag golevel 5
+wait 45
+flag coincam 2.5
+wait 1.2
+shot k_l5_a
+wait 0.37
+shot k_l5_b
+wait 0.37
+shot k_l5_c
+wait 0.37
+shot k_l5_d
+wait 0.37
+flag coincam 5
+wait 1
+shot k_l5_e
+end

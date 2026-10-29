@@ -1,0 +1,39 @@
+# №958: пути №943 на L6. NEW GAME на L6 (открыто 6 уровней) -> пауза -> MISSION SELECT -> ◄ (L6 -> L5) -> ✕, затем снова пауза -> ► (L5 -> L6) -> ✕: на втором переходе вход в L6.
+# Проверка tests/msnhome/check.py levels: курсор на текущей миссии, одна стартовавшая миссия до первого кадра, цель HUD и маркер одной миссии, нет цели «домой»
+flag menu
+flag lvset 6
+wait 1.5
+press cross
+wait 70
+flag uimsndone 15
+wait 1
+flag msnhud 1
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+press left
+wait 0.6
+press cross
+wait 45
+shot s6h_l5
+flag msnhud 1
+wait 4
+press start
+wait 1
+press down
+wait 0.4
+press cross
+wait 1
+press right
+wait 0.6
+shot s6h_l6_pick
+press cross
+wait 45
+shot s6h_l6_arrive
+flag msnhud 1
+wait 4
+flag msnhud 1
+end

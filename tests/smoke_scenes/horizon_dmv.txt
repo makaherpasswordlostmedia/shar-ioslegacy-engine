@@ -1,0 +1,36 @@
+# Горизонт: контрольная точка Камеры на L2 и L5 (улица у DMV, -257;-351), лента должна рисоваться; гейт --levels 2,5
+scene start
+wait 3
+scene HZ_L2_load
+flag golevel 2
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L2_dmv
+flag repair
+goto -257 -351 1.57
+wait 4
+flag horizon 0
+wait 4
+shot HZ_L2_dmv_off
+flag horizon 1
+wait 4
+shot HZ_L2_dmv_on
+scene HZ_L5_load
+flag golevel 5
+wait 22
+flag drawdist 60
+flag ddfloor 200
+flag horizon 0
+scene HZ_L5_dmv
+flag repair
+goto -257 -351 1.57
+wait 4
+flag horizon 0
+wait 4
+shot HZ_L5_dmv_off
+flag horizon 1
+wait 4
+shot HZ_L5_dmv_on
+end

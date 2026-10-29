@@ -1,0 +1,95 @@
+# Гейт «переход между уровнями» (tests/levels/switch.sh, сверка tests/levels/switch_check.py по строкам LEVEL / LEVELUP smoke.txt).
+# Круг 1 -> 2 -> 1: меню -> NEW GAME (уровень 1) -> все сюжетные миссии уровня пройдены (flag lvwin: событие конца уровня рантайма
+# миссий, как после последней AddMission) -> LEVEL COMPLETE -> газета уровня 2 (снимок loading) -> уровень 2 -> пауза, MISSION SELECT
+# уровня 2 -> QUIT GAME -> меню -> NEW GAME -> уровень 1 снова (куча та же ±64 КБ). Дальше обход 3..7 служебным выбором уровня
+# (flag lvset N, как L / R в меню служебного режима): старт из данных и куча на старте каждого уровня.
+flag menu
+wait 1.5
+press cross
+wait 6
+flag lvlog
+flag lvshot 1.5
+flag lvwin
+wait 12
+flag lvlog
+shot l2_spawn
+press start
+wait 1
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 0.8
+shot l2_msnsel
+press circle
+wait 0.5
+press circle
+wait 0.5
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+press cross
+wait 7
+flag lvlog
+shot l1_again
+# конец круга 1-2-1 (отрицательные контроли гейта обрываются здесь)
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 3
+press cross
+wait 7
+flag lvlog
+shot l3_spawn
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 4
+press cross
+wait 7
+flag lvlog
+shot l4_spawn
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 5
+press cross
+wait 7
+flag lvlog
+shot l5_spawn
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 6
+press cross
+wait 7
+flag lvlog
+shot l6_spawn
+press start
+wait 0.8
+press up
+wait 0.4
+press cross
+wait 2.5
+flag lvset 7
+press cross
+wait 7
+flag lvlog
+shot l7_spawn
+end

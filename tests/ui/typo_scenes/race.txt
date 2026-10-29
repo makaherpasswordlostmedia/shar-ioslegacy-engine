@@ -1,0 +1,19 @@
+scene typo_race
+wait 3
+flag msn
+wait 3
+flag msnmain 9
+wait 3
+press cross
+wait 10
+shot race_a
+flag uitypo 1
+wait 0.1
+shot race_b
+flag uitypo 2
+wait 0.1
+shot race_c
+flag uitypo 0
+wait 0.1
+shot race_a2
+end

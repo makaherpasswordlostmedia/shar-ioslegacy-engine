@@ -1,0 +1,57 @@
+wait 12
+flag cfgdefaults 1
+flag smksettle936 MODE
+flag diaglog 0
+flag camin 1
+scene P026
+foot 223.7 203.0 0
+wait 1.6
+shot e026_0
+press r 1.0
+wait 1.15
+shot e026_1
+press r 1.0
+wait 1.15
+shot e026_2
+press r 1.0
+wait 1.15
+shot e026_3
+press r 1.0
+wait 1.15
+scene P053
+foot 192.2 297.5 0
+wait 1.6
+shot e053_0
+press r 1.0
+wait 1.15
+shot e053_1
+press r 1.0
+wait 1.15
+shot e053_2
+press r 1.0
+wait 1.15
+shot e053_3
+press r 1.0
+wait 1.15
+scene P061
+foot 276.2 -511.0 0
+wait 1.6
+shot e061_0
+press r 1.0
+wait 1.15
+shot e061_1
+press r 1.0
+wait 1.15
+shot e061_2
+press r 1.0
+wait 1.15
+shot e061_3
+press r 1.0
+wait 1.15
+scene PAUSE
+press start 0.2
+wait 6
+press start 0.2
+scene RESUME
+wait 6
+end

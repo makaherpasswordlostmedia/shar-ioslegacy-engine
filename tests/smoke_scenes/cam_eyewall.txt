@@ -1,0 +1,43 @@
+# Точки видео TEST17 (16.10, Камера): глаз не внутри стены. L1: городская езда D_L1_city (75 с), трамплин D_L1_ramp9_b0 (autostraight 8); L3: причал D_L3_chase (погоня hnr 100, 75 с).
+# Смотреть CAMIN (eye = кадры с глазом в ящике непрозрачного куска, near = ближе 0,3 м) в конце каждой сцены и CAMCLIPSTAT eye_inside раз в секунду.
+flag camin 1
+scene D_L1_load
+flag golevel 1
+wait 15
+flag camin 1
+scene D_L1_city
+flag repair
+goto 220 172 1.5708
+wait 2
+flag camin 1
+flag drive 75
+wait 76
+flag camin 1
+flag stop
+wait 1
+scene D_L1_ramp9_b0
+flag bisect 0
+goto 229.3 -536.0 0.785
+wait 2
+flag camin 1
+flag autostraight 8
+wait 9
+shot ramp9_b0
+flag camin 1
+flag stop
+wait 1
+scene D_L3_load
+flag golevel 3
+wait 20
+flag camin 1
+scene D_L3_chase
+flag repair
+flag hnr 100
+flag drive 75
+wait 76
+flag camin 1
+shot D_L3_end
+flag stop
+flag hnr 0
+wait 1
+end

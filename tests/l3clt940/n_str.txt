@@ -1,0 +1,14 @@
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 3
+scene F_GO8_L3
+flag golevel 3
+wait 40
+flag cltstress940 1
+scene F_FLAT_L3B
+flag flat912 1
+foot -525.6 -40.7 0.28
+wait 9
+shot l3b_a
+end

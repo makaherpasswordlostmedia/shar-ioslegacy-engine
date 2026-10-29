@@ -1,0 +1,17 @@
+# Гейт «файлы-выключатели = как на магистрали» (16.10, Камера): запускать SMOKE_FLAGS="coneold homerspotold homerlitold" tools/smoke.sh; кадры сверяются побайтно с EBOOT магистрали без файлов
+# Красный контроль: тот же сценарий без файлов — кадры обязаны отличаться
+scene CI_L1_load
+flag golevel 1
+wait 15
+scene CI_road
+flag repair
+foot 50 -285 0.0
+wait 3
+shot ci_road
+scene CI_garage
+foot -85 -300 1.5708
+cam -78.5 2.2 -297.5 1.00 0.15 0.00 70
+flag lightspr 1
+wait 4
+shot ci_garage
+end

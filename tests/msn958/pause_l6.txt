@@ -1,0 +1,28 @@
+# №958: пауза на L6 после перехода golevel с L1: что показывает меню (карточка текущей миссии, строки)
+scene F_L1
+flag cfgdefaults 1
+flag repair
+wait 6
+scene F_GO6
+flag golevel 6
+wait 45
+shot p0_l6
+press start
+wait 1.5
+shot p1_pause
+press down
+wait 0.5
+shot p2_down
+press down
+wait 0.5
+shot p3_down
+press up
+wait 0.3
+press up
+wait 0.3
+press cross
+wait 1.5
+shot p4_cross
+press triangle
+wait 1
+end

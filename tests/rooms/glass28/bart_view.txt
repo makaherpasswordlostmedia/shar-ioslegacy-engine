@@ -1,0 +1,26 @@
+# Комната Барта (L4): окно на южной стене (z 453…457, int_br_backdrop за стеклом int_br_window_m); cam принимает вектор направления
+wait 3
+flag golevel 4
+wait 20
+scene bart_in
+foot 224.7 204.4 3.1416 6.6
+wait 1.5
+press up 0.3
+press circle 0.3
+wait 1
+press triangle
+wait 2
+scene b1
+cam 500.2 -18.6 449.2 0.0 0.0 1.0 60
+wait 1
+shot b1
+cam 500.2 -18.4 449.5 0.3 0.1 1.0 75
+wait 1
+shot b2
+cam 498.0 -18.6 450.0 0.6 0.0 1.0 80
+wait 1
+shot b3
+cam 502.0 -18.6 450.0 -0.6 0.0 1.0 80
+wait 1
+shot b4
+end

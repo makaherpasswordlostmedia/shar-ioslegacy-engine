@@ -1,0 +1,36 @@
+# Гейт «сохранение несёт уровень» (tests/levels/save_level.sh), прогон 1: служебный выбор уровня 2 (flag lvset 2, как R в меню
+# служебного режима) -> NEW GAME -> уровень 2 -> строка прогресса (SVPROG src=now level=2) -> пауза -> SAVE GAME -> слот 1 ->
+# «Save Successful» -> QUIT GAME -> «Do you want to save your game?» NO -> главное меню. Путь кнопок — как tests/savegame/emu_save.txt
+flag menu
+flag saves
+flag lvset 2
+wait 1.5
+press cross
+wait 7
+flag lvlog
+flag svlog
+press start
+wait 1
+press up
+wait 0.4
+press up
+wait 0.4
+shot lv_pause
+press cross
+wait 1
+shot lv_slots
+press cross
+wait 2.5
+shot lv_saved
+press cross
+wait 0.8
+press down
+wait 0.4
+press cross
+wait 1
+press down
+wait 0.3
+press cross
+wait 3
+shot lv_menu_after
+end

@@ -1,0 +1,77 @@
+### TEST69: все 16 роликов подряд (flag movie N: foxlogo vuglogo radlogo intro fmv1a fmv2..fmv8 gracie loot tele demo): строка MSNFMV frames= shown= dropped= skipped= и MOVIEWALL. Длинные ролики (>12 с по размеру файла) показываются первые 10–12 с и пропускаются START (команды сценария внутри ролика читает сам проигрыватель: wait идёт во время ролика, press start пропускает); короткие (vuglogo, radlogo, gracie) играют до конца. Служебные flag-строки внутри ролика проигрыватель теряет, поэтому между роликами стоят ожидания по длине
+scene F_MOVIES
+flag movie 0
+wait 12
+press start 0.3
+wait 2.5
+flag movie 1
+wait 8
+flag movie 2
+wait 6
+flag movie 3
+wait 12
+press start 0.3
+wait 2.5
+flag movie 4
+wait 12
+press start 0.3
+wait 2.5
+flag movie 5
+wait 12
+press start 0.3
+wait 2.5
+flag movie 6
+wait 12
+press start 0.3
+wait 2.5
+flag movie 7
+wait 12
+press start 0.3
+wait 2.5
+flag movie 8
+wait 12
+press start 0.3
+wait 2.5
+flag movie 9
+wait 12
+press start 0.3
+wait 2.5
+flag movie 10
+wait 12
+press start 0.3
+wait 2.5
+flag movie 11
+wait 12
+press start 0.3
+wait 2.5
+flag movie 12
+wait 9
+flag movie 13
+wait 10
+press start 0.3
+wait 2.5
+flag movie 14
+wait 10
+press start 0.3
+wait 2.5
+flag movie 15
+wait 12
+press start 0.3
+wait 2.5
+wait 1
+### TEST69: финал L7 до титров: этап m8 (flag msnmainat 701, как tests/content/ending_l7_checkpoint.txt; ролик этапа m8 обойдён, таймер timer2s и SetGameOver выполняются): level-complete -> LEVELDONE -> меню -> титры (ENDING open/start), снимок титров, △ пропуск, снимок меню после. Строки: MSN mainat m8, MSN level-complete level=7 gameover=1, LEVELDONE n=7 code=2, MENU, ENDING open/start/close, STREAM music track=credits. Ставится последней сценой (после неё игра в меню)
+scene F_ENDING_L7
+flag golevel 7
+wait 40
+flag repair
+wait 3
+flag lvlog
+flag msnmainat 701
+wait 8
+shot ending_screen
+wait 4
+shot ending_screen2
+wait 1
+press triangle 0.2
+wait 12
+shot ending_back

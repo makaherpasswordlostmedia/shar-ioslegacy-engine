@@ -1,0 +1,28 @@
+# Правки 180/184 (голоса улицы): машина игрока проходит мимо прохожего на скорости (уклонение, «чуть не сбил»), потом бьёт
+# машину трафика впереди (водитель кричит), потом сбивает прохожего. Улица перед Kwik-E-Mart (полоса 12, курс +x)
+scene near
+goto 188 279.9 1.5708
+wait 2
+flag pednear 30
+wait 0.2
+press cross 3.0
+wait 3.2
+shot near1
+scene carhit
+goto 188 279.9 1.5708
+wait 2
+flag trfahead 12
+flag trfstill
+wait 0.3
+press cross 2.5
+wait 3.0
+shot carhit1
+scene pedhit
+goto 188 279.9 1.5708
+wait 2
+flag pedahead 25
+wait 0.2
+press cross 3.0
+wait 3.5
+shot pedhit1
+end

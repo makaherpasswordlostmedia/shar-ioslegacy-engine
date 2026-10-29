@@ -1,0 +1,32 @@
+# Пауза миссии (PauseMission.scr, tests/ui/pause_msn.sh): m0 — △ у Мардж, разговор, брифинг, X (основная часть миссии) ->
+# START: пауза миссии (снимок) -> ↓ RESTART MISSION, X (миссия заново — снова брифинг, X) -> START -> ↓↓ CANCEL MISSION, X -> START: пауза свободной езды (снимок)
+scene msn
+flag msn
+wait 2
+press triangle
+wait 14
+press cross
+wait 2
+press start
+wait 1
+shot pause_msn
+press down
+wait 0.3
+press cross
+wait 2
+press cross
+wait 2
+press start
+wait 1
+press down
+wait 0.3
+press down
+wait 0.3
+press cross
+wait 3
+press start
+wait 1
+shot pause_free
+press start
+wait 1
+end

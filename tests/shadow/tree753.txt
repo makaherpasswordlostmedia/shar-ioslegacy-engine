@@ -1,0 +1,11 @@
+# №753 (Роб 17.10): «под объектами осталась облупленная тень» — нарисованные тени деревьев (L1 treeshadow.bmp): у дома Симпсонов (тень дерева 209.5, 203.2)
+wait 3
+scene tr_house
+foot 214 210 -2.4
+wait 2.5
+shot tr_house
+scene tr_park
+foot 109.8 168 0
+wait 2.5
+shot tr_park
+end

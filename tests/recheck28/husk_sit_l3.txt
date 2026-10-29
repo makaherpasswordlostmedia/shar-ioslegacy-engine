@@ -1,0 +1,21 @@
+# №355: в остов можно сесть и поехать, L3
+wait 3
+flag golevel 3
+wait 20
+scene sit3
+flag testboom
+wait 6
+shot l3_a
+foot -3.35 -8.37 0.0000
+wait 1.5
+shot l3_b
+press triangle
+wait 2.5
+shot l3_c
+flag autostraight 9
+wait 4
+shot l3_d
+wait 4
+shot l3_e
+wait 1
+end

@@ -1,0 +1,26 @@
+# №973: тень своей машины на месте, L6, четыре вида (сверху, три косых)
+scene F_L1
+flag cfgdefaults 1
+wait 4
+scene F_GO6
+flag golevel 6
+wait 45
+flag repair
+wait 4
+scene S_L6_still
+flag shdiag973 1
+flag warmhere
+wait 3
+camrel 0 14 0.5 0 -14 -0.5
+wait 1
+shot top
+camrel 5 3 5 -5 -3 -5
+wait 1
+shot rr
+camrel -5 3 5 5 -3 -5
+wait 1
+shot rl
+camrel 5 3 -5 -5 -3 5
+wait 1
+shot fr
+end

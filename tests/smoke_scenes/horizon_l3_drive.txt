@@ -1,0 +1,49 @@
+# Горизонт L3: проезд на маяк от 276 м, кадры по времени проезда; вкл и выкл идут из одной точки старта, кадры одного времени сравнимы (эмулятор детерминирован)
+scene start
+wait 3
+scene HZ_load
+flag golevel 3
+wait 22
+flag drawdist 60
+flag ddfloor 200
+scene HZ_drive_on
+flag horizon 8
+flag repair
+goto -330 90 4.205
+wait 2
+flag autostraight 6
+wait 1.2
+shot HZ_dr_on_1
+wait 1.2
+shot HZ_dr_on_2
+wait 1.2
+shot HZ_dr_on_3
+wait 1.2
+shot HZ_dr_on_4
+wait 1.2
+shot HZ_dr_on_5
+wait 1.2
+shot HZ_dr_on_6
+flag stop
+wait 1
+scene HZ_drive_off
+flag horizon 0
+flag repair
+goto -330 90 4.205
+wait 2
+flag autostraight 6
+wait 1.2
+shot HZ_dr_off_1
+wait 1.2
+shot HZ_dr_off_2
+wait 1.2
+shot HZ_dr_off_3
+wait 1.2
+shot HZ_dr_off_4
+wait 1.2
+shot HZ_dr_off_5
+wait 1.2
+shot HZ_dr_off_6
+flag stop
+wait 1
+end
