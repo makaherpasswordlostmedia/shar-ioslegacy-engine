@@ -19,7 +19,7 @@
 void ge_invalidate_range(const void *p, unsigned n);
 
 /* libpspdebug font `msx` (hud.c: extern unsigned char msx[]) - on iOS it is a copy of viewer/bootmsx.h */
-#include "bootmsx.h"
+#include "../../viewer/bootmsx.h"   /* relative to this file: host-check compiles it with only -I../ios/shim */
 unsigned char msx[2048];
 __attribute__((constructor)) static void msx_init(void) { memcpy(msx, bootMsx, sizeof msx); }
 /* newlib libm symbol used by viewer/fxdsp.h (FXD_EXPF); iOS libm only has expf */
