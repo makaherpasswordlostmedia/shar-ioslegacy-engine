@@ -69,6 +69,18 @@ jobs:
           done
           find "$SDK/usr/include" -name module.map | while read -r m; do mv "$m" "$(dirname "$m")/module.modulemap"; done
 
+      - name: Patch ios/Makefile (idempotent; keeps all packaging fixes inside this workflow)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          # ios_host.m is written for ARC; the per-file key in the Makefile does not match paths in FILES
+          grep -q 'SHARArmv7_OBJCFLAGS' Makefile || printf '\nSHARArmv7_OBJCFLAGS += -fobjc-arc\n' >> Makefile
+          # Theos only picks ./Info.plist, not Resources/Info.plist -> copy it (and launch images) into the staged .app
+          if ! grep -q '^internal-stage::' Makefile; then
+            printf '\ninternal-stage::\n\t$(ECHO_NOTHING)mkdir -p $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app && cp Resources/Info.plist Resources/LaunchImage*.png $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app/$(ECHO_END)\n' >> Makefile
+          fi
+          tail -8 Makefile
+
       - name: Build
         working-directory: ios
         env:
@@ -93,11 +105,44 @@ jobs:
         working-directory: ios
         run: |
           set -euo pipefail
-          APP="$(find .theos -type d -name SHARArmv7.app | head -n1)"
+          APP="$(find .theos/_ -type d -name SHARArmv7.app 2>/dev/null | head -n1 || true)"
+          [ -n "$APP" ] || APP="$(find .theos -type d -name SHARArmv7.app | head -n1)"
           [ -n "$APP" ] || { echo "::error::SHARArmv7.app not found"; exit 1; }
           rm -rf ipa && mkdir -p ipa/Payload packages
           cp -a "$APP" ipa/Payload/
-          (cd ipa && zip -rq "../packages/SHAR-armv7-$(git rev-parse --short HEAD).ipa" Payload)
+          A=ipa/Payload/SHARArmv7.app
+          # Theos does not pick Resources/Info.plist by itself -> without this the .ipa has no Info.plist and cannot be installed
+          cp Resources/Info.plist "$A/Info.plist"
+          cp Resources/LaunchImage*.png "$A/"
+          # keys that every Xcode-built app has; some installers / sideload tools read them
+          python3 - "$A/Info.plist" <<'PY'
+          import plistlib, sys
+          f = sys.argv[1]
+          d = plistlib.load(open(f, "rb"))
+          for k, v in (("CFBundleSupportedPlatforms", ["iPhoneOS"]), ("DTPlatformName", "iphoneos"), ("DTSDKName", "iphoneos9.3"),
+                       ("DTPlatformVersion", "9.3"), ("CFBundleSignature", "????")):
+              d.setdefault(k, v)
+          plistlib.dump(d, open(f, "wb"), fmt=plistlib.FMT_XML)
+          PY
+          chmod 755 "$A/SHARArmv7"
+          # (re)apply the fake signature with entitlements so AppSync/TrollStore-style installers accept the binary
+          LDID="$(command -v ldid || true)"
+          [ -n "$LDID" ] || LDID="$(ls "$THEOS"/toolchain/linux/iphone/bin/ldid "$THEOS"/bin/ldid 2>/dev/null | head -n1 || true)"
+          if [ -n "$LDID" ]; then "$LDID" -SResources/entitlements.plist "$A/SHARArmv7"; else echo "::warning::ldid not found, binary left as built"; fi
+          # sanity check: fail the build instead of shipping a broken .ipa
+          python3 - "$A" <<'PY'
+          import plistlib, os, sys
+          a = sys.argv[1]
+          d = plistlib.load(open(os.path.join(a, "Info.plist"), "rb"))
+          for k in ("CFBundleIdentifier", "CFBundleExecutable", "CFBundleName", "CFBundleVersion", "MinimumOSVersion"):
+              assert d.get(k), "Info.plist: missing " + k
+          exe = os.path.join(a, d["CFBundleExecutable"])
+          assert os.path.isfile(exe) and os.access(exe, os.X_OK), "executable missing: " + exe
+          print("Info.plist OK:", d["CFBundleIdentifier"], d["CFBundleShortVersionString"], "min iOS", d["MinimumOSVersion"])
+          PY
+          file "$A/SHARArmv7" || true
+          (cd ipa && zip -qry "../packages/SHAR-armv7-$(git rev-parse --short HEAD).ipa" Payload)
+          unzip -l packages/SHAR-armv7-*.ipa | head -20
 
       - uses: actions/upload-artifact@v4
         with:
