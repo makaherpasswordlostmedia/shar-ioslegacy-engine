@@ -133,6 +133,30 @@ jobs:
           PY
           grep -n "var/mobile/Documents" host/ios_host.m
 
+      - name: Patch psp_sys.c (pass sceKernelStartThread args to the thread - fixes NULL crash in movie/audio threads)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          timeout 60 python3 - <<'PY'
+          for p in ("src/psp_sys.c", "shim/psp_sys.c"):
+              s = open(p, encoding="utf-8").read()
+              if "unsigned char arg[128]" in s:
+                  print(p, "already patched"); continue
+              reps = [
+                ("typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; } Th;",
+                 "typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; unsigned char arg[128]; unsigned al; } Th;"),
+                ("t->fn(0, 0);", "t->fn(t->al, t->al ? (void *)t->arg : (void *)0);"),
+                ("(void)al; (void)ap; pthread_attr_t at;",
+                 "t->al = al > 128 ? 128 : al; if (ap && t->al) memcpy(t->arg, ap, t->al); pthread_attr_t at;"),
+              ]
+              for old, new in reps:
+                  assert old in s, p + ": anchor not found: " + old[:40]
+                  s = s.replace(old, new, 1)
+              open(p, "w", encoding="utf-8").write(s)
+              print(p, "patched")
+          PY
+          grep -n "t->al" src/psp_sys.c | cut -c1-160
+
       - name: Build
         working-directory: ios
         env:
