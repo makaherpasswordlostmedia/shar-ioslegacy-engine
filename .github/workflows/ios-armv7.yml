@@ -168,7 +168,7 @@ jobs:
               print(p, "already patched")
           else:
               reps = [
-              (r"""""",
+              (r"""/* ---------------- textures ---------------- */""",
                r"""#ifdef __APPLE__
           #include <mach/mach.h>
           #include <mach/vm_map.h>
@@ -198,7 +198,8 @@ jobs:
             memcpy(dst, src, n); return n;
           #endif
           }
-          """),
+
+          /* ---------------- textures ---------------- */"""),
               (r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; } TC;""",
                r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; int ul; } TC;
           static int lastUl = 1;   /* levels actually uploaded for the texture tex_get() returned last */"""),
