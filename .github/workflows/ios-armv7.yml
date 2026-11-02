@@ -157,6 +157,83 @@ jobs:
           PY
           grep -n "t->al" src/psp_sys.c | cut -c1-160
 
+      - name: Patch ge_gles2.c (fixes texture upload crash - stale mip levels or short buffer, KERN_PROTECTION_FAILURE in memcpy)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          p = "src/ge_gles2.c"
+          s = open(p, encoding="utf-8").read()
+          if "safe_copy" in s:
+              print(p, "already patched")
+          else:
+              reps = [
+              (r"""""",
+               r"""#ifdef __APPLE__
+          #include <mach/mach.h>
+          #include <mach/vm_map.h>
+          #endif
+
+          /* safe_copy: memcpy from a pointer that may be stale / too short. The GE list carries raw PSP-style pointers and
+           * per-level sizes; if a texture level is described bigger than the buffer behind it, a plain memcpy walks into a
+           * guard page (EXC_BAD_ACCESS, KERN_PROTECTION_FAILURE). Here unreadable pages are zero-filled and counted instead.
+           * Fast path = one vm_read_overwrite for the whole range; page-by-page only when that fails. Returns bytes that were readable. */
+          static unsigned bad_reads;
+          static size_t safe_copy(void *dst, const void *src, size_t n) {
+          #ifdef __APPLE__
+            uint8_t *d = (uint8_t *)dst; uintptr_t s = (uintptr_t)src; vm_size_t got = 0;
+            if (!n) return 0;
+            if (vm_read_overwrite(mach_task_self(), (vm_address_t)s, (vm_size_t)n, (vm_address_t)d, &got) == KERN_SUCCESS && got == n) return n;
+            size_t ok = 0, off = 0; const size_t PG = 4096;
+            while (off < n) {
+              size_t a = (s + off) & (PG - 1), len = PG - a; if (len > n - off) len = n - off;
+              got = 0;
+              if (vm_read_overwrite(mach_task_self(), (vm_address_t)(s + off), (vm_size_t)len, (vm_address_t)(d + off), &got) == KERN_SUCCESS && got == len) ok += len;
+              else memset(d + off, 0, len);
+              off += len;
+            }
+            if (ok < n) { bad_reads++; ios_log("ge: texture read %p+%u: only %u bytes mapped (stale/short level?)", src, (unsigned)n, (unsigned)ok); }
+            return ok;
+          #else
+            memcpy(dst, src, n); return n;
+          #endif
+          }
+          """),
+              (r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; } TC;""",
+               r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; int ul; } TC;
+          static int lastUl = 1;   /* levels actually uploaded for the texture tex_get() returned last */"""),
+              (r"""  uint32_t cl[256]; unsigned ch = 0; uintptr_t cp = S.slot[3];""",
+               r"""  if ((S.tw[0] & 15) > 9 || (S.th[0] & 15) > 9) return 0;   /* GE max is 512; a bigger value is stale/garbage state */
+            uint32_t cl[256]; unsigned ch = 0; uintptr_t cp = S.slot[3];"""),
+              (r"""  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) return tc[i].id;""",
+               r"""  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) { lastUl = tc[i].ul; return tc[i].id; }"""),
+              (r"""    int rowb = lw * bpp_x2(fmt) / 2; if (fmt == 4) rowb = (lw + 1) / 2; int tb = S.tbw[l] ? S.tbw[l] : lw; int stride = fmt == 4 ? tb / 2 : tb * bpp_x2(fmt) / 2; if (stride < rowb) stride = rowb;""",
+               r"""    if (l > 0 && (lw != (w >> l > 0 ? w >> l : 1) || lh != (h >> l > 0 ? h >> l : 1))) { lv = l; break; }   /* levels must halve; otherwise the state is stale */
+              int rowb = lw * bpp_x2(fmt) / 2; if (fmt == 4) rowb = (lw + 1) / 2; int tb = S.tbw[l] ? S.tbw[l] : lw; int stride = fmt == 4 ? tb / 2 : tb * bpp_x2(fmt) / 2; if (stride < rowb) stride = rowb;"""),
+              (r"""    if (S.texSwz) { uint8_t *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1); unswz(tmp, (const uint8_t *)lp, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); free(tmp); } else memcpy(lin, (const void *)lp, (size_t)stride * lh);
+              uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4);""",
+               r"""    if (S.texSwz) {
+                int rb = stride < 16 ? 16 : stride; size_t ssz = (size_t)(rb / 16) * 128 * (size_t)((lh + 7) / 8);   /* exactly what unswz() reads */
+                uint8_t *sb = (uint8_t *)malloc(ssz), *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1);
+                if (sb && tmp) { safe_copy(sb, (const void *)lp, ssz); unswz(tmp, sb, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); } else memset(lin, 0, (size_t)stride * lh);
+                free(sb); free(tmp);
+              } else safe_copy(lin, (const void *)lp, (size_t)stride * lh);
+              uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4); if (!o) { free(lin); lv = l; break; }"""),
+              (r"""  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, S.texMips + 1, ch, total ? (size_t)(w * h * bpp_x2(fmt) / 2 + 64) : 64, id, 1 };
+            tc[slot].lv = S.texMips + 1; (void)lv; return id;""",
+               r"""  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, S.texMips + 1, ch, total ? (size_t)(w * h * bpp_x2(fmt) / 2 + 64) : 64, id, 1, 1 };
+            tc[slot].lv = S.texMips + 1; tc[slot].ul = lv < 1 ? 1 : lv; lastUl = tc[slot].ul; return id;"""),
+              (r"""  int mip = S.texMips > 0; int mn = S.minF; GLint f;""",
+               r"""  int mip = S.texMips > 0 && lastUl > 1; int mn = S.minF; GLint f;"""),
+              ]
+              for old, new in reps:
+                  assert s.count(old) == 1, p + ": anchor not found/unique: " + old[:50]
+                  s = s.replace(old, new, 1)
+              open(p, "w", encoding="utf-8").write(s)
+              print(p, "patched")
+          PY
+          grep -c safe_copy src/ge_gles2.c
+
       - name: Build
         working-directory: ios
         env:
