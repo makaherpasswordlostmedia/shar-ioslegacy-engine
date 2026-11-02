@@ -75,11 +75,63 @@ jobs:
           set -euo pipefail
           # ios_host.m is written for ARC; the per-file key in the Makefile does not match paths in FILES
           grep -q 'SHARArmv7_OBJCFLAGS' Makefile || printf '\nSHARArmv7_OBJCFLAGS += -fobjc-arc\n' >> Makefile
-          # Theos only picks ./Info.plist, not Resources/Info.plist -> copy it (and launch images) into the staged .app
+          # Theos only picks ./Info.plist, not Resources/Info.plist -> copy it (and launch images) into the staged .app; postinst must be executable
           if ! grep -q '^internal-stage::' Makefile; then
-            printf '\ninternal-stage::\n\t$(ECHO_NOTHING)mkdir -p $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app && cp Resources/Info.plist Resources/LaunchImage*.png $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app/$(ECHO_END)\n' >> Makefile
+            printf '\ninternal-stage::\n\t$(ECHO_NOTHING)mkdir -p $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app && cp Resources/Info.plist Resources/LaunchImage*.png $(THEOS_STAGING_DIR)/Applications/$(APPLICATION_NAME).app/$(ECHO_END)\n\t$(ECHO_NOTHING)chmod 755 $(THEOS_STAGING_DIR)/DEBIAN/postinst 2>/dev/null || true$(ECHO_END)\n' >> Makefile
           fi
           tail -8 Makefile
+
+      - name: Add .deb postinst (creates the game data folder on install)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          mkdir -p layout/DEBIAN
+          cat > layout/DEBIAN/postinst <<'EOF'
+          #!/bin/sh
+          # Runs after the .deb is installed (Cydia / Sileo / Zebra / dpkg -i).
+          # Creates the folder where the converted game data must be copied.
+          # Must stay in sync with ios_host.m: apps in /Applications use /var/mobile/Documents.
+          case "$1" in
+            configure|"") ;;
+            *) exit 0 ;;
+          esac
+          GAME_DIR="/var/mobile/Documents/SHARVIEW"
+          mkdir -p "$GAME_DIR"
+          chown mobile:mobile /var/mobile/Documents "$GAME_DIR" 2>/dev/null
+          chmod 755 "$GAME_DIR"
+          if [ ! -f "$GAME_DIR/PUT_GAME_DATA_HERE.txt" ]; then
+            printf '%s\n' \
+              "Put the converted game data (made from your own disc) into THIS folder:" \
+              "  /var/mobile/Documents/SHARVIEW" \
+              "Copy with Filza, scp/sftp or iFunBox, then restart the game." \
+              "Log: /var/mobile/Documents/shar_ios.log" > "$GAME_DIR/PUT_GAME_DATA_HERE.txt"
+            chown mobile:mobile "$GAME_DIR/PUT_GAME_DATA_HERE.txt" 2>/dev/null
+          fi
+          command -v uicache >/dev/null 2>&1 && uicache >/dev/null 2>&1
+          echo "SHAR: game data folder ready -> $GAME_DIR"
+          exit 0
+          EOF
+          chmod 755 layout/DEBIAN/postinst
+          sh -n layout/DEBIAN/postinst
+
+      - name: Patch ios_host.m (use /var/mobile/Documents when installed from .deb)
+        working-directory: ios
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          p = "host/ios_host.m"
+          s = open(p, encoding="utf-8").read()
+          if "/var/mobile/Documents" not in s:
+              old = "NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0]; strlcpy"
+              new = ("NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];\n"
+                     "  /* installed from .deb into /Applications: data lives in /var/mobile/Documents/SHARVIEW (created by DEBIAN/postinst) */\n"
+                     "  if ([[[NSBundle mainBundle] bundlePath] hasPrefix:@\"/Applications/\"] && access(\"/var/mobile/Documents\", W_OK) == 0) d = @\"/var/mobile/Documents\";\n"
+                     "  strlcpy")
+              assert old in s, "ios_host.m: anchor not found"
+              open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
+          print("ios_host.m patched")
+          PY
+          grep -n "var/mobile/Documents" host/ios_host.m
 
       - name: Build
         working-directory: ios
