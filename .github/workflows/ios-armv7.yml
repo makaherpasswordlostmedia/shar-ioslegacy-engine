@@ -13,11 +13,752 @@ permissions:
   contents: read
 
 jobs:
+  prepare-fixes:
+    name: Write fixes.patch (graphics / logging fixes for the iOS layer)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write patch
+        run: |
+          cat > fixes.patch <<'FIXES_PATCH_EOF'
+          diff --git a/ios/host/ios_host.m b/ios/host/ios_host.m
+          index 37f0e75..017eac7 100644
+          --- a/ios/host/ios_host.m
+          +++ b/ios/host/ios_host.m
+          @@ -11,38 +11,109 @@
+           #import <GameController/GameController.h>
+           #include <pthread.h>
+           #include <stdarg.h>
+          +#include <signal.h>
+          +#include <execinfo.h>
+          +#include <unistd.h>
+          +#include <fcntl.h>
+          +#include <dirent.h>
+          +#include <sys/stat.h>
+          +#include <sys/time.h>
+          +#include <sys/utsname.h>
+          +#include <mach/mach.h>
+           #include "psp_compat.h"
+           
+           extern int shar_main(int argc, char **argv);
+           
+          -/* ---------------- paths / log ---------------- */
+          -static char g_docs[512]; static FILE *g_log; static pthread_mutex_t g_lm = PTHREAD_MUTEX_INITIALIZER;
+          +/* ---------------- paths / log ----------------
+          + * Log file: <Documents>/shar_ios.log  (previous run: shar_ios.prev.log; rotated again at LOG_MAX bytes).
+          + * Line:  HH:MM:SS.mmm +SSSS.mmm L [thread] message      L = E(rror) W(arning) I(nfo) T(race)
+          + * ios_log() takes a printf format whose FIRST CHARACTER may be the level followed by a space ("E ge: ..."); no prefix = I.
+          + * Identical formats repeating in a burst are collapsed ("... repeated N times") so one bad frame cannot flood the file.
+          + * Fatal signals / uncaught NSExceptions write a backtrace into the same file before the process dies. */
+          +#define LOG_MAX (4u << 20)
+          +static char g_docs[512]; static FILE *g_log; static int g_logfd = -1; static unsigned g_logBytes; static pthread_mutex_t g_lm = PTHREAD_MUTEX_INITIALIZER;
+          +static uint64_t g_t0us; static const char *g_lastFmt; static unsigned g_rep; static int g_trace = -1;
+           const char *ios_docs_dir(void) { return g_docs; }
+          -void ios_log(const char *f, ...) { pthread_mutex_lock(&g_lm); if (!g_log) { char p[600]; snprintf(p, sizeof p, "%s/shar_ios.log", g_docs); g_log = fopen(p, "a"); }
+          -  va_list a; va_start(a, f); if (g_log) { vfprintf(g_log, f, a); fputc('\n', g_log); fflush(g_log); } va_end(a); pthread_mutex_unlock(&g_lm); }
+          -void ios_exit_requested(void) { ios_log("exit requested"); }
+          +static uint64_t now_us(void) { struct timeval tv; gettimeofday(&tv, 0); return (uint64_t)tv.tv_sec * 1000000u + (uint64_t)tv.tv_usec; }
+          +static void log_open(int rotate) {
+          +  char p[640], q[640]; snprintf(p, sizeof p, "%s/shar_ios.log", g_docs); snprintf(q, sizeof q, "%s/shar_ios.prev.log", g_docs);
+          +  if (g_log) { fclose(g_log); g_log = 0; g_logfd = -1; }
+          +  if (rotate) { unlink(q); rename(p, q); }
+          +  g_log = fopen(p, "a"); if (g_log) { g_logfd = fileno(g_log); g_logBytes = 0; }
+          +}
+          +static void log_line(char lvl, const char *msg) {   /* caller holds g_lm */
+          +  if (!g_log) log_open(g_t0us == 0);
+          +  if (!g_t0us) g_t0us = now_us();
+          +  uint64_t t = now_us(); time_t sec = (time_t)(t / 1000000u); struct tm lt; localtime_r(&sec, &lt); uint64_t up = t - g_t0us;
+          +  char tid[24]; uint64_t id = 0; pthread_threadid_np(0, &id); snprintf(tid, sizeof tid, "%s", pthread_main_np() ? "main" : "game");
+          +  char b[2400]; int n = snprintf(b, sizeof b, "%02d:%02d:%02d.%03d +%04llu.%03llu %c [%s] %s\n", lt.tm_hour, lt.tm_min, lt.tm_sec, (int)((t / 1000u) % 1000u), (unsigned long long)(up / 1000000u), (unsigned long long)((up / 1000u) % 1000u), lvl, tid, msg);
+          +  if (n < 0) return; if (n >= (int)sizeof b) n = sizeof b - 1;
+          +  if (g_log) { fwrite(b, 1, (size_t)n, g_log); fflush(g_log); g_logBytes += (unsigned)n; if (lvl == 'E') fsync(g_logfd); if (g_logBytes > LOG_MAX) { log_open(1); } }
+          +}
+          +void ios_log(const char *f, ...) {
+          +  char lvl = 'I'; const char *fm = f; if ((f[0] == 'E' || f[0] == 'W' || f[0] == 'I' || f[0] == 'T') && f[1] == ' ') { lvl = f[0]; fm = f + 2; }
+          +  char msg[2048]; va_list a; va_start(a, f); vsnprintf(msg, sizeof msg, fm, a); va_end(a);
+          +  pthread_mutex_lock(&g_lm);
+          +  if (f == g_lastFmt) { g_rep++; if (g_rep > 20 && (g_rep % 1000) != 0) { pthread_mutex_unlock(&g_lm); return; } }
+          +  else { if (g_rep > 20) { char r[96]; snprintf(r, sizeof r, "(previous message repeated %u more times, similar lines suppressed)", g_rep - 20); log_line('W', r); } g_lastFmt = f; g_rep = 0; }
+          +  log_line(lvl, msg); pthread_mutex_unlock(&g_lm);
+          +}
+          +int ios_trace_enabled(void) { if (g_trace < 0) { char p[640]; snprintf(p, sizeof p, "%s/SHARVIEW/ge_trace.txt", g_docs); g_trace = access(p, F_OK) == 0; } return g_trace; }
+          +void ios_exit_requested(void) { ios_log("I host: exit requested by the engine"); }
+          +
+          +static unsigned rss_mb(void) { struct task_basic_info ti; mach_msg_type_number_t c = TASK_BASIC_INFO_COUNT; if (task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&ti, &c) != KERN_SUCCESS) return 0; return (unsigned)(ti.resident_size >> 20); }
+          +
+          +/* fatal-signal path: only write()/backtrace - no malloc, no stdio */
+          +static void crash_handler(int sig, siginfo_t *si, void *ctx) {
+          +  (void)ctx; static volatile int in; if (in++) _exit(128 + sig);
+          +  char b[200]; const char *nm = sig == SIGSEGV ? "SIGSEGV" : sig == SIGBUS ? "SIGBUS" : sig == SIGABRT ? "SIGABRT" : sig == SIGILL ? "SIGILL" : sig == SIGFPE ? "SIGFPE" : "SIGTRAP";
+          +  int n = snprintf(b, sizeof b, "\n*** FATAL %s (signal %d) code=%d fault_addr=%p thread=%s rss=%uMB ***\n", nm, sig, si ? si->si_code : 0, si ? si->si_addr : 0, pthread_main_np() ? "main" : "game", rss_mb());
+          +  int fd = g_logfd >= 0 ? g_logfd : 2; if (n > 0) write(fd, b, (size_t)n);
+          +  void *bt[48]; int c = backtrace(bt, 48); backtrace_symbols_fd(bt, c, fd);
+          +  fsync(fd); signal(sig, SIG_DFL); raise(sig);
+          +}
+          +static void uncaught_exc(NSException *e) { ios_log("E host: uncaught NSException %s: %s\n%s", e.name.UTF8String, e.reason.UTF8String, [[e callStackSymbols] componentsJoinedByString:@"\n"].UTF8String); }
+          +static void install_crash_handlers(void) {
+          +  struct sigaction sa; memset(&sa, 0, sizeof sa); sa.sa_sigaction = crash_handler; sa.sa_flags = SA_SIGINFO; sigemptyset(&sa.sa_mask);
+          +  int sg[] = { SIGSEGV, SIGBUS, SIGABRT, SIGILL, SIGFPE, SIGTRAP }; for (unsigned i = 0; i < sizeof sg / sizeof *sg; i++) sigaction(sg[i], &sa, 0);
+          +  NSSetUncaughtExceptionHandler(uncaught_exc);
+          +}
+          +static void log_session_header(void) {
+          +  struct utsname u; uname(&u); UIScreen *sc = [UIScreen mainScreen];
+          +  ios_log("I host: ===== SHAR iOS start | %s | iOS %s | screen %.0fx%.0f @%.1fx | log v2 =====", u.machine, [[UIDevice currentDevice] systemVersion].UTF8String, sc.bounds.size.width, sc.bounds.size.height, (double)sc.scale);
+          +  ios_log("I host: docs=%s rss=%uMB", g_docs, rss_mb());
+          +  char d[640]; snprintf(d, sizeof d, "%s/SHARVIEW", g_docs); DIR *dd = opendir(d); int n = 0; if (dd) { struct dirent *e; while ((e = readdir(dd))) if (e->d_name[0] != '.') n++; closedir(dd); }
+          +  if (!dd) ios_log("E host: game data folder %s is missing", d);
+          +  else if (n == 0 || (n == 1 && access([[NSString stringWithFormat:@"%s/PUT_GAME_DATA_HERE.txt", d] UTF8String], F_OK) == 0)) ios_log("E host: game data folder %s is EMPTY - copy the converted game data (tools/ship.sh output) there", d);
+          +  else ios_log("I host: game data folder %s has %d entries%s", d, n, ios_trace_enabled() ? " | GE trace ON (ge_trace.txt present)" : "");
+          +}
+           
+           /* ---------------- GL view ---------------- */
+           @interface GLView : UIView @end
+           @implementation GLView + (Class)layerClass { return [CAEAGLLayer class]; } @end
+           static GLView *g_view; static EAGLContext *g_ctx; static GLuint g_fbo, g_rbo, g_zrb; static GLint g_w, g_h;
+          +static volatile int g_active = 1;   /* 0 while the app is inactive/backgrounded: iOS kills processes that touch GL then */
+          +static void wait_active(void) { while (!g_active) usleep(20000); }
+           
+           void ios_gl_make_current(void) {
+          +  wait_active();
+             if (!g_ctx) {
+               __block CAEAGLLayer *l = nil;
+               dispatch_sync(dispatch_get_main_queue(), ^{ l = (CAEAGLLayer *)g_view.layer; l.opaque = YES; l.contentsScale = [UIScreen mainScreen].scale > 1.0 ? 1.0 : 1.0;
+                 l.drawableProperties = @{ kEAGLDrawablePropertyRetainedBacking: @NO, kEAGLDrawablePropertyColorFormat: kEAGLColorFormatRGBA8 }; });
+               g_ctx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES2]; [EAGLContext setCurrentContext:g_ctx];
+               glGenFramebuffers(1, &g_fbo); glGenRenderbuffers(1, &g_rbo); glBindFramebuffer(GL_FRAMEBUFFER, g_fbo); glBindRenderbuffer(GL_RENDERBUFFER, g_rbo);
+          -    [g_ctx renderbufferStorage:GL_RENDERBUFFER fromDrawable:l]; glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_rbo);
+          +    if (!g_ctx) { ios_log("E host: EAGLContext creation failed (OpenGL ES 2.0 unavailable?)"); return; }
+          +    if (![g_ctx renderbufferStorage:GL_RENDERBUFFER fromDrawable:l]) ios_log("E host: renderbufferStorage:fromDrawable failed"); glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, g_rbo);
+               glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &g_w); glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &g_h);
+               glGenRenderbuffers(1, &g_zrb); glBindRenderbuffer(GL_RENDERBUFFER, g_zrb); glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, g_w, g_h);
+               glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_zrb); glBindRenderbuffer(GL_RENDERBUFFER, g_rbo);
+          -    ios_log("GL %dx%d status=%x", g_w, g_h, glCheckFramebufferStatus(GL_FRAMEBUFFER));
+          +    { GLenum st = glCheckFramebufferStatus(GL_FRAMEBUFFER); if (st == GL_FRAMEBUFFER_COMPLETE) ios_log("I host: GL context ready, drawable %dx%d, framebuffer complete", g_w, g_h); else ios_log("E host: GL framebuffer INCOMPLETE (status 0x%x, drawable %dx%d) - nothing will be drawn", st, g_w, g_h); }
+             } else [EAGLContext setCurrentContext:g_ctx];
+           }
+           void ios_screen_size(int *w, int *h) { ios_gl_make_current(); *w = g_w; *h = g_h; }
+          -void ios_present(void) { ios_gl_make_current(); glBindFramebuffer(GL_FRAMEBUFFER, g_fbo); glBindRenderbuffer(GL_RENDERBUFFER, g_rbo); [g_ctx presentRenderbuffer:GL_RENDERBUFFER]; glBindFramebuffer(GL_FRAMEBUFFER, g_fbo); }
+          +void ios_present(void) { ios_gl_make_current(); { GLenum e = glGetError(); static unsigned n; if (e != GL_NO_ERROR && n++ < 20) ios_log("W host: GL error 0x%x pending at present", e); }
+          +  glBindFramebuffer(GL_FRAMEBUFFER, g_fbo); glBindRenderbuffer(GL_RENDERBUFFER, g_rbo); [g_ctx presentRenderbuffer:GL_RENDERBUFFER]; glBindFramebuffer(GL_FRAMEBUFFER, g_fbo); }
+           
+           /* ---------------- audio: ring buffer + AudioQueue (44.1k stereo s16) ---------------- */
+           #define RING 16384
+          @@ -111,12 +182,21 @@ int sceJpegDecodeMJpeg(unsigned char *j, unsigned size, void *rgba, unsigned dht
+           - (NSUInteger)supportedInterfaceOrientations { return UIInterfaceOrientationMaskLandscape; }
+           @end
+           
+          -static void *game_thread(void *a) { (void)a; ios_gl_make_current(); char *argv[] = { (char *)"SHARVIEW", 0 }; ios_log("shar_main start"); int r = shar_main(1, argv); ios_log("shar_main returned %d", r); return 0; }
+          +static void *game_thread(void *a) { (void)a; ios_gl_make_current(); char *argv[] = { (char *)"SHARVIEW", 0 }; ios_log("I host: shar_main start (rss=%uMB)", rss_mb()); int r = shar_main(1, argv); if (r) ios_log("W host: shar_main returned %d (rss=%uMB)", r, rss_mb()); else ios_log("I host: shar_main returned 0 (rss=%uMB)", rss_mb()); return 0; }
+           
+           @interface AppDelegate : UIResponder <UIApplicationDelegate> @property (strong) UIWindow *window; @end
+           @implementation AppDelegate
+          +- (void)applicationWillResignActive:(UIApplication *)a { ios_log("I host: will resign active (rss=%uMB)", rss_mb()); g_active = 0; }
+          +- (void)applicationDidBecomeActive:(UIApplication *)a { ios_log("I host: did become active"); g_active = 1; }
+          +- (void)applicationDidEnterBackground:(UIApplication *)a { ios_log("I host: entered background"); }
+          +- (void)applicationDidReceiveMemoryWarning:(UIApplication *)a { ios_log("W host: MEMORY WARNING rss=%uMB", rss_mb()); }
+          +- (void)applicationWillTerminate:(UIApplication *)a { ios_log("I host: will terminate"); }
+           - (BOOL)application:(UIApplication *)app didFinishLaunchingWithOptions:(NSDictionary *)o {
+          -  NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0]; strlcpy(g_docs, d.UTF8String, sizeof g_docs);
+          +  NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];
+          +  /* installed from the .deb into /Applications: data lives in /var/mobile/Documents/SHARVIEW (created by DEBIAN/postinst) */
+          +  if ([[[NSBundle mainBundle] bundlePath] hasPrefix:@"/Applications/"] && access("/var/mobile/Documents", W_OK) == 0) d = @"/var/mobile/Documents";
+          +  strlcpy(g_docs, d.UTF8String, sizeof g_docs);
+          +  install_crash_handlers(); log_session_header();
+             [[NSFileManager defaultManager] createDirectoryAtPath:[d stringByAppendingPathComponent:@"SHARVIEW"] withIntermediateDirectories:YES attributes:nil error:nil];
+             self.window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds]; VC *vc = [VC new]; self.window.rootViewController = vc;
+             g_view = [[GLView alloc] initWithFrame:self.window.bounds]; g_view.contentScaleFactor = 1.0; g_view.multipleTouchEnabled = YES; g_view.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight; [vc.view addSubview:g_view];
+          diff --git a/ios/shim/psp_compat.h b/ios/shim/psp_compat.h
+          index 1555133..a993a8e 100644
+          --- a/ios/shim/psp_compat.h
+          +++ b/ios/shim/psp_compat.h
+          @@ -354,7 +354,8 @@ void ios_present(void);                 /* swap the GL renderbuffer */
+           void ios_gl_make_current(void);
+           void ios_screen_size(int *w, int *h);   /* backing size in pixels */
+           const char *ios_docs_dir(void);
+          -void ios_log(const char *fmt, ...);
+          +void ios_log(const char *fmt, ...);      /* first char of fmt = level: E/W/I/T (see ios_host.m) */
+          +int ios_trace_enabled(void);              /* true if Documents/SHARVIEW/ge_trace.txt exists */
+           void ios_exit_requested(void);
+           extern volatile unsigned ios_pad_buttons; extern volatile signed char ios_pad_lx, ios_pad_ly;
+           
+          diff --git a/ios/shim/psp_sys.c b/ios/shim/psp_sys.c
+          index fbdad76..134e09e 100644
+          --- a/ios/shim/psp_sys.c
+          +++ b/ios/shim/psp_sys.c
+          @@ -51,7 +51,7 @@ static void mp(const char *in, char *out, size_t n) {
+           SceUID sceIoOpen(const char *f, int fl, SceMode m) {
+             char b[1024]; mp(f, b, sizeof b); int o = 0;
+             o = (fl & 3) == 3 ? O_RDWR : (fl & 2) ? O_WRONLY : O_RDONLY; if (fl & PSP_O_CREAT) o |= O_CREAT; if (fl & PSP_O_TRUNC) o |= O_TRUNC; if (fl & PSP_O_APPEND) o |= O_APPEND; if (fl & PSP_O_EXCL) o |= O_EXCL;
+          -  int fd = open(b, o, 0644); return fd < 0 ? (int)0x80010002 : fd; (void)m;
+          +  int fd = open(b, o, 0644); if (fd < 0) { static int n; if (n++ < 60 && !(o & O_CREAT)) ios_log("W io: open('%s') failed: %s (mapped to %s)", f, strerror(errno), b); return (int)0x80010002; } return fd; (void)m;
+           }
+           int sceIoClose(SceUID fd) { return close(fd); }
+           int sceIoRead(SceUID fd, void *d, SceSize n) { return (int)read(fd, d, n); }
+          @@ -75,12 +75,12 @@ int sceIoIoctl(SceUID a, unsigned b, void *c, int d, void *e, int f) { (void)a;
+           int sceIoDevctl(const char *a, int b, void *c, int d, void *e, int f) { (void)a; (void)b; (void)c; (void)d; (void)e; (void)f; return (int)0x80010016; }
+           
+           /* ---- threads / semas ---- */
+          -typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; } Th;
+          +typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; unsigned char arg[128]; unsigned al; } Th;
+           static Th ths[64]; static int nth = 1;
+          -static void *tmain(void *a) { Th *t = a; t->fn(0, 0); t->done = 1; return 0; }
+          +static void *tmain(void *a) { Th *t = a; t->fn(t->al, t->al ? (void *)t->arg : (void *)0); t->done = 1; return 0; }
+           SceUID sceKernelCreateThread(const char *n, SceKernelThreadEntry e, int p, int s, unsigned at, void *o) { (void)p; (void)s; (void)at; (void)o; if (nth >= 64) return -1; Th *t = &ths[nth]; memset(t, 0, sizeof *t); t->fn = e; t->id = nth; strncpy(t->name, n, 31); return nth++; }
+          -int sceKernelStartThread(SceUID id, SceSize al, void *ap) { Th *t = &ths[id]; (void)al; (void)ap; pthread_attr_t at; pthread_attr_init(&at); pthread_attr_setstacksize(&at, 512 * 1024);
+          -  t->started = 1; return pthread_create(&t->t, &at, tmain, t); }
+          +int sceKernelStartThread(SceUID id, SceSize al, void *ap) { Th *t = &ths[id]; t->al = al > 128 ? 128 : al; if (ap && t->al) memcpy(t->arg, ap, t->al); pthread_attr_t at; pthread_attr_init(&at); pthread_attr_setstacksize(&at, 512 * 1024);
+          +  t->started = 1; int pr = pthread_create(&t->t, &at, tmain, t); if (pr) ios_log("E sys: pthread_create failed for thread '%s' (err %d)", t->name, pr); return pr; }
+           int sceKernelDeleteThread(SceUID id) { (void)id; return 0; }
+           int sceKernelTerminateDeleteThread(SceUID id) { (void)id; return 0; }
+           int sceKernelExitDeleteThread(int s) { pthread_exit((void *)(intptr_t)s); return 0; }
+          diff --git a/ios/src/ge_gles2.c b/ios/src/ge_gles2.c
+          index 7c7f023..31f32b8 100644
+          --- a/ios/src/ge_gles2.c
+          +++ b/ios/src/ge_gles2.c
+          @@ -8,6 +8,11 @@
+           #include <GLES2/gl2.h>
+           #endif
+           #include "psp_compat.h"
+          +#include <pthread.h>
+          +#ifdef __APPLE__
+          +#include <mach/mach.h>
+          +#include <mach/vm_map.h>
+          +#endif
+           
+           #define GW 480
+           #define GH 272
+          @@ -26,54 +31,84 @@ static struct {
+           } S;
+           
+           enum { EN_ALPHA = 0, EN_DEPTH, EN_BLEND = 4, EN_CULL = 5, EN_FOG = 7, EN_TEX = 9 };
+          -static int vx, vy, vw, vh, fresh = 1, glready;
+          -static GLuint prog, vbo_dummy; static GLint uMVP, uTex, uUseTex, uFunc, uTcc, uAF, uARef, uFog, uFogC, uFogE, uFogS, uZ, uThru, uVP, uOff, uEnv, uTS, uTO;
+          +static int vx, vy, vw, vh, fresh = 1, glready, trace_left;
+          +/* ---- diagnostics counters (reported once a second by ge_stats_tick) ---- */
+          +static struct { unsigned draws, verts, clears, texNew, texHit, texFail, badReads, noTexPtr, glErr, thruDraws, spriteDraws; } ST;
+          +static unsigned lastErr; static int errBudget = 40;
+          +#define GLCHK(tag) glchk(tag, __LINE__)
+          +static void glchk(const char *tag, int line) {
+          +  GLenum e = glGetError(); if (e == GL_NO_ERROR) return; ST.glErr++; lastErr = e;
+          +  if (errBudget > 0) { errBudget--; ios_log("W ge: GL error 0x%04x after %s (ge_gles2.c:%d)%s", e, tag, line, errBudget == 0 ? " - further GL errors suppressed" : ""); } }
+          +
+          +static GLuint prog, vbo_dummy; static GLint uMVP, uTex, uUseTex, uFunc, uTcc, uAF, uARef, uFog, uFogC, uFogE, uFogS, uZ, uThru, uVP, uEnv, uTS, uTO;
+           static GLint aPos, aUV, aCol;
+           
+           static const char *VS =
+            "attribute vec3 aPos; attribute vec2 aUV; attribute vec4 aCol;\n"
+          - "uniform mat4 uMVP; uniform float uThru; uniform vec2 uZ; uniform vec4 uVP; uniform vec2 uOff; uniform vec4 uTS; uniform vec4 uTO;\n"
+          + "uniform mat4 uMVP; uniform float uThru; uniform vec2 uZ; uniform vec4 uVP; uniform vec4 uTS; uniform vec4 uTO;\n"
+            "varying vec2 vUV; varying vec4 vCol; varying float vW;\n"
+          + /* uVP = (ax, ay, bx, by): GL clip = (c.x*ax + c.w*bx, c.y*ay + c.w*by, c.z*uZ.x + c.w*uZ.y, c.w). Same result as the GE
+          +  * viewport transform, but linear in clip space: no division by c.w (w==0 / behind the eye no longer produces NaN/inf). */
+            "void main(){ vCol=aCol; vUV=aUV*uTS.xy+uTO.xy;\n"
+            " if(uThru>0.5){ float z=aPos.z/65535.0; gl_Position=vec4(aPos.x/240.0-1.0,1.0-aPos.y/136.0,z*2.0-1.0,1.0); vW=1.0; }\n"
+          - " else { vec4 c=uMVP*vec4(aPos,1.0); float zn=c.z/c.w; float zs=zn*uZ.x+uZ.y; vec2 s=vec2(c.x/c.w*uVP.x+uVP.z-uOff.x, c.y/c.w*uVP.y+uVP.w-uOff.y);\n"
+          - "  gl_Position=vec4((s.x/240.0-1.0)*c.w,(1.0-s.y/136.0)*c.w,(zs/32767.5-1.0)*c.w,c.w); vW=c.w; } }\n";
+          + " else { vec4 c=uMVP*vec4(aPos,1.0); gl_Position=vec4(c.x*uVP.x+c.w*uVP.z, c.y*uVP.y+c.w*uVP.w, c.z*uZ.x+c.w*uZ.y, c.w); vW=c.w; } }\n";
+           static const char *FS =
+          - "precision mediump float; varying vec2 vUV; varying vec4 vCol; varying float vW;\n"
+          + "#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n"
+          + "varying vec2 vUV; varying vec4 vCol; varying float vW;\n"
+            "uniform sampler2D uTex; uniform float uUseTex; uniform float uFunc; uniform float uTcc; uniform float uAF; uniform float uARef;\n"
+            "uniform float uFog; uniform vec3 uFogC; uniform vec2 uFogE; uniform vec3 uEnv;\n"
+            "void main(){ vec4 c=vCol;\n"
+          - " if(uUseTex>0.5){ vec4 t=texture2D(uTex,vUV); if(uTcc<0.5) t.a=1.0;\n"
+          - "  if(uFunc<0.5) c=c*t; else if(uFunc<1.5){ c.rgb=mix(c.rgb,t.rgb,t.a); } else if(uFunc<2.5){ c.rgb=mix(c.rgb,uEnv,t.rgb); c.a*=t.a; }\n"
+          - "  else if(uFunc<3.5) c=t; else { c.rgb+=t.rgb; c.a*=t.a; } }\n"
+          + " if(uUseTex>0.5){ vec4 t=texture2D(uTex,vUV); float ta=(uTcc<0.5)?1.0:t.a;\n"
+          + "  if(uFunc<0.5){ c.rgb*=t.rgb; c.a*=ta; } else if(uFunc<1.5){ c.rgb=mix(c.rgb,t.rgb,ta); } else if(uFunc<2.5){ c.rgb=mix(c.rgb,uEnv,t.rgb); c.a*=ta; }\n"
+          + "  else if(uFunc<3.5){ c.rgb=t.rgb; if(uTcc>0.5) c.a=t.a; } else { c.rgb+=t.rgb; c.a*=ta; } }\n"
+            " if(uAF>0.5){ float r=uARef; int f=int(uAF+0.5); bool ok=true;\n"
+            "  if(f==1) ok=false; else if(f==3) ok=abs(c.a-r)<0.002; else if(f==4) ok=abs(c.a-r)>=0.002; else if(f==5) ok=c.a<r; else if(f==6) ok=c.a<=r; else if(f==7) ok=c.a>r; else if(f==8) ok=c.a>=r;\n"
+            "  if(!ok) discard; }\n"
+            " if(uFog>0.5){ float f=clamp((uFogE.x-vW)*uFogE.y,0.0,1.0); c.rgb=mix(uFogC,c.rgb,f); }\n"
+            " gl_FragColor=c; }\n";
+           
+          -static GLuint sh(GLenum t, const char *s) { GLuint o = glCreateShader(t); glShaderSource(o, 1, &s, 0); glCompileShader(o);
+          -  GLint ok = 0; glGetShaderiv(o, GL_COMPILE_STATUS, &ok); if (!ok) { char b[512]; glGetShaderInfoLog(o, 512, 0, b); ios_log("shader: %s", b); } return o; }
+          +static GLuint sh(GLenum t, const char *src) { GLuint o = glCreateShader(t); glShaderSource(o, 1, &src, 0); glCompileShader(o);
+          +  GLint ok = 0; glGetShaderiv(o, GL_COMPILE_STATUS, &ok); char b[1024]; b[0] = 0; glGetShaderInfoLog(o, sizeof b, 0, b);
+          +  if (!ok) ios_log("E ge: %s shader FAILED to compile: %s", t == GL_VERTEX_SHADER ? "vertex" : "fragment", b);
+          +  else if (b[0]) ios_log("W ge: %s shader log: %s", t == GL_VERTEX_SHADER ? "vertex" : "fragment", b);
+          +  return o; }
+           static void gl_init(void) {
+          +  ios_log("I gl: vendor=%s renderer=%s version=%s glsl=%s", (const char *)glGetString(GL_VENDOR), (const char *)glGetString(GL_RENDERER), (const char *)glGetString(GL_VERSION), (const char *)glGetString(GL_SHADING_LANGUAGE_VERSION));
+          +  { GLint rng[2] = { 0, 0 }, prec = 0, mt = 0; glGetShaderPrecisionFormat(GL_FRAGMENT_SHADER, GL_HIGH_FLOAT, rng, &prec); glGetIntegerv(GL_MAX_TEXTURE_SIZE, &mt);
+          +    ios_log("I gl: fragment highp %s (range 2^%d, %d bits), max texture %d", prec ? "available" : "NOT available (mediump fallback)", rng[1], prec, mt); }
+             prog = glCreateProgram(); glAttachShader(prog, sh(GL_VERTEX_SHADER, VS)); glAttachShader(prog, sh(GL_FRAGMENT_SHADER, FS));
+          -  glBindAttribLocation(prog, 0, "aPos"); glBindAttribLocation(prog, 1, "aUV"); glBindAttribLocation(prog, 2, "aCol"); glLinkProgram(prog); glUseProgram(prog);
+          +  glBindAttribLocation(prog, 0, "aPos"); glBindAttribLocation(prog, 1, "aUV"); glBindAttribLocation(prog, 2, "aCol"); glLinkProgram(prog);
+          +  { GLint ok = 0; glGetProgramiv(prog, GL_LINK_STATUS, &ok); if (!ok) { char b[1024]; glGetProgramInfoLog(prog, sizeof b, 0, b); ios_log("E ge: program link FAILED: %s", b); } else ios_log("I ge: shader program linked"); }
+          +  glUseProgram(prog);
+           #define U(n) glGetUniformLocation(prog, n)
+             uMVP = U("uMVP"); uTex = U("uTex"); uUseTex = U("uUseTex"); uFunc = U("uFunc"); uTcc = U("uTcc"); uAF = U("uAF"); uARef = U("uARef"); uFog = U("uFog"); uFogC = U("uFogC");
+          -  uFogE = U("uFogE"); uZ = U("uZ"); uThru = U("uThru"); uVP = U("uVP"); uOff = U("uOff"); uEnv = U("uEnv"); uTS = U("uTS"); uTO = U("uTO");
+          +  uFogE = U("uFogE"); uZ = U("uZ"); uThru = U("uThru"); uVP = U("uVP"); uEnv = U("uEnv"); uTS = U("uTS"); uTO = U("uTO");
+          +  if (uMVP < 0 || uTex < 0 || uVP < 0 || uZ < 0) ios_log("E ge: missing uniforms (uMVP=%d uTex=%d uVP=%d uZ=%d) - shader optimised away?", uMVP, uTex, uVP, uZ);
+             glUniform1i(uTex, 0); glEnableVertexAttribArray(0); glEnableVertexAttribArray(1); glEnableVertexAttribArray(2); glready = 1;
+          -  S.vs[0] = 240; S.vs[1] = -136; S.vs[2] = 32767.5f; S.vp[0] = 2048; S.vp[1] = 2048; S.vp[2] = 32767.5f; S.off[0] = 2048 - 240; S.off[1] = 2048 - 136; S.tsu = S.tsv = 1;
+          +  for (int i = 0; i < 16; i++) S.world[i] = S.view[i] = S.proj[i] = S.tgen[i] = (i % 5 == 0) ? 1.f : 0.f;
+          +  S.sx2 = GW - 1; S.sy2 = GH - 1; S.zFunc = 7;
+          +  S.vs[0] = 240; S.vs[1] = -136; S.vs[2] = -32767.5f; S.vp[0] = 2048; S.vp[1] = 2048; S.vp[2] = 32767.5f; S.off[0] = 2048 - 240; S.off[1] = 2048 - 136; S.tsu = S.tsv = 1;
+          +  GLCHK("gl_init"); trace_left = ios_trace_enabled() ? 200 : 0; if (trace_left) ios_log("I ge: trace ON (first 200 draws will be dumped)");
+           }
+          +static int lastW, lastH;
+           static void setup_view(void) {
+             int w, h; ios_screen_size(&w, &h); float a = (float)GW / GH; vw = w; vh = (int)(w / a); if (vh > h) { vh = h; vw = (int)(h * a); } vx = (w - vw) / 2; vy = (h - vh) / 2;
+          +  if (w != lastW || h != lastH) { ios_log("I ge: framebuffer %dx%d -> 480x272 viewport at %d,%d size %dx%d", w, h, vx, vy, vw, vh); lastW = w; lastH = h; }
+             glDisable(GL_SCISSOR_TEST); glViewport(0, 0, w, h); glClearColor(0, 0, 0, 1); glDepthMask(GL_TRUE); glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); glViewport(vx, vy, vw, vh);
+           }
+           
+           /* ---------------- textures ---------------- */
+           typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; } TC;
+           static TC tc[384]; static int tcn;
+          +/* ge_invalidate_range is called from ANY thread (Dcache writeback hooks) - GL calls are only legal on the render thread,
+          + * so it just marks entries dead and queues the GL names; ge_flush_deletes() runs on the render thread. */
+          +static pthread_mutex_t tcm = PTHREAD_MUTEX_INITIALIZER; static GLuint delq[512]; static int deln;
+          +static void ge_flush_deletes(void) { pthread_mutex_lock(&tcm); if (deln) { glDeleteTextures(deln, delq); deln = 0; } pthread_mutex_unlock(&tcm); }
+           void ge_invalidate_range(const void *p, unsigned n) {
+             uintptr_t a = (uintptr_t)p, b = a + n;
+          -  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p < b && tc[i].p + tc[i].bytes > a) { glDeleteTextures(1, &tc[i].id); tc[i].live = 0; }
+          +  pthread_mutex_lock(&tcm);
+          +  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p < b && tc[i].p + tc[i].bytes > a) { if (deln < 512) delq[deln++] = tc[i].id; tc[i].live = 0; }
+          +  pthread_mutex_unlock(&tcm);
+           }
+           static int bpp_x2(int f) { return f == 4 ? 1 : f == 5 ? 2 : f <= 2 ? 4 : 8; }   /* bytes*2 per texel */
+           static void unswz(uint8_t *dst, const uint8_t *src, int rowb, int h) {
+          @@ -89,44 +124,96 @@ static uint32_t conv(uint32_t v, int f) {
+             default: return v; }
+             return r | (g << 8) | (b << 16) | (a << 24);
+           }
+          +/* safe_copy: memcpy from a pointer that may be stale / too short. The GE list carries raw PSP-style pointers and per-level
+          + * sizes; a texture level described bigger than the buffer behind it would walk into a guard page (EXC_BAD_ACCESS).
+          + * Unreadable pages are zero-filled and counted instead. Returns the number of readable bytes. */
+          +static size_t safe_copy(void *dst, const void *src, size_t n) {
+          +#ifdef __APPLE__
+          +  uint8_t *d = (uint8_t *)dst; uintptr_t s_ = (uintptr_t)src; vm_size_t got = 0; if (!n) return 0;
+          +  if (vm_read_overwrite(mach_task_self(), (vm_address_t)s_, (vm_size_t)n, (vm_address_t)d, &got) == KERN_SUCCESS && got == n) return n;
+          +  size_t ok = 0, off = 0; const size_t PG = 4096;
+          +  while (off < n) { size_t a = (s_ + off) & (PG - 1), len = PG - a; if (len > n - off) len = n - off; got = 0;
+          +    if (vm_read_overwrite(mach_task_self(), (vm_address_t)(s_ + off), (vm_size_t)len, (vm_address_t)(d + off), &got) == KERN_SUCCESS && got == len) ok += len; else memset(d + off, 0, len);
+          +    off += len; }
+          +  if (ok < n) { ST.badReads++; ios_log("W ge: texture read %p+%u: only %u bytes mapped (stale/short level?)", src, (unsigned)n, (unsigned)ok); }
+          +  return ok;
+          +#else
+          +  memcpy(dst, src, n); return n;
+          +#endif
+          +}
+          +static const char *fmt_name(int f) { static const char *n[] = { "5650", "5551", "4444", "8888", "T4", "T8", "T16", "T32" }; return (f >= 0 && f < 8) ? n[f] : "?"; }
+          +
+           static GLuint tex_get(void) {
+          -  int fmt = S.texFmt, w = 1 << (S.tw[0] & 15), h = 1 << (S.th[0] & 15); uintptr_t p = S.slot[4]; if (!p || fmt > 5) return 0;
+          +  int fmt = S.texFmt, w = 1 << (S.tw[0] & 15), h = 1 << (S.th[0] & 15); uintptr_t p = S.slot[4];
+          +  if (!p) { ST.noTexPtr++; return 0; }
+          +  if (fmt > 5) { ST.texFail++; if (errBudget > 0) ios_log("W ge: unsupported texture format %d", fmt); return 0; }
+          +  if ((S.tw[0] & 15) > 9 || (S.th[0] & 15) > 9) { ST.texFail++; return 0; }   /* GE max is 512: a bigger value is stale/garbage state */
+             uint32_t cl[256]; unsigned ch = 0; uintptr_t cp = S.slot[3];
+          -  if (fmt >= 4) { if (!cp) return 0; int n = fmt == 4 ? 16 : 256; int cf = S.clutFmt & 3; unsigned sh = (S.clutFmt >> 2) & 31, mk = (S.clutFmt >> 8) & 255, st = (S.clutFmt >> 16) & 31;
+          -    for (int i = 0; i < n; i++) { unsigned idx = (((unsigned)i >> sh) & mk) + st * 16; uint32_t v = cf == 3 ? ((const uint32_t *)cp)[idx & 255] : ((const uint16_t *)cp)[idx & 511]; cl[i] = conv(v, cf); ch = ch * 31 + cl[i]; } }
+          -  int lv = (fmt == 4 || fmt == 5 || 1) ? S.texMips + 1 : 1; if (lv > 8) lv = 8;
+          -  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) return tc[i].id;
+          -  GLuint id; glGenTextures(1, &id); glBindTexture(GL_TEXTURE_2D, id); size_t total = 0;
+          +  if (fmt >= 4) { if (!cp) { ST.texFail++; return 0; } int n = fmt == 4 ? 16 : 256; int cf = S.clutFmt & 3; unsigned sh = (S.clutFmt >> 2) & 31, mk = (S.clutFmt >> 8) & 255, st = (S.clutFmt >> 16) & 31;
+          +    uint32_t cb[256]; safe_copy(cb, (const void *)cp, sizeof cb);   /* up to 1 KB: 256 x 8888 or 512 x 16 bit */
+          +    for (int i = 0; i < n; i++) { unsigned idx = (((unsigned)i >> sh) & mk) + st * 16; uint32_t v = cf == 3 ? cb[idx & 255] : ((const uint16_t *)cb)[idx & 511]; cl[i] = conv(v, cf); ch = ch * 31 + cl[i]; } }
+          +  int lv = S.texMips + 1; if (lv > 8) lv = 8;
+          +  pthread_mutex_lock(&tcm);
+          +  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) { ST.texHit++; GLuint hit = tc[i].id; pthread_mutex_unlock(&tcm); return hit; }
+          +  pthread_mutex_unlock(&tcm);
+          +  GLuint id; glGenTextures(1, &id); glBindTexture(GL_TEXTURE_2D, id); size_t total = 0; int up = 0; uint32_t *prev = 0; int pw = 0, ph = 0;
+             for (int l = 0; l < lv; l++) {
+          -    int lw = 1 << (S.tw[l] & 15), lh = 1 << (S.th[l] & 15); uintptr_t lp = S.slot[4 + l]; if (!lp) { lv = l; break; }
+          +    /* level sizes are derived (halving), not read from possibly stale per-level registers */
+          +    int lw = w >> l > 0 ? w >> l : 1, lh = h >> l > 0 ? h >> l : 1; uintptr_t lp = S.slot[4 + l]; if (!lp) break;
+               int rowb = lw * bpp_x2(fmt) / 2; if (fmt == 4) rowb = (lw + 1) / 2; int tb = S.tbw[l] ? S.tbw[l] : lw; int stride = fmt == 4 ? tb / 2 : tb * bpp_x2(fmt) / 2; if (stride < rowb) stride = rowb;
+          -    uint8_t *lin = (uint8_t *)malloc((size_t)stride * lh + 16); if (!lin) break;
+          -    if (S.texSwz) { uint8_t *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1); unswz(tmp, (const uint8_t *)lp, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); free(tmp); } else memcpy(lin, (const void *)lp, (size_t)stride * lh);
+          -    uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4);
+          +    uint8_t *lin = (uint8_t *)malloc((size_t)stride * lh + 16); uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4); if (!lin || !o) { free(lin); free(o); break; }
+          +    if (S.texSwz) {
+          +      int rb = stride < 16 ? 16 : stride; size_t ssz = (size_t)(rb / 16) * 128 * (size_t)((lh + 7) / 8);   /* exactly what unswz() reads */
+          +      uint8_t *sb = (uint8_t *)malloc(ssz), *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1);
+          +      if (sb && tmp) { safe_copy(sb, (const void *)lp, ssz); unswz(tmp, sb, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); } else memset(lin, 0, (size_t)stride * lh);
+          +      free(sb); free(tmp);
+          +    } else safe_copy(lin, (const void *)lp, (size_t)stride * lh);
+               for (int y = 0; y < lh; y++) { const uint8_t *r = lin + (size_t)y * stride; uint32_t *d = o + (size_t)y * lw;
+                 for (int x = 0; x < lw; x++) { uint32_t v;
+          -        if (fmt == 4) v = cl[(x & 1) ? r[x >> 1] >> 4 : r[x >> 1] & 15]; else if (fmt == 5) v = cl[r[x]]; else if (fmt == 3) v = ((const uint32_t *)r)[x]; else v = conv(((const uint16_t *)r)[x], fmt); d[x] = v; } }
+          -    glTexImage2D(GL_TEXTURE_2D, l, GL_RGBA, lw, lh, 0, GL_RGBA, GL_UNSIGNED_BYTE, o); total += (size_t)lw * lh * 4; free(o); free(lin);
+          -    if (lw == 1 && lh == 1) { lv = l + 1; break; }
+          +        if (fmt == 4) v = cl[(x & 1) ? r[x >> 1] >> 4 : r[x >> 1] & 15]; else if (fmt == 5) v = cl[r[x]]; else if (fmt == 3) { uint32_t t; memcpy(&t, r + x * 4, 4); v = t; } else { uint16_t t; memcpy(&t, r + x * 2, 2); v = conv(t, fmt); } d[x] = v; } }
+          +    glTexImage2D(GL_TEXTURE_2D, l, GL_RGBA, lw, lh, 0, GL_RGBA, GL_UNSIGNED_BYTE, o); total += (size_t)lw * lh * 4; free(lin);
+          +    free(prev); prev = o; pw = lw; ph = lh; up = l + 1;
+          +    if (lw == 1 && lh == 1) break;
+             }
+          +  /* A GLES2 mip chain must be complete down to 1x1 or the texture samples BLACK. The engine stops its chains early
+          +   * (levels < 16 px are dropped), so finish the chain with a box filter on the CPU. */
+          +  if (up > 1 || S.texMips > 0) {
+          +    while (prev && (pw > 1 || ph > 1)) {
+          +      int nw = pw > 1 ? pw / 2 : 1, nh = ph > 1 ? ph / 2 : 1; uint32_t *n = (uint32_t *)malloc((size_t)nw * nh * 4); if (!n) break;
+          +      for (int y = 0; y < nh; y++) for (int x = 0; x < nw; x++) { unsigned sum[4] = { 0, 0, 0, 0 };
+          +        for (int dy = 0; dy < 2; dy++) for (int dx = 0; dx < 2; dx++) { int sx = x * 2 + dx, sy = y * 2 + dy; if (sx >= pw) sx = pw - 1; if (sy >= ph) sy = ph - 1; uint32_t v = prev[(size_t)sy * pw + sx]; for (int k = 0; k < 4; k++) sum[k] += (v >> (8 * k)) & 255; }
+          +        n[(size_t)y * nw + x] = (sum[0] >> 2) | ((sum[1] >> 2) << 8) | ((sum[2] >> 2) << 16) | ((sum[3] >> 2) << 24); }
+          +      glTexImage2D(GL_TEXTURE_2D, up, GL_RGBA, nw, nh, 0, GL_RGBA, GL_UNSIGNED_BYTE, n); total += (size_t)nw * nh * 4; free(prev); prev = n; pw = nw; ph = nh; up++; }
+          +  }
+          +  free(prev);
+          +  if (!up) { glDeleteTextures(1, &id); ST.texFail++; return 0; }
+          +  GLCHK("texture upload"); ST.texNew++;
+          +  if (ST.texNew <= 12 || (ST.texNew & 255) == 0) ios_log("I ge: texture #%u %s %dx%d mips=%d (+%d generated) swz=%d %.1f KB", ST.texNew, fmt_name(fmt), w, h, S.texMips + 1, up - (S.texMips + 1 > 0 ? S.texMips + 1 : 1), S.texSwz, total / 1024.0);
+          +  pthread_mutex_lock(&tcm);
+             int slot = -1; for (int i = 0; i < tcn; i++) if (!tc[i].live) { slot = i; break; }
+             if (slot < 0) { if (tcn < 384) slot = tcn++; else { slot = 0; if (tc[0].live) glDeleteTextures(1, &tc[0].id); } }
+          -  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, S.texMips + 1, ch, total ? (size_t)(w * h * bpp_x2(fmt) / 2 + 64) : 64, id, 1 };
+          -  tc[slot].lv = S.texMips + 1; (void)lv; return id;
+          +  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, lv, ch, (size_t)(w * h * bpp_x2(fmt) / 2 + 64), id, 1 };
+          +  pthread_mutex_unlock(&tcm);
+          +  return id;
+           }
+           static void tex_bind(void) {
+             GLuint id = tex_get(); if (!id) { glUniform1f(uUseTex, 0); return; }
+             glActiveTexture(GL_TEXTURE0); glBindTexture(GL_TEXTURE_2D, id);
+             int mip = S.texMips > 0; int mn = S.minF; GLint f;
+          -  if (!mip) f = (mn & 1) ? GL_LINEAR : GL_NEAREST; else f = (mn == 7 || mn == 6) ? GL_LINEAR_MIPMAP_LINEAR : (mn & 1) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST;
+          +  if (!mip) f = (mn & 1) ? GL_LINEAR : GL_NEAREST; else f = (mn == 7) ? GL_LINEAR_MIPMAP_LINEAR : (mn == 6) ? GL_NEAREST_MIPMAP_LINEAR : (mn & 1) ? GL_LINEAR_MIPMAP_NEAREST : GL_NEAREST_MIPMAP_NEAREST;
+             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, f); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (S.magF & 1) ? GL_LINEAR : GL_NEAREST);
+             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, S.wrapU ? GL_CLAMP_TO_EDGE : GL_REPEAT); glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, S.wrapV ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+             glUniform1f(uUseTex, 1);
+           }
+           
+           /* ---------------- vertices ---------------- */
+          -static float rd(const uint8_t *p, int t, int through, int isuv) { (void)isuv;
+          -  switch (t) { case 1: return through ? (float)(int8_t)p[0] : (int8_t)p[0] / 128.f; case 2: return through ? (float)*(const int16_t *)p : *(const int16_t *)p / 32768.f; default: return *(const float *)p; } }
+          +/* kind: 0 = position (signed), 1 = texcoord (unsigned, GE), 2 = through-mode Z (unsigned 16) */
+          +static float rd(const uint8_t *p, int t, int through, int kind) {
+          +  int u = kind != 0 && !(kind == 2 && !through);
+          +  switch (t) {
+          +  case 1: { float v = u ? (float)p[0] : (float)(int8_t)p[0]; return through ? v : v / 128.f; }
+          +  case 2: { uint16_t r; memcpy(&r, p, 2); float v = u ? (float)r : (float)(int16_t)r; return through ? v : v / 32768.f; }
+          +  default: { float f; memcpy(&f, p, 4); return f; } } }
+           static void col(const uint8_t *p, int f, uint8_t *o) {
+             uint32_t v = f == 7 ? *(const uint32_t *)p : *(const uint16_t *)p; uint32_t c = conv(v, f == 7 ? 3 : f - 4);
+             if (f == 4) { c = conv(v, 0); } else if (f == 5) c = conv(v, 1); else if (f == 6) c = conv(v, 2);
+          @@ -145,7 +232,7 @@ static int decode(Vtx *out, int n, const uint8_t *vp, const uint8_t *ip, int ity
+             uint8_t dc[4] = { S.ambCol & 255, (S.ambCol >> 8) & 255, (S.ambCol >> 16) & 255, (uint8_t)S.ambA };
+             for (int i = 0; i < n; i++) {
+               int k = i; if (ip) k = itype == 1 ? ip[i] : ((const uint16_t *)ip)[i]; const uint8_t *v = vp + (size_t)k * vsz; Vtx *o = &out[i];
+          -    o->x = rd(v + op, pt, thr, 0); o->y = rd(v + op + (pt == 3 ? 4 : pt), pt, thr, 0); o->z = rd(v + op + 2 * (pt == 3 ? 4 : pt), pt, thr, 0);
+          +    o->x = rd(v + op, pt, thr, 0); o->y = rd(v + op + (pt == 3 ? 4 : pt), pt, thr, 0); o->z = rd(v + op + 2 * (pt == 3 ? 4 : pt), pt, thr, thr ? 2 : 0);
+               if (wt && !thr) {   /* hardware skinning on the CPU: sum of weight * (pos * bone) */
+                 float px = o->x, py = o->y, pz = o->z, sx = 0, sy = 0, sz = 0;
+                 for (int b = 0; b < wn && b < 8; b++) { float w; const uint8_t *wp = v + ow + b * wsz[wt];
+          @@ -169,12 +256,22 @@ static void state_apply(int thr) {
+             static const GLenum dfc[11] = { GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, 0, 0, 0, 0, GL_CONSTANT_COLOR };
+             int bs = S.blendS > 10 ? 2 : S.blendS, bd = S.blendD > 10 ? 3 : S.blendD; GLenum s_ = sf[bs] ? sf[bs] : GL_ONE, d_ = dfc[bd] ? dfc[bd] : GL_ZERO;
+             if (bs == 10 && (S.fixS == 0xffffff)) s_ = GL_ONE; if (bs == 10 && S.fixS == 0) s_ = GL_ZERO; if (bd == 10 && S.fixD == 0xffffff) d_ = GL_ONE; if (bd == 10 && S.fixD == 0) d_ = GL_ZERO;
+          +  /* GU_FIX: GLES2 has a single constant colour. Cover the common cases exactly: one side FIX, or both FIX with complementary colours. */
+          +  { unsigned fc = 0; int useC = 0;
+          +    if (bs == 10 && S.fixS != 0 && S.fixS != 0xffffff) { fc = S.fixS; s_ = GL_CONSTANT_COLOR; useC = 1; }
+          +    if (bd == 10 && S.fixD != 0 && S.fixD != 0xffffff) {
+          +      if (useC && S.fixD == (~S.fixS & 0xffffff)) d_ = GL_ONE_MINUS_CONSTANT_COLOR;
+          +      else { d_ = GL_CONSTANT_COLOR; if (!useC) fc = S.fixD; /* both FIX, unrelated colours: GLES2 has one constant, src colour wins */ }
+          +      useC = 1; }
+          +    if (useC) glBlendColor((fc & 255) / 255.f, ((fc >> 8) & 255) / 255.f, ((fc >> 16) & 255) / 255.f, 1.f); }
+             glBlendFunc(s_, d_); glBlendEquation(S.blendOp == 1 ? GL_FUNC_SUBTRACT : S.blendOp == 2 ? GL_FUNC_REVERSE_SUBTRACT : GL_FUNC_ADD);
+             glUniform1f(uAF, S.en[EN_ALPHA] ? (float)(S.aFunc + 1) : 0.f); glUniform1f(uARef, S.aRef / 255.f);
+             glUniform1f(uFog, S.en[EN_FOG] && !thr); glUniform3f(uFogC, (S.fogCol & 255) / 255.f, ((S.fogCol >> 8) & 255) / 255.f, ((S.fogCol >> 16) & 255) / 255.f); glUniform2f(uFogE, S.fogEnd, S.fogSlope);
+             glUniform3f(uEnv, (S.envCol & 255) / 255.f, ((S.envCol >> 8) & 255) / 255.f, ((S.envCol >> 16) & 255) / 255.f);
+             glUniform1f(uFunc, (float)S.tfx); glUniform1f(uTcc, (float)S.tcc); glUniform1f(uThru, (float)thr);
+          -  glUniform2f(uZ, S.vs[2], S.vp[2]); glUniform4f(uVP, S.vs[0], S.vs[1], S.vp[0], S.vp[1]); glUniform2f(uOff, S.off[0], S.off[1]);
+          +  glUniform2f(uZ, S.vs[2] / 32767.5f, S.vp[2] / 32767.5f - 1.f);
+          +  glUniform4f(uVP, S.vs[0] / 240.f, -S.vs[1] / 136.f, (S.vp[0] - S.off[0]) / 240.f - 1.f, 1.f - (S.vp[1] - S.off[1]) / 136.f);
+          +  
+             glUniform4f(uTS, S.tsu, S.tsv, 1, 1); glUniform4f(uTO, S.tou, S.tov, 0, 0);
+             glEnable(GL_SCISSOR_TEST); int x1 = S.sx1, y1 = S.sy1, x2 = S.sx2 + 1, y2 = S.sy2 + 1;
+             glScissor(vx + x1 * vw / GW, vy + (GH - y2) * vh / GH, (x2 - x1) * vw / GW + 1, (y2 - y1) * vh / GH + 1);
+          @@ -183,6 +280,7 @@ static void mmul4(float *r, const float *a, const float *b) { float t[16]; for (
+           static void do_prim(void) {
+             int count = S.prim & 0xffff, pr = (S.prim >> 16) & 7; if (count <= 0 || !S.slot[0]) return;
+             if (!glready) gl_init(); if (fresh) { setup_view(); fresh = 0; }
+          +  ge_flush_deletes();
+             int itype = (S.vtype >> 11) & 3; const uint8_t *ip = itype ? (const uint8_t *)S.slot[1] : 0;
+             Vtx *src = (Vtx *)malloc(sizeof(Vtx) * (size_t)count); if (!src) return;
+             int thr = decode(src, count, (const uint8_t *)S.slot[0], ip, itype);
+          @@ -206,10 +304,14 @@ static void do_prim(void) {
+               if (thr) glUniform4f(uTS, 1, 1, 1, 1), glUniform4f(uTO, 0, 0, 0, 0);
+               glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vtx), &o[0].x); glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vtx), &o[0].u); glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(Vtx), o[0].c);
+               glDrawArrays(mode, 0, n);
+          +    ST.draws++; ST.verts += (unsigned)n; if (thr) ST.thruDraws++; if (pr == 6) ST.spriteDraws++;
+          +    if (trace_left > 0) { trace_left--; ios_log("T prim #%u mode=%d n=%d thru=%d vtype=%06x tex=%d fmt=%s depth(en=%d f=%d m=%d) blend(en=%d %d/%d) alpha(en=%d f=%d ref=%d) cull=%d fog=%d vs=(%.1f %.1f %.1f) vp=(%.1f %.1f %.1f) off=(%.1f %.1f) MVP[12..15]=(%.2f %.2f %.2f %.2f) w0=%.2f", ST.draws, pr, n, thr, S.vtype, S.en[EN_TEX], fmt_name(S.texFmt), S.en[EN_DEPTH], S.zFunc, S.zMask, S.en[EN_BLEND], S.blendS, S.blendD, S.en[EN_ALPHA], S.aFunc, S.aRef, S.en[EN_CULL], S.en[EN_FOG], S.vs[0], S.vs[1], S.vs[2], S.vp[0], S.vp[1], S.vp[2], S.off[0], S.off[1], M[12], M[13], M[14], M[15], src[0].x); }
+          +    if (ST.draws <= 4 || (ST.draws & 0xfff) == 0) GLCHK("draw");
+             }
+             free(o); free(src);
+           }
+           static void do_clear(unsigned flags) {
+          +  ST.clears++;
+             if (!glready) gl_init(); if (fresh) { setup_view(); fresh = 0; }
+             glEnable(GL_SCISSOR_TEST); int x1 = S.sx1, y1 = S.sy1, x2 = S.sx2 + 1, y2 = S.sy2 + 1; glScissor(vx + x1 * vw / GW, vy + (GH - y2) * vh / GH, (x2 - x1) * vw / GW + 1, (y2 - y1) * vh / GH + 1);
+             GLbitfield m = 0;
+          @@ -218,7 +320,7 @@ static void do_clear(unsigned flags) {
+             if (m) glClear(m);
+           }
+           static inline float f24(uint32_t a) { union { uint32_t u; float f; } x; x.u = a << 8; return x.f; }
+          -static void matpush(float *m, int *n, int total, float v, int cols) { int i = *n; if (cols == 3) { int r = i / 3, c = i % 3; if (r < 4) m[r * 4 + c] = v; } else if (i < total) m[i] = v; (*n)++; }
+          +static void matpush(float *m, int *n, int total, float v, int cols) { int i = *n; if (cols == 3) { int r = i / 3, c = i % 3; if (r < 4) { m[r * 4 + c] = v; m[r * 4 + 3] = (r == 3) ? 1.f : 0.f; } } else if (i < total) m[i] = v; (*n)++; }
+           static void run(const uint32_t *l, int depth) {
+             for (;;) {
+               uint32_t w = *l++; unsigned op = w >> 24, a = w & 0xffffff;
+          @@ -263,4 +365,16 @@ static void run(const uint32_t *l, int depth) {
+             }
+           }
+           void ge_exec(const uint32_t *list) { run(list, 0); }
+          -void ge_frame_end(void) { fresh = 1; }
+          +static unsigned frameNo; static unsigned long long statT0;
+          +void ge_frame_end(void) {
+          +  fresh = 1; frameNo++;
+          +  unsigned long long now = (unsigned long long)sceKernelGetSystemTimeWide(); if (!statT0) statT0 = now;
+          +  if (frameNo <= 3 && ST.draws == 0 && ST.clears == 0) ios_log("W ge: frame %u ended with no GE commands executed - engine is not drawing", frameNo);
+          +  if (now - statT0 >= 2000000ull) {   /* every 2 s: one summary line instead of per-draw noise */
+          +    double dt = (now - statT0) / 1e6; static unsigned lastFrame;
+          +    ios_log("I ge: %.1f fps | per frame: %u draws (%u thru, %u sprite) %u verts %u clears | tex new=%u hit=%u fail=%u noptr=%u | badReads=%u glErr=%u (last 0x%x) | cache %d",
+          +            (frameNo - lastFrame) / dt, ST.draws / (frameNo - lastFrame ? frameNo - lastFrame : 1), ST.thruDraws / (frameNo - lastFrame ? frameNo - lastFrame : 1), ST.spriteDraws / (frameNo - lastFrame ? frameNo - lastFrame : 1),
+          +            ST.verts / (frameNo - lastFrame ? frameNo - lastFrame : 1), ST.clears / (frameNo - lastFrame ? frameNo - lastFrame : 1), ST.texNew, ST.texHit, ST.texFail, ST.noTexPtr, ST.badReads, ST.glErr, lastErr, tcn);
+          +    ST.draws = ST.verts = ST.clears = ST.thruDraws = ST.spriteDraws = 0; lastFrame = frameNo; statT0 = now; }
+          +  if (frameNo == 1 || frameNo == 60) { GLint vp[4]; glGetIntegerv(GL_VIEWPORT, vp); ios_log("I ge: frame %u state: viewport=%d,%d,%d,%d world[12..14]=(%.1f %.1f %.1f) view[12..14]=(%.1f %.1f %.1f) proj[11]=%.2f clearCol=%06x depthClear=%u", frameNo, vp[0], vp[1], vp[2], vp[3], S.world[12], S.world[13], S.world[14], S.view[12], S.view[13], S.view[14], S.proj[11], S.clearCol, S.clearDepth); }
+          +}
+          diff --git a/ios/src/ge_list.c b/ios/src/ge_list.c
+          index 9adeea2..1a96738 100644
+          --- a/ios/src/ge_list.c
+          +++ b/ios/src/ge_list.c
+          @@ -51,12 +51,19 @@ void sceGuOffset(unsigned x, unsigned y) { E(0x4c, x << 4); E(0x4d, y << 4); }
+           void sceGuViewport(int cx, int cy, int w, int h) {
+             EF(0x42, w / 2.f); EF(0x43, -h / 2.f); EF(0x45, (float)cx); EF(0x46, (float)cy);
+           }
+          -static int dn = 65535, df = 0;
+          -void sceGuDepthRange(int n, int f) { dn = n; df = f; EF(0x44, (n - f) / 2.f); EF(0x47, (n + f) / 2.f); E(0xd6, f); E(0xd7, n); }
+          -void sceGuScissor(int x, int y, int w, int h) { scx = x; scy = y; scw = w; sch = h; if (scissorOn) { E(0xd4, (y << 10) | x); E(0xd5, ((y + h - 1) << 10) | (x + w - 1)); } }
+          +/* sceGuDepthRange exactly as libgu: scale = z - near, centre = z, z = (near+far)/2.
+          + * (near=65535, far=0 -> scale -32768: near maps to the HIGH depth value, which the engine's GU_GEQUAL test expects.
+          + * The first port had the sign flipped, so far geometry overdrew near geometry.) */
+          +void sceGuDepthRange(int n, int f) {
+          +  unsigned mx = (unsigned)n + (unsigned)f; float z = (float)((int)((mx >> 31) + mx) >> 1);
+          +  EF(0x44, z - (float)n); EF(0x47, z); E(0xd6, (unsigned)(n < f ? n : f)); E(0xd7, (unsigned)(n < f ? f : n));
+          +}
+          +/* libgu quirk: the 3rd/4th arguments are the END corner (w-1 / h-1 are written as is); the engine relies on it (QVP, hit boxes). */
+          +static int sex = 479, sey = 271;
+          +void sceGuScissor(int x, int y, int w, int h) { scx = x; scy = y; sex = w - 1; sey = h - 1; if (scissorOn) { E(0xd4, (y << 10) | x); E(0xd5, (sey << 10) | sex); } }
+           static const unsigned enOp[] = { 0x22, 0x23, 0, 0x24, 0x21, 0x1d, 0x20, 0x1f, 0x1c, 0x1e, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x25, 0, 0x26, 0x27, 0, 0, 0 };
+           void sceGuEnable(int s) { if (s < 0 || s > 21) return; status[s] = 1;
+          -  if (s == GU_SCISSOR_TEST) { scissorOn = 1; E(0xd4, (scy << 10) | scx); E(0xd5, ((scy + sch - 1) << 10) | (scx + scw - 1)); } else if (enOp[s]) E(enOp[s], 1); }
+          +  if (s == GU_SCISSOR_TEST) { scissorOn = 1; E(0xd4, (scy << 10) | scx); E(0xd5, (sey << 10) | sex); } else if (enOp[s]) E(enOp[s], 1); }
+           void sceGuDisable(int s) { if (s < 0 || s > 21) return; status[s] = 0;
+             if (s == GU_SCISSOR_TEST) { scissorOn = 0; E(0xd4, 0); E(0xd5, (271 << 10) | 479); } else if (enOp[s]) E(enOp[s], 0); }
+           int sceGuGetStatus(int s) { return (s >= 0 && s < 22) ? status[s] : 0; }
+          diff --git a/ios/src/psp_sys.c b/ios/src/psp_sys.c
+          index fbdad76..134e09e 100644
+          --- a/ios/src/psp_sys.c
+          +++ b/ios/src/psp_sys.c
+          @@ -51,7 +51,7 @@ static void mp(const char *in, char *out, size_t n) {
+           SceUID sceIoOpen(const char *f, int fl, SceMode m) {
+             char b[1024]; mp(f, b, sizeof b); int o = 0;
+             o = (fl & 3) == 3 ? O_RDWR : (fl & 2) ? O_WRONLY : O_RDONLY; if (fl & PSP_O_CREAT) o |= O_CREAT; if (fl & PSP_O_TRUNC) o |= O_TRUNC; if (fl & PSP_O_APPEND) o |= O_APPEND; if (fl & PSP_O_EXCL) o |= O_EXCL;
+          -  int fd = open(b, o, 0644); return fd < 0 ? (int)0x80010002 : fd; (void)m;
+          +  int fd = open(b, o, 0644); if (fd < 0) { static int n; if (n++ < 60 && !(o & O_CREAT)) ios_log("W io: open('%s') failed: %s (mapped to %s)", f, strerror(errno), b); return (int)0x80010002; } return fd; (void)m;
+           }
+           int sceIoClose(SceUID fd) { return close(fd); }
+           int sceIoRead(SceUID fd, void *d, SceSize n) { return (int)read(fd, d, n); }
+          @@ -75,12 +75,12 @@ int sceIoIoctl(SceUID a, unsigned b, void *c, int d, void *e, int f) { (void)a;
+           int sceIoDevctl(const char *a, int b, void *c, int d, void *e, int f) { (void)a; (void)b; (void)c; (void)d; (void)e; (void)f; return (int)0x80010016; }
+           
+           /* ---- threads / semas ---- */
+          -typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; } Th;
+          +typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; unsigned char arg[128]; unsigned al; } Th;
+           static Th ths[64]; static int nth = 1;
+          -static void *tmain(void *a) { Th *t = a; t->fn(0, 0); t->done = 1; return 0; }
+          +static void *tmain(void *a) { Th *t = a; t->fn(t->al, t->al ? (void *)t->arg : (void *)0); t->done = 1; return 0; }
+           SceUID sceKernelCreateThread(const char *n, SceKernelThreadEntry e, int p, int s, unsigned at, void *o) { (void)p; (void)s; (void)at; (void)o; if (nth >= 64) return -1; Th *t = &ths[nth]; memset(t, 0, sizeof *t); t->fn = e; t->id = nth; strncpy(t->name, n, 31); return nth++; }
+          -int sceKernelStartThread(SceUID id, SceSize al, void *ap) { Th *t = &ths[id]; (void)al; (void)ap; pthread_attr_t at; pthread_attr_init(&at); pthread_attr_setstacksize(&at, 512 * 1024);
+          -  t->started = 1; return pthread_create(&t->t, &at, tmain, t); }
+          +int sceKernelStartThread(SceUID id, SceSize al, void *ap) { Th *t = &ths[id]; t->al = al > 128 ? 128 : al; if (ap && t->al) memcpy(t->arg, ap, t->al); pthread_attr_t at; pthread_attr_init(&at); pthread_attr_setstacksize(&at, 512 * 1024);
+          +  t->started = 1; int pr = pthread_create(&t->t, &at, tmain, t); if (pr) ios_log("E sys: pthread_create failed for thread '%s' (err %d)", t->name, pr); return pr; }
+           int sceKernelDeleteThread(SceUID id) { (void)id; return 0; }
+           int sceKernelTerminateDeleteThread(SceUID id) { (void)id; return 0; }
+           int sceKernelExitDeleteThread(int s) { pthread_exit((void *)(intptr_t)s); return 0; }
+          diff --git a/b/tests/ios_ge/ge_render_test.c b/tests/ios_ge/ge_render_test.c
+          new file mode 100644
+          index 0000000..abc183b
+          --- /dev/null
+          +++ b/tests/ios_ge/ge_render_test.c
+          @@ -0,0 +1,131 @@
+          +/* ge_render_test.c - renders synthetic scenes through the iOS GE->GLES2 layer (ios/src/ge_list.c + ge_gles2.c) on a
+          + * headless EGL/GLES2 context (Mesa llvmpipe) and checks pixels. Covers the bugs seen on device as a flat green screen:
+          + * lost camera translation (4x3 matrix w column), inverted depth range, scissor end corner, incomplete mip chains.
+          + * Build/run: tests/ios_ge/run.sh */
+          +#include <EGL/egl.h>
+          +#include <EGL/eglext.h>
+          +#include <GLES2/gl2.h>
+          +#include "psp_compat.h"
+          +#include <sys/mman.h>
+          +
+          +/* ---- host stubs the iOS layer expects ---- */
+          +void ios_log(const char *f, ...) { va_list a; va_start(a, f); const char *fm = (f[1] == ' ' && (f[0] == 'E' || f[0] == 'W' || f[0] == 'I' || f[0] == 'T')) ? f + 2 : f;
+          +  if (getenv("GE_TEST_VERBOSE")) { fprintf(stderr, "  [log] "); vfprintf(stderr, fm, a); fputc('\n', stderr); } va_end(a); }
+          +int ios_trace_enabled(void) { return 0; }
+          +void ios_screen_size(int *w, int *h) { *w = 480; *h = 272; }
+          +void ios_gl_make_current(void) {}
+          +void ios_present(void) {}
+          +SceInt64 sceKernelGetSystemTimeWide(void) { return 0; }
+          +void geTexAddr(int l, const void *p, int tbw);
+          +
+          +static unsigned char px[480 * 272 * 4];
+          +static void grab(void) { glFinish(); glReadPixels(0, 0, 480, 272, GL_RGBA, GL_UNSIGNED_BYTE, px); }
+          +static void pix(int x, int y, int *r, int *g, int *b) { const unsigned char *p = px + ((271 - y) * 480 + x) * 4; *r = p[0]; *g = p[1]; *b = p[2]; }
+          +static int fails, checks;
+          +static void expect(const char *what, int x, int y, int er, int eg, int eb, int tol) {
+          +  int r, g, b; pix(x, y, &r, &g, &b); checks++;
+          +  int ok = abs(r - er) <= tol && abs(g - eg) <= tol && abs(b - eb) <= tol;
+          +  if (!ok) fails++; printf("%s %-46s (%3d,%3d) got %3d,%3d,%3d want %3d,%3d,%3d\n", ok ? "ok  " : "FAIL", what, x, y, r, g, b, er, eg, eb);
+          +}
+          +static void expect_not(const char *what, int x, int y, int nr, int ng, int nb, int tol) {
+          +  int r, g, b; pix(x, y, &r, &g, &b); checks++;
+          +  int same = abs(r - nr) <= tol && abs(g - ng) <= tol && abs(b - nb) <= tol; if (same) fails++;
+          +  printf("%s %-46s (%3d,%3d) got %3d,%3d,%3d must differ from %3d,%3d,%3d\n", same ? "FAIL" : "ok  ", what, x, y, r, g, b, nr, ng, nb);
+          +}
+          +
+          +/* GE pointers are packed as 32 bit (armv7). On x86_64 every buffer the GE reads must therefore live below 4 GB. */
+          +static void *low(size_t n) { void *p = mmap(0, n, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0); if (p == MAP_FAILED) { perror("mmap"); exit(2); } return p; }
+          +static uint32_t *list;
+          +typedef struct { uint32_t c; float x, y, z; } V3;
+          +typedef struct { float u, v; uint32_t c; float x, y, z; } VT;
+          +#define VT3D (GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_3D)
+          +#define RED 0xff0000ffu
+          +#define GREEN 0xff00ff00u
+          +#define BLUE 0xffff0000u
+          +
+          +static void frame_begin(void) {
+          +  sceGuStart(GU_DIRECT, list);
+          +  sceGuOffset(2048 - 240, 2048 - 136); sceGuViewport(2048, 2048, 480, 272);
+          +  sceGuDepthRange(65535, 0); sceGuScissor(0, 0, 480, 272); sceGuEnable(GU_SCISSOR_TEST);
+          +  sceGuDepthFunc(GU_GEQUAL); sceGuEnable(GU_DEPTH_TEST); sceGuDisable(GU_CULL_FACE); sceGuDisable(GU_TEXTURE_2D); sceGuDisable(GU_BLEND); sceGuDisable(GU_ALPHA_TEST);
+          +  sceGuClearColor(0xff303030); sceGuClearDepth(0); sceGuClear(GU_COLOR_BUFFER_BIT | GU_DEPTH_BUFFER_BIT);
+          +}
+          +static void frame_end(void) { sceGuFinish(); grab(); sceGuSwapBuffers(); }
+          +static void camera(float ex, float ey, float ez, float cx, float cy, float cz) {
+          +  sceGumMatrixMode(GU_PROJECTION); sceGumLoadIdentity(); sceGumPerspective(60.f, 480.f / 272.f, 1.f, 100.f);
+          +  ScePspFVector3 e = { ex, ey, ez }, c = { cx, cy, cz }, u = { 0, 1, 0 };
+          +  sceGumMatrixMode(GU_VIEW); sceGumLoadIdentity(); sceGumLookAt(&e, &c, &u);
+          +  sceGumMatrixMode(GU_MODEL); sceGumLoadIdentity();
+          +}
+          +static void quadz(uint32_t col, float x0, float y0, float x1, float y1, float z) {
+          +  V3 *v = (V3 *)sceGuGetMemory(6 * sizeof(V3));
+          +  V3 q[6] = { { col, x0, y0, z }, { col, x1, y0, z }, { col, x1, y1, z }, { col, x0, y0, z }, { col, x1, y1, z }, { col, x0, y1, z } }; memcpy(v, q, sizeof q);
+          +  sceGumDrawArray(GU_TRIANGLES, VT3D, 6, 0, v);
+          +}
+          +static void rect2d(uint32_t col, int x0, int y0, int x1, int y1) {
+          +  typedef struct { uint32_t c; short x, y, z; short pad; } SV; SV *v = (SV *)sceGuGetMemory(2 * sizeof(SV));
+          +  v[0] = (SV){ col, (short)x0, (short)y0, 0, 0 }; v[1] = (SV){ col, (short)x1, (short)y1, 0, 0 };
+          +  sceGuDrawArray(GU_SPRITES, GU_COLOR_8888 | GU_VERTEX_16BIT | GU_TRANSFORM_2D, 2, 0, v);
+          +}
+          +
+          +int main(void) {
+          +  EGLDisplay d = EGL_NO_DISPLAY; PFNEGLGETPLATFORMDISPLAYEXTPROC gp = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+          +  if (gp) d = gp(0x31DD /* EGL_PLATFORM_SURFACELESS_MESA */, EGL_DEFAULT_DISPLAY, 0); if (d == EGL_NO_DISPLAY) d = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+          +  EGLint maj, min; if (!eglInitialize(d, &maj, &min)) { fprintf(stderr, "eglInitialize failed\n"); return 2; }
+          +  eglBindAPI(EGL_OPENGL_ES_API);
+          +  EGLint ca[] = { EGL_SURFACE_TYPE, EGL_PBUFFER_BIT, EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT, EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8, EGL_ALPHA_SIZE, 8, EGL_DEPTH_SIZE, 16, EGL_NONE };
+          +  EGLConfig cfg; EGLint nc; if (!eglChooseConfig(d, ca, &cfg, 1, &nc) || !nc) { fprintf(stderr, "no EGL config\n"); return 2; }
+          +  EGLint pa[] = { EGL_WIDTH, 480, EGL_HEIGHT, 272, EGL_NONE }; EGLSurface sf = eglCreatePbufferSurface(d, cfg, pa);
+          +  EGLint xa[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE }; EGLContext cx = eglCreateContext(d, cfg, EGL_NO_CONTEXT, xa);
+          +  if (!eglMakeCurrent(d, sf, sf, cx)) { fprintf(stderr, "eglMakeCurrent failed\n"); return 2; }
+          +  printf("GL: %s | %s\n", (const char *)glGetString(GL_RENDERER), (const char *)glGetString(GL_VERSION));
+          +  list = (uint32_t *)low(1 << 18); sceGuInit();
+          +
+          +  puts("-- scene 1: depth order (near red drawn FIRST, far blue drawn after; GEQUAL, range 65535..0)");
+          +  frame_begin(); camera(0, 2, 10, 0, 2, 0);
+          +  quadz(RED, -1, 1, 1, 3, 2.f); quadz(BLUE, -8, -4, 8, 10, -20.f); frame_end();
+          +  expect("centre = near red quad", 240, 136, 255, 0, 0, 3);
+          +  expect("left of red = far blue quad", 190, 136, 0, 0, 255, 3);
+          +  expect("outside everything = clear colour", 20, 20, 48, 48, 48, 3);
+          +  puts("-- scene 2: far blue drawn FIRST, near red after");
+          +  frame_begin(); camera(0, 2, 10, 0, 2, 0);
+          +  quadz(BLUE, -8, -4, 8, 10, -20.f); quadz(RED, -1, 1, 1, 3, 2.f); frame_end();
+          +  expect("centre = near red quad", 240, 136, 255, 0, 0, 3);
+          +  expect("left of red = far blue quad", 190, 136, 0, 0, 255, 3);
+          +
+          +  puts("-- scene 3: camera translation (eye x=3): red quad must move LEFT on screen");
+          +  frame_begin(); camera(3, 2, 10, 3, 2, 0); quadz(RED, -1, 1, 1, 3, 2.f); frame_end();
+          +  expect("red at shifted position", 152, 136, 255, 0, 0, 3);
+          +  expect("old centre is empty now", 240, 136, 48, 48, 48, 3);
+          +  puts("-- scene 4: camera behind / world translation (model matrix translate z -30 with eye z=10)");
+          +  frame_begin(); camera(0, 2, 10, 0, 2, 0); { ScePspFVector3 t = { 0, 0, -30 }; sceGumTranslate(&t); } quadz(GREEN, -4, 0, 4, 4, 0); frame_end();
+          +  expect("translated quad visible at centre", 240, 130, 0, 255, 0, 3);
+          +
+          +  puts("-- scene 5: scissor uses END corner (libgu quirk): sceGuScissor(120,68,360,204)");
+          +  frame_begin(); sceGuScissor(120, 68, 360, 204); rect2d(RED, 0, 0, 480, 272); frame_end();
+          +  expect("inside (130,80)", 130, 80, 255, 0, 0, 3);
+          +  expect("inside (350,200)", 350, 200, 255, 0, 0, 3);
+          +  expect("outside right (370,100)", 370, 100, 48, 48, 48, 3);
+          +  expect("outside left (100,100)", 100, 100, 48, 48, 48, 3);
+          +
+          +  puts("-- scene 6: 2D sprites (through mode) and alpha blend");
+          +  frame_begin(); rect2d(GREEN, 10, 10, 100, 60); sceGuEnable(GU_BLEND); sceGuBlendFunc(GU_ADD, GU_SRC_ALPHA, GU_ONE_MINUS_SRC_ALPHA, 0, 0); rect2d(0x800000ffu, 50, 30, 150, 90); frame_end();
+          +  expect("opaque green sprite", 20, 20, 0, 255, 0, 3);
+          +  expect("half red over green", 70, 40, 127, 127, 0, 4);
+          +  expect("half red over clear", 120, 80, 151, 24, 24, 4);
+          +
+          +  puts("-- scene 7: textured quad with INCOMPLETE mip chain (32x32 + 16x16 only) minified 8x");
+          +  uint32_t *t0 = (uint32_t *)low(4096), *t1 = (uint32_t *)low(4096); for (int i = 0; i < 32 * 32; i++) t0[i] = 0xff00ffffu; for (int i = 0; i < 16 * 16; i++) t1[i] = 0xffffff00u;   /* yellow / cyan (ABGR) */
+          +  frame_begin(); sceGuEnable(GU_TEXTURE_2D); sceGuTexMode(GU_PSM_8888, 1, 0, 0); sceGuTexImage(0, 32, 32, 32, t0); sceGuTexImage(1, 16, 16, 16, t1);
+          +  sceGuTexFunc(GU_TFX_REPLACE, GU_TCC_RGBA); sceGuTexFilter(GU_LINEAR_MIPMAP_NEAREST, GU_LINEAR); sceGuTexWrap(GU_CLAMP, GU_CLAMP);
+          +  { VT *v = (VT *)sceGuGetMemory(2 * sizeof(VT)); v[0] = (VT){ 0, 0, 0xffffffffu, 100, 100, 0 }; v[1] = (VT){ 1, 1, 0xffffffffu, 132, 132, 0 };   /* 1:1 -> level 0 */
+          +    sceGuDrawArray(GU_SPRITES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 2, 0, v); }
+          +  { VT *v = (VT *)sceGuGetMemory(2 * sizeof(VT)); v[0] = (VT){ 0, 0, 0xffffffffu, 200, 100, 0 }; v[1] = (VT){ 1, 1, 0xffffffffu, 204, 104, 0 };   /* 8x minified -> tail of the chain */
+          +    sceGuDrawArray(GU_SPRITES, GU_TEXTURE_32BITF | GU_COLOR_8888 | GU_VERTEX_32BITF | GU_TRANSFORM_2D, 2, 0, v); }
+          +  frame_end();
+          +  expect("level 0 (yellow)", 116, 116, 255, 255, 0, 3);
+          +  expect_not("minified level is NOT black", 202, 102, 0, 0, 0, 8);
+          +
+          +  printf("\n%d/%d checks passed\n", checks - fails, checks);
+          +  return fails ? 1 : 0;
+          +}
+          diff --git a/b/tests/ios_ge/run.sh b/tests/ios_ge/run.sh
+          new file mode 100755
+          index 0000000..d7a71a9
+          --- /dev/null
+          +++ b/tests/ios_ge/run.sh
+          @@ -0,0 +1,6 @@
+          +#!/usr/bin/env bash
+          +# Usage: tests/ios_ge/run.sh [ios_dir]   (default: <repo>/ios).  Needs libgles2-mesa-dev + libegl1-mesa-dev (Mesa llvmpipe runs it headless).
+          +set -e
+          +HERE="$(cd "$(dirname "$0")" && pwd)"; IOS="${1:-$HERE/../../ios}"; OUT="${TMPDIR:-/tmp}/ge_render_test"
+          +gcc -std=gnu11 -O1 -g -w -I"$IOS/shim" -o "$OUT" "$HERE/ge_render_test.c" "$IOS/src/ge_list.c" "$IOS/src/ge_gles2.c" -lEGL -lGLESv2 -lm -lpthread
+          +LIBGL_ALWAYS_SOFTWARE=1 "$OUT"
+
+          FIXES_PATCH_EOF
+          grep -c '^diff --git' fixes.patch
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fixes-patch
+          path: fixes.patch
+
   host-check:
-    name: Engine compiles against the PSP shim (x86_64, syntax only)
+    name: Render test + engine compiles against the PSP shim (x86_64)
+    needs: prepare-fixes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fixes-patch
+      - name: Apply fixes.patch (idempotent)
+        run: |
+          set -e
+          if git apply --check fixes.patch 2>/dev/null; then git apply --whitespace=nowarn fixes.patch; echo "fixes applied";
+          elif git apply --check -R fixes.patch 2>/dev/null; then echo "fixes already in the tree";
+          else echo "::error::fixes.patch does not apply to this tree"; git apply --check fixes.patch; exit 1; fi
+          chmod +x tests/ios_ge/run.sh
+      - name: Render test (GE -> GLES2 on headless Mesa)
+        run: |
+          sudo apt-get update && sudo apt-get install -y libgles2-mesa-dev libegl1-mesa-dev libegl-mesa0 libgl1-mesa-dri
+          tests/ios_ge/run.sh
       - name: Syntax-check engine + shim
         working-directory: viewer
         run: |
@@ -33,11 +774,21 @@ jobs:
 
   build-ios-armv7:
     name: iOS armv7 (Theos, iOS 7.0 - 9.3.5)
-    needs: host-check
+    needs: [prepare-fixes, host-check]
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: fixes-patch
+      - name: Apply fixes.patch (idempotent)
+        run: |
+          set -e
+          if git apply --check fixes.patch 2>/dev/null; then git apply --whitespace=nowarn fixes.patch; echo "fixes applied";
+          elif git apply --check -R fixes.patch 2>/dev/null; then echo "fixes already in the tree";
+          else echo "::error::fixes.patch does not apply to this tree"; git apply --check fixes.patch; exit 1; fi
+          chmod +x tests/ios_ge/run.sh
 
       - name: Install host tools
         run: |
@@ -113,127 +864,6 @@ jobs:
           EOF
           chmod 755 layout/DEBIAN/postinst
           sh -n layout/DEBIAN/postinst
-
-      - name: Patch ios_host.m (use /var/mobile/Documents when installed from .deb)
-        working-directory: ios
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          p = "host/ios_host.m"
-          s = open(p, encoding="utf-8").read()
-          if "/var/mobile/Documents" not in s:
-              old = "NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0]; strlcpy"
-              new = ("NSString *d = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES)[0];\n"
-                     "  /* installed from .deb into /Applications: data lives in /var/mobile/Documents/SHARVIEW (created by DEBIAN/postinst) */\n"
-                     "  if ([[[NSBundle mainBundle] bundlePath] hasPrefix:@\"/Applications/\"] && access(\"/var/mobile/Documents\", W_OK) == 0) d = @\"/var/mobile/Documents\";\n"
-                     "  strlcpy")
-              assert old in s, "ios_host.m: anchor not found"
-              open(p, "w", encoding="utf-8").write(s.replace(old, new, 1))
-          print("ios_host.m patched")
-          PY
-          grep -n "var/mobile/Documents" host/ios_host.m
-
-      - name: Patch psp_sys.c (pass sceKernelStartThread args to the thread - fixes NULL crash in movie/audio threads)
-        working-directory: ios
-        run: |
-          set -euo pipefail
-          timeout 60 python3 - <<'PY'
-          for p in ("src/psp_sys.c", "shim/psp_sys.c"):
-              s = open(p, encoding="utf-8").read()
-              if "unsigned char arg[128]" in s:
-                  print(p, "already patched"); continue
-              reps = [
-                ("typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; } Th;",
-                 "typedef struct { pthread_t t; SceKernelThreadEntry fn; int started, done, id; char name[32]; unsigned char arg[128]; unsigned al; } Th;"),
-                ("t->fn(0, 0);", "t->fn(t->al, t->al ? (void *)t->arg : (void *)0);"),
-                ("(void)al; (void)ap; pthread_attr_t at;",
-                 "t->al = al > 128 ? 128 : al; if (ap && t->al) memcpy(t->arg, ap, t->al); pthread_attr_t at;"),
-              ]
-              for old, new in reps:
-                  assert old in s, p + ": anchor not found: " + old[:40]
-                  s = s.replace(old, new, 1)
-              open(p, "w", encoding="utf-8").write(s)
-              print(p, "patched")
-          PY
-          grep -n "t->al" src/psp_sys.c | cut -c1-160
-
-      - name: Patch ge_gles2.c (fixes texture upload crash - stale mip levels or short buffer, KERN_PROTECTION_FAILURE in memcpy)
-        working-directory: ios
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          p = "src/ge_gles2.c"
-          s = open(p, encoding="utf-8").read()
-          if "safe_copy" in s:
-              print(p, "already patched")
-          else:
-              reps = [
-              (r"""/* ---------------- textures ---------------- */""",
-               r"""#ifdef __APPLE__
-          #include <mach/mach.h>
-          #include <mach/vm_map.h>
-          #endif
-
-          /* safe_copy: memcpy from a pointer that may be stale / too short. The GE list carries raw PSP-style pointers and
-           * per-level sizes; if a texture level is described bigger than the buffer behind it, a plain memcpy walks into a
-           * guard page (EXC_BAD_ACCESS, KERN_PROTECTION_FAILURE). Here unreadable pages are zero-filled and counted instead.
-           * Fast path = one vm_read_overwrite for the whole range; page-by-page only when that fails. Returns bytes that were readable. */
-          static unsigned bad_reads;
-          static size_t safe_copy(void *dst, const void *src, size_t n) {
-          #ifdef __APPLE__
-            uint8_t *d = (uint8_t *)dst; uintptr_t s = (uintptr_t)src; vm_size_t got = 0;
-            if (!n) return 0;
-            if (vm_read_overwrite(mach_task_self(), (vm_address_t)s, (vm_size_t)n, (vm_address_t)d, &got) == KERN_SUCCESS && got == n) return n;
-            size_t ok = 0, off = 0; const size_t PG = 4096;
-            while (off < n) {
-              size_t a = (s + off) & (PG - 1), len = PG - a; if (len > n - off) len = n - off;
-              got = 0;
-              if (vm_read_overwrite(mach_task_self(), (vm_address_t)(s + off), (vm_size_t)len, (vm_address_t)(d + off), &got) == KERN_SUCCESS && got == len) ok += len;
-              else memset(d + off, 0, len);
-              off += len;
-            }
-            if (ok < n) { bad_reads++; ios_log("ge: texture read %p+%u: only %u bytes mapped (stale/short level?)", src, (unsigned)n, (unsigned)ok); }
-            return ok;
-          #else
-            memcpy(dst, src, n); return n;
-          #endif
-          }
-
-          /* ---------------- textures ---------------- */"""),
-              (r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; } TC;""",
-               r"""typedef struct { uintptr_t p, clut; int fmt, w, h, swz, lv; unsigned chash; size_t bytes; GLuint id; int live; int ul; } TC;
-          static int lastUl = 1;   /* levels actually uploaded for the texture tex_get() returned last */"""),
-              (r"""  uint32_t cl[256]; unsigned ch = 0; uintptr_t cp = S.slot[3];""",
-               r"""  if ((S.tw[0] & 15) > 9 || (S.th[0] & 15) > 9) return 0;   /* GE max is 512; a bigger value is stale/garbage state */
-            uint32_t cl[256]; unsigned ch = 0; uintptr_t cp = S.slot[3];"""),
-              (r"""  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) return tc[i].id;""",
-               r"""  for (int i = 0; i < tcn; i++) if (tc[i].live && tc[i].p == p && tc[i].fmt == fmt && tc[i].w == w && tc[i].h == h && tc[i].swz == S.texSwz && tc[i].lv == lv && tc[i].clut == (fmt >= 4 ? cp : 0) && tc[i].chash == ch) { lastUl = tc[i].ul; return tc[i].id; }"""),
-              (r"""    int rowb = lw * bpp_x2(fmt) / 2; if (fmt == 4) rowb = (lw + 1) / 2; int tb = S.tbw[l] ? S.tbw[l] : lw; int stride = fmt == 4 ? tb / 2 : tb * bpp_x2(fmt) / 2; if (stride < rowb) stride = rowb;""",
-               r"""    if (l > 0 && (lw != (w >> l > 0 ? w >> l : 1) || lh != (h >> l > 0 ? h >> l : 1))) { lv = l; break; }   /* levels must halve; otherwise the state is stale */
-              int rowb = lw * bpp_x2(fmt) / 2; if (fmt == 4) rowb = (lw + 1) / 2; int tb = S.tbw[l] ? S.tbw[l] : lw; int stride = fmt == 4 ? tb / 2 : tb * bpp_x2(fmt) / 2; if (stride < rowb) stride = rowb;"""),
-              (r"""    if (S.texSwz) { uint8_t *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1); unswz(tmp, (const uint8_t *)lp, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); free(tmp); } else memcpy(lin, (const void *)lp, (size_t)stride * lh);
-              uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4);""",
-               r"""    if (S.texSwz) {
-                int rb = stride < 16 ? 16 : stride; size_t ssz = (size_t)(rb / 16) * 128 * (size_t)((lh + 7) / 8);   /* exactly what unswz() reads */
-                uint8_t *sb = (uint8_t *)malloc(ssz), *tmp = (uint8_t *)calloc((size_t)stride * (lh + 8), 1);
-                if (sb && tmp) { safe_copy(sb, (const void *)lp, ssz); unswz(tmp, sb, stride, lh); memcpy(lin, tmp, (size_t)stride * lh); } else memset(lin, 0, (size_t)stride * lh);
-                free(sb); free(tmp);
-              } else safe_copy(lin, (const void *)lp, (size_t)stride * lh);
-              uint32_t *o = (uint32_t *)malloc((size_t)lw * lh * 4); if (!o) { free(lin); lv = l; break; }"""),
-              (r"""  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, S.texMips + 1, ch, total ? (size_t)(w * h * bpp_x2(fmt) / 2 + 64) : 64, id, 1 };
-            tc[slot].lv = S.texMips + 1; (void)lv; return id;""",
-               r"""  tc[slot] = (TC){ p, fmt >= 4 ? cp : 0, fmt, w, h, S.texSwz, S.texMips + 1, ch, total ? (size_t)(w * h * bpp_x2(fmt) / 2 + 64) : 64, id, 1, 1 };
-            tc[slot].lv = S.texMips + 1; tc[slot].ul = lv < 1 ? 1 : lv; lastUl = tc[slot].ul; return id;"""),
-              (r"""  int mip = S.texMips > 0; int mn = S.minF; GLint f;""",
-               r"""  int mip = S.texMips > 0 && lastUl > 1; int mn = S.minF; GLint f;"""),
-              ]
-              for old, new in reps:
-                  assert s.count(old) == 1, p + ": anchor not found/unique: " + old[:50]
-                  s = s.replace(old, new, 1)
-              open(p, "w", encoding="utf-8").write(s)
-              print(p, "patched")
-          PY
-          grep -c safe_copy src/ge_gles2.c
 
       - name: Build
         working-directory: ios
