@@ -6,11 +6,11 @@ name: Build SHAR iOS armv7 (iOS 7+)
 on:
   workflow_dispatch:
     inputs:
-      cull:
-        description: "Face culling in the GE->GLES2 layer (walls missing? try off, then flipped)"
+      diag:
+        description: "Walls missing? Diagnostic build: bypass one GLES2 stage"
         type: choice
-        default: normal
-        options: [normal, off, flipped]
+        default: none
+        options: [none, nocull, flipcull, nodepth, nofog, noalpha, notex, all_off]
   push:
     branches: [main]
     paths: ["ios/**", "viewer/**", ".github/workflows/ios-armv7.yml"]
@@ -796,17 +796,52 @@ jobs:
           else echo "::error::fixes.patch does not apply to this tree"; git apply --check fixes.patch; exit 1; fi
           chmod +x tests/ios_ge/run.sh
 
-      - name: Culling experiment (workflow_dispatch input "cull"; push builds stay "normal")
+      - name: Depth offset for decal layers (permanent fix; sceGuDepthOffset was a no-op)
+        run: |
+          python3 - <<'PYEOF'
+          import re
+          p='ios/src/ge_list.c'; s=open(p,encoding='utf-8').read()
+          if 'depthOff' not in s:
+              s=re.sub(r'void sceGuDepthRange\(int n, int f\) \{.*?\n\}\n', """static int dn = 65535, df = 0, depthOff = 0;
+          void sceGuDepthRange(int n, int f) {
+            dn = n; df = f; unsigned mx = (unsigned)n + (unsigned)f; float z = (float)((int)((mx >> 31) + mx) >> 1);
+            EF(0x44, z - (float)n); EF(0x47, z + (float)depthOff); E(0xd6, (unsigned)(n < f ? n : f)); E(0xd7, (unsigned)(n < f ? f : n));
+          }
+          """, s, count=1, flags=re.S)
+              s=s.replace('void sceGuDepthOffset(unsigned o) { (void)o; }','void sceGuDepthOffset(unsigned o) { depthOff = (int)o; sceGuDepthRange(dn, df); }')
+              assert 'depthOff = (int)o' in s and 'static int dn' in s
+              open(p,'w',encoding='utf-8').write(s)
+          print('depth offset patched')
+          PYEOF
+          grep -n "depthOff" ios/src/ge_list.c | head
+
+      - name: Diagnostics (workflow_dispatch input "diag"; push builds stay "none")
         env:
-          CULL: ${{ inputs.cull }}
+          DIAG: ${{ inputs.diag }}
         run: |
           set -e
-          f=ios/src/ge_gles2.c
-          case "${CULL:-normal}" in
-            off)     sed -i 's/if (S.en\[EN_CULL\] \&\& !thr)/if (0 \&\& S.en[EN_CULL] \&\& !thr)/' $f ;;
-            flipped) sed -i 's/glFrontFace(S.cullFront ? GL_CW : GL_CCW)/glFrontFace(S.cullFront ? GL_CCW : GL_CW)/' $f ;;
-          esac
-          echo "cull mode: ${CULL:-normal}"; grep -n "glFrontFace\|EN_CULL\] &&" $f | head
+          f=ios/src/ge_gles2.c; d="${DIAG:-none}"
+          if [ "$d" = nocull ]   || [ "$d" = all_off ]; then sed -i 's/if (S.en\[EN_CULL\] \&\& !thr)/if (0 \&\& S.en[EN_CULL] \&\& !thr)/' $f; fi
+          if [ "$d" = flipcull ]; then sed -i 's/glFrontFace(S.cullFront ? GL_CW : GL_CCW)/glFrontFace(S.cullFront ? GL_CCW : GL_CW)/' $f; fi
+          if [ "$d" = nodepth ]  || [ "$d" = all_off ]; then sed -i 's/EN(S.en\[EN_DEPTH\], GL_DEPTH_TEST)/glDisable(GL_DEPTH_TEST)/' $f; fi
+          if [ "$d" = nofog ]    || [ "$d" = all_off ]; then sed -i 's/glUniform1f(uFog, S.en\[EN_FOG\] \&\& !thr)/glUniform1f(uFog, 0.f)/' $f; fi
+          if [ "$d" = noalpha ]  || [ "$d" = all_off ]; then sed -i 's/glUniform1f(uAF, S.en\[EN_ALPHA\] ? (float)(S.aFunc + 1) : 0.f)/glUniform1f(uAF, 0.f)/' $f; fi
+          if [ "$d" = notex ]; then sed -i 's/if (S.en\[EN_TEX\]) { glUniform4f(uTS, S.tsu, S.tsv, 1, 1); tex_bind(); } else glUniform1f(uUseTex, 0);/glUniform1f(uUseTex, 0);/' $f; fi
+          echo "diag mode: $d"; git diff --stat -- $f || true
+          grep -c "0 && S.en\[EN_CULL\]\|glDisable(GL_DEPTH_TEST)\|glUniform1f(uFog, 0.f)\|glUniform1f(uAF, 0.f)" $f || true
+
+      - name: Re-armable GE trace (ge_trace.txt was only read once, so it dumped menu draws and never the city)
+        run: |
+          python3 - <<'PYEOF'
+          p='ios/src/ge_gles2.c'; s=open(p,encoding='utf-8').read()
+          if 'trace re-armed' not in s:
+              a='  fresh = 1; frameNo++;\n'
+              assert a in s
+              s=s.replace(a, a+'  if ((frameNo % 30) == 0 && trace_left <= 0) { char tp[640]; snprintf(tp, sizeof tp, "%s/SHARVIEW/ge_trace.txt", ios_docs_dir()); FILE *tf = fopen(tp, "rb"); if (tf) { fclose(tf); remove(tp); trace_left = 300; ios_log("I ge: trace re-armed (ge_trace.txt consumed): next 300 draws are dumped"); } }\n',1)
+              open(p,'w',encoding='utf-8').write(s)
+          print('trace patch ok')
+          PYEOF
+          grep -n "trace re-armed" ios/src/ge_gles2.c | head -2
 
       - name: Install host tools
         run: |
