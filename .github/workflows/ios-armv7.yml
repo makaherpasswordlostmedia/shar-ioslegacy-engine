@@ -5,6 +5,12 @@ name: Build SHAR iOS armv7 (iOS 7+)
 # the app's Documents/SHARVIEW folder (iTunes file sharing / Filza / scp).
 on:
   workflow_dispatch:
+    inputs:
+      cull:
+        description: "Face culling in the GE->GLES2 layer (walls missing? try off, then flipped)"
+        type: choice
+        default: normal
+        options: [normal, off, flipped]
   push:
     branches: [main]
     paths: ["ios/**", "viewer/**", ".github/workflows/ios-armv7.yml"]
@@ -789,6 +795,18 @@ jobs:
           elif git apply --check -R fixes.patch 2>/dev/null; then echo "fixes already in the tree";
           else echo "::error::fixes.patch does not apply to this tree"; git apply --check fixes.patch; exit 1; fi
           chmod +x tests/ios_ge/run.sh
+
+      - name: Culling experiment (workflow_dispatch input "cull"; push builds stay "normal")
+        env:
+          CULL: ${{ inputs.cull }}
+        run: |
+          set -e
+          f=ios/src/ge_gles2.c
+          case "${CULL:-normal}" in
+            off)     sed -i 's/if (S.en\[EN_CULL\] \&\& !thr)/if (0 \&\& S.en[EN_CULL] \&\& !thr)/' $f ;;
+            flipped) sed -i 's/glFrontFace(S.cullFront ? GL_CW : GL_CCW)/glFrontFace(S.cullFront ? GL_CCW : GL_CW)/' $f ;;
+          esac
+          echo "cull mode: ${CULL:-normal}"; grep -n "glFrontFace\|EN_CULL\] &&" $f | head
 
       - name: Install host tools
         run: |
