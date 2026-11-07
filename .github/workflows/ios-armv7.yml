@@ -830,18 +830,80 @@ jobs:
           echo "diag mode: $d"; git diff --stat -- $f || true
           grep -c "0 && S.en\[EN_CULL\]\|glDisable(GL_DEPTH_TEST)\|glUniform1f(uFog, 0.f)\|glUniform1f(uAF, 0.f)" $f || true
 
-      - name: Re-armable GE trace (ge_trace.txt was only read once, so it dumped menu draws and never the city)
+      - name: GE trace for the 3D city (only 3D draws, no log de-duplication, re-armed from the file)
         run: |
           python3 - <<'PYEOF'
           p='ios/src/ge_gles2.c'; s=open(p,encoding='utf-8').read()
-          if 'trace re-armed' not in s:
+          if 'seen3d' not in s:
+              s=s.replace('static int vx, vy, vw, vh, fresh = 1, glready, trace_left;','static int vx, vy, vw, vh, fresh = 1, glready, trace_left, seen3d;',1)
+              # trace only real 3D draws, with fog / texenv state
+              a='if (trace_left > 0) { trace_left--;'
+              assert a in s
+              s=s.replace(a,'if (!thr && n >= 30) seen3d = 1;\n    if (trace_left > 0 && !thr) { trace_left--;',1)
+              k=s.index('if (trace_left > 0 && !thr)'); e=s.index('src[0].x); }',k)
+              s=s[:e]+'src[0].x, S.fogEnd, S.fogSlope, S.fogCol, S.tfx, S.tcc); }'+s[e+len('src[0].x); }'):]
+              s=s.replace('w0=%.2f", ST.draws','w0=%.2f fogE=%.1f fogS=%.5f fogC=%06x tfx=%d tcc=%d", ST.draws',1)
               a='  fresh = 1; frameNo++;\n'
               assert a in s
-              s=s.replace(a, a+'  if ((frameNo % 30) == 0 && trace_left <= 0) { char tp[640]; snprintf(tp, sizeof tp, "%s/SHARVIEW/ge_trace.txt", ios_docs_dir()); FILE *tf = fopen(tp, "rb"); if (tf) { fclose(tf); remove(tp); trace_left = 300; ios_log("I ge: trace re-armed (ge_trace.txt consumed): next 300 draws are dumped"); } }\n',1)
+              s=s.replace(a,a+'  if ((frameNo % 30) == 0 && trace_left <= 0 && seen3d) { char tp[640]; snprintf(tp, sizeof tp, "%s/SHARVIEW/ge_trace.txt", ios_docs_dir()); FILE *tf = fopen(tp, "rb"); if (tf) { fclose(tf); remove(tp); trace_left = 150; seen3d = 0; ios_log("I ge: trace re-armed in 3D (ge_trace.txt consumed): next 150 3D draws are dumped"); } }\n',1)
               open(p,'w',encoding='utf-8').write(s)
+          p='ios/host/ios_host.m'; s=open(p,encoding='utf-8').read()
+          a='if (f == g_lastFmt) { g_rep++;'
+          assert a in s
+          s=s.replace(a,'if (lvl != \'T\' && f == g_lastFmt) { g_rep++;',1)
+          open(p,'w',encoding='utf-8').write(s)
           print('trace patch ok')
           PYEOF
-          grep -n "trace re-armed" ios/src/ge_gles2.c | head -2
+          grep -n "seen3d" ios/src/ge_gles2.c | cut -c1-120
+
+      - name: Richer logs (draw signatures + camera/scene summary every 10 s)
+        run: |
+          python3 - <<'PYEOF'
+          p='ios/src/ge_gles2.c'; s=open(p,encoding='utf-8').read()
+          if 'sig_add' not in s:
+              anchor='static unsigned lastErr; static int errBudget = 40;'
+              assert anchor in s
+              code=r'''
+          /* ---- per-state draw signatures: what the engine actually draws (dumped every 10 s) ---- */
+          typedef struct { uint32_t vt; int prim, thr, tex, fmt, depth, zf, zm, blend, bs, bd, alpha, af, cull, cf, fog, tfx; unsigned draws, verts; } Sig;
+          static const char *fmt_name(int f);
+          static Sig sigs[48]; static int nsig, sigOver; static unsigned long long sigT0;
+          static void sig_add(int thr, int pr, int n) {
+            Sig k; memset(&k, 0, sizeof k); k.vt = S.vtype; k.prim = pr; k.thr = thr; k.tex = S.en[EN_TEX]; k.fmt = S.texFmt; k.depth = S.en[EN_DEPTH]; k.zf = S.zFunc; k.zm = S.zMask;
+            k.blend = S.en[EN_BLEND]; k.bs = S.blendS; k.bd = S.blendD; k.alpha = S.en[EN_ALPHA]; k.af = S.aFunc; k.cull = S.en[EN_CULL]; k.cf = S.cullFront; k.fog = S.en[EN_FOG]; k.tfx = S.tfx;
+            for (int i = 0; i < nsig; i++) if (!memcmp(&sigs[i], &k, offsetof(Sig, draws))) { sigs[i].draws++; sigs[i].verts += (unsigned)n; return; }
+            if (nsig < 48) { k.draws = 1; k.verts = (unsigned)n; sigs[nsig++] = k; } else sigOver++;
+          }
+          static void sig_dump(void) {
+            unsigned td = 0, tv = 0, d3 = 0; for (int i = 0; i < nsig; i++) { td += sigs[i].draws; tv += sigs[i].verts; if (!sigs[i].thr) d3 += sigs[i].draws; }
+            if (d3) {
+              const float *P = S.proj, *V = S.view; float nn = P[14] / (P[10] - 1.f), ff = P[14] / (P[10] + 1.f);
+              float ex = -(V[12] * V[0] + V[13] * V[1] + V[14] * V[2]), ey = -(V[12] * V[4] + V[13] * V[5] + V[14] * V[6]), ez = -(V[12] * V[8] + V[13] * V[9] + V[14] * V[10]);
+              ios_log("I scene: 10s totals draws=%u verts=%u (3D draws=%u, %d signatures%s) | eye=(%.1f %.1f %.1f) proj: x=%.3f y=%.3f near=%.2f far=%.1f | cullfront=%d depthRange z=(%.1f,%.1f) fog end=%.1f slope=%.5f col=%06x",
+                      td, tv, d3, nsig, sigOver ? "+overflow" : "", ex, ey, ez, P[0], P[5], nn, ff, S.cullFront, S.vs[2], S.vp[2], S.fogEnd, S.fogSlope, S.fogCol);
+              for (int pass = 0; pass < 16; pass++) {
+                int b = -1; for (int i = 0; i < nsig; i++) if (!sigs[i].thr && sigs[i].draws && (b < 0 || sigs[i].verts > sigs[b].verts)) b = i; if (b < 0) break;
+                const Sig *g = &sigs[b];
+                ios_log("I sig: %5u draws %7u verts | vt=%06x prim=%d tex=%d fmt=%s | depth=%d f=%d mask=%d | blend=%d %d/%d | atest=%d f=%d | cull=%d front=%d | fog=%d tfx=%d",
+                        g->draws, g->verts, g->vt, g->prim, g->tex, fmt_name(g->fmt), g->depth, g->zf, g->zm, g->blend, g->bs, g->bd, g->alpha, g->af, g->cull, g->cf, g->fog, g->tfx);
+                sigs[b].draws = 0;
+              }
+            }
+            nsig = 0; sigOver = 0;
+          }
+          '''
+              s=s.replace(anchor, anchor+code,1)
+              a='ST.draws++; ST.verts += (unsigned)n;'
+              assert a in s
+              s=s.replace(a,'sig_add(thr, pr, n); '+a,1)
+              a='  fresh = 1; frameNo++;\n'
+              assert a in s
+              s=s.replace(a,a+'  { unsigned long long tn = (unsigned long long)sceKernelGetSystemTimeWide(); if (!sigT0) sigT0 = tn; if (tn - sigT0 >= 10000000ull) { sig_dump(); sigT0 = tn; } }\n',1)
+              if '#include <stddef.h>' not in s: s='#include <stddef.h>\n'+s
+              open(p,'w',encoding='utf-8').write(s)
+          print('logs patch ok')
+          PYEOF
+          grep -n "sig_add\|sig_dump" ios/src/ge_gles2.c | cut -c1-100 | head
 
       - name: Install host tools
         run: |
